@@ -58,34 +58,42 @@ DEFINE_int32(index, -1, "nv index");
 DEFINE_int32(nv_slot, 1000, "nv slot");
 DEFINE_int32(nv_size, -1, "nv size");
 DEFINE_string(tpm_device, "/dev/tpm0", "tpm device");
-DEFINE_string(seal_hierearchy_name, "seal_hierarchy.bin",
+DEFINE_string(seal_hierearchy_name,
+              "seal_hierarchy.bin",
               "seal hierarch save file name");
-DEFINE_string(quote_hierearchy_name, "quote_hierarchy.bin",
+DEFINE_string(quote_hierearchy_name,
+              "quote_hierarchy.bin",
               "quote hierarch save file name");
-DEFINE_string(ek_cert_file_name, "ek-rsa2048.crt",
-              "tpm cert file name");
+DEFINE_string(ek_cert_file_name, "ek-rsa2048.crt", "tpm cert file name");
 
 #ifndef GFLAGS_NS
-#define GFLAGS_NS google
+#  define GFLAGS_NS google
 #endif
 
 // ----------------------------------------------------------
 
-bool endorsement_test(local_tpm& tpm) {
+bool endorsement_test(local_tpm &tpm) {
   TPM_HANDLE ek_handle;
 
-  if  (!get_endorsement_key(tpm, &ek_handle)) {
-    printf("%s() error, line %d, get_endorsement_key failed\n", __func__, __LINE__);
+  if (!get_endorsement_key(tpm, &ek_handle)) {
+    printf("%s() error, line %d, get_endorsement_key failed\n",
+           __func__,
+           __LINE__);
     return false;
   }
 
   TPM2B_PUBLIC pub_out;
-  TPM2B_NAME pub_name;
-  TPM2B_NAME qualified_pub_name;
-  uint16_t pub_blob_size = 4096;
-  byte_t pub_blob[pub_blob_size];
-  if (!Tpm2_ReadPublic(tpm, ek_handle, &pub_blob_size, pub_blob,
-                      &pub_out, &pub_name, &qualified_pub_name)) {
+  TPM2B_NAME   pub_name;
+  TPM2B_NAME   qualified_pub_name;
+  uint16_t     pub_blob_size = 4096;
+  byte_t       pub_blob[pub_blob_size];
+  if (!Tpm2_ReadPublic(tpm,
+                       ek_handle,
+                       &pub_blob_size,
+                       pub_blob,
+                       &pub_out,
+                       &pub_name,
+                       &qualified_pub_name)) {
     printf("%s() error, line %d, ReadPublic failed\n", __func__, __LINE__);
     Tpm2_FlushContext(tpm, ek_handle);
     return false;
@@ -106,7 +114,7 @@ bool endorsement_test(local_tpm& tpm) {
   printf("Scheme: %d\n", pub_out.publicArea.parameters.rsaDetail.scheme.scheme);
   printf("Bytes (%d):\n", (int)pub_out.publicArea.unique.rsa.size);
   print_bytes((int)pub_out.publicArea.unique.rsa.size,
-             (byte_t*)pub_out.publicArea.unique.rsa.buffer);
+              (byte_t *)pub_out.publicArea.unique.rsa.buffer);
   printf("\n");
   printf("Exponent: %d\n", pub_out.publicArea.parameters.rsaDetail.exponent);
   printf("\n");
@@ -114,81 +122,98 @@ bool endorsement_test(local_tpm& tpm) {
 
   string cert_out;
   if (!get_endorsement_cert(FLAGS_ek_cert_file_name, &cert_out)) {
-    printf("%s() error, line %d, get_endorsement_cert failed\n", __func__, __LINE__);
+    printf("%s() error, line %d, get_endorsement_cert failed\n",
+           __func__,
+           __LINE__);
     return false;
   }
 
   return true;
 }
 
-bool seal_test(local_tpm& tpm, int pcr_num, const string& seal_file) {
+bool seal_test(local_tpm &tpm, int pcr_num, const string &seal_file) {
 
-  int num_pcrs = 1;
-  byte_t pcrs[1] = { 7 };
+  int    num_pcrs = 1;
+  byte_t pcrs[1] = {7};
 
   if (!extend_pcrs(tpm, 7)) {
-    printf("%s() error, line %d, extend_pcrs failed\n",
-            __func__, __LINE__);
+    printf("%s() error, line %d, extend_pcrs failed\n", __func__, __LINE__);
     return false;
   }
 
   if (!create_seal_hierarchy_and_secret(tpm, num_pcrs, pcrs, seal_file)) {
     printf("\n");
     printf("%s() error, line %d, create_seal_hierarchy_and_secret failed\n",
-           __func__, __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
 
   printf("\n");
   string seal_secret;
-  if (!recover_sealing_secret(tpm, num_pcrs, pcrs,
-                             FLAGS_seal_hierearchy_name, &seal_secret)) {
+  if (!recover_sealing_secret(tpm,
+                              num_pcrs,
+                              pcrs,
+                              FLAGS_seal_hierearchy_name,
+                              &seal_secret)) {
     printf("\n");
     printf("%s() error, line %d, recover_sealing_secret failed\n",
-            __func__, __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
 
   printf("Recovered seal secret: ");
-  print_bytes(seal_secret.size(), (byte_t*)seal_secret.data());
+  print_bytes(seal_secret.size(), (byte_t *)seal_secret.data());
   printf("\n");
 
   return true;
 }
 
-bool quote_test(local_tpm& tpm, const string& quote_file) {
-  int num_pcrs = 1;
-  byte_t pcrs[1] = { 7 };
+bool quote_test(local_tpm &tpm, const string &quote_file) {
+  int    num_pcrs = 1;
+  byte_t pcrs[1] = {7};
 
   TPM_HANDLE srk_handle;
   TPM_HANDLE quote_handle;
 
   if (!extend_pcrs(tpm, 7)) {
-    printf("%s() error, line %d, extend_pcrs failed\n",
-            __func__, __LINE__);
+    printf("%s() error, line %d, extend_pcrs failed\n", __func__, __LINE__);
     return false;
   }
 
-  if (!create_quote_hierarchy(tpm, num_pcrs, pcrs, quote_file) ) {
+  if (!create_quote_hierarchy(tpm, num_pcrs, pcrs, quote_file)) {
     printf("%s() error, line %d, create_quote_hierarchy failed\n",
-            __func__, __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
 
-  if (!recover_and_load_quote_hierarchy(tpm, num_pcrs, pcrs, quote_file,
-        &srk_handle, &quote_handle)) {
+  if (!recover_and_load_quote_hierarchy(tpm,
+                                        num_pcrs,
+                                        pcrs,
+                                        quote_file,
+                                        &srk_handle,
+                                        &quote_handle)) {
     printf("%s() error, line %d, recover_and_load_quote_hierarchy failed\n",
-           __func__, __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
 
   string to_quote("I am being quoted");
   string quote_sig;
 
-  if (!do_quote(tpm, srk_handle, num_pcrs, pcrs,
-                quote_handle, to_quote, &quote_sig)) {
+  if (!do_quote(tpm,
+                srk_handle,
+                num_pcrs,
+                pcrs,
+                quote_handle,
+                to_quote,
+                &quote_sig)) {
     printf("%s() error, line %d, recover_sealing_secret failed\n",
-           __func__, __LINE__);
+           __func__,
+           __LINE__);
     Tpm2_FlushContext(tpm, quote_handle);
     Tpm2_FlushContext(tpm, srk_handle);
     return false;
@@ -197,7 +222,8 @@ bool quote_test(local_tpm& tpm, const string& quote_file) {
   // Verify it
   if (!verify_credential(tpm, to_quote, quote_sig)) {
     printf("%s() error, line %d, verify_credential failed\n",
-            __func__, __LINE__);
+           __func__,
+           __LINE__);
     Tpm2_FlushContext(tpm, quote_handle);
     Tpm2_FlushContext(tpm, srk_handle);
     return false;
@@ -208,31 +234,40 @@ bool quote_test(local_tpm& tpm, const string& quote_file) {
   return true;
 }
 
-bool context_test(local_tpm& tpm) {
+bool context_test(local_tpm &tpm) {
   TPM_HANDLE handle;
-  uint16_t size = 4096;
-  byte_t saveArea[4096];
-  string authString("01020304");
+  uint16_t   size = 4096;
+  byte_t     saveArea[4096];
+  string     authString("01020304");
 
-  TPM2B_PUBLIC pub_out;
+  TPM2B_PUBLIC       pub_out;
   TPML_PCR_SELECTION pcrSelect;
   init_single_pcr_selection(7, TPM_ALG_SHA1, &pcrSelect);
 
   TPMA_OBJECT primary_flags;
-  *(uint32_t*)(&primary_flags) = 0;
+  *(uint32_t *)(&primary_flags) = 0;
   primary_flags.fixedTPM = 1;
   primary_flags.fixedParent = 1;
   primary_flags.sensitiveDataOrigin = 1;
   primary_flags.userWithAuth = 1;
   primary_flags.sign = 1;
 
-  if (Tpm2_CreatePrimary(tpm, TPM_RH_OWNER, authString, pcrSelect,
-                         TPM_ALG_RSA, TPM_ALG_SHA256, primary_flags, TPM_ALG_NULL,
-                         (TPMI_AES_KEY_BITS)0, TPM_ALG_ECB, TPM_ALG_RSASSA,
-                         1024, 0x010001,
-                         &handle, &pub_out)) {
-    printf("%s() error, line %d, CreatePrimary failed\n",
-           __func__, __LINE__);
+  if (Tpm2_CreatePrimary(tpm,
+                         TPM_RH_OWNER,
+                         authString,
+                         pcrSelect,
+                         TPM_ALG_RSA,
+                         TPM_ALG_SHA256,
+                         primary_flags,
+                         TPM_ALG_NULL,
+                         (TPMI_AES_KEY_BITS)0,
+                         TPM_ALG_ECB,
+                         TPM_ALG_RSASSA,
+                         1024,
+                         0x010001,
+                         &handle,
+                         &pub_out)) {
+    printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);
     return false;
   }
 #ifdef DEBUG
@@ -243,14 +278,12 @@ bool context_test(local_tpm& tpm) {
   string out;
 
   if (!save_context(tpm, handle, &out)) {
-    printf("%s() error, line %d, save_context failed\n",
-           __func__, __LINE__);
+    printf("%s() error, line %d, save_context failed\n", __func__, __LINE__);
     Tpm2_FlushContext(tpm, handle);
     return false;
   }
   if (!load_context(tpm, handle, in)) {
-    printf("%s() error, line %d, load_context failed\n",
-           __func__, __LINE__);
+    printf("%s() error, line %d, load_context failed\n", __func__, __LINE__);
     Tpm2_FlushContext(tpm, handle);
     return false;
   }
@@ -259,54 +292,62 @@ bool context_test(local_tpm& tpm) {
   return true;
 }
 
-bool nv_test(local_tpm& tpm) {
+bool nv_test(local_tpm &tpm) {
   int slot = 1000;
 
   uint16_t size_data = 16;
-  byte_t data_in[512] = {
-    0x9, 0x8, 0x7, 0x6,
-    0x9, 0x8, 0x7, 0x6,
-    0x9, 0x8, 0x7, 0x6,
-    0x9, 0x8, 0x7, 0x6
-  };
+  byte_t   data_in[512] = {0x9,
+                           0x8,
+                           0x7,
+                           0x6,
+                           0x9,
+                           0x8,
+                           0x7,
+                           0x6,
+                           0x9,
+                           0x8,
+                           0x7,
+                           0x6,
+                           0x9,
+                           0x8,
+                           0x7,
+                           0x6};
   uint16_t size_out = 512;
-  byte_t data_out[512];
+  byte_t   data_out[512];
 
   string in;
   string out;
-  in.assign((char*)data_in, size_data);
+  in.assign((char *)data_in, size_data);
 
   if (!write_nv_slot(tpm, slot, in)) {
-    printf("%s() error, line %d, write_nv_slot failed\n",
-            __func__, __LINE__);
+    printf("%s() error, line %d, write_nv_slot failed\n", __func__, __LINE__);
     return false;
   }
   if (!read_nv_slot(tpm, slot, &out)) {
-    printf("%s() error, line %d, read_nv_slot failed\n",
-            __func__, __LINE__);
+    printf("%s() error, line %d, read_nv_slot failed\n", __func__, __LINE__);
     return false;
   }
 
   if (memcmp(in.data(), out.data(), out.size()) != 0) {
     printf("%s() error, line %d, written and read values don't match\n",
-           __func__, __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
   return true;
 }
 
-bool get_cert(local_tpm& tpm, const string& file_name, string* out) {
-  string cert;
+bool get_cert(local_tpm &tpm, const string &file_name, string *out) {
+  string     cert;
   TPM_HANDLE handle = 0x1c00002;
 
   if (!read_file_into_string(file_name, &cert)) {
-    printf("%s() error, line %d, can't read cert file\n",
-           __func__, __LINE__);
+    printf("%s() error, line %d, can't read cert file\n", __func__, __LINE__);
     return false;
   }
 
   TPM2B_AUTH auth;
-  string authString;
+  string     authString;
 
   if (!Tpm2_UndefineSpace(tpm, TPM_RH_OWNER, handle)) {
 #ifdef DEBUG
@@ -314,33 +355,38 @@ bool get_cert(local_tpm& tpm, const string& file_name, string* out) {
 #endif
   }
 #ifdef DEBUG
-    printf("Tpm2_UndefineSpace %x succeeds\n", handle);
+  printf("Tpm2_UndefineSpace %x succeeds\n", handle);
 #endif
 
   // TODO: define a policy here using StartAuthSession
   // create_pcr_policy(local_tpm& tpm, int num_pcrs, byte_t* pcrs,
-                //string* policy_out)
+  // string* policy_out)
 
   int size = 2048;
-  if (!Tpm2_DefineSpace(tpm, TPM_RH_OWNER, handle, authString, 
-                        sizeof(auth), (byte_t*) &auth,
-                        NV_AUTHWRITE | NV_AUTHREAD, size)) {
+  if (!Tpm2_DefineSpace(tpm,
+                        TPM_RH_OWNER,
+                        handle,
+                        authString,
+                        sizeof(auth),
+                        (byte_t *)&auth,
+                        NV_AUTHWRITE | NV_AUTHREAD,
+                        size)) {
     printf("%s() error, line %x, DefineSpace failed\n", __func__, __LINE__);
     return false;
   }
 #ifdef DEBUG
-    printf("Tpm2_DefineSpace %x succeeds\n", handle);
+  printf("Tpm2_DefineSpace %x succeeds\n", handle);
 #endif
 
   if (!write_nv_handle(tpm, handle, authString, cert)) {
-    printf("%s() error, line %d, write nvram\n",
-           __func__, __LINE__);
+    printf("%s() error, line %d, write nvram\n", __func__, __LINE__);
     return false;
   }
 
   if (!get_endorsement_cert(tpm, out)) {
     printf("%s() error, line %d, can't get endorsement cert\n",
-           __func__, __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
   return true;
@@ -348,7 +394,7 @@ bool get_cert(local_tpm& tpm, const string& file_name, string* out) {
 
 // ------------------------------------------------------------------------
 
-int main(int an, char** av) {
+int main(int an, char **av) {
   local_tpm tpm;
 
 #if 0
@@ -390,35 +436,35 @@ int main(int an, char** av) {
     }
   } else if (FLAGS_operation == "SealTest") {
     printf("\n");
-    if(seal_test(tpm, 7, FLAGS_seal_hierearchy_name)) {
+    if (seal_test(tpm, 7, FLAGS_seal_hierearchy_name)) {
       printf("seal test succeeded\n");
     } else {
       printf("seal test failed\n");
     }
   } else if (FLAGS_operation == "QuoteTest") {
     printf("\n");
-    if(quote_test(tpm, FLAGS_quote_hierearchy_name)) {
+    if (quote_test(tpm, FLAGS_quote_hierearchy_name)) {
       printf("quote test succeeded\n");
     } else {
       printf("quote test failed\n");
     }
   } else if (FLAGS_operation == "ContextTest") {
     printf("\n");
-    if(context_test(tpm)) {
+    if (context_test(tpm)) {
       printf("context test succeeded\n");
     } else {
       printf("context test failed\n");
     }
   } else if (FLAGS_operation == "NvTest") {
     printf("\n");
-    if(nv_test(tpm)) {
+    if (nv_test(tpm)) {
       printf("nv test succeeded\n");
     } else {
       printf("nv test failed\n");
     }
   } else if (FLAGS_operation == "GetCert") {
     string cert;
-    if(get_cert(tpm, FLAGS_ek_cert_file_name, &cert)) {
+    if (get_cert(tpm, FLAGS_ek_cert_file_name, &cert)) {
       printf("get cert test succeeded\n");
     } else {
       printf("get cert test failed\n");

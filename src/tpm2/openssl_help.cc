@@ -47,13 +47,13 @@ using std::string;
 #define MAX_SIZE_PARAMS 4096
 
 
-void print_internal_private_key(RSA& key) {
-  const RSA* r = &key;
-  const BIGNUM* n = RSA_get0_n(r);
-  const BIGNUM* e = RSA_get0_e(r);
-  const BIGNUM* d = RSA_get0_d(r);
-  const BIGNUM* p = RSA_get0_p(r);
-  const BIGNUM* q = RSA_get0_q(r);
+void print_internal_private_key(RSA &key) {
+  const RSA    *r = &key;
+  const BIGNUM *n = RSA_get0_n(r);
+  const BIGNUM *e = RSA_get0_e(r);
+  const BIGNUM *d = RSA_get0_d(r);
+  const BIGNUM *p = RSA_get0_p(r);
+  const BIGNUM *q = RSA_get0_q(r);
   if (n != nullptr) {
     printf("\nModulus: \n");
     BN_print_fp(stdout, n);
@@ -98,32 +98,32 @@ void print_internal_private_key(RSA& key) {
 #endif
 }
 
-BIGNUM* bin_to_BN(int len, byte_t* buf) {
-  BIGNUM* bn = BN_bin2bn(buf, len, nullptr);
+BIGNUM *bin_to_BN(int len, byte_t *buf) {
+  BIGNUM *bn = BN_bin2bn(buf, len, nullptr);
   return bn;
 }
 
-string* BN_to_bin(BIGNUM& n) {
+string *BN_to_bin(BIGNUM &n) {
   byte_t buf[MAX_SIZE_PARAMS];
 
   int len = BN_bn2bin(&n, buf);
-  return new string((const char*)buf, len);
+  return new string((const char *)buf, len);
 }
 
 class extEntry {
-public:
-  char* key_;
-  char* value_;
+ public:
+  char *key_;
+  char *value_;
 
-  extEntry(const char* k, const char* v);
+  extEntry(const char *k, const char *v);
   extEntry();
-  char* getKey();
-  char* getValue();
+  char *getKey();
+  char *getValue();
 };
 
-extEntry::extEntry(const char* k, const char* v) {
-  key_ = (char*)strdup(k);
-  value_ = (char*)strdup(v);
+extEntry::extEntry(const char *k, const char *v) {
+  key_ = (char *)strdup(k);
+  value_ = (char *)strdup(v);
 }
 
 extEntry::extEntry() {
@@ -131,22 +131,23 @@ extEntry::extEntry() {
   value_ = nullptr;
 }
 
-char* extEntry::getKey() {
+char *extEntry::getKey() {
   return key_;
 }
 
-char* extEntry::getValue() {
+char *extEntry::getValue() {
   return value_;
 }
 
-bool addExtensionsToCert(int num_entry, extEntry** entries, X509* cert) {
+bool addExtensionsToCert(int num_entry, extEntry **entries, X509 *cert) {
   // add extensions
   for (int i = 0; i < num_entry; i++) {
-    int nid = OBJ_txt2nid(entries[i]->getKey());
-    ASN1_OCTET_STRING* val = ASN1_OCTET_STRING_new();
-    ASN1_STRING_set(val, (const void *)entries[i]->getValue(),
+    int                nid = OBJ_txt2nid(entries[i]->getKey());
+    ASN1_OCTET_STRING *val = ASN1_OCTET_STRING_new();
+    ASN1_STRING_set(val,
+                    (const void *)entries[i]->getValue(),
                     strlen(entries[i]->getValue()));
-    X509_EXTENSION* ext = X509_EXTENSION_create_by_NID(NULL, nid, 0, val);
+    X509_EXTENSION *ext = X509_EXTENSION_create_by_NID(NULL, nid, 0, val);
     if (ext == 0) {
       printf("Bad ext_conf %d\n", i);
       printf("ERR: %s\n", ERR_lib_error_string(ERR_get_error()));
@@ -162,44 +163,54 @@ bool addExtensionsToCert(int num_entry, extEntry** entries, X509* cert) {
   return true;
 }
 
-void XorBlocks(int size, byte_t* in1, byte_t* in2, byte_t* out) {
+void XorBlocks(int size, byte_t *in1, byte_t *in2, byte_t *out) {
   for (int i = 0; i < size; i++)
     out[i] = in1[i] ^ in2[i];
 }
 
-bool KDFa(uint16_t hashAlg, string& key, string& label, string& contextU,
-          string& contextV, int bits, int out_size, byte_t* out) {
-  uint32_t len = 32;
-  uint32_t counter = 0;
-  int bytes_left = (bits + 7) / 8;
-  byte_t* current_out = out;
-  int size_buf = 0;
-  byte_t buf[MAX_SIZE_PARAMS];
-  int n;
-  HMAC_CTX* ctx = nullptr;
+bool KDFa(uint16_t hashAlg,
+          string  &key,
+          string  &label,
+          string  &contextU,
+          string  &contextV,
+          int      bits,
+          int      out_size,
+          byte_t  *out) {
+  uint32_t  len = 32;
+  uint32_t  counter = 0;
+  int       bytes_left = (bits + 7) / 8;
+  byte_t   *current_out = out;
+  int       size_buf = 0;
+  byte_t    buf[MAX_SIZE_PARAMS];
+  int       n;
+  HMAC_CTX *ctx = nullptr;
 
   memset(buf, 0, 128);
-  change_endian32(&counter, (uint32_t*)&buf[size_buf]);
+  change_endian32(&counter, (uint32_t *)&buf[size_buf]);
   size_buf += sizeof(uint32_t);
   n = strlen(label.c_str()) + 1;
-  if ((size_buf + n) > MAX_SIZE_PARAMS) return false;
+  if ((size_buf + n) > MAX_SIZE_PARAMS)
+    return false;
   memcpy(&buf[size_buf], label.data(), n);
   size_buf += n;
-  if ((size_buf + contextU.size()) > MAX_SIZE_PARAMS) return false;
+  if ((size_buf + contextU.size()) > MAX_SIZE_PARAMS)
+    return false;
   memcpy(&buf[size_buf], contextU.data(), contextU.size());
   size_buf += contextU.size();
-  if ((size_buf + contextV.size()) > MAX_SIZE_PARAMS) return false;
+  if ((size_buf + contextV.size()) > MAX_SIZE_PARAMS)
+    return false;
   memcpy(&buf[size_buf], contextV.data(), contextV.size());
   size_buf += contextV.size();
-  if ((size_buf + sizeof(uint32_t)) > MAX_SIZE_PARAMS) return false;
-  change_endian32((uint32_t*)&bits, (uint32_t*)&buf[size_buf]);
+  if ((size_buf + sizeof(uint32_t)) > MAX_SIZE_PARAMS)
+    return false;
+  change_endian32((uint32_t *)&bits, (uint32_t *)&buf[size_buf]);
   size_buf += sizeof(uint32_t);
 
   while (bytes_left > 0) {
     counter++;
-    change_endian32(&counter, (uint32_t*)buf);
+    change_endian32(&counter, (uint32_t *)buf);
 
-    if (hashAlg == TPM_ALG_SHA1 ) {
+    if (hashAlg == TPM_ALG_SHA1) {
       HMAC_Init_ex(ctx, key.data(), key.size(), EVP_sha1(), nullptr);
     } else {
       HMAC_Init_ex(ctx, key.data(), key.size(), EVP_sha256(), nullptr);
@@ -213,20 +224,23 @@ bool KDFa(uint16_t hashAlg, string& key, string& label, string& contextU,
   return true;
 }
 
-bool AesCtrCrypt(int key_size_bits, byte_t* key, int size,
-                 byte_t* in, byte_t* out) {
-  AES_KEY ectx;
+bool AesCtrCrypt(int     key_size_bits,
+                 byte_t *key,
+                 int     size,
+                 byte_t *in,
+                 byte_t *out) {
+  AES_KEY  ectx;
   uint64_t ctr[2] = {0ULL, 0ULL};
-  byte_t block[32];
+  byte_t   block[32];
 
   if (key_size_bits != 128) {
     return false;
   }
-  
+
   AES_set_encrypt_key(key, 128, &ectx);
   while (size > 0) {
     ctr[1]++;
-    AES_encrypt((byte_t*)ctr, block, &ectx);
+    AES_encrypt((byte_t *)ctr, block, &ectx);
     XorBlocks(16, block, in, out);
     in += 16;
     out += 16;
@@ -237,22 +251,29 @@ bool AesCtrCrypt(int key_size_bits, byte_t* key, int size,
 
 #define AESBLKSIZE 16
 
-bool AesCFBEncrypt(byte_t* key, int in_size, byte_t* in, int iv_size, byte_t* iv,
-                   int* out_size, byte_t* out) {
+bool AesCFBEncrypt(byte_t *key,
+                   int     in_size,
+                   byte_t *in,
+                   int     iv_size,
+                   byte_t *iv,
+                   int    *out_size,
+                   byte_t *out) {
   byte_t last_cipher[32];
   byte_t cipher_block[32];
-  int size = 0;
-  int current_size;
+  int    size = 0;
+  int    current_size;
 
   AES_KEY ectx;
   AES_set_encrypt_key(key, 128, &ectx);
 
   // Don't write iv, called already knows it
-  if(iv_size != AESBLKSIZE) return false;
+  if (iv_size != AESBLKSIZE)
+    return false;
   memcpy(last_cipher, iv, AESBLKSIZE);
 
   while (in_size > 0) {
-    if ((size + AESBLKSIZE) > *out_size) return false; 
+    if ((size + AESBLKSIZE) > *out_size)
+      return false;
     // C[0] = IV, C[i] = P[i] ^ E(K, C[i-1])
     AES_encrypt(last_cipher, cipher_block, &ectx);
     if (in_size >= AESBLKSIZE)
@@ -270,22 +291,29 @@ bool AesCFBEncrypt(byte_t* key, int in_size, byte_t* in, int iv_size, byte_t* iv
   return true;
 }
 
-bool AesCFBDecrypt(byte_t* key, int in_size, byte_t* in, int iv_size, byte_t* iv,
-                   int* out_size, byte_t* out) {
+bool AesCFBDecrypt(byte_t *key,
+                   int     in_size,
+                   byte_t *in,
+                   int     iv_size,
+                   byte_t *iv,
+                   int    *out_size,
+                   byte_t *out) {
   byte_t last_cipher[32];
   byte_t cipher_block[32];
-  int size = 0;
-  int current_size;
+  int    size = 0;
+  int    current_size;
 
   AES_KEY ectx;
   AES_set_encrypt_key(key, 128, &ectx);
 
   // Don't write iv, called already knows it
-  if(iv_size != AESBLKSIZE) return false;
+  if (iv_size != AESBLKSIZE)
+    return false;
   memcpy(last_cipher, iv, AESBLKSIZE);
 
   while (in_size > 0) {
-    if ((size + AESBLKSIZE) > *out_size) return false; 
+    if ((size + AESBLKSIZE) > *out_size)
+      return false;
     // P[i] = C[i] ^ E(K, C[i-1])
     AES_encrypt(last_cipher, cipher_block, &ectx);
     if (in_size >= AESBLKSIZE)
@@ -304,12 +332,12 @@ bool AesCFBDecrypt(byte_t* key, int in_size, byte_t* in, int iv_size, byte_t* iv
 }
 
 int SizeHash(TPM_ALG_ID hash) {
-  switch(hash) {
-  case TPM_ALG_SHA1:
-    return 20;
-  case TPM_ALG_SHA256:
-    return 32;
-  default:
-    return -1;
+  switch (hash) {
+    case TPM_ALG_SHA1:
+      return 20;
+    case TPM_ALG_SHA256:
+      return 32;
+    default:
+      return -1;
   }
 }

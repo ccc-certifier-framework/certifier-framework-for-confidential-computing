@@ -38,20 +38,38 @@
 #include <string>
 using std::string;
 
-void print_internal_private_key(RSA& key);
+void print_internal_private_key(RSA &key);
 
-BIGNUM* bin_to_BN(int len, byte_t* buf);
-string* BN_to_bin(BIGNUM& n);
+BIGNUM *bin_to_BN(int len, byte_t *buf);
+string *BN_to_bin(BIGNUM &n);
 
-void XorBlocks(int size, byte_t* in1, byte_t* in2, byte_t* out);
-bool AesCtrCrypt(int key_size_bits, byte_t* key, int size,
-                 byte_t* in, byte_t* out);
-bool KDFa(uint16_t hashAlg, string& key, string& label, string& contextU,
-          string& contextV, int bits, int out_size, byte_t* out);
-bool AesCFBEncrypt(byte_t* key, int in_size, byte_t* in, int iv_size, byte_t* iv,
-                   int* out_size, byte_t* out);
-bool AesCFBDecrypt(byte_t* key, int in_size, byte_t* in, int iv_size, byte_t* iv,
-                   int* out_size, byte_t* out);
-int SizeHash(TPM_ALG_ID hash);
+void XorBlocks(int size, byte_t *in1, byte_t *in2, byte_t *out);
+bool AesCtrCrypt(int     key_size_bits,
+                 byte_t *key,
+                 int     size,
+                 byte_t *in,
+                 byte_t *out);
+bool KDFa(uint16_t hashAlg,
+          string  &key,
+          string  &label,
+          string  &contextU,
+          string  &contextV,
+          int      bits,
+          int      out_size,
+          byte_t  *out);
+bool AesCFBEncrypt(byte_t *key,
+                   int     in_size,
+                   byte_t *in,
+                   int     iv_size,
+                   byte_t *iv,
+                   int    *out_size,
+                   byte_t *out);
+bool AesCFBDecrypt(byte_t *key,
+                   int     in_size,
+                   byte_t *in,
+                   int     iv_size,
+                   byte_t *iv,
+                   int    *out_size,
+                   byte_t *out);
+int  SizeHash(TPM_ALG_ID hash);
 #endif
-

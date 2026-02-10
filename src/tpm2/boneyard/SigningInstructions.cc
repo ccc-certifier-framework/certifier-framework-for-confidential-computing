@@ -42,7 +42,7 @@
 // This program initializes the signing instructions.
 
 // Calling sequence
-//   SigningInstructions.exe 
+//   SigningInstructions.exe
 //     --issuer=name
 //     --purpose=purpose
 //     --hash_alg=[sha1|sha256]
@@ -53,21 +53,24 @@ using std::string;
 
 #define DEBUG
 
-#define CALLING_SEQUENCE "SigningInstructions.exe "\
-"--issuer=name " \
-"--purpose=purpose " \
-"--isCA=[true|false]" \
-"--hash_alg=[sha1|sha256] " \
-"--duration=duration-in-seconds " \
-"--can_sign=[true|false] " \
-"--instructions_file=output-file\n"
+#define CALLING_SEQUENCE                                                       \
+  "SigningInstructions.exe "                                                   \
+  "--issuer=name "                                                             \
+  "--purpose=purpose "                                                         \
+  "--isCA=[true|false]"                                                        \
+  "--hash_alg=[sha1|sha256] "                                                  \
+  "--duration=duration-in-seconds "                                            \
+  "--can_sign=[true|false] "                                                   \
+  "--instructions_file=output-file\n"
 
 void PrintOptions() {
   printf(CALLING_SEQUENCE);
 }
 
 DEFINE_string(issuer, "", "issuer name");
-DEFINE_string(purpose, "critical: DigitalSignature, KeyEncipherment", "purpose");
+DEFINE_string(purpose,
+              "critical: DigitalSignature, KeyEncipherment",
+              "purpose");
 DEFINE_string(hash_alg, "sha1", "hash alg");
 DEFINE_int64(duration, 31536000, "duration (in seconds)");
 DEFINE_string(instructions_file, "signing_instructions", "output-file-name");
@@ -75,14 +78,14 @@ DEFINE_bool(isCA, false, "is CA");
 DEFINE_bool(can_sign, true, "can sign");
 
 #ifndef GFLAGS_NS
-#define GFLAGS_NS google
+#  define GFLAGS_NS google
 #endif
 
 #define MAXKEY_BUF 8192
 
-int main(int an, char** av) {
+int main(int an, char **av) {
   signing_instructions_message message;
-  int ret_val = 0;
+  int                          ret_val = 0;
 
   printf("\nSigningInstructions\n\n");
 
@@ -103,12 +106,12 @@ int main(int an, char** av) {
 #ifdef DEBUG
   printf("Signinginstructions: %s\n", message.DebugString().c_str());
 #endif
-  if (!WriteFileFromBlock(FLAGS_instructions_file, output.size(),
-                          (byte*)output.data())) {
+  if (!WriteFileFromBlock(FLAGS_instructions_file,
+                          output.size(),
+                          (byte *)output.data())) {
     printf("Can't write output file\n");
     ret_val = 1;
   }
 done:
   return ret_val;
 }
-

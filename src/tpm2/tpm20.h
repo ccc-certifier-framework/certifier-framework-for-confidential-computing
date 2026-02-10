@@ -1,15 +1,16 @@
 /** @file
   TPM2.0 Specification data structures
-  (Trusted Platform Module Library Specification, Family "2.0", Level 00, Revision 00.96,
+  (Trusted Platform Module Library Specification, Family "2.0", Level 00,
+Revision 00.96,
   @http://www.trustedcomputinggroup.org/resources/tpm_library_specification)
 
   Check http://trustedcomputinggroup.org for latest specification updates.
 
 Copyright (c) 2013, Intel Corporation. All rights reserved. <BR>
 This program and the accompanying materials
-are licensed and made available under the terms and conditions of the BSD License
-which accompanies this distribution.  The full text of the license may be found at
-http://opensource.org/licenses/bsd-license.php
+are licensed and made available under the terms and conditions of the BSD
+License which accompanies this distribution.  The full text of the license may
+be found at http://opensource.org/licenses/bsd-license.php
 
 THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
 WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
@@ -21,7 +22,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #include "tpm12.h"
 
-#pragma pack (1)
+#pragma pack(1)
 
 // Annex A Algorithm Constants
 
@@ -80,53 +81,54 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #define MAX_SYM_BLOCK_SIZE MAX_AES_BLOCK_SIZE_BYTES
 
 // Table 220 - Defines for Implementation Values
-typedef uint16_t                        BSIZE;
-#define BUFFER_ALIGNMENT              4
-#define IMPLEMENTATION_PCR            24
-#define PLATFORM_PCR                  24
-#define DRTM_PCR                      17
-#define NUM_LOCALITIES                5
-#define MAX_HANDLE_NUM                3
-#define MAX_ACTIVE_SESSIONS           64
-typedef uint16_t                        CONTEXT_SLOT;
-typedef uint64_t                        CONTEXT_COUNTER;
-#define MAX_LOADED_SESSIONS           3
-#define MAX_SESSION_NUM               3
-#define MAX_LOADED_OBJECTS            3
-#define MIN_EVICT_OBJECTS             2
-#define PCR_SELECT_MIN                ((PLATFORM_PCR + 7) / 8)
-#define PCR_SELECT_MAX                ((IMPLEMENTATION_PCR + 7) / 8)
-#define NUM_POLICY_PCR_GROUP          1
-#define NUM_AUTHVALUE_PCR_GROUP       1
-#define MAX_CONTEXT_SIZE              4000
-#define MAX_DIGEST_BUFFER             1024
-#define MAX_NV_INDEX_SIZE             1024
-#define MAX_CAP_BUFFER                1024
-#define NV_MEMORY_SIZE                16384
-#define NUM_STATIC_PCR                16
-#define MAX_ALG_LIST_SIZE             64
-#define TIMER_PRESCALE                100000
-#define PRIMARY_SEED_SIZE             32
-#define CONTEXT_ENCRYPT_ALG           TPM_ALG_AES
-#define CONTEXT_ENCRYPT_KEY_BITS      MAX_SYM_KEY_BITS
-#define CONTEXT_ENCRYPT_KEY_BYTES     ((CONTEXT_ENCRYPT_KEY_BITS + 7) / 8)
-#define CONTEXT_INTEGRITY_HASH_ALG    TPM_ALG_SHA256
-#define CONTEXT_INTEGRITY_HASH_SIZE   SHA256_DIGEST_SIZE
-#define PROOF_SIZE                    CONTEXT_INTEGRITY_HASH_SIZE
-#define NV_CLOCK_UPDATE_INTERVAL      12
-#define NUM_POLICY_PCR                1
-#define MAX_COMMAND_SIZE              4096
-#define MAX_RESPONSE_SIZE             4096
-#define ORDERLY_BITS                  8
-#define MAX_ORDERLY_COUNT             ((1 << ORDERLY_BITS) - 1)
-#define ALG_ID_FIRST                  TPM_ALG_FIRST
-#define ALG_ID_LAST                   TPM_ALG_LAST
-#define MAX_SYM_DATA                  128
-#define MAX_RNG_ENTROPY_SIZE          64
-#define RAM_INDEX_SPACE               512
-#define RSA_DEFAULT_PUBLIC_EXPONENT   0x00010001
-#define CRT_FORMAT_RSA                YES
-#define PRIVATE_VENDOR_SPECIFIC_BYTES ((MAX_RSA_KEY_BYTES / 2) * ( 3 + CRT_FORMAT_RSA * 2))
+typedef uint16_t BSIZE;
+#define BUFFER_ALIGNMENT    4
+#define IMPLEMENTATION_PCR  24
+#define PLATFORM_PCR        24
+#define DRTM_PCR            17
+#define NUM_LOCALITIES      5
+#define MAX_HANDLE_NUM      3
+#define MAX_ACTIVE_SESSIONS 64
+typedef uint16_t CONTEXT_SLOT;
+typedef uint64_t CONTEXT_COUNTER;
+#define MAX_LOADED_SESSIONS         3
+#define MAX_SESSION_NUM             3
+#define MAX_LOADED_OBJECTS          3
+#define MIN_EVICT_OBJECTS           2
+#define PCR_SELECT_MIN              ((PLATFORM_PCR + 7) / 8)
+#define PCR_SELECT_MAX              ((IMPLEMENTATION_PCR + 7) / 8)
+#define NUM_POLICY_PCR_GROUP        1
+#define NUM_AUTHVALUE_PCR_GROUP     1
+#define MAX_CONTEXT_SIZE            4000
+#define MAX_DIGEST_BUFFER           1024
+#define MAX_NV_INDEX_SIZE           1024
+#define MAX_CAP_BUFFER              1024
+#define NV_MEMORY_SIZE              16384
+#define NUM_STATIC_PCR              16
+#define MAX_ALG_LIST_SIZE           64
+#define TIMER_PRESCALE              100000
+#define PRIMARY_SEED_SIZE           32
+#define CONTEXT_ENCRYPT_ALG         TPM_ALG_AES
+#define CONTEXT_ENCRYPT_KEY_BITS    MAX_SYM_KEY_BITS
+#define CONTEXT_ENCRYPT_KEY_BYTES   ((CONTEXT_ENCRYPT_KEY_BITS + 7) / 8)
+#define CONTEXT_INTEGRITY_HASH_ALG  TPM_ALG_SHA256
+#define CONTEXT_INTEGRITY_HASH_SIZE SHA256_DIGEST_SIZE
+#define PROOF_SIZE                  CONTEXT_INTEGRITY_HASH_SIZE
+#define NV_CLOCK_UPDATE_INTERVAL    12
+#define NUM_POLICY_PCR              1
+#define MAX_COMMAND_SIZE            4096
+#define MAX_RESPONSE_SIZE           4096
+#define ORDERLY_BITS                8
+#define MAX_ORDERLY_COUNT           ((1 << ORDERLY_BITS) - 1)
+#define ALG_ID_FIRST                TPM_ALG_FIRST
+#define ALG_ID_LAST                 TPM_ALG_LAST
+#define MAX_SYM_DATA                128
+#define MAX_RNG_ENTROPY_SIZE        64
+#define RAM_INDEX_SPACE             512
+#define RSA_DEFAULT_PUBLIC_EXPONENT 0x00010001
+#define CRT_FORMAT_RSA              YES
+#define PRIVATE_VENDOR_SPECIFIC_BYTES                                          \
+  ((MAX_RSA_KEY_BYTES / 2) * (3 + CRT_FORMAT_RSA * 2))
 
 // Capability related MAX_ value
 #define MAX_CAP_DATA       (MAX_CAP_BUFFER - sizeof(TPM_CAP) - sizeof(uint32_t))
@@ -150,10 +152,11 @@ typedef byte_t BOOL;
 
 // Table 4 - Definition of Types for Documentation Clarity
 //
-// NOTE: Comment because it has same name as TPM1.2 (value is same, so not runtime issue)
+// NOTE: Comment because it has same name as TPM1.2 (value is same, so not
+// runtime issue)
 //
-//typedef uint32_t TPM_ALGORITHM_ID;
-//typedef uint32_t TPM_MODIFIER_INDICATOR;
+// typedef uint32_t TPM_ALGORITHM_ID;
+// typedef uint32_t TPM_MODIFIER_INDICATOR;
 typedef uint32_t TPM_AUTHORIZATION_SIZE;
 typedef uint32_t TPM_PARAMETER_SIZE;
 typedef uint16_t TPM_KEY_SIZE;
@@ -168,17 +171,18 @@ typedef uint32_t TPM_GENERATED;
 // Table 7 - TPM_ALG_ID Constants
 typedef uint16_t TPM_ALG_ID;
 //
-// NOTE: Comment some algo which has same name as TPM1.2 (value is same, so not runtime issue)
+// NOTE: Comment some algo which has same name as TPM1.2 (value is same, so not
+// runtime issue)
 //
-#define TPM_ALG_ERROR          (TPM_ALG_ID)(0x0000)
-#define TPM_ALG_FIRST          (TPM_ALG_ID)(0x0001)
+#define TPM_ALG_ERROR (TPM_ALG_ID)(0x0000)
+#define TPM_ALG_FIRST (TPM_ALG_ID)(0x0001)
 // defined in tpm.h #define TPM_ALG_RSA            (TPM_ALG_ID)(0x0001)
 // defined in tpm.h #define TPM_ALG_SHA            (TPM_ALG_ID)(0x0004)
-#define TPM_ALG_SHA1           (TPM_ALG_ID)(0x0004)
+#define TPM_ALG_SHA1 (TPM_ALG_ID)(0x0004)
 // defined in tpm.h #define TPM_ALG_HMAC           (TPM_ALG_ID)(0x0005)
-#define TPM_ALG_AES            (TPM_ALG_ID)(0x0006)
+#define TPM_ALG_AES (TPM_ALG_ID)(0x0006)
 // defined in tpm.h #define TPM_ALG_MGF1           (TPM_ALG_ID)(0x0007)
-#define TPM_ALG_KEYEDHASH      (TPM_ALG_ID)(0x0008)
+#define TPM_ALG_KEYEDHASH (TPM_ALG_ID)(0x0008)
 // defined in tpm.h #define TPM_ALG_XOR            (TPM_ALG_ID)(0x000A)
 #define TPM_ALG_SHA256         (TPM_ALG_ID)(0x000B)
 #define TPM_ALG_SHA384         (TPM_ALG_ID)(0x000C)
@@ -404,7 +408,7 @@ typedef uint32_t TPM_RC;
 #define TPM_RC_RESERVED_BITS     (TPM_RC)(RC_FMT1 + 0x021)
 #define TPM_RC_BAD_AUTH          (TPM_RC)(RC_FMT1 + 0x022)
 #define TPM_RC_EXPIRED           (TPM_RC)(RC_FMT1 + 0x023)
-#define TPM_RC_POLICY_CC         (TPM_RC)(RC_FMT1 + 0x024 )
+#define TPM_RC_POLICY_CC         (TPM_RC)(RC_FMT1 + 0x024)
 #define TPM_RC_BINDING           (TPM_RC)(RC_FMT1 + 0x025)
 #define TPM_RC_CURVE             (TPM_RC)(RC_FMT1 + 0x026)
 #define TPM_RC_ECC_POINT         (TPM_RC)(RC_FMT1 + 0x027)
@@ -643,9 +647,10 @@ typedef uint32_t TPM_PS;
 
 // Table 25 - Handles Types
 //
-// NOTE: Comment because it has same name as TPM1.2 (value is same, so not runtime issue)
+// NOTE: Comment because it has same name as TPM1.2 (value is same, so not
+// runtime issue)
 //
-//typedef uint32_t    TPM_HANDLE;
+// typedef uint32_t    TPM_HANDLE;
 
 // Table 26 - TPM_HT Constants
 typedef byte_t TPM_HT;
@@ -696,11 +701,12 @@ typedef TPM_HANDLE TPM_HC;
 #define LOADED_SESSION_FIRST (TPM_HC)(HMAC_SESSION_FIRST)
 #define LOADED_SESSION_LAST  (TPM_HC)(HMAC_SESSION_LAST)
 #define POLICY_SESSION_FIRST (TPM_HC)(HR_POLICY_SESSION + 0)
-#define POLICY_SESSION_LAST  (TPM_HC)(POLICY_SESSION_FIRST + MAX_ACTIVE_SESSIONS - 1)
+#define POLICY_SESSION_LAST                                                    \
+  (TPM_HC)(POLICY_SESSION_FIRST + MAX_ACTIVE_SESSIONS - 1)
 #define TRANSIENT_FIRST      (TPM_HC)(HR_TRANSIENT + 0)
 #define ACTIVE_SESSION_FIRST (TPM_HC)(POLICY_SESSION_FIRST)
 #define ACTIVE_SESSION_LAST  (TPM_HC)(POLICY_SESSION_LAST)
-#define TRANSIENT_LAST       (TPM_HC)(TRANSIENT_FIRST+MAX_LOADED_OBJECTS - 1)
+#define TRANSIENT_LAST       (TPM_HC)(TRANSIENT_FIRST + MAX_LOADED_OBJECTS - 1)
 #define PERSISTENT_FIRST     (TPM_HC)(HR_PERSISTENT + 0)
 #define PERSISTENT_LAST      (TPM_HC)(PERSISTENT_FIRST + 0x00FFFFFF)
 #define PLATFORM_PERSISTENT  (TPM_HC)(PERSISTENT_FIRST + 0x00800000)
@@ -713,46 +719,46 @@ typedef TPM_HANDLE TPM_HC;
 
 // Table 29 - TPMA_ALGORITHM Bits
 typedef struct {
-  uint32_t asymmetric    : 1;
-  uint32_t symmetric     : 1;
-  uint32_t hash          : 1;
-  uint32_t object        : 1;
-  uint32_t reserved4_7   : 4;
-  uint32_t signing       : 1;
-  uint32_t encrypting    : 1;
-  uint32_t method        : 1;
+  uint32_t asymmetric : 1;
+  uint32_t symmetric : 1;
+  uint32_t hash : 1;
+  uint32_t object : 1;
+  uint32_t reserved4_7 : 4;
+  uint32_t signing : 1;
+  uint32_t encrypting : 1;
+  uint32_t method : 1;
   uint32_t reserved11_31 : 21;
 } TPMA_ALGORITHM;
 
 // Table 30 - TPMA_OBJECT Bits
 typedef struct {
-  uint32_t reserved1            : 1;
-  uint32_t fixedTPM             : 1;
-  uint32_t stClear              : 1;
-  uint32_t reserved4            : 1;
-  uint32_t fixedParent          : 1;
-  uint32_t sensitiveDataOrigin  : 1;
-  uint32_t userWithAuth         : 1;
-  uint32_t adminWithPolicy      : 1;
-  uint32_t reserved8_9          : 2;
-  uint32_t noDA                 : 1;
+  uint32_t reserved1 : 1;
+  uint32_t fixedTPM : 1;
+  uint32_t stClear : 1;
+  uint32_t reserved4 : 1;
+  uint32_t fixedParent : 1;
+  uint32_t sensitiveDataOrigin : 1;
+  uint32_t userWithAuth : 1;
+  uint32_t adminWithPolicy : 1;
+  uint32_t reserved8_9 : 2;
+  uint32_t noDA : 1;
   uint32_t encryptedDuplication : 1;
-  uint32_t reserved12_15        : 4;
-  uint32_t restricted           : 1;
-  uint32_t decrypt              : 1;
-  uint32_t sign                 : 1;
-  uint32_t reserved19_31        : 13;
+  uint32_t reserved12_15 : 4;
+  uint32_t restricted : 1;
+  uint32_t decrypt : 1;
+  uint32_t sign : 1;
+  uint32_t reserved19_31 : 13;
 } TPMA_OBJECT;
 
 // Table 31 - TPMA_SESSION Bits
 typedef struct {
   byte_t continueSession : 1;
-  byte_t auditExclusive  : 1;
-  byte_t auditReset      : 1;
-  byte_t reserved3_4     : 2;
-  byte_t decrypt         : 1;
-  byte_t encrypt         : 1;
-  byte_t audit           : 1;
+  byte_t auditExclusive : 1;
+  byte_t auditReset : 1;
+  byte_t reserved3_4 : 2;
+  byte_t decrypt : 1;
+  byte_t encrypt : 1;
+  byte_t audit : 1;
 } TPMA_SESSION;
 
 // Table 32 - TPMA_LOCALITY Bits
@@ -760,54 +766,54 @@ typedef struct {
 // NOTE: Use low case here to resolve conflict
 //
 typedef struct {
-  byte_t locZero  : 1;
-  byte_t locOne   : 1;
-  byte_t locTwo   : 1;
+  byte_t locZero : 1;
+  byte_t locOne : 1;
+  byte_t locTwo : 1;
   byte_t locThree : 1;
-  byte_t locFour  : 1;
+  byte_t locFour : 1;
   byte_t Extended : 3;
 } TPMA_LOCALITY;
 
 // Table 33 - TPMA_PERMANENT Bits
 typedef struct {
-  uint32_t ownerAuthSet       : 1;
+  uint32_t ownerAuthSet : 1;
   uint32_t endorsementAuthSet : 1;
-  uint32_t lockoutAuthSet     : 1;
-  uint32_t reserved3_7        : 5;
-  uint32_t disableClear       : 1;
-  uint32_t inLockout          : 1;
-  uint32_t tpmGeneratedEPS    : 1;
-  uint32_t reserved11_31      : 21;
+  uint32_t lockoutAuthSet : 1;
+  uint32_t reserved3_7 : 5;
+  uint32_t disableClear : 1;
+  uint32_t inLockout : 1;
+  uint32_t tpmGeneratedEPS : 1;
+  uint32_t reserved11_31 : 21;
 } TPMA_PERMANENT;
 
 // Table 34 - TPMA_STARTUP_CLEAR Bits
 typedef struct {
-  uint32_t phEnable     : 1;
-  uint32_t shEnable     : 1;
-  uint32_t ehEnable     : 1;
+  uint32_t phEnable : 1;
+  uint32_t shEnable : 1;
+  uint32_t ehEnable : 1;
   uint32_t reserved3_30 : 28;
-  uint32_t orderly      : 1;
+  uint32_t orderly : 1;
 } TPMA_STARTUP_CLEAR;
 
 // Table 35 - TPMA_MEMORY Bits
 typedef struct {
-  uint32_t sharedRAM         : 1;
-  uint32_t sharedNV          : 1;
+  uint32_t sharedRAM : 1;
+  uint32_t sharedNV : 1;
   uint32_t objectCopiedToRam : 1;
-  uint32_t reserved3_31      : 29;
+  uint32_t reserved3_31 : 29;
 } TPMA_MEMORY;
 
 // Table 36 - TPMA_CC Bits
 typedef struct {
-  uint32_t commandIndex  : 16;
+  uint32_t commandIndex : 16;
   uint32_t reserved16_21 : 6;
-  uint32_t nv            : 1;
-  uint32_t extensive     : 1;
-  uint32_t flushed       : 1;
-  uint32_t cHandles      : 3;
-  uint32_t rHandle       : 1;
-  uint32_t V             : 1;
-  uint32_t Res           : 2;
+  uint32_t nv : 1;
+  uint32_t extensive : 1;
+  uint32_t flushed : 1;
+  uint32_t cHandles : 3;
+  uint32_t rHandle : 1;
+  uint32_t V : 1;
+  uint32_t Res : 2;
 } TPMA_CC;
 
 // 9 Interface Types
@@ -921,14 +927,14 @@ typedef struct {
 
 // Table 68 - TPM2B_DIGEST Structure
 typedef struct {
-  uint16_t  size;
-  BYTE      buffer[sizeof(TPMU_HA)];
+  uint16_t size;
+  BYTE     buffer[sizeof(TPMU_HA)];
 } TPM2B_DIGEST;
 
 // Table 69 - TPM2B_DATA Structure
 typedef struct {
-  uint16_t  size;
-  BYTE      buffer[sizeof(TPMT_HA)];
+  uint16_t size;
+  BYTE     buffer[sizeof(TPMT_HA)];
 } TPM2B_DATA;
 
 // Table 70 - TPM2B_NONCE Types
@@ -942,32 +948,32 @@ typedef TPM2B_DIGEST TPM2B_OPERAND;
 
 // Table 73 - TPM2B_EVENT Structure
 typedef struct {
-  uint16_t  size;
-  BYTE      buffer[1024];
+  uint16_t size;
+  BYTE     buffer[1024];
 } TPM2B_EVENT;
 
 // Table 74 - TPM2B_MAX_BUFFER Structure
 typedef struct {
-  uint16_t    size;
-  BYTE        buffer[MAX_DIGEST_BUFFER];
+  uint16_t size;
+  BYTE     buffer[MAX_DIGEST_BUFFER];
 } TPM2B_MAX_BUFFER;
 
 // Table 75 - TPM2B_MAX_NV_BUFFER Structure
 typedef struct {
   uint16_t size;
-  BYTE   buffer[MAX_NV_INDEX_SIZE];
+  BYTE     buffer[MAX_NV_INDEX_SIZE];
 } TPM2B_MAX_NV_BUFFER;
 
 // Table 76 - TPM2B_TIMEOUT Structure
 typedef struct {
   uint16_t size;
-  BYTE   buffer[sizeof(uint64_t)];
+  BYTE     buffer[sizeof(uint64_t)];
 } TPM2B_TIMEOUT;
 
 // Table 77 -- TPM2B_IV Structure <I/O>
 typedef struct {
   uint16_t size;
-  BYTE   buffer[MAX_SYM_BLOCK_SIZE];
+  BYTE     buffer[MAX_SYM_BLOCK_SIZE];
 } TPM2B_IV;
 
 // Table 78 - TPMU_NAME Union
@@ -979,19 +985,19 @@ typedef union {
 // Table 79 - TPM2B_NAME Structure
 typedef struct {
   uint16_t size;
-  BYTE   name[sizeof(TPMU_NAME)];
+  BYTE     name[sizeof(TPMU_NAME)];
 } TPM2B_NAME;
 
 // Table 80 - TPMS_PCR_SELECT Structure
 typedef struct {
   byte_t sizeofSelect;
-  BYTE  pcrSelect[PCR_SELECT_MAX];
+  BYTE   pcrSelect[PCR_SELECT_MAX];
 } TPMS_PCR_SELECT;
 
 // Table 81 - TPMS_PCR_SELECTION Structure
 typedef struct {
   TPMI_ALG_HASH hash;
-  byte_t          sizeofSelect;
+  byte_t        sizeofSelect;
   BYTE          pcrSelect[PCR_SELECT_MAX];
 } TPMS_PCR_SELECTION;
 
@@ -1031,38 +1037,38 @@ typedef struct {
 
 // Table 89 - TPMS_TAGGED_PROPERTY Structure
 typedef struct {
-  TPM_PT property;
+  TPM_PT   property;
   uint32_t value;
 } TPMS_TAGGED_PROPERTY;
 
 // Table 90 - TPMS_TAGGED_PCR_SELECT Structure
 typedef struct {
   TPM_PT tag;
-  byte_t  sizeofSelect;
+  byte_t sizeofSelect;
   BYTE   pcrSelect[PCR_SELECT_MAX];
 } TPMS_TAGGED_PCR_SELECT;
 
 // Table 91 - TPML_CC Structure
 typedef struct {
   uint32_t count;
-  TPM_CC commandCodes[MAX_CAP_CC];
+  TPM_CC   commandCodes[MAX_CAP_CC];
 } TPML_CC;
 
 // Table 92 - TPML_CCA Structure
 typedef struct {
-  uint32_t  count;
-  TPMA_CC commandAttributes[MAX_CAP_CC];
+  uint32_t count;
+  TPMA_CC  commandAttributes[MAX_CAP_CC];
 } TPML_CCA;
 
 // Table 93 - TPML_ALG Structure
 typedef struct {
-  uint32_t     count;
+  uint32_t   count;
   TPM_ALG_ID algorithms[MAX_ALG_LIST_SIZE];
 } TPML_ALG;
 
 // Table 94 - TPML_HANDLE Structure
 typedef struct {
-  uint32_t     count;
+  uint32_t   count;
   TPM_HANDLE handle[MAX_CAP_HANDLES];
 } TPML_HANDLE;
 
@@ -1074,43 +1080,43 @@ typedef struct {
 
 // Table 96 -- TPML_DIGEST_VALUES Structure <I/O>
 typedef struct {
-  uint32_t  count;
-  TPMT_HA   digests[HASH_COUNT];
+  uint32_t count;
+  TPMT_HA  digests[HASH_COUNT];
 } TPML_DIGEST_VALUES;
 
 // Table 97 - TPM2B_DIGEST_VALUES Structure
 typedef struct {
   uint16_t size;
-  BYTE   buffer[sizeof(TPML_DIGEST_VALUES)];
+  BYTE     buffer[sizeof(TPML_DIGEST_VALUES)];
 } TPM2B_DIGEST_VALUES;
 
 // Table 98 - TPML_PCR_SELECTION Structure
 typedef struct {
-  uint32_t             count;
+  uint32_t           count;
   TPMS_PCR_SELECTION pcrSelections[HASH_COUNT];
 } TPML_PCR_SELECTION;
 
 // Table 99 - TPML_ALG_PROPERTY Structure
 typedef struct {
-  uint32_t            count;
+  uint32_t          count;
   TPMS_ALG_PROPERTY algProperties[MAX_CAP_ALGS];
 } TPML_ALG_PROPERTY;
 
 // Table 100 - TPML_TAGGED_TPM_PROPERTY Structure
 typedef struct {
-  uint32_t               count;
+  uint32_t             count;
   TPMS_TAGGED_PROPERTY tpmProperty[MAX_TPM_PROPERTIES];
 } TPML_TAGGED_TPM_PROPERTY;
 
 // Table 101 - TPML_TAGGED_PCR_PROPERTY Structure
 typedef struct {
-  uint32_t                 count;
+  uint32_t               count;
   TPMS_TAGGED_PCR_SELECT pcrProperty[MAX_PCR_PROPERTIES];
 } TPML_TAGGED_PCR_PROPERTY;
 
 // Table 102 - TPML_ECC_CURVE Structure
 typedef struct {
-  uint32_t        count;
+  uint32_t      count;
   TPM_ECC_CURVE eccCurves[MAX_ECC_CURVES];
 } TPML_ECC_CURVE;
 
@@ -1135,22 +1141,22 @@ typedef struct {
 
 // Table 105 - TPMS_CLOCK_INFO Structure
 typedef struct {
-  uint64_t      clock;
-  uint32_t      resetCount;
-  uint32_t      restartCount;
+  uint64_t    clock;
+  uint32_t    resetCount;
+  uint32_t    restartCount;
   TPMI_YES_NO safe;
 } TPMS_CLOCK_INFO;
 
 // Table 106 - TPMS_TIME_INFO Structure
 typedef struct {
-  uint64_t          time;
+  uint64_t        time;
   TPMS_CLOCK_INFO clockInfo;
 } TPMS_TIME_INFO;
 
 // Table 107 - TPMS_TIME_ATTEST_INFO Structure
 typedef struct {
   TPMS_TIME_INFO time;
-  uint64_t         firmwareVersion;
+  uint64_t       firmwareVersion;
 } TPMS_TIME_ATTEST_INFO;
 
 // Table 108 - TPMS_CERTIFY_INFO Structure
@@ -1220,7 +1226,7 @@ typedef struct {
 // Table 117 - TPM2B_ATTEST Structure
 typedef struct {
   uint16_t size;
-  BYTE   attestationData[sizeof(TPMS_ATTEST)];
+  BYTE     attestationData[sizeof(TPMS_ATTEST)];
 } TPM2B_ATTEST;
 
 // Table 118 - TPMS_AUTH_COMMAND Structure
@@ -1278,7 +1284,7 @@ typedef struct {
 // Table 127 - TPM2B_SYM_KEY Structure
 typedef struct {
   uint16_t size;
-  BYTE   buffer[MAX_SYM_KEY_BYTES];
+  BYTE     buffer[MAX_SYM_KEY_BYTES];
 } TPM2B_SYM_KEY;
 
 // Table 128 - TPMS_SYMCIPHER_PARMS Structure
@@ -1289,7 +1295,7 @@ typedef struct {
 // Table 129 - TPM2B_SENSITIVE_DATA Structure
 typedef struct {
   uint16_t size;
-  BYTE   buffer[MAX_SYM_DATA];
+  BYTE     buffer[MAX_SYM_DATA];
 } TPM2B_SENSITIVE_DATA;
 
 // Table 130 - TPMS_SENSITIVE_CREATE Structure
@@ -1345,7 +1351,7 @@ typedef TPMS_SCHEME_SIGHASH TPMS_SCHEME_ECSCHNORR;
 // Table 140 - TPMS_SCHEME_ECDAA Structure
 typedef struct {
   TPMI_ALG_HASH hashAlg;
-  uint16_t        count;
+  uint16_t      count;
 } TPMS_SCHEME_ECDAA;
 
 // Table 141 - TPMU_SIG_SCHEME Union
@@ -1450,7 +1456,7 @@ typedef struct {
 // Table 158 - TPM2B_PUBLIC_KEY_RSA Structure
 typedef struct {
   uint16_t size;
-  BYTE   buffer[MAX_RSA_KEY_BYTES];
+  BYTE     buffer[MAX_RSA_KEY_BYTES];
 } TPM2B_PUBLIC_KEY_RSA;
 
 // Table 159 - TPMI_RSA_KEY_BITS Type
@@ -1459,13 +1465,13 @@ typedef TPM_KEY_BITS TPMI_RSA_KEY_BITS;
 // Table 160 - TPM2B_PRIVATE_KEY_RSA Structure
 typedef struct {
   uint16_t size;
-  BYTE   buffer[MAX_RSA_KEY_BYTES/2];
+  BYTE     buffer[MAX_RSA_KEY_BYTES / 2];
 } TPM2B_PRIVATE_KEY_RSA;
 
 // Table 161 - TPM2B_ECC_PARAMETER Structure
 typedef struct {
   uint16_t size;
-  BYTE   buffer[MAX_ECC_KEY_BYTES];
+  BYTE     buffer[MAX_ECC_KEY_BYTES];
 } TPM2B_ECC_PARAMETER;
 
 // Table 162 - TPMS_ECC_POINT Structure
@@ -1476,7 +1482,7 @@ typedef struct {
 
 // Table 163 -- TPM2B_ECC_POINT Structure <I/O>
 typedef struct {
-  uint16_t         size;
+  uint16_t       size;
   TPMS_ECC_POINT point;
 } TPM2B_ECC_POINT;
 
@@ -1495,7 +1501,7 @@ typedef struct {
 // Table 167 - TPMS_ALGORITHM_DETAIL_ECC Structure
 typedef struct {
   TPM_ECC_CURVE       curveID;
-  uint16_t              keySize;
+  uint16_t            keySize;
   TPMT_KDF_SCHEME     kdf;
   TPMT_ECC_SCHEME     sign;
   TPM2B_ECC_PARAMETER p;
@@ -1555,7 +1561,7 @@ typedef union {
 // Table 174 - TPM2B_ENCRYPTED_SECRET Structure
 typedef struct {
   uint16_t size;
-  BYTE   secret[sizeof(TPMU_ENCRYPTED_SECRET)];
+  BYTE     secret[sizeof(TPMU_ENCRYPTED_SECRET)];
 } TPM2B_ENCRYPTED_SECRET;
 
 // 12 Key/Object Complex
@@ -1632,7 +1638,7 @@ typedef struct {
 // Table 185 - TPM2B_PRIVATE_VENDOR_SPECIFIC Structure
 typedef struct {
   uint16_t size;
-  BYTE   buffer[PRIVATE_VENDOR_SPECIFIC_BYTES];
+  BYTE     buffer[PRIVATE_VENDOR_SPECIFIC_BYTES];
 } TPM2B_PRIVATE_VENDOR_SPECIFIC;
 
 // Table 186 - TPMU_SENSITIVE_COMPOSITE Union
@@ -1654,7 +1660,7 @@ typedef struct {
 
 // Table 188 - TPM2B_SENSITIVE Structure
 typedef struct {
-  uint16_t         size;
+  uint16_t       size;
   TPMT_SENSITIVE sensitiveArea;
 } TPM2B_SENSITIVE;
 
@@ -1668,7 +1674,7 @@ typedef struct {
 // Table 190 - TPM2B_PRIVATE Structure
 typedef struct {
   uint16_t size;
-  BYTE   buffer[sizeof(_PRIVATE)];
+  BYTE     buffer[sizeof(_PRIVATE)];
 } TPM2B_PRIVATE;
 
 // Table 191 - _ID_OBJECT Structure
@@ -1680,7 +1686,7 @@ typedef struct {
 // Table 192 - TPM2B_ID_OBJECT Structure
 typedef struct {
   uint16_t size;
-  BYTE   credential[sizeof(_ID_OBJECT)];
+  BYTE     credential[sizeof(_ID_OBJECT)];
 } TPM2B_ID_OBJECT;
 
 // 13 NV Storage Structures
@@ -1689,7 +1695,7 @@ typedef struct {
 //
 // NOTE: Comment here to resolve conflict
 //
-//typedef struct {
+// typedef struct {
 //  uint32_t index : 22;
 //  uint32_t space : 2;
 //  uint32_t RH_NV : 8;
@@ -1697,32 +1703,32 @@ typedef struct {
 
 // Table 195 - TPMA_NV Bits
 typedef struct {
-  uint32_t TPMA_NV_PPWRITE        : 1;
-  uint32_t TPMA_NV_OWNERWRITE     : 1;
-  uint32_t TPMA_NV_AUTHWRITE      : 1;
-  uint32_t TPMA_NV_POLICYWRITE    : 1;
-  uint32_t TPMA_NV_COUNTER        : 1;
-  uint32_t TPMA_NV_BITS           : 1;
-  uint32_t TPMA_NV_EXTEND         : 1;
-  uint32_t reserved7_9            : 3;
-  uint32_t TPMA_NV_POLICY_DELETE  : 1;
-  uint32_t TPMA_NV_WRITELOCKED    : 1;
-  uint32_t TPMA_NV_WRITEALL       : 1;
-  uint32_t TPMA_NV_WRITEDEFINE    : 1;
-  uint32_t TPMA_NV_WRITE_STCLEAR  : 1;
-  uint32_t TPMA_NV_GLOBALLOCK     : 1;
-  uint32_t TPMA_NV_PPREAD         : 1;
-  uint32_t TPMA_NV_OWNERREAD      : 1;
-  uint32_t TPMA_NV_AUTHREAD       : 1;
-  uint32_t TPMA_NV_POLICYREAD     : 1;
-  uint32_t reserved20_24          : 5;
-  uint32_t TPMA_NV_NO_DA          : 1;
-  uint32_t TPMA_NV_ORDERLY        : 1;
-  uint32_t TPMA_NV_CLEAR_STCLEAR  : 1;
-  uint32_t TPMA_NV_READLOCKED     : 1;
-  uint32_t TPMA_NV_WRITTEN        : 1;
+  uint32_t TPMA_NV_PPWRITE : 1;
+  uint32_t TPMA_NV_OWNERWRITE : 1;
+  uint32_t TPMA_NV_AUTHWRITE : 1;
+  uint32_t TPMA_NV_POLICYWRITE : 1;
+  uint32_t TPMA_NV_COUNTER : 1;
+  uint32_t TPMA_NV_BITS : 1;
+  uint32_t TPMA_NV_EXTEND : 1;
+  uint32_t reserved7_9 : 3;
+  uint32_t TPMA_NV_POLICY_DELETE : 1;
+  uint32_t TPMA_NV_WRITELOCKED : 1;
+  uint32_t TPMA_NV_WRITEALL : 1;
+  uint32_t TPMA_NV_WRITEDEFINE : 1;
+  uint32_t TPMA_NV_WRITE_STCLEAR : 1;
+  uint32_t TPMA_NV_GLOBALLOCK : 1;
+  uint32_t TPMA_NV_PPREAD : 1;
+  uint32_t TPMA_NV_OWNERREAD : 1;
+  uint32_t TPMA_NV_AUTHREAD : 1;
+  uint32_t TPMA_NV_POLICYREAD : 1;
+  uint32_t reserved20_24 : 5;
+  uint32_t TPMA_NV_NO_DA : 1;
+  uint32_t TPMA_NV_ORDERLY : 1;
+  uint32_t TPMA_NV_CLEAR_STCLEAR : 1;
+  uint32_t TPMA_NV_READLOCKED : 1;
+  uint32_t TPMA_NV_WRITTEN : 1;
   uint32_t TPMA_NV_PLATFORMCREATE : 1;
-  uint32_t TPMA_NV_READ_STCLEAR   : 1;
+  uint32_t TPMA_NV_READ_STCLEAR : 1;
 } TPMA_NV;
 
 // Table 196 - TPMS_NV_PUBLIC Structure
@@ -1731,12 +1737,12 @@ typedef struct {
   TPMI_ALG_HASH    nameAlg;
   TPMA_NV          attributes;
   TPM2B_DIGEST     authPolicy;
-  uint16_t           dataSize;
+  uint16_t         dataSize;
 } TPMS_NV_PUBLIC;
 
 // Table 197 - TPM2B_NV_PUBLIC Structure
 typedef struct {
-  uint16_t         size;
+  uint16_t       size;
   TPMS_NV_PUBLIC nvPublic;
 } TPM2B_NV_PUBLIC;
 
@@ -1745,7 +1751,7 @@ typedef struct {
 // Table 198 - TPM2B_CONTEXT_SENSITIVE Structure
 typedef struct {
   uint16_t size;
-  BYTE   buffer[MAX_CONTEXT_SIZE];
+  BYTE     buffer[MAX_CONTEXT_SIZE];
 } TPM2B_CONTEXT_SENSITIVE;
 
 // Table 199 - TPMS_CONTEXT_DATA Structure
@@ -1757,12 +1763,12 @@ typedef struct {
 // Table 200 - TPM2B_CONTEXT_DATA Structure
 typedef struct {
   uint16_t size;
-  BYTE   buffer[sizeof(TPMS_CONTEXT_DATA)];
+  BYTE     buffer[sizeof(TPMS_CONTEXT_DATA)];
 } TPM2B_CONTEXT_DATA;
 
 // Table 201 - TPMS_CONTEXT Structure
 typedef struct {
-  uint64_t             sequence;
+  uint64_t           sequence;
   TPMI_DH_CONTEXT    savedHandle;
   TPMI_RH_HIERARCHY  hierarchy;
   TPM2B_CONTEXT_DATA contextBlob;
@@ -1783,7 +1789,7 @@ typedef struct {
 
 // Table 204 - TPM2B_CREATION_DATA Structure
 typedef struct {
-  uint16_t             size;
+  uint16_t           size;
   TPMS_CREATION_DATA creationData;
 } TPM2B_CREATION_DATA;
 
@@ -1792,17 +1798,17 @@ typedef struct {
 // Command Header
 //
 typedef struct {
-  TPM_ST tag;
+  TPM_ST   tag;
   uint32_t paramSize;
-  TPM_CC commandCode;
+  TPM_CC   commandCode;
 } TPM2_COMMAND_HEADER;
 
 typedef struct {
-  TPM_ST tag;
+  TPM_ST   tag;
   uint32_t paramSize;
-  TPM_RC responseCode;
+  TPM_RC   responseCode;
 } TPM2_RESPONSE_HEADER;
 
-#pragma pack ()
+#pragma pack()
 
 #endif

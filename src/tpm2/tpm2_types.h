@@ -22,4 +22,3 @@
 #include <stdint.h>
 typedef unsigned char byte_t;
 #endif
-

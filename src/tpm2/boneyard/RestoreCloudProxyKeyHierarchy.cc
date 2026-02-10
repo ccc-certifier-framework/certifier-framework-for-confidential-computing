@@ -40,7 +40,7 @@
 // unseals sealed file contents and verifies quoted file contents.
 
 // Calling sequence
-//   RestoreCloudProxyKeyHierarchy.exe 
+//   RestoreCloudProxyKeyHierarchy.exe
 //      --slot_primary=int32 --slot_seal=int32 --slot_quote=int32
 //      --seal_value=value-string --quote_value=value-string
 //      --pcr_hash_alg_name=[sha1 | sha256]
@@ -49,13 +49,14 @@
 
 using std::string;
 
-#define CALLING_SEQUENCE "RestoreCloudProxyKeyHierarchy.exe " \
-"--slot_primary=int32 --slot_seal=int32 " \
-"--slot_quote=int32" \
-"--seal_value=value-string --quote_value=value-string " \
-"--pcr_hash_alg_name=[sha1 | sha256]" \
-"--pcr_list=\"int, int, ...\" --seal_output_file=output-file-name" \
-"--quote_output_file= output-file-name --pcr_file=output-file-name\n"
+#define CALLING_SEQUENCE                                                       \
+  "RestoreCloudProxyKeyHierarchy.exe "                                         \
+  "--slot_primary=int32 --slot_seal=int32 "                                    \
+  "--slot_quote=int32"                                                         \
+  "--seal_value=value-string --quote_value=value-string "                      \
+  "--pcr_hash_alg_name=[sha1 | sha256]"                                        \
+  "--pcr_list=\"int, int, ...\" --seal_output_file=output-file-name"           \
+  "--quote_output_file= output-file-name --pcr_file=output-file-name\n"
 
 void PrintOptions() {
   printf("Calling sequence: %s", CALLING_SEQUENCE);
@@ -74,14 +75,14 @@ DEFINE_string(pcr_file, "", "output-file-name");
 DEFINE_string(hash_alg, "sha1", "hash alg");
 
 #ifndef GFLAGS_NS
-#define GFLAGS_NS google
+#  define GFLAGS_NS google
 #endif
 
 #define MAX_SIZE_PARAMS 4096
 
-int main(int an, char** av) {
+int main(int an, char **av) {
   LocalTpm tpm;
-  int ret_val = 0;
+  int      ret_val = 0;
 
   printf("\nRestoreCloudProxyKeyHierarchy\n\n");
 
@@ -108,19 +109,22 @@ int main(int an, char** av) {
 
   TPML_PCR_SELECTION pcrSelect;
 
-  TPM_HANDLE root_handle = 0; 
+  TPM_HANDLE root_handle = 0;
   TPM_HANDLE seal_handle = 0;
   TPM_HANDLE quote_handle = 0;
   TPM_HANDLE nv_handle = 0;
-  byte context_save_area[MAX_SIZE_PARAMS];
-  uint16_t context_data_size = 924;
+  byte       context_save_area[MAX_SIZE_PARAMS];
+  uint16_t   context_data_size = 924;
 
   InitSinglePcrSelection(7, hash_alg_id, &pcrSelect);
 
   // root handle
   memset(context_save_area, 0, MAX_SIZE_PARAMS);
   nv_handle = GetNvHandle(FLAGS_slot_primary);
-  if (!Tpm2_ReadNv(tpm, nv_handle, authString, &context_data_size,
+  if (!Tpm2_ReadNv(tpm,
+                   nv_handle,
+                   authString,
+                   &context_data_size,
                    context_save_area)) {
     printf("Root ReadNv failed\n");
     ret_val = 1;
@@ -133,7 +137,9 @@ int main(int an, char** av) {
   printf("\n\n");
 #endif
 
-  if (!Tpm2_LoadContext(tpm, context_data_size, context_save_area,
+  if (!Tpm2_LoadContext(tpm,
+                        context_data_size,
+                        context_save_area,
                         &root_handle)) {
     printf("Root LoadContext failed\n");
     ret_val = 1;
@@ -143,7 +149,10 @@ int main(int an, char** av) {
   // seal handle
   memset(context_save_area, 0, MAX_SIZE_PARAMS);
   nv_handle = GetNvHandle(FLAGS_slot_seal);
-  if (!Tpm2_ReadNv(tpm, nv_handle, authString, &context_data_size,
+  if (!Tpm2_ReadNv(tpm,
+                   nv_handle,
+                   authString,
+                   &context_data_size,
                    context_save_area)) {
     printf("Root ReadNv failed\n");
     ret_val = 1;
@@ -152,7 +161,9 @@ int main(int an, char** av) {
   printf("context_save_area: ");
   PrintBytes(context_data_size, context_save_area);
   printf("\n");
-  if (!Tpm2_LoadContext(tpm, context_data_size, context_save_area,
+  if (!Tpm2_LoadContext(tpm,
+                        context_data_size,
+                        context_save_area,
                         &seal_handle)) {
     printf("Root LoadContext failed\n");
     ret_val = 1;
@@ -162,13 +173,18 @@ int main(int an, char** av) {
   // quote handle
   memset(context_save_area, 0, MAX_SIZE_PARAMS);
   nv_handle = GetNvHandle(FLAGS_slot_quote);
-  if (!Tpm2_ReadNv(tpm, nv_handle, authString, &context_data_size,
+  if (!Tpm2_ReadNv(tpm,
+                   nv_handle,
+                   authString,
+                   &context_data_size,
                    context_save_area)) {
     printf("Quote ReadNv failed\n");
     ret_val = 1;
     goto done;
   }
-  if (!Tpm2_LoadContext(tpm, context_data_size, context_save_area,
+  if (!Tpm2_LoadContext(tpm,
+                        context_data_size,
+                        context_save_area,
                         &quote_handle)) {
     printf("Quote LoadContext failed\n");
     ret_val = 1;
@@ -189,4 +205,3 @@ done:
   tpm.CloseTpm();
   return ret_val;
 }
-

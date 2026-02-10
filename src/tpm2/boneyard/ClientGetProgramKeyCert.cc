@@ -55,12 +55,13 @@
 using std::string;
 
 
-#define CALLING_SEQUENCE "ClientGetProgramKeyCert.exe " \
-"--slot_primary=slot-number " \
-"--slot_seal= slot-number " \
-"--slot_quote= slot-number " \
-"--program_key_response_file=input-file-name " \
-"--program_key_cert_file=output-file-name\n"
+#define CALLING_SEQUENCE                                                       \
+  "ClientGetProgramKeyCert.exe "                                               \
+  "--slot_primary=slot-number "                                                \
+  "--slot_seal= slot-number "                                                  \
+  "--slot_quote= slot-number "                                                 \
+  "--program_key_response_file=input-file-name "                               \
+  "--program_key_cert_file=output-file-name\n"
 
 void PrintOptions() {
   printf("Calling sequence: %s", CALLING_SEQUENCE);
@@ -75,15 +76,15 @@ DEFINE_string(program_key_cert_file, "", "output-file-name");
 DEFINE_string(hash_alg, "sha1", "hash algorithm");
 
 #ifndef GFLAGS_NS
-#define GFLAGS_NS google
+#  define GFLAGS_NS google
 #endif
 
 #define MAX_SIZE_PARAMS 4096
 #define DEBUG
 
-int main(int an, char** av) {
+int main(int an, char **av) {
   LocalTpm tpm;
-  int ret_val = 0;
+  int      ret_val = 0;
 
   printf("\nClientGetProgramKeyCert\n\n");
 
@@ -108,32 +109,32 @@ int main(int an, char** av) {
   TPM_HANDLE seal_handle = 0;
   TPM_HANDLE quote_handle = 0;
 
-  TPM2B_ID_OBJECT credentialBlob;
+  TPM2B_ID_OBJECT        credentialBlob;
   TPM2B_ENCRYPTED_SECRET unmarshaled_secret;
 
   TPM2B_DIGEST recovered_credential;
 
-  TPMA_OBJECT primary_flags;
+  TPMA_OBJECT  primary_flags;
   TPM2B_PUBLIC ek_pub_out;
 
-  int current_size = 0;
+  int      current_size = 0;
   uint16_t context_data_size = 924;
-  byte context_save_area[MAX_SIZE_PARAMS];
+  byte     context_save_area[MAX_SIZE_PARAMS];
 
-  string cert_key_seed;
-  string label;
-  string contextV;
-  int size_derived_keys;
-  byte derived_keys[128];
-  int encrypted_cert_hmac_size;
-  byte encrypted_cert_hmac[256];
+  string   cert_key_seed;
+  string   label;
+  string   contextV;
+  int      size_derived_keys;
+  byte     derived_keys[128];
+  int      encrypted_cert_hmac_size;
+  byte     encrypted_cert_hmac[256];
   HMAC_CTX hctx;
 
-  int size_response = MAX_SIZE_PARAMS;
-  byte response_buf[MAX_SIZE_PARAMS];
+  int                           size_response = MAX_SIZE_PARAMS;
+  byte                          response_buf[MAX_SIZE_PARAMS];
   program_cert_response_message response;
-  int size_cert_out = MAX_SIZE_PARAMS;
-  byte cert_out_buf[MAX_SIZE_PARAMS];
+  int                           size_cert_out = MAX_SIZE_PARAMS;
+  byte                          cert_out_buf[MAX_SIZE_PARAMS];
 
   TPM_ALG_ID hash_alg_id;
   if (FLAGS_hash_alg == "sha1") {
@@ -165,7 +166,7 @@ int main(int an, char** av) {
   }
 
   // Create endorsement key
-  *(uint32_t*)(&primary_flags) = 0;
+  *(uint32_t *)(&primary_flags) = 0;
 
   primary_flags.fixedTPM = 1;
   primary_flags.fixedParent = 1;
@@ -174,10 +175,21 @@ int main(int an, char** av) {
   primary_flags.decrypt = 1;
   primary_flags.restricted = 1;
 
-  if (Tpm2_CreatePrimary(tpm, TPM_RH_ENDORSEMENT, emptyAuth, pcrSelect,
-                         TPM_ALG_RSA, hash_alg_id, primary_flags,
-                         TPM_ALG_AES, 128, TPM_ALG_CFB, TPM_ALG_NULL,
-                         2048, 0x010001, &ekHandle, &ek_pub_out)) {
+  if (Tpm2_CreatePrimary(tpm,
+                         TPM_RH_ENDORSEMENT,
+                         emptyAuth,
+                         pcrSelect,
+                         TPM_ALG_RSA,
+                         hash_alg_id,
+                         primary_flags,
+                         TPM_ALG_AES,
+                         128,
+                         TPM_ALG_CFB,
+                         TPM_ALG_NULL,
+                         2048,
+                         0x010001,
+                         &ekHandle,
+                         &ek_pub_out)) {
     printf("CreatePrimary succeeded parent: %08x\n", ekHandle);
   } else {
     printf("CreatePrimary failed\n");
@@ -192,7 +204,10 @@ int main(int an, char** av) {
   // root handle
   memset(context_save_area, 0, MAX_SIZE_PARAMS);
   nv_handle = GetNvHandle(FLAGS_slot_primary);
-  if (!Tpm2_ReadNv(tpm, nv_handle, authString, &context_data_size,
+  if (!Tpm2_ReadNv(tpm,
+                   nv_handle,
+                   authString,
+                   &context_data_size,
                    context_save_area)) {
     printf("Root ReadNv failed\n");
     ret_val = 1;
@@ -205,7 +220,9 @@ int main(int an, char** av) {
   printf("\n\n");
 #endif
 
-  if (!Tpm2_LoadContext(tpm, context_data_size, context_save_area,
+  if (!Tpm2_LoadContext(tpm,
+                        context_data_size,
+                        context_save_area,
                         &root_handle)) {
     printf("Root LoadContext failed\n");
     ret_val = 1;
@@ -215,13 +232,18 @@ int main(int an, char** av) {
   // quote handle
   memset(context_save_area, 0, MAX_SIZE_PARAMS);
   nv_handle = GetNvHandle(FLAGS_slot_quote);
-  if (!Tpm2_ReadNv(tpm, nv_handle, authString, &context_data_size,
+  if (!Tpm2_ReadNv(tpm,
+                   nv_handle,
+                   authString,
+                   &context_data_size,
                    context_save_area)) {
     printf("Quote ReadNv failed\n");
     ret_val = 1;
     goto done;
   }
-  if (!Tpm2_LoadContext(tpm, context_data_size, context_save_area,
+  if (!Tpm2_LoadContext(tpm,
+                        context_data_size,
+                        context_save_area,
                         &quote_handle)) {
     printf("Quote LoadContext failed\n");
     ret_val = 1;
@@ -235,13 +257,14 @@ int main(int an, char** av) {
 #endif
 
   // Get response
-  if (!ReadFileIntoBlock(FLAGS_program_key_response_file, &size_response,
+  if (!ReadFileIntoBlock(FLAGS_program_key_response_file,
+                         &size_response,
                          response_buf)) {
     printf("Can't read response\n");
     ret_val = 1;
     goto done;
   }
-  input.assign((const char*)response_buf, size_response);
+  input.assign((const char *)response_buf, size_response);
   if (!response.ParseFromString(input)) {
     printf("Can't parse response\n");
     ret_val = 1;
@@ -251,48 +274,53 @@ int main(int an, char** av) {
 #ifdef DEBUG
   printf("\nintegrity (%d): ", (int)response.integrityhmac().size());
   PrintBytes(response.integrityhmac().size(),
-             (byte*)response.integrityhmac().data());
+             (byte *)response.integrityhmac().data());
   printf("\n");
   printf("encidentity(%d): ", (int)response.encidentity().size());
   PrintBytes(response.encidentity().size(),
-             (byte*)response.encidentity().data());
+             (byte *)response.encidentity().data());
   printf("\n");
   printf("secret(%d): ", (int)response.secret().size());
-  PrintBytes(response.secret().size(),
-             (byte*)response.secret().data());
+  PrintBytes(response.secret().size(), (byte *)response.secret().data());
   printf("\n");
 #endif
 
   // Fill credential blob and secret
-  credentialBlob.size = (int)response.integrityhmac().size() + (int)response.encidentity().size();
+  credentialBlob.size =
+      (int)response.integrityhmac().size() + (int)response.encidentity().size();
   current_size = 0;
   memcpy(&credentialBlob.credential[current_size],
-         (byte*) response.integrityhmac().data(),
+         (byte *)response.integrityhmac().data(),
          response.integrityhmac().size());
   current_size += response.integrityhmac().size();
   memcpy(&credentialBlob.credential[current_size],
-         (byte*) response.encidentity().data(),
+         (byte *)response.encidentity().data(),
          response.encidentity().size());
   current_size += response.encidentity().size();
 
-  // secret 
+  // secret
   unmarshaled_secret.size = response.secret().size();
-  memcpy(unmarshaled_secret.secret, response.secret().data(),
+  memcpy(unmarshaled_secret.secret,
+         response.secret().data(),
          unmarshaled_secret.size);
 
 #ifdef DEBUG
   printf("\nunmarshaled secret: %d\n",
-         (int) (unmarshaled_secret.size + sizeof(uint16_t)));
-  PrintBytes(unmarshaled_secret.size, 
-             (byte*)&unmarshaled_secret.secret);
+         (int)(unmarshaled_secret.size + sizeof(uint16_t)));
+  PrintBytes(unmarshaled_secret.size, (byte *)&unmarshaled_secret.secret);
   printf("\n");
   printf("\nConstructed credBlob (%d): ", credentialBlob.size);
   PrintBytes(credentialBlob.size, credentialBlob.credential);
   printf("\n");
 #endif
 
-  if (!Tpm2_ActivateCredential(tpm, quote_handle, ekHandle, parentAuth,
-                               emptyAuth, credentialBlob, unmarshaled_secret,
+  if (!Tpm2_ActivateCredential(tpm,
+                               quote_handle,
+                               ekHandle,
+                               parentAuth,
+                               emptyAuth,
+                               credentialBlob,
+                               unmarshaled_secret,
                                &recovered_credential)) {
     printf("ActivateCredential failed\n");
     ret_val = 1;
@@ -316,10 +344,16 @@ int main(int an, char** av) {
 
   size_derived_keys = 128;
   label = "PROTECT";
-  cert_key_seed.assign((const char*)recovered_credential.buffer,
+  cert_key_seed.assign((const char *)recovered_credential.buffer,
                        recovered_credential.size);
-  if (!KDFa(hash_alg_id, cert_key_seed, label, contextV, contextV, 256,
-            size_derived_keys, derived_keys)) {
+  if (!KDFa(hash_alg_id,
+            cert_key_seed,
+            label,
+            contextV,
+            contextV,
+            256,
+            size_derived_keys,
+            derived_keys)) {
     printf("Can't derive cert protection keys\n");
     ret_val = 1;
     goto done;
@@ -332,19 +366,24 @@ int main(int an, char** av) {
     HMAC_Init_ex(&hctx, &derived_keys[16], 16, EVP_sha256(), nullptr);
     encrypted_cert_hmac_size = 32;
   }
-  HMAC_Update(&hctx, (byte*)response.encrypted_cert().data(),
+  HMAC_Update(&hctx,
+              (byte *)response.encrypted_cert().data(),
               response.encrypted_cert().size());
-  HMAC_Final(&hctx, encrypted_cert_hmac, (uint32_t*)&encrypted_cert_hmac_size);
+  HMAC_Final(&hctx, encrypted_cert_hmac, (uint32_t *)&encrypted_cert_hmac_size);
   HMAC_CTX_cleanup(&hctx);
-  if (memcmp(encrypted_cert_hmac, response.encrypted_cert_hmac().data(),
-             encrypted_cert_hmac_size) !=0) {
+  if (memcmp(encrypted_cert_hmac,
+             response.encrypted_cert_hmac().data(),
+             encrypted_cert_hmac_size)
+      != 0) {
     printf("Hmac compare failed\n");
     ret_val = 1;
     goto done;
   }
   // decrypt
-  if (!AesCtrCrypt(128, derived_keys, response.encrypted_cert().size(),
-                   (byte*)response.encrypted_cert().data(),
+  if (!AesCtrCrypt(128,
+                   derived_keys,
+                   response.encrypted_cert().size(),
+                   (byte *)response.encrypted_cert().data(),
                    cert_out_buf)) {
     printf("Can't parse response\n");
     ret_val = 1;
@@ -360,9 +399,9 @@ int main(int an, char** av) {
   PrintBytes(size_cert_out, cert_out_buf);
   printf("\n\n");
 #endif
-  
- // Write output cert
- if (!WriteFileFromBlock(FLAGS_program_key_cert_file,
+
+  // Write output cert
+  if (!WriteFileFromBlock(FLAGS_program_key_cert_file,
                           size_cert_out,
                           cert_out_buf)) {
     printf("Can't write out program cert\n");
@@ -371,7 +410,7 @@ int main(int an, char** av) {
   }
 
 done:
- if (root_handle != 0) {
+  if (root_handle != 0) {
     Tpm2_FlushContext(tpm, root_handle);
   }
   if (seal_handle != 0) {
@@ -386,4 +425,3 @@ done:
   tpm.CloseTpm();
   return ret_val;
 }
-

@@ -45,16 +45,16 @@ using std::string;
 // standard buffer size
 
 bool white(const char c) {
-  return c== ' ' || c == '\n' || c == ' ' || c == '\r';
+  return c == ' ' || c == '\n' || c == ' ' || c == '\r';
 }
 
-int Convert(int in_size, char* in, byte* out) {
+int Convert(int in_size, char *in, byte *out) {
   extern byte ToHex(const char);
-  int i;
-  int n = 0;
-  byte a, b;
+  int         i;
+  int         n = 0;
+  byte        a, b;
   for (i = 0; i < in_size; i += 2) {
-    if (i >= (in_size-1)) {
+    if (i >= (in_size - 1)) {
       if (white((const char)in[i]))
         break;
       a = ToHex((const char)in[i]);
@@ -64,19 +64,19 @@ int Convert(int in_size, char* in, byte* out) {
     if (in[i] == '\n')
       break;
     a = ToHex((const char)in[i]);
-    b = ToHex((const char)in[i+1]);
-    out[n++] = (a<<4) | b;
+    b = ToHex((const char)in[i + 1]);
+    out[n++] = (a << 4) | b;
   }
   return n;
 }
 
-int main(int an, char** av) {
+int main(int an, char **av) {
   string filename(av[1]);
-  byte buf[1024];
-  int buf_size = 1024;
-  byte padded_buf[512];
-  byte check[512];
-  byte repadded_buf[1024];
+  byte   buf[1024];
+  int    buf_size = 1024;
+  byte   padded_buf[512];
+  byte   check[512];
+  byte   repadded_buf[1024];
   memset(check, 0, 512);
   memset(repadded_buf, 0, 512);
 
@@ -85,13 +85,28 @@ int main(int an, char** av) {
     return 1;
   }
   buf[buf_size] = 0;
-  int pad_size = Convert(buf_size, (char*)buf, padded_buf);
-  int check_len = RSA_padding_check_PKCS1_OAEP(check, 256, padded_buf, pad_size,
-                    256, (byte*)"IDENTITY", strlen("IDENTITY")+1);
-  printf("Padding %3d  : ", pad_size);PrintBytes(pad_size, padded_buf);printf("\n");
-  printf("check %03d    : ", check_len);PrintBytes(check_len, check);printf("\n");
-  int repadded_len = RSA_padding_add_PKCS1_OAEP(repadded_buf, 256, check, check_len,
-                    	(byte*)"IDENTITY", strlen("IDENTITY")+1);
-  printf("repadded  %03d : ", 256);PrintBytes(256, repadded_buf);printf("\n");
+  int pad_size = Convert(buf_size, (char *)buf, padded_buf);
+  int check_len = RSA_padding_check_PKCS1_OAEP(check,
+                                               256,
+                                               padded_buf,
+                                               pad_size,
+                                               256,
+                                               (byte *)"IDENTITY",
+                                               strlen("IDENTITY") + 1);
+  printf("Padding %3d  : ", pad_size);
+  PrintBytes(pad_size, padded_buf);
+  printf("\n");
+  printf("check %03d    : ", check_len);
+  PrintBytes(check_len, check);
+  printf("\n");
+  int repadded_len = RSA_padding_add_PKCS1_OAEP(repadded_buf,
+                                                256,
+                                                check,
+                                                check_len,
+                                                (byte *)"IDENTITY",
+                                                strlen("IDENTITY") + 1);
+  printf("repadded  %03d : ", 256);
+  PrintBytes(256, repadded_buf);
+  printf("\n");
   return 0;
 }

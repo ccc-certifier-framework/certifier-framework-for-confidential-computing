@@ -51,31 +51,31 @@ DEFINE_string(machine_identifier, "", "text to identify endorsement");
 DEFINE_string(hash_alg, "sha1", "hash");
 
 #ifndef GFLAGS_NS
-#define GFLAGS_NS google
+#  define GFLAGS_NS google
 #endif
 #define DEBUG
 
 void PrintOptions() {
-  printf("Calling sequence: GetEndorsementKey.exe " \
-          "-- machine_identifier= name --endorsement_info_file=output-file\n");
+  printf("Calling sequence: GetEndorsementKey.exe "
+         "-- machine_identifier= name --endorsement_info_file=output-file\n");
 }
 
-int main(int an, char** av) {
-  LocalTpm tpm;
-  TPM_HANDLE ekHandle;
-  TPM2B_PUBLIC pub_out;
-  TPM2B_NAME pub_name;
-  TPM2B_NAME qualified_pub_name;
-  uint16_t pub_blob_size = 1024;
-  byte pub_blob[1024];
-  string emptyAuth;
+int main(int an, char **av) {
+  LocalTpm           tpm;
+  TPM_HANDLE         ekHandle;
+  TPM2B_PUBLIC       pub_out;
+  TPM2B_NAME         pub_name;
+  TPM2B_NAME         qualified_pub_name;
+  uint16_t           pub_blob_size = 1024;
+  byte               pub_blob[1024];
+  string             emptyAuth;
   TPML_PCR_SELECTION pcrSelect;
-  TPMA_OBJECT primary_flags;
-  *(uint32_t*)(&primary_flags) = 0;
+  TPMA_OBJECT        primary_flags;
+  *(uint32_t *)(&primary_flags) = 0;
 
-  int ret_val = 0;
+  int                     ret_val = 0;
   endorsement_key_message message;
-  string output;
+  string                  output;
 
   printf("\nGetEndorsementKey\n\n");
 
@@ -109,18 +109,34 @@ int main(int an, char** av) {
   primary_flags.restricted = 1;
 
   InitSinglePcrSelection(7, hash_alg_id, &pcrSelect);
-  if (Tpm2_CreatePrimary(tpm, TPM_RH_ENDORSEMENT, emptyAuth, pcrSelect,
-                         TPM_ALG_RSA, hash_alg_id, primary_flags,
-                         TPM_ALG_AES, 128, TPM_ALG_CFB, TPM_ALG_NULL,
-                         2048, 0x010001, &ekHandle, &pub_out)) {
+  if (Tpm2_CreatePrimary(tpm,
+                         TPM_RH_ENDORSEMENT,
+                         emptyAuth,
+                         pcrSelect,
+                         TPM_ALG_RSA,
+                         hash_alg_id,
+                         primary_flags,
+                         TPM_ALG_AES,
+                         128,
+                         TPM_ALG_CFB,
+                         TPM_ALG_NULL,
+                         2048,
+                         0x010001,
+                         &ekHandle,
+                         &pub_out)) {
     printf("CreatePrimary succeeded parent: %08x\n", ekHandle);
   } else {
     printf("CreatePrimary failed\n");
     ret_val = 1;
     goto done;
   }
-  if (Tpm2_ReadPublic(tpm, ekHandle, &pub_blob_size, pub_blob,
-                      &pub_out, &pub_name, &qualified_pub_name)) {
+  if (Tpm2_ReadPublic(tpm,
+                      ekHandle,
+                      &pub_blob_size,
+                      pub_blob,
+                      &pub_out,
+                      &pub_name,
+                      &qualified_pub_name)) {
     printf("ReadPublic succeeded\n");
   } else {
     printf("ReadPublic failed\n");
@@ -143,16 +159,17 @@ int main(int an, char** av) {
 #endif
 
   message.set_machine_identifier(FLAGS_machine_identifier);
-  message.set_tpm2b_blob((const char*)pub_blob, (int)pub_blob_size);
-  message.set_tpm2_name((const char*)pub_name.name, (int)pub_name.size);
+  message.set_tpm2b_blob((const char *)pub_blob, (int)pub_blob_size);
+  message.set_tpm2_name((const char *)pub_name.name, (int)pub_name.size);
 
   if (!message.SerializeToString(&output)) {
     printf("Can't serialize output\n");
     ret_val = 1;
     goto done;
   }
-  if (!WriteFileFromBlock(FLAGS_endorsement_info_file, output.size(),
-                          (byte*)output.data())) {
+  if (!WriteFileFromBlock(FLAGS_endorsement_info_file,
+                          output.size(),
+                          (byte *)output.data())) {
     printf("Can't write output file\n");
     ret_val = 1;
   }
@@ -161,4 +178,3 @@ done:
   tpm.CloseTpm();
   return ret_val;
 }
-

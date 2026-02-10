@@ -29,16 +29,16 @@
 
 using std::string;
 
-char value_to_hex(byte_t x);
+char   value_to_hex(byte_t x);
 byte_t hex_to_value(char x);
 
-string* byte_to_base64_left_to_right(int size, byte_t* in);
-string* byte_to_base64_right_to_left(int size, byte_t* in);
-int base64_to_byte_left_to_right(char* in, int size, byte_t* out);
-int base_64_to_byte_right_to_left(char* in, int size, byte_t* out);
+string *byte_to_base64_left_to_right(int size, byte_t *in);
+string *byte_to_base64_right_to_left(int size, byte_t *in);
+int     base64_to_byte_left_to_right(char *in, int size, byte_t *out);
+int     base_64_to_byte_right_to_left(char *in, int size, byte_t *out);
 
-string* byte_to_hex_left_to_right(int, byte_t*);
-string* byte_to_hex_right_to_left(int, byte_t*);
-int hex_to_byte_left_to_right(char*, int, byte_t*);
-int hex_to_byte_right_to_left(char*, int, byte_t*);
+string *byte_to_hex_left_to_right(int, byte_t *);
+string *byte_to_hex_right_to_left(int, byte_t *);
+int     hex_to_byte_left_to_right(char *, int, byte_t *);
+int     hex_to_byte_right_to_left(char *, int, byte_t *);
 #endif
