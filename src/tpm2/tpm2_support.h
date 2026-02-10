@@ -38,9 +38,12 @@ bool get_endorsement_key(local_tpm& tpm, TPM_HANDLE* ek_handle);
 bool save_context(local_tpm& tpm, TPM_HANDLE& handle, string* out);
 bool load_context(local_tpm& tpm, TPM_HANDLE& handle, string& in);
 bool nv_increment_counter(local_tpm& tpm, int slot);
+bool read_nv_handle(local_tpm& tpm, TPM_HANDLE handle, string* out);
 bool read_nv_slot(local_tpm& tpm, int slot, string* out);
 bool write_nv_slot(local_tpm& tpm, int slot, string& in);
+bool write_nv_handle(local_tpm& tpm, TPM_HANDLE handle, string& in);
 bool get_endorsement_cert(local_tpm& tpm, string* out);
+bool get_endorsement_cert(const string& file_name, string* out);
 bool recover_endorsement_cert(const string& file_name);
 bool save_endorsement_cert(const string& file_name);
 bool create_quote_hierarchy(local_tpm& tpm,

@@ -551,30 +551,19 @@ bool get_endorsement_key(local_tpm& tpm, TPM_HANDLE* ek_handle) {
   return true;
 }
 
+bool get_endorsement_cert(const string& file_name, string* out) {
+  return read_file_into_string(file_name, out);
+}
+
 bool get_endorsement_cert(local_tpm& tpm, string* out) {
   // EK Certificate is at 0x01c00002 (RSA) or 0x01c0000a (ECC)
-  // in nvram
-  // int slot = 0x02;
-  int slot = 0x01c00002;
+  int handle = 0x01c00002;
 
   int out_size = 2048;
   byte_t out_buf[out_size];
-  uint32_t cap = TPM_CAP_HANDLES;
-  // uint32_t start = 0x01C00000;
-  uint32_t start = 0x0;
 
-  if (!Tpm2_GetCapability(tpm, cap, start, &out_size, out_buf)) {
-    printf("%s() error, line %d, Tpm2_GetCapability failed\n", __func__, __LINE__);
-    return false;
-  }
-#ifdef DEBUG
-  printf("GetCapability succeeded: %d\n", out_size);
-  print_bytes(out_size, out_buf);
-  printf("\n");
-#endif
-
-  if (!read_nv_slot(tpm, slot, out) ) {
-    printf("%s() error, line %d, read_nv_slot failed\n", __func__, __LINE__);
+  if (!read_nv_handle(tpm, handle, out) ) {
+    printf("%s() error, line %d, read_nv_handle failed\n", __func__, __LINE__);
     return false;
   }
   return true;
@@ -643,6 +632,85 @@ bool nv_increment_counter(local_tpm& tpm, int slot) {
     printf("%s() error, line %d, IncrementNv failed\n", __func__, __LINE__);
     return false;
   }
+
+  return true;
+}
+
+bool read_nv_handle(local_tpm& tpm, TPM_HANDLE handle, string* out) {
+  uint16_t size_data = 2048;
+  byte_t data_out[size_data];
+  string authString("");
+
+#if 0
+  if (Tpm2_UndefineSpace(tpm, TPM_RH_OWNER, handle)) {
+#ifdef DEBUG
+    printf("Tpm2_UndefineSpace %x succeeds\n", handle);
+#endif
+  } else {
+#ifdef DEBUG
+    printf("Tpm2_UndefineSpace fails (but that's OK usually)\n");
+#endif
+  }
+
+  if (!Tpm2_DefineSpace(tpm, TPM_RH_OWNER, handle, authString, 0, nullptr,
+                       NV_AUTHWRITE | NV_AUTHREAD, size_data)) {
+    printf("%s() error, line %d, DefineSpace failed\n",
+	    __func__, __LINE__);
+    return false;
+  }
+#ifdef DEBUG
+    printf("Tpm2_DefineSpace %x succeeds\n", handle);
+#endif
+#endif
+
+  if (!Tpm2_ReadNv(tpm, handle, authString, &size_data, data_out)) {
+    printf("%s() error, line %d, ReadNv failed, handle: %x\n",
+	    __func__, __LINE__, handle);
+    return false;
+  }
+#ifdef DEBUG
+  printf("Tpm2_ReadNv %d succeeds: ", handle);
+  print_bytes(size_data, data_out);
+  printf("\n");
+#endif
+
+  out->assign((char*)data_out, size_data);
+  return true;
+}
+
+bool write_nv_handle(local_tpm& tpm, TPM_HANDLE handle, string& in) {
+  string authString("");
+  TPM2B_AUTH auth;
+
+  if (Tpm2_UndefineSpace(tpm, TPM_RH_OWNER, handle)) {
+#ifdef DEBUG
+    printf("Tpm2_UndefineSpace %x succeeds\n", handle);
+#endif
+  } else {
+#ifdef DEBUG
+    printf("Tpm2_UndefineSpace fails (but that's OK usually)\n");
+#endif
+  }
+
+  // TODO: define a policy here using StartAuthSession
+ 
+  if (!Tpm2_DefineSpace(tpm, TPM_RH_OWNER, handle, authString, 0, (byte_t*)&auth,
+                       NV_AUTHWRITE | NV_AUTHREAD, in.size()) ) {
+    printf("%s() error, line %x, DefineSpace failed\n", __func__, __LINE__);
+    return false;
+  }
+#ifdef DEBUG
+    printf("Tpm2_DefineSpace %x succeeds\n", handle);
+#endif
+
+  if (!Tpm2_WriteNv(tpm, handle, authString, in.size(), (byte_t*)in.data())) {
+    printf("%s() error, line %d, WriteNv failed\n",
+	   __func__, __LINE__);
+    return false;
+  }
+#ifdef DEBUG
+    printf("Tpm2_WriteNv %x succeeds, %d bytes written\n", handle, (int)in.size());
+#endif
 
   return true;
 }

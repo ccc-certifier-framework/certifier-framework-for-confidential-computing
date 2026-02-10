@@ -221,73 +221,7 @@ a secure, hierarchical, and verifiable identifier for keys.
 
 -------------------------------------------------------------------------------
 
-This just covers how we go from a vendor-certified EK to quoting key that CF can use.  Endorsement_test is close to what we will need.
-
-The TPM “comes with” a certified restricted decryption key that we call the endorsement key (EK).  Restricted means that it can only be used for certain purposes.  The one we care about is ActivateCredential
-
-The endorsement key is not usually TPM resident: it’s deterministically generated based on input parameters (what sort of key we want) and the endorsement seed (which we can assume never changes.) 
-
-Note that you ReadPublic shortly after: you should be able to match this pubkey with the cert that you found in NV storage.
-
-You make the quoting key at line 590.  You have made it a child of a “storage root key” that is created earlier (line 562).  Making your quoting key a child of the storage root key means that after reboot you can recreate the SRK (deterministic) and then load the key blob that you got at line 590.
-
-Now we want to cryptographically link the quoting key to the EK.
-
-The cryptographic operation public key decryption with the EK, but rather than the server simply encrypting a secret, it encrypts a secret PLUS the public key of the quoting key we’re trying to get certified (there’s other stuff too.)  Creating the blob (secret+thing-to-check) can be done with library code or using the TPM helper function MakeCredential.
-
-We get to choose how we use this ActivateCredential function, but the simplest thing would be:
-
- 
-
-Client sends EK, EK-cred, pub-key of newly created (but not yet certified) quoting key to server
-Server checks the EK cert chai.  If OK
-The server creates a certificate for the quoting key based on whatever root it wants to use.            
-It then creates a random symmetric encryption key
-And encrypts the certificate
-The server uses MakeCredential (or a library function) to create an encrypted blob containing the symmetric key 3(b)
-This blob is send to the client (as well as the now-encrypted cert
-The client calls ActivateCredential
-If this succeeds, the client can now decrypt the cert for the quoting key
- 
-On reboot, client code must recreate the SRK as before (line 562) and Load() the qutoting key, like line 604
-
-It can then quote with this key.
-
-I can walk you through the other stuff, but that’s the tricky one
-
---------------------------------------------------
-
-Get endorsement
-  flags: fixedTPM fixedParent sensitivedataorigin user-with-auth decrypt restricted
-  tpm2_createprimary endorsement empty-auth pcr-select rsa-alg hash-id-alg flags 
-    aes-alg cfb alg-null 2048 010001 &handle &pub-out
-  tpm2_createkey root-handle sealed-out
-  tpm2_load sealed-out creation-out &seal-load-handle ...
-  tpm2-savecontext context-save-area
-  tpm2-writenv context save area
-  
-sealtest
-  tpm2_createprimary ... &parent_handle &pub-out
-  tpm2-startauthsession RH_NULL RH_NULL initial-nonce salt SE_POLICY symmetric SHA &session-handle
-    &nonce-obj
-  tpm2_policygetdigest session-handle &policy-digest
-  tpm2_policypassword session-handle
-  tpm2_policypcr session-handle expected-digest pcr-select
-  tpm2_createsealed parent-handle policy-digest parent-auth secret pcr-select hash-alg create-flags
-    pub-out private-out digest-out ticket
-  tpm2_load out-pub out-priv &load-handle &name
-  tpm2_unseal load-handle parent-auth session-handle nonce 01 hmac &unsealed
-
-quote
-  tpm2_createprimary auth pcr-sel flags size &parent-handle &pub-out
-  tpm2_pcrevent
-  tpm2_createkey parent-handle parent-auth .. &pub &priv &create-out &digest-auth &&ticket-out
-  tpm2_load parent-handle ... &load-handle &name
-  tpm2_quote load-handle parent-auth to-quote scheme pcr-selection &quoted &sig
-
-The following options are supported if the chardev interface is chosen:
-       -c|--chardev <device path>
-       --vtpm-proxy
+OLD
 
 XDG_CONFIG_HOME="/home/jlm/.config"
 swtpm_setup --tpm2 --tpmstate ${XDG_CONFIG_HOME}/mytpm1 --create-ek-cert --create-platform-cert --lock-nvram
@@ -316,10 +250,9 @@ sudo apt install swtpm swtpm-tools apparmor -y
 
 ---------------------------
 
-To run the simulator and tests:
+NEW
 
-Start:
-  tpm2_rc_decode 0x905
+To run the simulator and tests:
 
 sudo bash
 
@@ -328,17 +261,46 @@ echo $XDG_CONFIG_HOME
 
 pushd $XDG_CONFIG_HOME/mytpm1
 rm ./*
+rm ./.lock
 popd
 
 modprobe tpm_vtpm_proxy
 
-swtpm_setup --tpm2 --tpmstate ${XDG_CONFIG_HOME}/mytpm1 --create-ek-cert --create-platform-cert --lock-nvram --print-capabilities
+swtpm_setup --tpmstate ${XDG_CONFIG_HOME}/mytpm1 --create-ek-cert --create-platform-cert --tpm2 --write-ek-cert-files .
 
 If you use the tcp utility
 swtpm socket --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --server type=tcp,port=2321 --ctrl type=tcp,port=2322 --flags not-need-init,startup-clear &
 
 If you use the vtpm2 device (/dev/tpm1)
 swtpm chardev --vtpm-proxy --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --ctrl type=tcp,port=2322 --flags not-need-init,startup-clear &
+
+
+The swtpm flag --flags not-need-init allows a TPM 2.0 emulator to
+accept commands immediately upon startup without requiring an explicit
+INIT signal via swtpm_ioctl
+
+-------------------------------------------------------------
+CRAP
+
+openssl x509 -inform pem -in /var/lib/swtpm-localca/swtpm-localca-rootca-cert.pem -text
+tpm2_getcap handles-transient
+#tpm2_getcap handles-nv-index
+#tpm2_getcap -l 0x01c00002
+export TPM_INTERFACE_TYPE=dev TPM_DEVICE=/dev/tpmrm0
+tssgetcapability -cap 1 -pr 0x01c00000
+tssnvread -hia o -ha 0x01c00002 -of ekcert.der
+tpm2_nvread 0x01c00002
+
+The Platform certificate can be found at index 0x01c08000.
+All certificates are in DER format [2, 3].
+
+tpm2_createek -c - -G rsa -u myek.tpm2 -c ekcontext.bin
+tpm2_readpublic -c ekcontext.bin -f pem -o myek.pem
+swtpm_cert --type ek --pubkey myek.pem --tpm2 --out-cert ekgen.cert
+openssl rsa -pubin -in myek.pem -text -noout
+openssl x509 -inform der -in ekcert.der -pubkey  -noout | openssl rsa -pubin -text -noout
+
+--------------------------------------------------------------------------------
 
 ./tpm2_util.exe --tpm_device="/dev/tpm1" --command=GetRandom --numbytes=32
 ./tpm2_util.exe --tpm_device="/dev/tpm1" --pcr_num=7 --command=EndorsementTest
@@ -367,9 +329,13 @@ To decode error messages:
   tpm2_rc_decode 0x2c4
      tpm:parameter(2):value is out of range or is not correct for the context
   tpm2_rc_decode 0x14a
+     tpm:error(2.0): an NV Index is used before being initialized or
+     the state saved by TPM2_ShutdownSTATE could not be restored
+
   tpm2_rc_decode 0x284
   tpm2_rc_decode 0x1c4
   tpm2_rc_decode 0x1cb
+  tpm2_rc_decode 0x18b
 
 ----------------------------
 

@@ -62,8 +62,8 @@ DEFINE_string(seal_hierearchy_name, "seal_hierarchy.bin",
               "seal hierarch save file name");
 DEFINE_string(quote_hierearchy_name, "quote_hierarchy.bin",
               "quote hierarch save file name");
-DEFINE_string(file_name, "tpm_cert.bin",
-              "tpm file name");
+DEFINE_string(ek_cert_file_name, "ek-rsa2048.crt",
+              "tpm cert file name");
 
 #ifndef GFLAGS_NS
 #define GFLAGS_NS google
@@ -113,7 +113,7 @@ bool endorsement_test(local_tpm& tpm) {
   Tpm2_FlushContext(tpm, ek_handle);
 
   string cert_out;
-  if (!get_endorsement_cert(tpm, &cert_out)) {
+  if (!get_endorsement_cert(FLAGS_ek_cert_file_name, &cert_out)) {
     printf("%s() error, line %d, get_endorsement_cert failed\n", __func__, __LINE__);
     return false;
   }
@@ -295,20 +295,27 @@ bool nv_test(local_tpm& tpm) {
   return true;
 }
 
-bool get_cert(local_tpm& tpm, const string& file_name) {
-  string out;
+bool get_cert(local_tpm& tpm, const string& file_name, string* out) {
+  string cert;
+  TPM_HANDLE handle = 0x1c00002;
 
-  if (!get_endorsement_cert(tpm, &out)) {
+  if (!read_file_into_string(file_name, &cert)) {
+    printf("%s() error, line %d, can't read cert file\n",
+           __func__, __LINE__);
+    return false;
+  }
+
+  if (!write_nv_handle(tpm, handle, cert)) {
+    printf("%s() error, line %d, write nvram\n",
+           __func__, __LINE__);
+    return false;
+  }
+
+  if (!get_endorsement_cert(tpm, out)) {
     printf("%s() error, line %d, can't get endorsement cert\n",
            __func__, __LINE__);
     return false;
   }
-  if (!write_file_from_string(file_name, out)) {
-    printf("%s() error, line: %d, Can't writ key_inf file %s\n",
-       __func__, __LINE__, file_name.c_str());
-    return false;
-  }
-
   return true;
 }
 
@@ -383,8 +390,8 @@ int main(int an, char** av) {
       printf("nv test failed\n");
     }
   } else if (FLAGS_operation == "GetCert") {
-    printf("\n");
-    if(get_cert(tpm, FLAGS_file_name)) {
+    string cert;
+    if(get_cert(tpm, FLAGS_ek_cert_file_name, &cert)) {
       printf("get cert test succeeded\n");
     } else {
       printf("get cert test failed\n");
