@@ -87,16 +87,15 @@ bool print_pcrs(local_tpm &tpm, int num_pcrs, byte *pcrs) {
   return true;
 }
 
-bool create_pcr_policy(local_tpm &tpm,
-                       int        num_pcrs,
-                       byte_t    *pcrs,
-                       string    *policy_out) {
+bool create_pcr_policy(local_tpm    &tpm,
+                       int           num_pcrs,
+                       byte_t       *pcrs,
+                       TPM2B_DIGEST *policy_out) {
 
   TPM_HANDLE         session_handle;
   TPML_PCR_SELECTION pcrSelect;
   memset((void *)&pcrSelect, 0, sizeof(TPML_PCR_SELECTION));
 
-  TPM2B_DIGEST           digest_out;
   TPM2B_NONCE            initial_nonce;
   TPM2B_ENCRYPTED_SECRET salt;
   TPMT_SYM_DEF           symmetric;
@@ -148,7 +147,7 @@ bool create_pcr_policy(local_tpm &tpm,
 #endif
 
   TPM2B_DIGEST policy_digest;
-  if (!Tpm2_PolicyGetDigest(tpm, session_handle, &policy_digest)) {
+  if (!Tpm2_PolicyGetDigest(tpm, session_handle, policy_out)) {
     printf("%s() error, line %d, PolicyGetDigest failed\n", __func__, __LINE__);
     Tpm2_FlushContext(tpm, session_handle);
     return false;
@@ -158,11 +157,10 @@ bool create_pcr_policy(local_tpm &tpm,
   printf("%s() line %d, PolicyGetDigest before Pcr succeeded: \n",
          __func__,
          __LINE__);
-  print_bytes(policy_digest.size, policy_digest.buffer);
+  print_bytes(policy_out->size, policy_out->buffer);
   printf("\n");
 #endif
 
-  policy_out->assign((char *)policy_digest.buffer, policy_digest.size);
   Tpm2_FlushContext(tpm, session_handle);
   return true;
 }

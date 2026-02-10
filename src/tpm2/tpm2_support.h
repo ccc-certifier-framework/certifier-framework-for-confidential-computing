@@ -56,6 +56,10 @@ bool write_nv_handle(local_tpm &tpm,
                      TPM_HANDLE handle,
                      string    &authString,
                      string    &in);
+bool create_pcr_policy(local_tpm    &tpm,
+                       int           num_pcrs,
+                       byte_t       *pcrs,
+                       TPM2B_DIGEST *policy_out);
 bool get_endorsement_cert(local_tpm &tpm, string *out);
 bool get_endorsement_cert(const string &file_name, string *out);
 bool recover_endorsement_cert(const string &file_name);

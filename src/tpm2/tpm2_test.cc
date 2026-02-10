@@ -358,9 +358,9 @@ bool get_cert(local_tpm &tpm, const string &file_name, string *out) {
   printf("Tpm2_UndefineSpace %x succeeds\n", handle);
 #endif
 
-  // TODO: define a policy here using StartAuthSession
-  // create_pcr_policy(local_tpm& tpm, int num_pcrs, byte_t* pcrs,
-  // string* policy_out)
+  // define a policy here using StartAuthSession
+  // bool create_pcr_policy(local_tpm &tpm, int num_pcrs, byte_t *pcrs,
+  // TPM2B_DIGEST* policy_out)
 
   int size = 2048;
   if (!Tpm2_DefineSpace(tpm,
