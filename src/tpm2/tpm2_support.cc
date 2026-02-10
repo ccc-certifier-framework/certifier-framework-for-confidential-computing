@@ -88,6 +88,79 @@ bool print_pcrs(local_tpm& tpm, int num_pcrs, byte* pcrs) {
   return true;
 }
 
+bool create_pcr_policy(local_tpm& tpm, int num_pcrs, byte_t* pcrs,
+                string* policy_out) {
+
+  TPM_HANDLE session_handle;
+  TPML_PCR_SELECTION pcrSelect;
+  memset((void*)&pcrSelect, 0, sizeof(TPML_PCR_SELECTION));
+
+  if (num_pcrs < 1) {
+    printf("%s() error, line %d: No pcrs\n",
+         __func__,
+         __LINE__);
+    return false;
+  }
+  init_single_pcr_selection(pcrs[0], TPM_ALG_SHA256, &pcrSelect);
+  for (int i = 1; i < num_pcrs; i++) {
+    add_pcr_selection(pcrs[i], TPM_ALG_SHA256, &pcrSelect);
+  }
+
+  initial_nonce.size = 32;
+  memset(initial_nonce.buffer, 0, initial_nonce.size);
+  salt.size = 0;
+  symmetric.algorithm = TPM_ALG_NULL;
+
+  // Start auth session
+  if (!Tpm2_StartAuthSession(tpm, TPM_RH_NULL, TPM_RH_NULL,
+                            initial_nonce, salt, TPM_SE_POLICY,
+                            symmetric, TPM_ALG_SHA256, &session_handle,
+                            &nonce_obj)) {
+    printf("\n");
+    printf("%s() error, line %d, Tpm2_StartAuthSession fails\n",
+         __func__,
+         __LINE__);
+    return false;
+  }
+
+  TPM2B_DIGEST expected_digest;
+  expected_digest.size = 0;
+  if (!Tpm2_PolicyPcr(tpm, *session_handle,
+                     expected_digest, pcrSelect)) {
+    printf("%s() error, line %d, Tpm2_StartAuthSession fails\n",
+         __func__,
+         __LINE__);
+    Tpm2_FlushContext(tpm, session_handle);
+    return false;
+  }
+#ifdef DEBUG
+  printf("%s(), line %d, Tpm2_PolicyPcr succeeded\n",
+         __func__,
+         __LINE__);
+#endif
+
+  TPM2B_DIGEST policy_digest;
+  if(!Tpm2_PolicyGetDigest(tpm, session_handle, &policy_digest)) {
+    printf("%s() error, line %d, PolicyGetDigest failed\n",
+         __func__,
+         __LINE__);
+    Tpm2_FlushContext(tpm, session_handle);
+    return false;
+  }
+#ifdef DEBUG
+  printf("\n");
+  printf("%s() line %d, PolicyGetDigest before Pcr succeeded: \n",
+         __func__,
+         __LINE__);
+  print_bytes(policy_digest.size, policy_digest.buffer);
+  printf("\n");
+#endif
+
+  policy_out->assign((char*)policy_digest.buffer, policy_digest.size);
+  Tpm2_FlushContext(tpm, session_handle);
+  return true;
+}
+
 bool create_seal_session(local_tpm& tpm, TPML_PCR_SELECTION& pcrSelect,
                 TPM_HANDLE* session_handle) {
 
@@ -655,7 +728,7 @@ bool read_nv_handle(local_tpm& tpm, TPM_HANDLE handle, string* out) {
   if (!Tpm2_DefineSpace(tpm, TPM_RH_OWNER, handle, authString, 0, nullptr,
                        NV_AUTHWRITE | NV_AUTHREAD, size_data)) {
     printf("%s() error, line %d, DefineSpace failed\n",
-	    __func__, __LINE__);
+            __func__, __LINE__);
     return false;
   }
 #ifdef DEBUG
@@ -665,7 +738,7 @@ bool read_nv_handle(local_tpm& tpm, TPM_HANDLE handle, string* out) {
 
   if (!Tpm2_ReadNv(tpm, handle, authString, &size_data, data_out)) {
     printf("%s() error, line %d, ReadNv failed, handle: %x\n",
-	    __func__, __LINE__, handle);
+            __func__, __LINE__, handle);
     return false;
   }
 #ifdef DEBUG
@@ -693,6 +766,8 @@ bool write_nv_handle(local_tpm& tpm, TPM_HANDLE handle, string& in) {
   }
 
   // TODO: define a policy here using StartAuthSession
+  // create_pcr_policy(local_tpm& tpm, int num_pcrs, byte_t* pcrs,
+                //string* policy_out)
  
   if (!Tpm2_DefineSpace(tpm, TPM_RH_OWNER, handle, authString, 0, (byte_t*)&auth,
                        NV_AUTHWRITE | NV_AUTHREAD, in.size()) ) {
@@ -705,7 +780,7 @@ bool write_nv_handle(local_tpm& tpm, TPM_HANDLE handle, string& in) {
 
   if (!Tpm2_WriteNv(tpm, handle, authString, in.size(), (byte_t*)in.data())) {
     printf("%s() error, line %d, WriteNv failed\n",
-	   __func__, __LINE__);
+           __func__, __LINE__);
     return false;
   }
 #ifdef DEBUG
@@ -797,7 +872,7 @@ bool extend_pcrs(local_tpm& tpm, int pcr_num) {
   byte_t eventData[3] = {1, 2, 3};
   if (!Tpm2_PCR_Event(tpm, pcr_num, size_eventData, eventData)) {
     printf("%s() error, line %d, Tpm2_PCR_Event failed\n",
-	   __func__, __LINE__);
+           __func__, __LINE__);
     return false;
   }
 #ifdef DEBUG2
@@ -986,7 +1061,7 @@ bool recover_and_load_quote_hierarchy(local_tpm& tpm,
                          TPM_ALG_AES, 256, TPM_ALG_CFB, TPM_ALG_NULL,
                          2048, 0x010001, srk_handle, &pub_out)) {
     printf("%s() error, line %d, CreatePrimary failed\n",
-	   __func__, __LINE__);
+           __func__, __LINE__);
     return false;
   }
 
