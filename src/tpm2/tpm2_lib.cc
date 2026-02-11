@@ -3280,7 +3280,6 @@ bool Tpm2_DefineSpace(local_tpm& tpm,
   // TPM2B_NV_PUBLIC
   uint16_t size_nv_area = sizeof(TPM_HANDLE) + sizeof(TPMI_ALG_HASH) +
           sizeof(uint32_t) + sizeof(uint16_t) + auth.size + sizeof(uint16_t);
-
   // nv size
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   change_endian16((uint16_t *)&size_nv_area, (uint16_t *)in);

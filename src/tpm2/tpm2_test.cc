@@ -392,7 +392,7 @@ bool get_cert(local_tpm &tpm, const string &file_name, string *out) {
                         NV_AUTHWRITE | NV_AUTHREAD,
                         auth,
                         (uint16_t)cert.size())) {
-    printf("%s() error, line %x, DefineSpace failed\n",
+    printf("%s() error, line %d, DefineSpace failed\n",
 		    __func__, __LINE__);
     return false;
   }
