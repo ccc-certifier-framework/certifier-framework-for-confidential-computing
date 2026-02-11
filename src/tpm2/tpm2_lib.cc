@@ -724,6 +724,7 @@ int SetPasswordData(string &password, int size, byte_t *buf) {
   IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint16_t))
   change_endian16(&size_out, (uint16_t *)out);
   Update(sizeof(uint16_t), &out, &total_size, &space_left);
+
   if (num_auth_bytes > 0) {
     IF_LESS_THAN_RETURN_MINUS1(space_left, num_auth_bytes)
     memcpy(out, auth, num_auth_bytes);
@@ -739,26 +740,32 @@ int CreatePasswordAuthArea(string &password, int size, byte_t *buf) {
   uint16_t len;
   byte_t  *pLen = out;
 
+  // size of pw auth area (filled later)
   IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint16_t));
   memset(out, 0, 2);
   Update(sizeof(uint16_t), &out, &total_size, &space_left);
 
+  // policy handle
   uint32_t policy = TPM_RS_PW;
   IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint32_t));
   change_endian32(&policy, (uint32_t *)out);
   Update(sizeof(uint32_t), &out, &total_size, &space_left);
 
+  // Nonce size (must be 0)
   IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint16_t));
   memset(out, 0, sizeof(uint16_t));
   Update(sizeof(uint16_t), &out, &total_size, &space_left);
 
+  // sessionAttributes (must be 1)
   IF_LESS_THAN_RETURN_MINUS1(space_left, 1);
   *out = 1;
   Update(1, &out, &total_size, &space_left);
 
+  //TPM2B_Auth (password)
   int n = SetPasswordData(password, size, out);
   IF_NEG_RETURN_MINUS1(n)
   Update(n, &out, &total_size, &space_left);
+
   len = 7 + n;
   change_endian16(&len, (uint16_t *)pLen);
   return total_size;
@@ -3234,16 +3241,114 @@ bool Tpm2_WriteNv(local_tpm       &tpm,
   return true;
 }
 
-#if 0
-Tpm2_DefineSpace(local_tpm& tpm,
+#define DEBUG1
+bool Tpm2_DefineSpace(local_tpm& tpm,
                  TPM_HANDLE owner,
-                 string authString,
+                 string& authString,
                  TPM_HANDLE handle,
                  TPMI_ALG_HASH alg,
                  uint32_t permissions,
                  TPM2B_DIGEST auth,
-                 uint16_t size)
+                 uint16_t size) {
+  byte_t  commandBuf[2 * MAX_SIZE_PARAMS];
+  int     size_resp = MAX_SIZE_PARAMS;
+  byte_t  resp_buf[MAX_SIZE_PARAMS];
+  int     size_params = 0;
+  byte_t  params_buf[MAX_SIZE_PARAMS];
+  int     space_left = MAX_SIZE_PARAMS;
+  byte_t *in = params_buf;
+
+  memset(commandBuf, 0, MAX_SIZE_PARAMS);
+  memset(resp_buf, 0, MAX_SIZE_PARAMS);
+
+  int n = SetOwnerHandle(owner, space_left, in);
+  IF_NEG_RETURN_FALSE(n);
+  Update(n, &in, &size_params, &space_left);
+
+  uint16_t auth_string_size = (uint16_t) authString.size();
+  // size
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
+  change_endian16((uint16_t *)&auth_string_size, (uint16_t *)in);
+  Update(sizeof(uint16_t), &in, &size_params, &space_left);
+  // data
+  if (auth_string_size > 0) {
+    IF_LESS_THAN_RETURN_FALSE(space_left, auth_string_size)
+    memcpy(in, (byte_t*)authString.data(), auth_string_size);
+    Update(auth.size, &in, &size_params, &space_left);
+  }
+
+  // TPM2B_NV_PUBLIC
+  uint16_t size_nv_area = sizeof(TPM_HANDLE) + sizeof(TPMI_ALG_HASH) +
+          sizeof(uint32_t) + sizeof(uint16_t) + auth.size + sizeof(uint16_t);
+
+  // nv size
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
+  change_endian16((uint16_t *)&size_nv_area, (uint16_t *)in);
+  Update(sizeof(uint16_t), &in, &size_params, &space_left);
+
+  // handle
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint32_t))
+  change_endian32((uint32_t *)&handle, (uint32_t *)in);
+  Update(sizeof(uint32_t), &in, &size_params, &space_left);
+
+  // alg
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
+  change_endian16((uint16_t *)&alg, (uint16_t *)in);
+  Update(sizeof(uint16_t), &in, &size_params, &space_left);
+
+  // permissions
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint32_t))
+  change_endian32((uint32_t *)&permissions, (uint32_t *)in);
+  Update(sizeof(uint32_t), &in, &size_params, &space_left);
+
+  // authPolicy size
+  change_endian16((uint16_t *)&auth.size, (uint16_t *)in);
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
+  Update(sizeof(uint16_t), &in, &size_params, &space_left);
+  if (auth.size > 0) {
+    IF_LESS_THAN_RETURN_FALSE(space_left, auth.size)
+    memcpy(in, auth.buffer, auth.size);
+    Update(auth.size, &in, &size_params, &space_left);
+  }
+  // dataSize
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
+  change_endian16((uint16_t *)&size, (uint16_t *)in);
+  Update(sizeof(uint16_t), &in, &size_params, &space_left);
+
+  int in_size = Tpm2_SetCommand(TPM_ST_SESSIONS,
+                                TPM_CC_NV_DefineSpace,
+                                commandBuf,
+                                size_params,
+                                params_buf);
+#ifdef DEBUG1
+  print_command("DefineSpace", in_size, commandBuf);
 #endif
+  if (!tpm.send_command(in_size, commandBuf)) {
+    printf("%s() error, line %d, send_command failed\n", __func__, __LINE__);
+    return false;
+  }
+  if (!tpm.get_response(&size_resp, resp_buf)) {
+    printf("%s() error, line %d, get_response failed\n", __func__, __LINE__);
+    return false;
+  }
+  uint16_t cap = 0;
+  uint32_t responseSize;
+  uint32_t responseCode;
+  Tpm2_InterpretResponse(size_resp,
+                         resp_buf,
+                         &cap,
+                         &responseSize,
+                         &responseCode);
+#ifdef DEBUG1
+  print_response("Definespace", cap, responseSize, responseCode, resp_buf);
+#else
+  if (responseCode != 0)
+    printf("Response code: %x\n", responseCode);
+#endif
+  if (responseCode != TPM_RC_SUCCESS)
+    return false;
+  return true;
+}
 
 bool Tpm2_DefineSpace(local_tpm       &tpm,
                       TPM_HANDLE       owner,
@@ -3639,11 +3744,9 @@ bool Tpm2_EvictControl(local_tpm         &tpm,
   IF_NEG_RETURN_FALSE(n);
   Update(n, &in, &size_params, &space_left);
 
-#if 0
   n = SetPasswordData(authString, space_left, in);
   IF_NEG_RETURN_FALSE(n);
   Update(n, &in, &size_params, &space_left);
-#endif
 
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint32_t))
   change_endian32((uint32_t *)&persistantHandle, (uint32_t *)in);

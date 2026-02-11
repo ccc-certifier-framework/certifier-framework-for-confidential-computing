@@ -107,7 +107,6 @@ bool endorsement_test(local_tpm &tpm) {
   printf("Qualified name: ");
   print_bytes(qualified_pub_name.size, qualified_pub_name.name);
   printf("\n");
-  printf("\n");
   printf("Pubout size: %d\n", pub_out.size);
   printf("Type: %d\n", pub_out.publicArea.type);
   printf("Name: %d\n", pub_out.publicArea.nameAlg);
@@ -142,7 +141,6 @@ bool seal_test(local_tpm &tpm, int pcr_num, const string &seal_file) {
   }
 
   if (!create_seal_hierarchy_and_secret(tpm, num_pcrs, pcrs, seal_file)) {
-    printf("\n");
     printf("%s() error, line %d, create_seal_hierarchy_and_secret failed\n",
            __func__,
            __LINE__);
@@ -156,7 +154,6 @@ bool seal_test(local_tpm &tpm, int pcr_num, const string &seal_file) {
                               pcrs,
                               FLAGS_seal_hierearchy_name,
                               &seal_secret)) {
-    printf("\n");
     printf("%s() error, line %d, recover_sealing_secret failed\n",
            __func__,
            __LINE__);
@@ -337,26 +334,17 @@ bool nv_test(local_tpm &tpm) {
   return true;
 }
 
+#define DEBUG
+
 bool get_cert(local_tpm &tpm, const string &file_name, string *out) {
   string     cert;
   TPM_HANDLE handle = 0x1c00002;
 
   if (!read_file_into_string(file_name, &cert)) {
-    printf("%s() error, line %d, can't read cert file\n", __func__, __LINE__);
+    printf("%s() error, line %d, can't read cert file\n",
+	   __func__, __LINE__);
     return false;
   }
-
-  TPM2B_AUTH auth;
-  string     authString;
-
-  if (!Tpm2_UndefineSpace(tpm, TPM_RH_OWNER, handle)) {
-#ifdef DEBUG
-    printf("Tpm2_UndefineSpace fails (but that's OK usually)\n");
-#endif
-  }
-#ifdef DEBUG
-  printf("Tpm2_UndefineSpace %x succeeds\n", handle);
-#endif
 
   // define a policy here using StartAuthSession
   int num_pcrs = 1;
@@ -367,41 +355,37 @@ bool get_cert(local_tpm &tpm, const string &file_name, string *out) {
     return false;
   }
 
+  TPM2B_AUTH auth;
+  string     authString;
   if (!create_pcr_policy(tpm, num_pcrs, pcrs, &auth)) {
     printf("%s() error, line %d, create_pcr_policy failed\n",
 		   __func__, __LINE__);
     return false;
   }
-
-#if 0
-  TPM2B_NV_PUBLIC nv_pub;
-  nv_pub.nvPublic.nvIndex = handle;
-  nv_pub.nvPublic.nameAlg = TPM_ALG_SHA256;
-  // nv_pub.nvPublic.attributes = (TPMA_NV) (NV_AUTHWRITE | NV_AUTHREAD);
-  nv_pub.nvPublic.authPolicy = auth;
-  nv_pub.nvPublic.dataSize = (uint16_t)cert.size();
-  nv_pub.size = (uint16_t) sizeof(nv_pub.nvPublic);
+#ifdef DEBUG
+  printf("Tpm2_DefineSpace create_pcr_policy succeeds\n");
 #endif
 
-  /*
-   * Replace with
-   * Tpm2_DefineSpace(tpm,
-                        TPM_RH_OWNER,
-                        authString,
-                        handle,
-                        alg,
-                        permissions,
-                        auth,
-                        (uint16_t)cert.size()))
-   */
+  if (!Tpm2_UndefineSpace(tpm, TPM_RH_OWNER, handle)) {
+#ifdef DEBUG
+    printf("Tpm2_UndefineSpace fails (but that's OK usually)\n");
+#endif
+  } else {
+#ifdef DEBUG
+  printf("Tpm2_UndefineSpace %x succeeds\n", handle);
+#endif
+  }
 
+#ifdef DEBUG
+  printf("authstring size: %d\n", (int)authString.size());
+#endif
   if (!Tpm2_DefineSpace(tpm,
                         TPM_RH_OWNER,
-                        handle,
                         authString,
-                        sizeof(auth),
-                        (byte_t *)&auth,
+                        handle,
+                        TPM_ALG_SHA256,
                         NV_AUTHWRITE | NV_AUTHREAD,
+                        auth,
                         (uint16_t)cert.size())) {
     printf("%s() error, line %x, DefineSpace failed\n",
 		    __func__, __LINE__);
@@ -456,9 +440,10 @@ int main(int an, char **av) {
   if (!tpm.open_tpm(FLAGS_tpm_device.c_str())) {
     printf("Can't open tpm: %s\n", FLAGS_tpm_device.c_str());
     return 1;
-  } else {
-    printf("Opened tpm: %s %d\n", FLAGS_tpm_device.c_str(), tpm.tpm_fd_);
   }
+#ifdef DEBUG
+    printf("Opened tpm: %s %d\n", FLAGS_tpm_device.c_str(), tpm.tpm_fd_);
+#endif
 
   if (FLAGS_operation == "EndorsementTest") {
     printf("\n");

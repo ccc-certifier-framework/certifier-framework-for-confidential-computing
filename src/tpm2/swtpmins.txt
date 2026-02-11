@@ -339,7 +339,10 @@ To decode error messages:
    tpm:handle(1):the handle is not correct for the use
   tpm2_rc_decode 0x2d5
    tpm:parameter(2):structure is the wrong size
-
+  tpm2_rc_decode 14c
+    tpm:error(1.2): unknown version 1.2 error code
+  tpm2_rc_decode 149
+  tpm2_rc_decode 0x984
 
 ----------------------------
 

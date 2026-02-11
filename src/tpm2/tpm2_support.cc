@@ -132,6 +132,9 @@ bool create_pcr_policy(local_tpm    &tpm,
            __LINE__);
     return false;
   }
+#ifdef DEBUG
+  printf("Tpm2_StartAuthSession succeeded\n");
+#endif
 
   TPM2B_DIGEST expected_digest;
   expected_digest.size = 0;
@@ -153,7 +156,6 @@ bool create_pcr_policy(local_tpm    &tpm,
     return false;
   }
 #ifdef DEBUG
-  printf("\n");
   printf("%s() line %d, PolicyGetDigest before Pcr succeeded: \n",
          __func__,
          __LINE__);
