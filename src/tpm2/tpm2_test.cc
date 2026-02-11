@@ -334,11 +334,9 @@ bool nv_test(local_tpm &tpm) {
   return true;
 }
 
-#define DEBUG
-
-bool get_cert(local_tpm &tpm, const string &file_name, string *out) {
-  string     cert;
-  TPM_HANDLE handle = 0x1c00002;
+bool define_write_read_test(local_tpm &tpm) {
+#if 0
+  TPM_HANDLE handle = 0x1000;
 
   if (!read_file_into_string(file_name, &cert)) {
     printf("%s() error, line %d, can't read cert file\n",
@@ -355,9 +353,9 @@ bool get_cert(local_tpm &tpm, const string &file_name, string *out) {
     return false;
   }
 
-#ifdef DEBUG
+#  ifdef DEBUG
   print_pcrs(tpm, num_pcrs, pcrs);
-#endif
+#  endif
 
   TPM2B_AUTH auth;
   string     authString;
@@ -366,24 +364,24 @@ bool get_cert(local_tpm &tpm, const string &file_name, string *out) {
 		   __func__, __LINE__);
     return false;
   }
-#ifdef DEBUG
+#  ifdef DEBUG
   printf("Tpm2_DefineSpace create_pcr_policy succeeds\n");
-#endif
+#  endif
 
   if (!Tpm2_UndefineSpace(tpm, TPM_RH_OWNER, handle)) {
-#ifdef DEBUG
+#  ifdef DEBUG
     printf("Tpm2_UndefineSpace fails (but that's OK usually)\n");
-#endif
+#  endif
   } else {
-#ifdef DEBUG
+#  ifdef DEBUG
   printf("Tpm2_UndefineSpace %x succeeds\n", handle);
-#endif
+#  endif
   }
 
-#ifdef DEBUG
+#  ifdef DEBUG
   printf("authstring size: %d\n", (int)authString.size());
   print_pcrs(tpm, num_pcrs, pcrs);
-#endif
+#  endif
   if (!Tpm2_DefineSpace(tpm,
                         TPM_RH_OWNER,
                         authString,
@@ -396,14 +394,21 @@ bool get_cert(local_tpm &tpm, const string &file_name, string *out) {
 		    __func__, __LINE__);
     return false;
   }
-#ifdef DEBUG
+#  ifdef DEBUG
   printf("Tpm2_DefineSpace %x succeeds\n", handle);
-#endif
+#  endif
 
   if (!write_nv_handle(tpm, handle, authString, cert)) {
     printf("%s() error, line %d, write nvram\n", __func__, __LINE__);
     return false;
   }
+#endif
+  return false;
+}
+
+bool get_cert(local_tpm &tpm, const string &file_name, string *out) {
+  string     cert;
+  TPM_HANDLE handle = 0x1c00002;
 
   if (!get_endorsement_cert(tpm, out)) {
     printf("%s() error, line %d, can't get endorsement cert\n",
@@ -411,6 +416,9 @@ bool get_cert(local_tpm &tpm, const string &file_name, string *out) {
            __LINE__);
     return false;
   }
+  printf("Cert:\n");
+  print_bytes(out->size(), (byte_t *)out->data());
+  printf("\n");
   return true;
 }
 
@@ -447,7 +455,7 @@ int main(int an, char **av) {
     return 1;
   }
 #ifdef DEBUG
-    printf("Opened tpm: %s %d\n", FLAGS_tpm_device.c_str(), tpm.tpm_fd_);
+  printf("Opened tpm: %s %d\n", FLAGS_tpm_device.c_str(), tpm.tpm_fd_);
 #endif
 
   if (FLAGS_operation == "EndorsementTest") {

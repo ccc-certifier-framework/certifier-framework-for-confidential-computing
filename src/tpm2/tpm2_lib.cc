@@ -45,6 +45,9 @@ using std::string;
 // standard buffer size
 #define MAX_SIZE_PARAMS 4096
 
+
+#define DEBUG1
+
 // ------------------------------------------------------------
 
 void reverse_byte_copy(int size, byte_t *in, byte_t *out) {
@@ -761,7 +764,7 @@ int CreatePasswordAuthArea(string &password, int size, byte_t *buf) {
   *out = 1;
   Update(1, &out, &total_size, &space_left);
 
-  //TPM2B_Auth (password)
+  // TPM2B_Auth (password)
   int n = SetPasswordData(password, size, out);
   IF_NEG_RETURN_MINUS1(n)
   Update(n, &out, &total_size, &space_left);
@@ -3241,15 +3244,14 @@ bool Tpm2_WriteNv(local_tpm       &tpm,
   return true;
 }
 
-#define DEBUG1
-bool Tpm2_DefineSpace(local_tpm& tpm,
-                 TPM_HANDLE owner,
-                 string& authString,
-                 TPM_HANDLE handle,
-                 TPMI_ALG_HASH alg,
-                 uint32_t permissions,
-                 TPM2B_DIGEST auth,
-                 uint16_t size) {
+bool Tpm2_DefineSpace(local_tpm    &tpm,
+                      TPM_HANDLE    owner,
+                      string       &authString,
+                      TPM_HANDLE    handle,
+                      TPMI_ALG_HASH alg,
+                      uint32_t      permissions,
+                      TPM2B_DIGEST  auth,
+                      uint16_t      size) {
   byte_t  commandBuf[2 * MAX_SIZE_PARAMS];
   int     size_resp = MAX_SIZE_PARAMS;
   byte_t  resp_buf[MAX_SIZE_PARAMS];
@@ -3265,7 +3267,7 @@ bool Tpm2_DefineSpace(local_tpm& tpm,
   IF_NEG_RETURN_FALSE(n);
   Update(n, &in, &size_params, &space_left);
 
-  uint16_t auth_string_size = (uint16_t) authString.size();
+  uint16_t auth_string_size = (uint16_t)authString.size();
   // size
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   change_endian16((uint16_t *)&auth_string_size, (uint16_t *)in);
@@ -3273,13 +3275,14 @@ bool Tpm2_DefineSpace(local_tpm& tpm,
   // data
   if (auth_string_size > 0) {
     IF_LESS_THAN_RETURN_FALSE(space_left, auth_string_size)
-    memcpy(in, (byte_t*)authString.data(), auth_string_size);
+    memcpy(in, (byte_t *)authString.data(), auth_string_size);
     Update(auth.size, &in, &size_params, &space_left);
   }
 
   // TPM2B_NV_PUBLIC
-  uint16_t size_nv_area = sizeof(TPM_HANDLE) + sizeof(TPMI_ALG_HASH) +
-          sizeof(uint32_t) + sizeof(uint16_t) + auth.size + sizeof(uint16_t);
+  uint16_t size_nv_area = sizeof(TPM_HANDLE) + sizeof(TPMI_ALG_HASH)
+                          + sizeof(uint32_t) + sizeof(uint16_t) + auth.size
+                          + sizeof(uint16_t);
   // nv size
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   change_endian16((uint16_t *)&size_nv_area, (uint16_t *)in);

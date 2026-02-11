@@ -10,7 +10,7 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License
-#    File: tpm2.mak
+#    File: tpm2_support.mak
 
 #ifndef CERTIFIER_ROOT
 CERTIFIER_ROOT=../..
@@ -59,12 +59,12 @@ ifndef NEW_API
 CFLAGS += -DNEW_API
 endif
 
-certifier_objs = $(O)/certifier.pb.o $(O)/certifier.o      \
+certifier_objs = $(O)/certifier.pb.o $(O)/certifier.o \
 	      $(O)/certifier_proofs.o  $(O)/support.o $(O)/simulated_enclave.o \
 	      $(O)/application_enclave.o
 
-dobj_tpm2= $(O)/tpm2_lib.o $(O)/openssl_help.o $(O)/convert.o \
-  $(O)/tpm2.pb.o $(O)/tpm2_support.o $(certifier_objs) $(O)/tpm2_test.o
+dobj_tpm2= $(certifier_objs) $(O)/tpm2.pb.o $(O)/tpm2_lib.o $(O)/openssl_help.o \
+	$(O)/convert.o $(O)/tpm2_support.o $(O)/tpm2_test.o
 
 all:	$(EXE_DIR)/tpm2_test.exe \
 
@@ -80,6 +80,14 @@ clean:
 $(EXE_DIR)/tpm2_test.exe: $(dobj_tpm2)
 	@echo "linking tpm2_test"
 	$(LINK) -o $(EXE_DIR)/tpm2_test.exe $(dobj_tpm2) $(LDFLAGS)
+
+$(O)/certifier.pb.o: $(S)/certifier.pb.cc $(CI)/certifier.pb.h
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(S)/certifier.pb.cc $(CI)/certifier.pb.h: $(CP)/certifier.proto
+	$(PROTO) --cpp_out=$(S) --proto_path $(<D) $<
+	mv $(S)/certifier.pb.h $(CI)
 
 $(O)/tpm2_lib.o: $(S)/tpm2_lib.cc
 	@echo "compiling tpm2_lib.cc"
@@ -101,16 +109,7 @@ $(O)/tpm2_test.o: $(S)/tpm2_test.cc
 	@echo "compiling tpm2_test.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/tpm2_test.o $(S)/tpm2_test.cc
 
-$(S)/tpm2.pb.cc $(S)/tpm2.pb.h: $(S)/tpm2.proto
-	$(PROTO) --cpp_out=$(S) --proto_path $(<D) $<
 $(O)/tpm2.pb.o: $(S)/tpm2.pb.cc $(S)/tpm2.pb.h
-	@echo "\ncompiling $<"
-	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
-
-$(S)/certifier.pb.cc $(CI)/certifier.pb.h: $(CP)/certifier.proto
-	$(PROTO) --cpp_out=$(S) --proto_path $(<D) $<
-	mv $(S)/certifier.pb.h $(CI)
-$(O)/certifier.pb.o: $(S)/certifier.pb.cc $(CI)/certifier.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 

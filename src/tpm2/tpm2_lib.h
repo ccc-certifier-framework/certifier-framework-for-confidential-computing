@@ -276,14 +276,14 @@ bool Tpm2_DefineSpace(local_tpm       &tpm,
                       byte_t          *authPolicy,
                       uint32_t         attributes,
                       uint16_t         size_data);
-bool Tpm2_DefineSpace(local_tpm& tpm,
-                 TPM_HANDLE owner,
-                 string& authString,
-                 TPM_HANDLE handle,
-                 TPMI_ALG_HASH alg,
-                 uint32_t permissions,
-                 TPM2B_DIGEST auth,
-                 uint16_t size);
+bool Tpm2_DefineSpace(local_tpm    &tpm,
+                      TPM_HANDLE    owner,
+                      string       &authString,
+                      TPM_HANDLE    handle,
+                      TPMI_ALG_HASH alg,
+                      uint32_t      permissions,
+                      TPM2B_DIGEST  auth,
+                      uint16_t      size);
 bool Tpm2_UndefineSpace(local_tpm       &tpm,
                         TPM_HANDLE       owner,
                         TPMI_RH_NV_INDEX index);

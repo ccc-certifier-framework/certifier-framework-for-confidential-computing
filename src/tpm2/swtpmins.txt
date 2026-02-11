@@ -300,6 +300,9 @@ swtpm_cert --type ek --pubkey myek.pem --tpm2 --out-cert ekgen.cert
 openssl rsa -pubin -in myek.pem -text -noout
 openssl x509 -inform der -in ekcert.der -pubkey  -noout | openssl rsa -pubin -text -noout
 
+tpm2_getekcertificate -T swtpm:port=2321
+tpm2_nvread -T swtpm:port=2321 -C o 0x01c00002 -o tool_ek_rsa_cert.bin
+
 --------------------------------------------------------------------------------
 
 ./tpm2_util.exe --tpm_device="/dev/tpm1" --command=GetRandom --numbytes=32

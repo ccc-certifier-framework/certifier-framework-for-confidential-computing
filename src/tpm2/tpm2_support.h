@@ -52,6 +52,7 @@ bool write_nv_slot(local_tpm &tpm, int slot, string &in);
 bool read_nv_handle(local_tpm &tpm,
                     TPM_HANDLE handle,
                     string    &authString,
+                    int        size,
                     string    *out);
 bool write_nv_handle(local_tpm &tpm,
                      TPM_HANDLE handle,
@@ -89,7 +90,8 @@ bool tpm_init(const string &device_name,
               const string &endorsement_cert_file_name,
               const string &seal_hierarchy_file_name,
               const string &quote_hierarchy_file_name,
-	      int num_pcrs, byte_t* pcrs);
+              int           num_pcrs,
+              byte_t       *pcrs);
 bool tpm_seal(string &unsealed, string *sealed);
 bool tpm_unseal(string &sealed, string *unsealed);
 bool tpm_attest(string &to_quote, string *quote);

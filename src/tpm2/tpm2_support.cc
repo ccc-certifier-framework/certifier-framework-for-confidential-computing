@@ -698,11 +698,11 @@ bool get_endorsement_cert(local_tpm &tpm, string *out) {
   // EK Certificate is at 0x01c00002 (RSA) or 0x01c0000a (ECC)
   int handle = 0x01c00002;
 
-  int    out_size = 2048;
+  int    out_size = 1016;
   byte_t out_buf[out_size];
   string authString;
 
-  if (!read_nv_handle(tpm, handle, authString, out)) {
+  if (!read_nv_handle(tpm, handle, authString, out_size, out)) {
     printf("%s() error, line %d, read_nv_handle failed\n", __func__, __LINE__);
     return false;
   }
@@ -786,8 +786,9 @@ bool nv_increment_counter(local_tpm &tpm, int slot) {
 bool read_nv_handle(local_tpm &tpm,
                     TPM_HANDLE handle,
                     string    &authString,
+                    int        size,
                     string    *out) {
-  uint16_t size_data = 2048;
+  uint16_t size_data = (uint16_t)size;
   byte_t   data_out[size_data];
 
   if (!Tpm2_ReadNv(tpm, handle, authString, &size_data, data_out)) {
@@ -798,7 +799,7 @@ bool read_nv_handle(local_tpm &tpm,
     return false;
   }
 #ifdef DEBUG
-  printf("Tpm2_ReadNv %d succeeds: ", handle);
+  printf("Tpm2_ReadNv %x succeeds: ", handle);
   print_bytes(size_data, data_out);
   printf("\n");
 #endif
@@ -831,17 +832,17 @@ bool read_nv_slot(local_tpm &tpm, int slot, string *out) {
   byte_t   data_out[size_data];
 
   // Get endorsement key handle
-  TPM_HANDLE   nv_handle = GetNvHandle(slot);
+  TPM_HANDLE nv_handle = GetNvHandle(slot);
 
 #if 0
   if (Tpm2_UndefineSpace(tpm, TPM_RH_OWNER, nv_handle)) {
-#ifdef DEBUG
+#  ifdef DEBUG
     printf("Tpm2_UndefineSpace %d succeeds\n", slot);
-#endif
+#  endif
   } else {
-#ifdef DEBUG
+#  ifdef DEBUG
     printf("Tpm2_UndefineSpace fails (but that's OK usually)\n");
-#endif
+#  endif
   }
 
   if (!Tpm2_DefineSpace(tpm,
@@ -855,9 +856,9 @@ bool read_nv_slot(local_tpm &tpm, int slot, string *out) {
     printf("%s() error, line %d, DefineSpace failed\n", __func__, __LINE__);
     return false;
   }
-#ifdef DEBUG
+#  ifdef DEBUG
   printf("Tpm2_DefineSpace %d succeeds\n", nv_handle);
-#endif
+#  endif
 #endif
 
   if (!Tpm2_ReadNv(tpm, nv_handle, ekAuth, &size_data, data_out)) {
@@ -901,7 +902,7 @@ bool write_nv_slot(local_tpm &tpm, int slot, string &in) {
   }
 #ifdef DEBUG
   else {
-  printf("Tpm2_DefineSpace %d succeeds\n", nv_handle);
+    printf("Tpm2_DefineSpace %d succeeds\n", nv_handle);
   }
 #endif
 
@@ -1387,59 +1388,63 @@ bool verify_credential(local_tpm    &tpm,
 
 //----------------------------------------------------------------------
 
-bool g_tpm_initialized = false;
-bool g_tpm_environment_initialized = false;
-local_tpm g_tpm;
-int       g_seal_key_type;
-string    g_seal_key;
-string    g_endorsement_cert;
-string    g_endorsement_cert_file_name;
-string    g_seal_hierarchy_file_name;
-string    g_quote_hierarchy_file_name;
-string    g_seal_thing;
+bool       g_tpm_initialized = false;
+bool       g_tpm_environment_initialized = false;
+local_tpm  g_tpm;
+int        g_seal_key_type;
+string     g_seal_key;
+string     g_endorsement_cert;
+string     g_endorsement_cert_file_name;
+string     g_seal_hierarchy_file_name;
+string     g_quote_hierarchy_file_name;
+string     g_seal_thing;
 TPM_HANDLE g_srk_handle;
 TPM_HANDLE g_quote_handle;
-int g_num_pcrs;
-byte_t g_pcrs[32];
+int        g_num_pcrs;
+byte_t     g_pcrs[32];
 
 bool tpm_init(const string &device_name,
               const string &endorsement_cert_file_name,
               const string &seal_hierarchy_file_name,
               const string &quote_hierarchy_file_name,
-              int num_pcrs, byte_t* pcrs) {
+              int           num_pcrs,
+              byte_t       *pcrs) {
   g_endorsement_cert_file_name = endorsement_cert_file_name;
-  g_seal_hierarchy_file_name= seal_hierarchy_file_name;
+  g_seal_hierarchy_file_name = seal_hierarchy_file_name;
   g_quote_hierarchy_file_name = quote_hierarchy_file_name;
   if (g_seal_hierarchy_file_name == "") {
-    printf("%s() error, line %d, no seal key file name\n",
-        __func__, __LINE__);
+    printf("%s() error, line %d, no seal key file name\n", __func__, __LINE__);
     return false;
   }
   if (g_quote_hierarchy_file_name == "") {
-    printf("%s() error, line %d, no seal key file name\n",
-        __func__, __LINE__);
+    printf("%s() error, line %d, no seal key file name\n", __func__, __LINE__);
     return false;
   }
   if (g_endorsement_cert_file_name == "") {
     printf("%s() error, line %d, no endorsement cert file name\n",
-        __func__, __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
 
   if (file_size(g_endorsement_cert_file_name) == -1) {
-    printf("%s() error, line %d, no endorsement cert\n",
-        __func__, __LINE__);
+    printf("%s() error, line %d, no endorsement cert\n", __func__, __LINE__);
     return false;
   }
-  if (!read_file_into_string(g_endorsement_cert_file_name, &g_endorsement_cert)) {
+  if (!read_file_into_string(g_endorsement_cert_file_name,
+                             &g_endorsement_cert)) {
     printf("%s() error, line %d, can't read endorsement cert: %s\n",
-        __func__, __LINE__, g_endorsement_cert_file_name.c_str());
+           __func__,
+           __LINE__,
+           g_endorsement_cert_file_name.c_str());
     return false;
   }
 
   if (!g_tpm.open_tpm(device_name.c_str())) {
     printf("%s() error, line %d, can't open tpm: %s\n",
-        __func__, __LINE__, device_name.c_str());
+           __func__,
+           __LINE__,
+           device_name.c_str());
     return false;
   }
 
@@ -1449,15 +1454,22 @@ bool tpm_init(const string &device_name,
     printf("Creating Seal hierarchy\n");
 #endif
     if (!create_seal_hierarchy_and_secret(g_tpm,
-            num_pcrs, pcrs, g_seal_hierarchy_file_name)) {
+                                          num_pcrs,
+                                          pcrs,
+                                          g_seal_hierarchy_file_name)) {
       printf("%s() error, line %d, can't create seal hierarchy %s\n",
-          __func__, __LINE__, g_seal_hierarchy_file_name.c_str());
+             __func__,
+             __LINE__,
+             g_seal_hierarchy_file_name.c_str());
       return false;
     }
   }
-  if (!read_file_into_string(g_endorsement_cert_file_name, &g_endorsement_cert)) {
+  if (!read_file_into_string(g_endorsement_cert_file_name,
+                             &g_endorsement_cert)) {
     printf("%s() error, line %d, can't read endorsement cert: %s\n",
-        __func__, __LINE__, g_endorsement_cert_file_name.c_str());
+           __func__,
+           __LINE__,
+           g_endorsement_cert_file_name.c_str());
     return false;
   }
 
@@ -1467,30 +1479,41 @@ bool tpm_init(const string &device_name,
     printf("Creating Quote hierarchy\n");
 #endif
     if (!create_quote_hierarchy(g_tpm,
-                   num_pcrs, pcrs, g_quote_hierarchy_file_name)) {
+                                num_pcrs,
+                                pcrs,
+                                g_quote_hierarchy_file_name)) {
       printf("%s() error, line %d, can't create quote hierarchy %s\n",
-          __func__, __LINE__, g_quote_hierarchy_file_name.c_str());
+             __func__,
+             __LINE__,
+             g_quote_hierarchy_file_name.c_str());
       return false;
     }
   }
 
   if (!recover_sealing_secret(g_tpm,
-                            num_pcrs,
-                            pcrs,
-                            g_seal_hierarchy_file_name,
-                            &g_seal_thing)) {
-      printf("%s() error, line %d, can't recover seal hierarchy %s\n",
-          __func__, __LINE__, g_seal_hierarchy_file_name.c_str());
-      return false;
+                              num_pcrs,
+                              pcrs,
+                              g_seal_hierarchy_file_name,
+                              &g_seal_thing)) {
+    printf("%s() error, line %d, can't recover seal hierarchy %s\n",
+           __func__,
+           __LINE__,
+           g_seal_hierarchy_file_name.c_str());
+    return false;
   }
   if (!recover_and_load_quote_hierarchy(g_tpm,
-          num_pcrs, pcrs, g_quote_hierarchy_file_name,
-          &g_srk_handle, &g_quote_handle)) {
-      printf("%s() error, line %d, can't recover quote hierarchy %s\n",
-          __func__, __LINE__, g_quote_hierarchy_file_name.c_str());
-      return false;
+                                        num_pcrs,
+                                        pcrs,
+                                        g_quote_hierarchy_file_name,
+                                        &g_srk_handle,
+                                        &g_quote_handle)) {
+    printf("%s() error, line %d, can't recover quote hierarchy %s\n",
+           __func__,
+           __LINE__,
+           g_quote_hierarchy_file_name.c_str());
+    return false;
   }
-  g_num_pcrs= num_pcrs;
+  g_num_pcrs = num_pcrs;
   memcpy(g_pcrs, pcrs, num_pcrs);
   g_tpm_initialized = true;
   g_tpm_environment_initialized = true;
@@ -1501,31 +1524,30 @@ bool tpm_seal(string &unsealed, string *sealed) {
   // Initialized?
   if (!g_tpm_environment_initialized) {
     printf("%s() error, line %d, environment not initialized\n",
-          __func__, __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
 
   // Encrypt
   byte iv[32];
-  int out_size = unsealed.size() + 128;
+  int  out_size = unsealed.size() + 128;
   byte out[out_size];
 
   if (!get_random(32 * NBITSINBYTE, iv)) {
-    printf("%s() error, line %d, gant get iv\n",
-          __func__, __LINE__);
+    printf("%s() error, line %d, gant get iv\n", __func__, __LINE__);
     return false;
   }
-  if (!aes_256_gcm_encrypt((byte_t*)unsealed.data(),
-                         (int)unsealed.size(),
-                         (byte_t*)g_seal_thing.data(),
-                         iv, 
-                         out,
-                         &out_size)) {
-    printf("%s() error, line %d, encrypt failure\n",
-          __func__, __LINE__);
+  if (!aes_256_gcm_encrypt((byte_t *)unsealed.data(),
+                           (int)unsealed.size(),
+                           (byte_t *)g_seal_thing.data(),
+                           iv,
+                           out,
+                           &out_size)) {
+    printf("%s() error, line %d, encrypt failure\n", __func__, __LINE__);
     return false;
   }
-  sealed->assign((char*)out, out_size);
+  sealed->assign((char *)out, out_size);
   return true;
 }
 
@@ -1533,23 +1555,23 @@ bool tpm_unseal(string &sealed, string *unsealed) {
   // Initialized?
   if (!g_tpm_environment_initialized) {
     printf("%s() error, line %d, environment not initialized\n",
-          __func__, __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
 
   // Decrypt
-  int out_size = sealed.size() + 128;
+  int  out_size = sealed.size() + 128;
   byte out[out_size];
-  if (!aes_256_gcm_decrypt((byte_t*)sealed.data(),
-                         (int)sealed.size(),
-                         (byte_t*)g_seal_thing.data(),
-                         out,
-                         &out_size)) {
-    printf("%s() error, line %d, can't decrypt\n",
-          __func__, __LINE__);
+  if (!aes_256_gcm_decrypt((byte_t *)sealed.data(),
+                           (int)sealed.size(),
+                           (byte_t *)g_seal_thing.data(),
+                           out,
+                           &out_size)) {
+    printf("%s() error, line %d, can't decrypt\n", __func__, __LINE__);
     return false;
   }
-  unsealed->assign((char*)out, out_size);
+  unsealed->assign((char *)out, out_size);
   return true;
 }
 
@@ -1557,7 +1579,8 @@ bool tpm_attest(string &to_quote, string *quote) {
   // Initialized?
   if (!g_tpm_environment_initialized) {
     printf("%s() error, line %d, environment not initialized\n",
-          __func__, __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
 
@@ -1568,8 +1591,8 @@ bool tpm_attest(string &to_quote, string *quote) {
   // optional string signing_algorithm         = 4;
   // optional bytes signature                  = 5;
   tpm_attestation_message tpm_attest_msg;
-  //optional bytes what_was_said              = 1;
-  //optional bytes reported_attestation       = 2;
+  // optional bytes what_was_said              = 1;
+  // optional bytes reported_attestation       = 2;
 
   // hash what to say
   /*
@@ -1590,14 +1613,13 @@ bool tpm_attest(string &to_quote, string *quote) {
   */
 
   if (!do_quote(g_tpm,
-              g_srk_handle,
-              g_num_pcrs,
-              g_pcrs,
-              g_quote_handle,
-              to_quote,
-              quote)) {
-    printf("%s() error, line %d, quote failed\n",
-          __func__, __LINE__);
+                g_srk_handle,
+                g_num_pcrs,
+                g_pcrs,
+                g_quote_handle,
+                to_quote,
+                quote)) {
+    printf("%s() error, line %d, quote failed\n", __func__, __LINE__);
     return false;
   }
   return true;
