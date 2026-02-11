@@ -1399,6 +1399,8 @@ string    g_quote_hierarchy_file_name;
 string    g_seal_thing;
 TPM_HANDLE g_srk_handle;
 TPM_HANDLE g_quote_handle;
+int g_num_pcrs;
+byte_t g_pcrs[32];
 
 bool tpm_init(const string &device_name,
               const string &endorsement_cert_file_name,
@@ -1488,6 +1490,8 @@ bool tpm_init(const string &device_name,
           __func__, __LINE__, g_quote_hierarchy_file_name.c_str());
       return false;
   }
+  g_num_pcrs= num_pcrs;
+  memcpy(g_pcrs, pcrs, num_pcrs);
   g_tpm_initialized = true;
   g_tpm_environment_initialized = true;
   return true;
@@ -1550,7 +1554,53 @@ bool tpm_unseal(string &sealed, string *unsealed) {
 }
 
 bool tpm_attest(string &to_quote, string *quote) {
-  return false;
+  // Initialized?
+  if (!g_tpm_environment_initialized) {
+    printf("%s() error, line %d, environment not initialized\n",
+          __func__, __LINE__);
+    return false;
+  }
+
+  signed_report tpm_report;
+  // optional string report_format             = 1;
+  // optional bytes report                     = 2;
+  // optional key_message signing_key          = 3;
+  // optional string signing_algorithm         = 4;
+  // optional bytes signature                  = 5;
+  tpm_attestation_message tpm_attest_msg;
+  //optional bytes what_was_said              = 1;
+  //optional bytes reported_attestation       = 2;
+
+  // hash what to say
+  /*
+  int  hash_len = 48;
+  byte hash[hash_len];
+
+  sev_attestation_message the_attestation;
+  the_attestation.set_what_was_said(what_to_say, what_to_say_size);
+
+  if (!digest_message(Digest_method_sha_384,
+                      what_to_say,
+                      what_to_say_size,
+                      hash,
+                      hash_len)) {
+    printf("digest_message failed\n");
+    return false;
+  }
+  */
+
+  if (!do_quote(g_tpm,
+              g_srk_handle,
+              g_num_pcrs,
+              g_pcrs,
+              g_quote_handle,
+              to_quote,
+              quote)) {
+    printf("%s() error, line %d, quote failed\n",
+          __func__, __LINE__);
+    return false;
+  }
+  return true;
 }
 
 bool tpm_verify_attest(string &quote) {

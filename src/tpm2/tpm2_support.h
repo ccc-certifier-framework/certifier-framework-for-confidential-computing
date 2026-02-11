@@ -19,6 +19,7 @@
 #include "certifier.h"
 #include "support.h"
 #include "tpm2_lib.h"
+#include "certifier.pb.h"
 #include <string>
 using std::string;
 using namespace certifier::framework;

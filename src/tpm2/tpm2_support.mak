@@ -73,6 +73,9 @@ clean:
 	rm $(O)/*.o
 	@echo "removing executable file"
 	rm $(EXE_DIR)/tpm2_test.exe
+	@echo "removing protobuf files"
+	rm $(CI)/certifier.pb.h
+	rm $(s)/certifier.pb.cc
 
 $(EXE_DIR)/tpm2_test.exe: $(dobj_tpm2)
 	@echo "linking tpm2_test"
@@ -90,7 +93,7 @@ $(O)/openssl_help.o: $(S)/openssl_help.cc
 	@echo "compiling openssl_help.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/openssl_help.o $(S)/openssl_help.cc
 
-$(O)/tpm2_support.o: $(S)/tpm2_support.cc
+$(O)/tpm2_support.o: $(S)/tpm2_support.cc $(S)/certifier.pb.cc $(S)/tpm2.pb.cc
 	@echo "compiling tpm2_support.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/tpm2_support.o $(S)/tpm2_support.cc
 
