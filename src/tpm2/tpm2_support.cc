@@ -698,7 +698,32 @@ bool get_endorsement_cert(local_tpm &tpm, string *out) {
   // EK Certificate is at 0x01c00002 (RSA) or 0x01c0000a (ECC)
   int handle = 0x01c00002;
 
-  int    out_size = 1016;
+  TPM_HANDLE slot_index;
+  uint32_t   slot_attributes;
+  uint16_t   slot_size;
+  TPM_ALG_ID slot_alg;
+  string     slot_policy;
+  if (!Tpm2_ReadNvPublic(tpm,
+                         handle,
+                         &slot_index,
+                         &slot_alg,
+                         &slot_attributes,
+                         &slot_policy,
+                         &slot_size)) {
+    printf("%s() error, line %d, ReadNvPublic failed\n", __func__, __LINE__);
+    return false;
+  }
+#ifdef DEBUG1
+  printf("reported handle: %08x\n", slot_index);
+  printf("reported alg: %04x\n", slot_alg);
+  printf("reported slot size : %d\n", (int)slot_size);
+  printf("reported policy (%d):\n", (int)slot_policy.size());
+  print_bytes((int)slot_policy.size(), (byte_t *)slot_policy.data());
+  printf("\n");
+  printf("\n");
+#endif
+
+  int    out_size = (int)slot_size;
   byte_t out_buf[out_size];
   string authString;
 
@@ -798,7 +823,7 @@ bool read_nv_handle(local_tpm &tpm,
            handle);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG1
   printf("Tpm2_ReadNv %x succeeds: ", handle);
   print_bytes(size_data, data_out);
   printf("\n");
@@ -834,38 +859,11 @@ bool read_nv_slot(local_tpm &tpm, int slot, string *out) {
   // Get endorsement key handle
   TPM_HANDLE nv_handle = GetNvHandle(slot);
 
-#if 0
-  if (Tpm2_UndefineSpace(tpm, TPM_RH_OWNER, nv_handle)) {
-#  ifdef DEBUG
-    printf("Tpm2_UndefineSpace %d succeeds\n", slot);
-#  endif
-  } else {
-#  ifdef DEBUG
-    printf("Tpm2_UndefineSpace fails (but that's OK usually)\n");
-#  endif
-  }
-
-  if (!Tpm2_DefineSpace(tpm,
-                        TPM_RH_OWNER,
-                        nv_handle,
-                        ekAuth,
-                        0,
-                        nullptr,
-                        NV_AUTHWRITE | NV_AUTHREAD,
-                        size_data)) {
-    printf("%s() error, line %d, DefineSpace failed\n", __func__, __LINE__);
-    return false;
-  }
-#  ifdef DEBUG
-  printf("Tpm2_DefineSpace %d succeeds\n", nv_handle);
-#  endif
-#endif
-
   if (!Tpm2_ReadNv(tpm, nv_handle, ekAuth, &size_data, data_out)) {
     printf("%s() error, line %d, ReadNv failed\n", __func__, __LINE__);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG1
   printf("Tpm2_ReadNv %d succeeds: ", nv_handle);
   print_bytes(size_data, data_out);
   printf("\n");

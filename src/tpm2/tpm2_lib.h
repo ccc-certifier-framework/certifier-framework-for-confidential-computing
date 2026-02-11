@@ -258,6 +258,13 @@ bool Tpm2_FlushContext(local_tpm &tpm, TPM_HANDLE handle);
 bool Tpm2_IncrementNv(local_tpm       &tpm,
                       TPMI_RH_NV_INDEX index,
                       string          &authString);
+bool Tpm2_ReadNvPublic(local_tpm  &tpm,
+                       TPM_HANDLE  handle,
+                       uint32_t   *index,
+                       TPM_ALG_ID *alg,
+                       uint32_t   *attributes,
+                       string     *policy,
+                       uint16_t   *slot_size);
 bool Tpm2_ReadNv(local_tpm       &tpm,
                  TPMI_RH_NV_INDEX index,
                  string          &authString,

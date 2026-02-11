@@ -2098,6 +2098,98 @@ bool get_public_out(uint16_t size_in, byte_t *input, TPM2B_PUBLIC *outPublic) {
   return true;
 }
 
+#define DEBUG1
+bool Tpm2_ReadNvPublic(local_tpm  &tpm,
+                       TPM_HANDLE  handle,
+                       uint32_t   *index,
+                       TPM_ALG_ID *alg,
+                       uint32_t   *attributes,
+                       string     *policy,
+                       uint16_t   *slot_size) {
+  byte_t commandBuf[2 * MAX_SIZE_PARAMS];
+  memset(commandBuf, 0, MAX_SIZE_PARAMS);
+
+  int     size_resp = MAX_SIZE_PARAMS;
+  byte_t  resp_buf[MAX_SIZE_PARAMS];
+  int     size_params = 0;
+  byte_t  params_buf[MAX_SIZE_PARAMS];
+  byte_t *in = params_buf;
+  int     space_left = MAX_SIZE_PARAMS;
+  int     n;
+
+  memset(resp_buf, 0, MAX_SIZE_PARAMS);
+  memset(params_buf, 0, MAX_SIZE_PARAMS);
+
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint32_t))
+  change_endian32((uint32_t *)&handle, (uint32_t *)in);
+  Update(sizeof(uint32_t), &in, &size_params, &space_left);
+
+  int in_size = Tpm2_SetCommand(TPM_ST_NO_SESSIONS,
+                                TPM_CC_NV_ReadPublic,
+                                commandBuf,
+                                size_params,
+                                params_buf);
+#ifdef DEBUG
+  print_command("ReadNvPublic", in_size, commandBuf);
+#endif
+  if (!tpm.send_command(in_size, commandBuf)) {
+    printf("%s() error, line %d, send_command failed\n", __func__, __LINE__);
+    return false;
+  }
+  if (!tpm.get_response(&size_resp, resp_buf)) {
+    printf("%s() error, line %d, get_response failed\n", __func__, __LINE__);
+    return false;
+  }
+  uint16_t cap = 0;
+  uint32_t responseSize;
+  uint32_t responseCode;
+  Tpm2_InterpretResponse(size_resp,
+                         resp_buf,
+                         &cap,
+                         &responseSize,
+                         &responseCode);
+#ifdef DEBUG
+  print_response("ReadNvPublic", cap, responseSize, responseCode, resp_buf);
+#else
+  if (responseCode != 0)
+    printf("Response code: %x\n", responseCode);
+#endif
+  if (responseCode != TPM_RC_SUCCESS)
+    return false;
+  byte_t *out = resp_buf + sizeof(TPM_RESPONSE);
+
+  // Don't know what first two bytes are
+  out += 2;
+  // handle
+  change_endian32((uint32_t *)out, (uint32_t *)index);
+  out += 4;
+
+  // alg
+  change_endian16((uint16_t *)out, (uint16_t *)alg);
+  out += 2;
+
+  // attributes
+  change_endian32((uint32_t *)out, (uint32_t *)index);
+  out += 4;
+
+  // Don't know what these two bytes are
+  out += 2;
+
+  // slot size
+  change_endian16((uint16_t *)out, (uint16_t *)slot_size);
+  out += 2;
+
+  // policy
+  uint16_t p_size;
+  change_endian16((uint16_t *)out, (uint16_t *)&p_size);
+  out += 2;
+
+  // policy
+  policy->assign((char *)out, (int)p_size);
+
+  return true;
+}
+
 bool Tpm2_ReadPublic(local_tpm    &tpm,
                      TPM_HANDLE    handle,
                      uint16_t     *pub_blob_size,
