@@ -355,6 +355,10 @@ bool get_cert(local_tpm &tpm, const string &file_name, string *out) {
     return false;
   }
 
+#ifdef DEBUG
+  print_pcrs(tpm, num_pcrs, pcrs);
+#endif
+
   TPM2B_AUTH auth;
   string     authString;
   if (!create_pcr_policy(tpm, num_pcrs, pcrs, &auth)) {
@@ -378,6 +382,7 @@ bool get_cert(local_tpm &tpm, const string &file_name, string *out) {
 
 #ifdef DEBUG
   printf("authstring size: %d\n", (int)authString.size());
+  print_pcrs(tpm, num_pcrs, pcrs);
 #endif
   if (!Tpm2_DefineSpace(tpm,
                         TPM_RH_OWNER,

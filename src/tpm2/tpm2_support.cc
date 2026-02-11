@@ -72,9 +72,9 @@ bool print_pcrs(local_tpm &tpm, int num_pcrs, byte *pcrs) {
     printf("%s() error, line %d, Tpm2_ReadPcrs failed\n", __func__, __LINE__);
     return false;
   }
-  printf("Tpm2_ReadPcrssucceeded %d entries\n", pcrSelectOut.count);
+  printf("Tpm2_ReadPcrs succeeded %d entries\n", pcrSelectOut.count);
   for (int i = 0; i < (int)pcrSelectOut.count; i++) {
-    printf("  hash: %d, size: %d, ",
+    printf("  hash: %04x, size: %d, ",
            pcrSelectOut.pcrSelections[i].hash,
            pcrSelectOut.pcrSelections[i].sizeofSelect);
     printf("mask: ");
@@ -831,10 +831,9 @@ bool read_nv_slot(local_tpm &tpm, int slot, string *out) {
   byte_t   data_out[size_data];
 
   // Get endorsement key handle
-  TPM_HANDLE   ek_handle;
-  TPM2B_PUBLIC pub_out;
   TPM_HANDLE   nv_handle = GetNvHandle(slot);
 
+#if 0
   if (Tpm2_UndefineSpace(tpm, TPM_RH_OWNER, nv_handle)) {
 #ifdef DEBUG
     printf("Tpm2_UndefineSpace %d succeeds\n", slot);
@@ -858,6 +857,7 @@ bool read_nv_slot(local_tpm &tpm, int slot, string *out) {
   }
 #ifdef DEBUG
   printf("Tpm2_DefineSpace %d succeeds\n", nv_handle);
+#endif
 #endif
 
   if (!Tpm2_ReadNv(tpm, nv_handle, ekAuth, &size_data, data_out)) {
@@ -900,7 +900,9 @@ bool write_nv_slot(local_tpm &tpm, int slot, string &in) {
     return false;
   }
 #ifdef DEBUG
+  else {
   printf("Tpm2_DefineSpace %d succeeds\n", nv_handle);
+  }
 #endif
 
   if (!Tpm2_WriteNv(tpm,
