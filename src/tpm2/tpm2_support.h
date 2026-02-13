@@ -82,7 +82,8 @@ bool do_quote(local_tpm  &tpm,
               byte_t     *pcrs,
               TPM_HANDLE &quote_handle,
               string     &to_quote,
-              string     *quote_out);
+              string     *quoted,
+              string     *signature);
 bool verify_credential(local_tpm    &tpm,
                        const string &to_quote,
                        const string &quote);
@@ -94,7 +95,10 @@ bool tpm_init(const string &device_name,
               byte_t       *pcrs);
 bool tpm_seal(string &unsealed, string *sealed);
 bool tpm_unseal(string &sealed, string *unsealed);
-bool tpm_attest(string &to_quote, string *quote);
-bool tpm_verify_attest(string &quote);
+bool tpm_attest(string &to_quote, string *quoted, string *signature);
+bool tpm_verify_attest(string &cert,
+                       string &to_quote,
+                       string &quoted,
+                       string &signature);
 
 #endif

@@ -1265,13 +1265,14 @@ bool do_quote(local_tpm  &tpm,
               byte_t     *pcrs,
               TPM_HANDLE &quote_handle,
               string     &to_quote,
-              string     *quote_out) {
+              string     *quoted,
+              string     *signature) {
 
   TPML_PCR_SELECTION pcrSelect;
   TPMT_SIG_SCHEME    scheme;
   string             quoteAuth;
   int                quote_size = 2048;
-  byte_t             quoted[quote_size];
+  byte_t             quoted_buf[quote_size];
 
   memset((void *)&pcrSelect, 0, sizeof(TPML_PCR_SELECTION));
 
@@ -1292,16 +1293,18 @@ bool do_quote(local_tpm  &tpm,
                   TPM_ALG_RSA,
                   TPM_ALG_SHA256,
                   &quote_size,
-                  quoted,
+                  quoted_buf,
                   &sig_size,
                   sig)) {
     printf("%s() error, line %d, quote failed\n", __func__, __LINE__);
     return false;
   }
-  quote_out->assign((char *)sig, sig_size);
+  quoted->assign((char *)quoted_buf, quote_size);
+  signature->assign((char *)sig, sig_size);
+
 #ifdef DEBUG
   printf("Quote succeeded, quoted (%d): ", quote_size);
-  print_bytes(quote_size, quoted);
+  print_bytes(quote_size, quoted_buf);
   printf("\n");
   printf("Sig (%d): ", sig_size);
   print_bytes(sig_size, sig);
@@ -1573,7 +1576,7 @@ bool tpm_unseal(string &sealed, string *unsealed) {
   return true;
 }
 
-bool tpm_attest(string &to_quote, string *quote) {
+bool tpm_attest(string &to_quote, string *quoted, string *signature) {
   // Initialized?
   if (!g_tpm_environment_initialized) {
     printf("%s() error, line %d, environment not initialized\n",
@@ -1616,14 +1619,18 @@ bool tpm_attest(string &to_quote, string *quote) {
                 g_pcrs,
                 g_quote_handle,
                 to_quote,
-                quote)) {
+                quoted,
+                signature)) {
     printf("%s() error, line %d, quote failed\n", __func__, __LINE__);
     return false;
   }
   return true;
 }
 
-bool tpm_verify_attest(string &quote) {
+bool tpm_verify_attest(string &cert,
+                       string &to_quote,
+                       string &quoted,
+                       string &signature) {
   return false;
 }
 
