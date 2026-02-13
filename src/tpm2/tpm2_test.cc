@@ -219,18 +219,78 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
     Tpm2_FlushContext(tpm, srk_handle);
     return false;
   }
-#ifdef DEBUG
-  printf("do_quote:\n");
-  printf("to_quote:\n");
-  print_bytes((int)to_quote.size(), (byte_t *)to_quote.data());
+  printf("do_quote succeeded\n");
+
+  TPM2B_PUBLIC pub_out;
+  TPM2B_NAME   pub_name;
+  TPM2B_NAME   qualified_pub_name;
+  uint16_t     pub_blob_size = 4096;
+  byte_t       pub_blob[pub_blob_size];
+  if (!Tpm2_ReadPublic(tpm,
+                       quote_handle,
+                       &pub_blob_size,
+                       pub_blob,
+                       &pub_out,
+                       &pub_name,
+                       &qualified_pub_name)) {
+    printf("%s() error, line %d, ReadPublic failed\n", __func__, __LINE__);
+    Tpm2_FlushContext(tpm, quote_handle);
+    Tpm2_FlushContext(tpm, srk_handle);
+    return false;
+  } else {
+    printf("ReadPublic quote key succeeded\n");
+  }
+#if 0
+  printf("\nQuote Key\n");
+  printf("  Pubout size: %d\n", pub_out.size);
+  printf("  Type: %d\n", pub_out.publicArea.type);
+  printf("  Alg name: %x\n", pub_out.publicArea.nameAlg);
+  printf("  Scheme: %d\n", pub_out.publicArea.parameters.rsaDetail.scheme.scheme);
+  printf("  Modulus (%d):\n", (int)pub_out.publicArea.unique.rsa.size);
+  print_bytes((int)pub_out.publicArea.unique.rsa.size,
+              (byte_t *)pub_out.publicArea.unique.rsa.buffer);
   printf("\n");
-  printf("quoted:\n");
-  print_bytes((int)quoted.size(), (byte_t *)quoted.data());
-  printf("\n");
-  printf("signature:\n");
-  print_bytes((int)signature.size(), (byte_t *)signature.data());
+  printf("  Exponent: %d\n", pub_out.publicArea.parameters.rsaDetail.exponent);
   printf("\n");
 #endif
+
+  key_message quote_key;
+
+  int n = (int)pub_out.publicArea.unique.rsa.size;
+  if (n == 256) {
+    quote_key.set_key_type(Enc_method_rsa_2048_public);
+  } else if (n == 128) {
+    quote_key.set_key_type(Enc_method_rsa_1024_public);
+  } else if (n == 512) {
+    quote_key.set_key_type(Enc_method_rsa_4096_public);
+  } else if (n == 384) {
+    quote_key.set_key_type(Enc_method_rsa_3072_public);
+  } else {
+    printf("%s() error, line: %d, bad modulus size failed\n",
+           __func__,
+           __LINE__);
+    Tpm2_FlushContext(tpm, quote_handle);
+    Tpm2_FlushContext(tpm, srk_handle);
+    return false;
+  }
+  rsa_message *rsa = new (rsa_message);
+  quote_key.set_allocated_rsa_key(rsa);
+
+  quote_key.set_key_name("quote-key-tpm");
+  quote_key.set_key_format("vse-key");
+  rsa->set_public_modulus((byte_t *)pub_out.publicArea.unique.rsa.buffer, n);
+  rsa->set_public_exponent(
+      (byte_t *)&pub_out.publicArea.parameters.rsaDetail.exponent,
+      4);
+  print_key(quote_key);
+  printf("\n");
+
+  if (!tpm_verify_attest(quote_key, to_quote, quoted, signature)) {
+    printf("%s() error, line: %d, Cant verify quote\n", __func__, __LINE__);
+    Tpm2_FlushContext(tpm, quote_handle);
+    Tpm2_FlushContext(tpm, srk_handle);
+    return true;
+  }
 
   // Make/Activate Credential
   // Verify it
@@ -359,7 +419,7 @@ bool define_write_read_test(local_tpm &tpm) {
 
   if (!read_file_into_string(file_name, &cert)) {
     printf("%s() error, line %d, can't read cert file\n",
-	   __func__, __LINE__);
+           __func__, __LINE__);
     return false;
   }
 
@@ -368,7 +428,7 @@ bool define_write_read_test(local_tpm &tpm) {
   byte_t pcrs[1] = {7};
   if (!extend_pcrs(tpm, 7)) {
     printf("%s() error, line %d, extend_pcrs failed\n",
-		    __func__, __LINE__);
+                    __func__, __LINE__);
     return false;
   }
 
@@ -380,7 +440,7 @@ bool define_write_read_test(local_tpm &tpm) {
   string     authString;
   if (!create_pcr_policy(tpm, num_pcrs, pcrs, &auth)) {
     printf("%s() error, line %d, create_pcr_policy failed\n",
-		   __func__, __LINE__);
+                   __func__, __LINE__);
     return false;
   }
 #  ifdef DEBUG
@@ -410,7 +470,7 @@ bool define_write_read_test(local_tpm &tpm) {
                         auth,
                         (uint16_t)cert.size())) {
     printf("%s() error, line %d, DefineSpace failed\n",
-		    __func__, __LINE__);
+                    __func__, __LINE__);
     return false;
   }
 #  ifdef DEBUG

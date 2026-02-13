@@ -1585,6 +1585,8 @@ bool tpm_attest(string &to_quote, string *quoted, string *signature) {
     return false;
   }
 
+#if 0
+  // may be needed later
   signed_report tpm_report;
   // optional string report_format             = 1;
   // optional bytes report                     = 2;
@@ -1612,6 +1614,7 @@ bool tpm_attest(string &to_quote, string *quoted, string *signature) {
     return false;
   }
   */
+#endif
 
   if (!do_quote(g_tpm,
                 g_srk_handle,
@@ -1624,6 +1627,48 @@ bool tpm_attest(string &to_quote, string *quoted, string *signature) {
     printf("%s() error, line %d, quote failed\n", __func__, __LINE__);
     return false;
   }
+  return true;
+}
+
+bool decode_quoted(int size_buf, byte_t *buf) {
+  /*
+   * magic bytes: ff544347
+   * type: 8018
+   * name:
+   * 0022000bb9cdfa540244e908bddf6fae8d9f242e381fe6b6551b9c38155191ef6a685dd7
+   * extra data size: 0011 (to quote)
+   * extra data: 4920616d206265696e672071756f746564
+   * clock info: 0000000000d538933295cbbda8a9dd83013a64b94700320b2500 safe: 00
+   * count: 0001
+   *  hash: 000b
+   *  size of select: 03
+   *  select: 800000
+   *  digest size: 0014 (a sha1 hash)
+   *  pcrdigest: 42b189601aa3424d8d5b946d43fe32de37c192f0
+   */
+  return true;
+}
+
+bool tpm_verify_attest(key_message &quote_key,
+                       string      &to_quote,
+                       string      &quoted,
+                       string      &signature) {
+#ifdef DEBUG
+  printf("tpm_verify_attest:\n");
+  print_key(quote_key);
+  printf("\n");
+
+  printf("to_quote: ");
+  print_bytes((int)to_quote.size(), (byte_t *)to_quote.data());
+  printf("\n");
+  printf("quoted: ");
+  print_bytes((int)quoted.size(), (byte_t *)quoted.data());
+  printf("\n");
+  printf("signature: ");
+  print_bytes((int)signature.size(), (byte_t *)signature.data());
+  printf("\n");
+#endif
+
   return true;
 }
 
