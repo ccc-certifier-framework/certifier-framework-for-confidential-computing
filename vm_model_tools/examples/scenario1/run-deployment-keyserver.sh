@@ -17,7 +17,11 @@ source ./arg-processing.inc
 # and transmit existing secrets. Secrets are stored in the (deployment)
 # cryptstore.
 
-# ------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------
+
+echo ""
+echo "run-deployment-key-server.sh"
+echo ""
 
 echo "Processing arguments"
 process-args

@@ -150,7 +150,11 @@ function do-make-policy() {
   echo "do-make-policy done"
 }
 
-# ---------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+
+echo ""
+echo "build-policy.sh"
+echo ""
 
 echo "Processing arguments"
 process-args
@@ -161,4 +165,6 @@ if [[ $VERBOSE -eq 1 ]]; then
 fi
 
 do-make-policy
+echo ""
+echo "build-policy.sh done"
 echo ""

@@ -34,7 +34,7 @@ subordinate scripts employ a number of shell variables.   It's a good idea to
 define the first two in the shell you use by doing the following:
 
 ```shell
-    export CERTIFIER_ROOT=~/src/github.com//ccc-certifier-framework/certifier-framework-for-confidential-computing
+    export CERTIFIER_ROOT=~/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing
     export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
 ```
 

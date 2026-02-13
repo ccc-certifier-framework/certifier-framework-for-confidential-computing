@@ -13,8 +13,12 @@ source ./arg-processing.inc
 # a secret previously stored.  Again, this happend over an http API mediated
 # secure channel establised using certifier credentials.
 
-# ------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
 
+
+echo ""
+echo "obtain-application-secrets.sh"
+echo ""
 
 echo "Processing arguments"
 process-args

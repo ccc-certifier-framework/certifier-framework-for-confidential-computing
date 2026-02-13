@@ -64,6 +64,11 @@ function do-copy-files() {
 	echo " "
 }
 
+
+echo ""
+echo "copy-files.sh"
+echo ""
+
 echo "Processing arguments"
 process-args
 echo "Processed arguments"

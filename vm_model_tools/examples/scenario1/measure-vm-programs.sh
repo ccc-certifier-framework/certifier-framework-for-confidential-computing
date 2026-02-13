@@ -13,7 +13,7 @@ source ./arg-processing.inc
 # sev-snp-measure tool.
 # This script is currently incomplete and untested.
 
-# ------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------
 
 
 function do-fresh() {
@@ -55,6 +55,10 @@ function do-measure-vm() {
 	echo "vm measured"
 	echo " "
 }
+
+echo ""
+echo "measure-vm-programs.sh"
+echo ""
 
 echo "Processing arguments - $*"
 process-args

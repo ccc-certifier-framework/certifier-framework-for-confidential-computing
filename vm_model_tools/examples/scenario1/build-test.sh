@@ -152,6 +152,10 @@ function do-run() {
 
 # ---------------------------------------------------------------------------------
 
+echo ""
+echo "build-test.sh"
+echo ""
+
 echo "Processing arguments"
 process-args
 echo "Arguments processed"

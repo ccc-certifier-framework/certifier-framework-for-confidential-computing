@@ -13,8 +13,12 @@ source ./arg-processing.inc
 # used to build the VM.
 # This script is currently incomplete and untested.
 
-# ------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------
 
+
+echo ""
+echo "copy-vm-files.sh"
+echo ""
 
 function do-copy-vm-files() {
 	echo " "

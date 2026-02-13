@@ -60,7 +60,7 @@ DEFINE_string(symmetric_key_algorithm,
               Enc_method_aes_256_cbc_hmac_sha256,
               "symmetric algorithm");
 
-DEFINE_string(data_dir, "./cf_data", "supporting file directory");
+DEFINE_string(data_dir, "./", "supporting file directory");
 DEFINE_string(input_format, "cryptstore-entry", "input format");
 DEFINE_string(output_format, "cryptstore-entry", "output format");
 DEFINE_string(input_file, "client.in", "input file");
@@ -83,25 +83,27 @@ DEFINE_string(action, "retrieve", "retrieve or store");
 DEFINE_int32(print_level, 1, "print level");
 
 DEFINE_string(ark_cert_file,
-              "./service/ark_cert.der",
+              "ark_cert.der",
               "machine ark certificate location");
 DEFINE_string(ask_cert_file,
-              "./service/ask_cert.der",
+              "ask_cert.der",
               "machine ask certificate location");
 DEFINE_string(vcek_cert_file,
-              "./service/vcek_cert.der",
+              "vcek_cert.der",
               "machine vcek certificate location");
 
 // For simulated-enclave
 DEFINE_string(attest_key_file,
-              "./cf_data/attest_key_file.bin",
+              "attest_key_file.bin",
               "simulated attestation key");
 DEFINE_string(measurement_file,
-              "./cf_data/cf_utility.measurement",
+              "cf_utility.measurement",
               "simulated enclave measurement");
 DEFINE_string(platform_attest_endorsement_file,
-              "./cf_data/platform_attest_endorsement.bin",
+              "platform_attest_endorsement.bin",
               "platform endorsement");
+
+const string sub_directory_name("cf_data/");
 
 // -------------------------------------------------------------------------
 
@@ -153,19 +155,24 @@ bool get_simulated_enclave_parameters(string **s, int *n) {
   }
   *s = args;
 
-  if (!read_file_into_string(FLAGS_attest_key_file, &args[0])) {
+  if (!read_file_into_string(
+          FLAGS_data_dir + sub_directory_name + FLAGS_attest_key_file,
+          &args[0])) {
     printf("%s() error, line %d, Can't read attest file\n", __func__, __LINE__);
     goto err;
   }
 
-  if (!read_file_into_string(FLAGS_measurement_file, &args[1])) {
+  if (!read_file_into_string(
+          FLAGS_data_dir + sub_directory_name + FLAGS_measurement_file,
+          &args[1])) {
     printf("%s() error, line %d, Can't read measurement file\n",
            __func__,
            __LINE__);
     goto err;
   }
 
-  if (!read_file_into_string(FLAGS_platform_attest_endorsement_file,
+  if (!read_file_into_string(FLAGS_data_dir + sub_directory_name
+                                 + FLAGS_platform_attest_endorsement_file,
                              &args[2])) {
     printf("%s() error, line %d, Can't read endorsement file\n",
            __func__,
@@ -190,19 +197,25 @@ bool get_sev_enclave_parameters(string **s, int *n) {
   }
   *s = args;
 
-  if (!read_file_into_string(FLAGS_data_dir + FLAGS_ark_cert_file, &args[0])) {
+  if (!read_file_into_string(
+          FLAGS_data_dir + sub_directory_name + FLAGS_ark_cert_file,
+          &args[0])) {
     printf("%s() error, line %d, Can't read attest file\n", __func__, __LINE__);
     goto err;
   }
 
-  if (!read_file_into_string(FLAGS_data_dir + FLAGS_ask_cert_file, &args[1])) {
+  if (!read_file_into_string(
+          FLAGS_data_dir + sub_directory_name + FLAGS_ask_cert_file,
+          &args[1])) {
     printf("%s() error, line %d, Can't read measurement file\n",
            __func__,
            __LINE__);
     goto err;
   }
 
-  if (!read_file_into_string(FLAGS_data_dir + FLAGS_vcek_cert_file, &args[2])) {
+  if (!read_file_into_string(
+          FLAGS_data_dir + sub_directory_name + FLAGS_vcek_cert_file,
+          &args[2])) {
     printf("%s() error, line %d, Can't read endorsement file\n",
            __func__,
            __LINE__);
@@ -664,8 +677,12 @@ int main(int an, char **av) {
   // read policy cert
   if (FLAGS_trust_anchors == "") {
     string der_policy_cert_file_name(FLAGS_data_dir);
-    der_policy_cert_file_name.append("cf_data/");
-    der_policy_cert_file_name.append(FLAGS_policy_key_cert_file);
+    if (*FLAGS_policy_key_cert_file.c_str() == '/') {
+      der_policy_cert_file_name = FLAGS_policy_key_cert_file;
+    } else {
+      der_policy_cert_file_name.append(sub_directory_name);
+      der_policy_cert_file_name.append(FLAGS_policy_key_cert_file);
+    }
     if (!read_file_into_string(der_policy_cert_file_name,
                                &g_serialized_policy_cert)) {
       printf("%s() error, line %d, couldn't read policy domain cert in %s\n",
