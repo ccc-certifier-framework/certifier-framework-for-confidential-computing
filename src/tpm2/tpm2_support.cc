@@ -1660,90 +1660,88 @@ bool decode_quoted(int size_buf, byte_t *buf, string* extra_data,
    */
 
   // Check magic bytes: ff544347
-  if (size < sizeof(uint32_t) || *((uint32_t*) buf) != 0xff544347) {
+  if (size_buf < (int)sizeof(uint32_t) || *((uint32_t*) buf) != 0xff544347) {
     printf("%s() error, line %d, magic number doesn't match\n", __func__, __LINE__);
     return false;
   }
   buf += sizeof(uint32_t);
-  size -= sizeof(uint32_t);
+  size_buf -= sizeof(uint32_t);
 
   // Check type: 8018
-  if (size < sizeof(uint16_t) || *((uint16_t*) buf) != 0x8018) {
+  if (size_buf < (int)sizeof(uint16_t) || *((uint16_t*) buf) != 0x8018) {
     printf("%s() error, line %d, magic number doesn't match\n", __func__, __LINE__);
     return false;
   }
   buf += sizeof(uint16_t);
-  size -= sizeof(uint16_t);
+  size_buf -= sizeof(uint16_t);
 
   // extra data
-  if (size < sizeof(uint16_t)) {
+  if (size_buf < (int)sizeof(uint16_t)) {
     printf("%s() error, line %d, buffer too short\n", __func__, __LINE__);
     return false;
   }
   uint16_t ed_size = 0;
   change_endian16((uint16_t *)buf, &ed_size);
-  if (size < (int)ed_size) {
+  if (size_buf < (int)ed_size) {
     printf("%s() error, line %d, buffer too short\n", __func__, __LINE__);
     return false;
   }
   extra_data->assign((char*)buf, (int)ed_size);
   buf += ed_size;
-  size -= ed_size;
+  size_buf -= ed_size;
 
   // clock  (There must be a better way)
   buf += 27;
-  size -= 27;
+  size_buf -= 27;
 
   // pcr selection
-  TPML_PCR_SELECTION pcrSelect;
-
   uint16_t count= 0;
   change_endian16((uint16_t *)buf, &count);
 #ifdef DEBUG
   printf("count: %d\n", (int) count);
 #endif
-  pcrSelect.count = count;
+  pcrSelect->count = count;
   for (int i = 0; i < (int)count; i++) {
     uint16_t alg = 0;
     uint16_t size_select = 0;
-    if (size < sizeof(uint16_t)) {
+    if (size_buf < (int)sizeof(uint16_t)) {
       printf("%s() error, line %d, buffer too short\n", __func__, __LINE__);
       return false;
     }
     change_endian16((uint16_t *)buf, &alg);
-    pcrSelect.pcrSelections[i].hash = alg;
+    pcrSelect->pcrSelections[i].hash = alg;
     buf += sizeof(uint16_t);
-    size -= sizeof(uint16_t);
-    if (size < sizeof(uint16_t)) {
+    size_buf -= sizeof(uint16_t);
+    if (size_buf < (int)sizeof(uint16_t)) {
       printf("%s() error, line %d, buffer too short\n", __func__, __LINE__);
       return false;
     }
     buf += sizeof(byte_t);
-    size -= sizeof(byte_t);
-    pcrSelect.pcrSelections[i].sizeofSelect= size_select;
-    if (size < PCR_SELECT_MAX) {
+    size_buf -= sizeof(byte_t);
+    pcrSelect->pcrSelections[i].sizeofSelect= size_select;
+    if (size_buf < PCR_SELECT_MAX) {
       printf("%s() error, line %d, buffer too short\n", __func__, __LINE__);
       return false;
     }
-    memcpy(pcrSelect.pcrSelections[i].pcrSelect, buf, sizeof(uint32_t));
+    memcpy(pcrSelect->pcrSelections[i].pcrSelect, buf, sizeof(uint32_t));
     buf += PCR_SELECT_MAX;
-    size -= PCR_SELECT_MAX;
+    size_buf -= PCR_SELECT_MAX;
   }
 
   // digests
-  if (size < sizeof(uint16_t)) {
+  if (size_buf < (int)sizeof(uint16_t)) {
     printf("%s() error, line %d, buffer too short\n", __func__, __LINE__);
     return false;
   }
   uint16_t d_size = 0;
   change_endian16((uint16_t *)buf, &d_size);
-  if (size < d_size) {
+  if (size_buf < d_size) {
     printf("%s() error, line %d, buffer too short\n", __func__, __LINE__);
     return false;
   }
   pcr_digest->assign((char*)buf, d_size);
   buf += d_size;
-  size -= d_size;
+  size_buf -= d_size;
 
   return true;
 }
@@ -1768,10 +1766,10 @@ bool tpm_verify_attest(key_message &quote_key,
   printf("\n");
 #endif
 
-  string extra_data,
+  string extra_data;
   TPML_PCR_SELECTION pcrSelect;
   string pcr_digest;
-  if (!decode_quoted((int)quoted.size(), (byte_t *) quoted.data(), buf, &extra_data,
+  if (!decode_quoted((int)quoted.size(), (byte_t *) quoted.data(), &extra_data,
         &pcrSelect, &pcr_digest)) {
     printf("%s() error, line %d, decode_quoted fails\n", __func__, __LINE__);
     return false;
