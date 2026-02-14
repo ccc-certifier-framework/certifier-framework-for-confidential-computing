@@ -1217,7 +1217,7 @@ void FillPublicRsaTemplate(TPM_ALG_ID        enc_alg,
   pub_key.publicArea.parameters.rsaDetail.scheme.scheme = sig_scheme;
   if (sig_scheme != TPM_ALG_NULL)
     pub_key.publicArea.parameters.rsaDetail.scheme.details.rsassa.hashAlg =
-        0x04;
+	TPM_ALG_SHA256;
   pub_key.publicArea.parameters.rsaDetail.keyBits = (uint16_t)mod_size;
   pub_key.publicArea.parameters.rsaDetail.exponent = exp;
 }

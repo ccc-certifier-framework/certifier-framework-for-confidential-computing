@@ -275,13 +275,16 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
   }
   rsa_message *rsa = new (rsa_message);
   quote_key.set_allocated_rsa_key(rsa);
+  uint32_t le_exp;
+
+  change_endian32((uint32_t*)&pub_out.publicArea.parameters.rsaDetail.exponent,
+		 (uint32_t*) &le_exp);
 
   quote_key.set_key_name("quote-key-tpm");
   quote_key.set_key_format("vse-key");
+  // Do I have to reverse these bytes?
   rsa->set_public_modulus((byte_t *)pub_out.publicArea.unique.rsa.buffer, n);
-  rsa->set_public_exponent(
-      (byte_t *)&pub_out.publicArea.parameters.rsaDetail.exponent,
-      4);
+  rsa->set_public_exponent((byte_t *)&le_exp, sizeof(uint32_t));
   print_key(quote_key);
   printf("\n");
 
