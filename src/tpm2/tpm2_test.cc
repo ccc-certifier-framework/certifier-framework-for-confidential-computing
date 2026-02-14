@@ -277,8 +277,8 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
   quote_key.set_allocated_rsa_key(rsa);
   uint32_t le_exp;
 
-  change_endian32((uint32_t*)&pub_out.publicArea.parameters.rsaDetail.exponent,
-		 (uint32_t*) &le_exp);
+  change_endian32((uint32_t *)&pub_out.publicArea.parameters.rsaDetail.exponent,
+                  (uint32_t *)&le_exp);
 
   quote_key.set_key_name("quote-key-tpm");
   quote_key.set_key_format("vse-key");
