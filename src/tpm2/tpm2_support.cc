@@ -1718,22 +1718,16 @@ bool decode_quoted(int size_buf, byte_t *buf, string* extra_data,
       printf("%s() error, line %d, buffer too short\n", __func__, __LINE__);
       return false;
     }
-    change_endian16((uint16_t *)buf, &size_select);
-    buf += sizeof(uint16_t);
-    size -= sizeof(uint16_t);
+    buf += sizeof(byte_t);
+    size -= sizeof(byte_t);
     pcrSelect.pcrSelections[i].sizeofSelect= size_select;
-    int hash_size = size_hash(alg)
-    if (hash_size < 0) {
+    if (size < PCR_SELECT_MAX) {
       printf("%s() error, line %d, buffer too short\n", __func__, __LINE__);
       return false;
     }
-    if (size < hash_size) {
-      printf("%s() error, line %d, buffer too short\n", __func__, __LINE__);
-      return false;
-    }
-    memcpy(pcrSelect.pcrSelections[i].pcrSelect, buf, hash_size);
-    buf += hash_size;
-    size -= hash_size;
+    memcpy(pcrSelect.pcrSelections[i].pcrSelect, buf, sizeof(uint32_t));
+    buf += PCR_SELECT_MAX;
+    size -= PCR_SELECT_MAX;
   }
 
   // digests
