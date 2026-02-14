@@ -1630,22 +1630,127 @@ bool tpm_attest(string &to_quote, string *quoted, string *signature) {
   return true;
 }
 
-bool decode_quoted(int size_buf, byte_t *buf) {
+int size_hash(uint16_t id) {
+  switch(id) {
+  case TPM_ALG_SHA1:
+    return SHA1_DIGEST_SIZE;
+  case TPM_ALG_SHA256:
+    return SHA256_DIGEST_SIZE;
+  default:
+    return -1;
+  }
+}
+
+// These are the values we have to check
+bool decode_quoted(int size_buf, byte_t *buf, string* extra_data,
+        TPML_PCR_SELECTION* pcrSelect, string* pcr_digest) {
   /*
    * magic bytes: ff544347
    * type: 8018
-   * name:
-   * 0022000bb9cdfa540244e908bddf6fae8d9f242e381fe6b6551b9c38155191ef6a685dd7
+   * name: 0022000bb9cdfa540244e908bddf6fae8d9f242e381fe6b6551b9c38155191ef6a685dd7
    * extra data size: 0011 (to quote)
    * extra data: 4920616d206265696e672071756f746564
    * clock info: 0000000000d538933295cbbda8a9dd83013a64b94700320b2500 safe: 00
    * count: 0001
-   *  hash: 000b
-   *  size of select: 03
-   *  select: 800000
+   *    hash: 000b
+   *    size of select: 03
+   *    select: 800000
    *  digest size: 0014 (a sha1 hash)
    *  pcrdigest: 42b189601aa3424d8d5b946d43fe32de37c192f0
    */
+
+  // Check magic bytes: ff544347
+  if (size < sizeof(uint32_t) || *((uint32_t*) buf) != 0xff544347) {
+    printf("%s() error, line %d, magic number doesn't match\n", __func__, __LINE__);
+    return false;
+  }
+  buf += sizeof(uint32_t);
+  size -= sizeof(uint32_t);
+
+  // Check type: 8018
+  if (size < sizeof(uint16_t) || *((uint16_t*) buf) != 0x8018) {
+    printf("%s() error, line %d, magic number doesn't match\n", __func__, __LINE__);
+    return false;
+  }
+  buf += sizeof(uint16_t);
+  size -= sizeof(uint16_t);
+
+  // extra data
+  if (size < sizeof(uint16_t)) {
+    printf("%s() error, line %d, buffer too short\n", __func__, __LINE__);
+    return false;
+  }
+  uint16_t ed_size = 0;
+  change_endian16((uint16_t *)buf, &ed_size);
+  if (size < (int)ed_size) {
+    printf("%s() error, line %d, buffer too short\n", __func__, __LINE__);
+    return false;
+  }
+  extra_data->assign((char*)buf, (int)ed_size);
+  buf += ed_size;
+  size -= ed_size;
+
+  // clock  (There must be a better way)
+  buf += 27;
+  size -= 27;
+
+  // pcr selection
+  TPML_PCR_SELECTION pcrSelect;
+
+  uint16_t count= 0;
+  change_endian16((uint16_t *)buf, &count);
+#ifdef DEBUG
+  printf("count: %d\n", (int) count);
+#endif
+  pcrSelect.count = count;
+  for (int i = 0; i < (int)count; i++) {
+    uint16_t alg = 0;
+    uint16_t size_select = 0;
+    if (size < sizeof(uint16_t)) {
+      printf("%s() error, line %d, buffer too short\n", __func__, __LINE__);
+      return false;
+    }
+    change_endian16((uint16_t *)buf, &alg);
+    pcrSelect.pcrSelections[i].hash = alg;
+    buf += sizeof(uint16_t);
+    size -= sizeof(uint16_t);
+    if (size < sizeof(uint16_t)) {
+      printf("%s() error, line %d, buffer too short\n", __func__, __LINE__);
+      return false;
+    }
+    change_endian16((uint16_t *)buf, &size_select);
+    buf += sizeof(uint16_t);
+    size -= sizeof(uint16_t);
+    pcrSelect.pcrSelections[i].sizeofSelect= size_select;
+    int hash_size = size_hash(alg)
+    if (hash_size < 0) {
+      printf("%s() error, line %d, buffer too short\n", __func__, __LINE__);
+      return false;
+    }
+    if (size < hash_size) {
+      printf("%s() error, line %d, buffer too short\n", __func__, __LINE__);
+      return false;
+    }
+    memcpy(pcrSelect.pcrSelections[i].pcrSelect, buf, hash_size);
+    buf += hash_size;
+    size -= hash_size;
+  }
+
+  // digests
+  if (size < sizeof(uint16_t)) {
+    printf("%s() error, line %d, buffer too short\n", __func__, __LINE__);
+    return false;
+  }
+  uint16_t d_size = 0;
+  change_endian16((uint16_t *)buf, &d_size);
+  if (size < d_size) {
+    printf("%s() error, line %d, buffer too short\n", __func__, __LINE__);
+    return false;
+  }
+  pcr_digest->assign((char*)buf, d_size);
+  buf += d_size;
+  size -= d_size;
+
   return true;
 }
 
@@ -1668,6 +1773,31 @@ bool tpm_verify_attest(key_message &quote_key,
   print_bytes((int)signature.size(), (byte_t *)signature.data());
   printf("\n");
 #endif
+
+  string extra_data,
+  TPML_PCR_SELECTION pcrSelect;
+  string pcr_digest;
+  if (!decode_quoted((int)quoted.size(), (byte_t *) quoted.data(), buf, &extra_data,
+        &pcrSelect, &pcr_digest)) {
+    printf("%s() error, line %d, decode_quoted fails\n", __func__, __LINE__);
+    return false;
+  }
+#ifdef DEBUG
+  printf("tpm_verify_attest:\n");
+  printf("extra data: ");
+  print_bytes((int)extra_data.size(), (byte_t *)extra_data.data());
+  printf("\n");
+  printf("pcr selection: ");
+  printf("\n");
+  printf("pcr digest: ");
+  print_bytes((int)pcr_digest.size(), (byte_t *)pcr_digest.data());
+  printf("\n");
+#endif
+
+  // hash quoted data
+  // vertify extra_data == to_quote
+  // check pcr_section
+  // decrypt signature and check the hashes match
 
   return true;
 }
