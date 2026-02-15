@@ -328,9 +328,8 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
 
 #if 0
   // Make/Activate Credential
-  // Verify it
-
   TPM_HANDLE ek_handle;
+  string emptyAuth;
 
   if (!get_endorsement_key(tpm, &ek_handle)) {
     printf("%s() error, line %d, get_endorsement_key failed\n",
@@ -398,7 +397,7 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
   if (!Tpm2_ActivateCredential(tpm,
                               quote_handle,
                               ek_handle,
-                              srkAuth,
+                              emptyAuth,
                               emptyAuth,
                               credentialBlob,
                               secret,
