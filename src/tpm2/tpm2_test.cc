@@ -300,8 +300,10 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
 
   quote_key.set_key_name("quote-key-tpm");
   quote_key.set_key_format("vse-key");
-  // Do I have to reverse these bytes?
-  rsa->set_public_modulus((byte_t *)pub_out.publicArea.unique.rsa.buffer, n);
+
+  byte_t le_modulus[256];
+  reverse_byte_copy(256, (byte_t *)pub_out.publicArea.unique.rsa.buffer, le_modulus);
+  rsa->set_public_modulus(le_modulus, n);
   rsa->set_public_exponent((byte_t *)&le_exp, sizeof(uint32_t));
   print_key(quote_key);
   printf("\n");
