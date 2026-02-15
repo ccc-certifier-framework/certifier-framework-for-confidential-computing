@@ -105,6 +105,8 @@ bool endorsement_test(local_tpm &tpm) {
   print_bytes(pub_blob_size, pub_blob);
   printf("\n");
   printf("Name: ");
+  print_bytes(pub_name.size, pub_name.name);
+  printf("\n");
   printf("Qualified name: ");
   print_bytes(qualified_pub_name.size, qualified_pub_name.name);
   printf("\n");
@@ -137,7 +139,6 @@ bool endorsement_test(local_tpm &tpm) {
            __LINE__);
     return false;
   }
-
   string tmp_cert_name("jlm_cert.crt");
   if (!write_file_from_string(tmp_cert_name, cert_out)) {
     printf("%s() error, line %d, get_endorsement_cert failed\n",
