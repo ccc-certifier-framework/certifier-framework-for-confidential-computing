@@ -104,9 +104,7 @@ bool endorsement_test(local_tpm &tpm) {
   printf("Public blob: ");
   print_bytes(pub_blob_size, pub_blob);
   printf("\n");
-  printf("\nName: ");
-  print_bytes(pub_name.size, pub_name.name);
-  printf("\n");
+  printf("Name: ");
   printf("Qualified name: ");
   print_bytes(qualified_pub_name.size, qualified_pub_name.name);
   printf("\n");
@@ -120,18 +118,28 @@ bool endorsement_test(local_tpm &tpm) {
   printf("\n");
   printf("Exponent: %d\n", pub_out.publicArea.parameters.rsaDetail.exponent);
   printf("\n");
+#if 0
   byte_t reversed[256];
   reverse_byte_copy((int)pub_out.publicArea.unique.rsa.size,
                     (byte_t *)pub_out.publicArea.unique.rsa.buffer,
                     reversed);
-
   printf("Bytes reversed (%d):\n", (int)pub_out.publicArea.unique.rsa.size);
   print_bytes((int)pub_out.publicArea.unique.rsa.size, reversed);
   printf("\n");
+#endif
+
   Tpm2_FlushContext(tpm, ek_handle);
 
   string cert_out;
   if (!get_endorsement_cert(FLAGS_ek_cert_file_name, &cert_out)) {
+    printf("%s() error, line %d, get_endorsement_cert failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  string tmp_cert_name("jlm_cert.crt");
+  if (!write_file_from_string(tmp_cert_name, cert_out)) {
     printf("%s() error, line %d, get_endorsement_cert failed\n",
            __func__,
            __LINE__);

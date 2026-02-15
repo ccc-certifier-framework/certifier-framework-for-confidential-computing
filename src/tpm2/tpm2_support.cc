@@ -650,16 +650,14 @@ bool get_endorsement_key(local_tpm &tpm, TPM_HANDLE *ek_handle) {
     printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);
     return false;
   }
-#ifdef DEBUG
-  printf("CreatePrimary succeeded primary: %08x\n", *ek_handle);
+
+#ifdef DEBUG1
   printf("Modulus from CreatePrimary (%d):\n",
          pub_out.publicArea.unique.rsa.size);
   print_bytes(pub_out.publicArea.unique.rsa.size,
               pub_out.publicArea.unique.rsa.buffer);
   printf("\n");
-#endif
-
-#ifdef DEBUG1
+  printf("CreatePrimary succeeded primary: %08x\n", *ek_handle);
   if (!Tpm2_ReadPublic(tpm,
                        *ek_handle,
                        &pub_blob_size,
@@ -678,7 +676,6 @@ bool get_endorsement_key(local_tpm &tpm, TPM_HANDLE *ek_handle) {
   printf("\n");
   printf("Qualified name: ");
   print_bytes(qualified_pub_name.size, qualified_pub_name.name);
-  printf("\n");
   printf("\n");
   printf("Pubout size: %d\n", pub_out.size);
   printf("Type: %d\n", pub_out.publicArea.type);
@@ -737,14 +734,6 @@ bool get_endorsement_cert(local_tpm &tpm, string *out) {
     return false;
   }
   return true;
-}
-
-bool recover_endorsement_cert(const string &file_name) {
-  return false;
-}
-
-bool save_endorsement_cert(const string &file_name) {
-  return false;
 }
 
 bool save_context(local_tpm &tpm, TPM_HANDLE &handle, string *out) {
