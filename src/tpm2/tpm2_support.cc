@@ -652,6 +652,11 @@ bool get_endorsement_key(local_tpm &tpm, TPM_HANDLE *ek_handle) {
   }
 #ifdef DEBUG
   printf("CreatePrimary succeeded primary: %08x\n", *ek_handle);
+  printf("Modulus from CreatePrimary (%d):\n",
+         pub_out.publicArea.unique.rsa.size);
+  print_bytes(pub_out.publicArea.unique.rsa.size,
+              pub_out.publicArea.unique.rsa.buffer);
+  printf("\n");
 #endif
 
 #ifdef DEBUG1
@@ -665,7 +670,7 @@ bool get_endorsement_key(local_tpm &tpm, TPM_HANDLE *ek_handle) {
     printf("%s() error, line %d, ReadPublic failed\n", __func__, __LINE__);
     return false;
   }
-  printf("Public blob: ");
+  printf("ReadPublic, Public blob: ");
   print_bytes(pub_blob_size, pub_blob);
   printf("\n");
   printf("Name: ");

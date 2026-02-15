@@ -255,6 +255,71 @@ bool compute_pcr_digest(TPM_ALG_ID hash,
   return true;
 }
 
+int GetName(uint16_t size_in, byte_t *in, TPM2B_NAME *name) {
+  int total_size = 0;
+
+  change_endian16((uint16_t *)in, (uint16_t *)&name->size);
+  in += sizeof(uint16_t);
+  memcpy(name->name, in, name->size);
+  in += name->size;
+  return total_size;
+}
+
+int GetRsaParams(uint16_t              size_in,
+                 byte_t               *input,
+                 TPMS_RSA_PARMS       &rsaParams,
+                 TPM2B_PUBLIC_KEY_RSA *rsa) {
+  int total_size = 0;
+
+
+  // algorithm
+  change_endian16((uint16_t *)input,
+                  (uint16_t *)&rsaParams.symmetric.algorithm);
+  input += sizeof(uint16_t);
+  total_size += sizeof(uint16_t);
+
+  // symmetric bits (if present)
+  if (rsaParams.symmetric.algorithm != TPM_ALG_NULL) {
+    change_endian16((uint16_t *)input,
+                    (uint16_t *)&rsaParams.symmetric.keyBits);
+    input += sizeof(uint16_t);
+    total_size += sizeof(uint16_t);
+    change_endian16((uint16_t *)input, (uint16_t *)&rsaParams.symmetric.mode);
+    input += sizeof(uint16_t);
+    total_size += sizeof(uint16_t);
+    change_endian16((uint16_t *)input, (uint16_t *)&rsaParams.scheme.scheme);
+    input += sizeof(uint16_t);
+    total_size += sizeof(uint16_t);
+    // TODO(jlm): what goes here?  Details?
+    input += sizeof(uint16_t);
+    total_size += sizeof(uint16_t);
+  } else {
+    // scheme
+    change_endian16((uint16_t *)input, (uint16_t *)&rsaParams.scheme.scheme);
+    input += sizeof(uint16_t);
+    total_size += sizeof(uint16_t);
+    // TODO(jlm): what goes here?  Details?
+    input += sizeof(uint32_t);
+    total_size += sizeof(uint32_t);
+  }
+
+  // Exponent
+  change_endian32((uint32_t *)input, (uint32_t *)&rsaParams.exponent);
+  input += sizeof(uint32_t);
+  total_size += sizeof(uint32_t);
+
+  // modulus size
+  change_endian16((uint16_t *)input, (uint16_t *)&rsa->size);
+  input += sizeof(uint16_t);
+  total_size += sizeof(uint16_t);
+
+  // modulus
+  memcpy(rsa->buffer, input, rsa->size);
+  input += rsa->size;
+  total_size += rsa->size;
+  return total_size;
+}
+
 void Tpm2_InterpretResponse(int       out_size,
                             byte_t   *out_buf,
                             uint16_t *cap,
@@ -1256,53 +1321,51 @@ bool GetPublicOut(int                  size,
                   TPM2B_DIGEST        *hash,
                   TPMT_TK_CREATION    *creation_ticket,
                   TPM2B_NAME          *name) {
+
   byte_t *current_in = in;
   change_endian32((uint32_t *)current_in, (uint32_t *)handle);
   current_in += sizeof(TPM_HANDLE);
 
-  // skip size and 2 uint16_t's
-  current_in += 3 * sizeof(uint16_t);
-  uint16_t new_size;
+  uint16_t size_in = 0;
+
+  change_endian16((uint16_t *)current_in, (uint16_t *)&size_in);
+  current_in += sizeof(uint16_t);
+
+  // type
   change_endian16((uint16_t *)current_in,
                   (uint16_t *)&pub_out->publicArea.type);
   current_in += sizeof(uint16_t);
+  size_in += sizeof(uint16_t);
+
+  // alg
   change_endian16((uint16_t *)current_in,
                   (uint16_t *)&pub_out->publicArea.nameAlg);
   current_in += sizeof(uint16_t);
+  size_in += sizeof(uint16_t);
 
+  // attributes
   change_endian32((uint32_t *)current_in,
                   (uint32_t *)&pub_out->publicArea.objectAttributes);
   current_in += sizeof(uint32_t);
+  size_in += sizeof(uint32_t);
 
-  change_endian32((uint32_t *)current_in,
-                  (uint32_t *)&pub_out->publicArea.parameters.rsaDetail
-                      .symmetric.algorithm);
-  current_in += sizeof(uint32_t);
-  if (pub_out->publicArea.parameters.rsaDetail.symmetric.algorithm
-      != TPM_ALG_NULL) {
-  }
-  change_endian16(
-      (uint16_t *)current_in,
-      (uint16_t *)&pub_out->publicArea.parameters.rsaDetail.scheme.scheme);
-  current_in += sizeof(uint16_t);
-  change_endian16(
-      (uint16_t *)current_in,
-      (uint16_t *)&pub_out->publicArea.parameters.rsaDetail.scheme.details);
-  current_in += sizeof(uint16_t);
-
+  // auth policy
   change_endian16((uint16_t *)current_in,
-                  &pub_out->publicArea.parameters.rsaDetail.keyBits);
+                  (uint16_t *)&pub_out->publicArea.authPolicy.size);
   current_in += sizeof(uint16_t);
-  change_endian32((uint32_t *)current_in,
-                  &pub_out->publicArea.parameters.rsaDetail.exponent);
-  current_in += sizeof(uint32_t);
+  size_in -= sizeof(uint16_t);
+  memcpy(pub_out->publicArea.authPolicy.buffer,
+         current_in,
+         pub_out->publicArea.authPolicy.size);
+  current_in += pub_out->publicArea.authPolicy.size;
+  size_in -= pub_out->publicArea.authPolicy.size;
 
-  // get modulus
-  change_endian16((uint16_t *)current_in, &new_size);
-  pub_out->publicArea.unique.rsa.size = new_size;
-  current_in += sizeof(uint16_t);
-  memcpy(pub_out->publicArea.unique.rsa.buffer, current_in, new_size);
-  current_in += new_size;
+  int n = GetRsaParams(size_in,
+                       current_in,
+                       pub_out->publicArea.parameters.rsaDetail,
+                       &pub_out->publicArea.unique.rsa);
+  current_in += n;
+  size_in -= n;
 
   return true;
 }
@@ -1433,8 +1496,10 @@ bool GetLoadOut(int         size,
 
   change_endian32((uint32_t *)current_in, (uint32_t *)new_handle);
   current_in += sizeof(uint32_t);
+
   change_endian16((uint16_t *)current_in, (uint16_t *)&name->size);
   current_in += sizeof(uint16_t);
+
   memcpy(name->name, current_in, name->size);
   current_in += name->size;
   return true;
@@ -2002,75 +2067,26 @@ bool Tpm2_Save(local_tpm &tpm) {
   return false;
 }
 
-int GetName(uint16_t size_in, byte_t *in, TPM2B_NAME *name) {
-  int total_size = 0;
-
-  change_endian16((uint16_t *)in, (uint16_t *)&name->size);
-  in += sizeof(uint16_t);
-  memcpy(name->name, in, name->size);
-  in += name->size;
-  return total_size;
-}
-
-int GetRsaParams(uint16_t              size_in,
-                 byte_t               *input,
-                 TPMS_RSA_PARMS       &rsaParams,
-                 TPM2B_PUBLIC_KEY_RSA *rsa) {
-  int total_size = 0;
-
-  change_endian16((uint16_t *)input,
-                  (uint16_t *)&rsaParams.symmetric.algorithm);
-  input += sizeof(uint16_t);
-  total_size += sizeof(uint16_t);
-  if (rsaParams.symmetric.algorithm != TPM_ALG_NULL) {
-    change_endian16((uint16_t *)input,
-                    (uint16_t *)&rsaParams.symmetric.keyBits);
-    input += sizeof(uint16_t);
-    total_size += sizeof(uint16_t);
-    change_endian16((uint16_t *)input, (uint16_t *)&rsaParams.symmetric.mode);
-    input += sizeof(uint16_t);
-    total_size += sizeof(uint16_t);
-    change_endian16((uint16_t *)input, (uint16_t *)&rsaParams.scheme.scheme);
-    input += sizeof(uint16_t);
-    total_size += sizeof(uint16_t);
-    // TODO(jlm): what goes here?  Details?
-    input += sizeof(uint16_t);
-    total_size += sizeof(uint16_t);
-  } else {
-    change_endian16((uint16_t *)input, (uint16_t *)&rsaParams.scheme.scheme);
-    input += sizeof(uint16_t);
-    total_size += sizeof(uint16_t);
-    // TODO(jlm): what goes here?  Details?
-    input += sizeof(uint32_t);
-    total_size += sizeof(uint32_t);
-  }
-  // Exponent
-  change_endian32((uint32_t *)input, (uint32_t *)&rsaParams.exponent);
-  input += sizeof(uint32_t);
-  total_size += sizeof(uint32_t);
-  // modulus size
-  change_endian16((uint16_t *)input, (uint16_t *)&rsa->size);
-  input += sizeof(uint16_t);
-  total_size += sizeof(uint16_t);
-  // modulus
-  memcpy(rsa->buffer, input, rsa->size);
-  input += rsa->size;
-  total_size += rsa->size;
-  return total_size;
-}
-
 bool get_public_out(uint16_t size_in, byte_t *input, TPM2B_PUBLIC *outPublic) {
+
+  // type
   change_endian16((uint16_t *)input, (uint16_t *)&outPublic->publicArea.type);
   input += sizeof(uint16_t);
   size_in -= sizeof(uint16_t);
+
+  // alg
   change_endian16((uint16_t *)input,
                   (uint16_t *)&outPublic->publicArea.nameAlg);
   input += sizeof(uint16_t);
   size_in -= sizeof(uint16_t);
+
+  // attributes
   change_endian32((uint32_t *)input,
                   (uint32_t *)&outPublic->publicArea.objectAttributes);
   input += sizeof(uint32_t);
   size_in -= sizeof(uint32_t);
+
+  // auth policy
   change_endian16((uint16_t *)input,
                   (uint16_t *)&outPublic->publicArea.authPolicy.size);
   input += sizeof(uint16_t);
@@ -2086,6 +2102,8 @@ bool get_public_out(uint16_t size_in, byte_t *input, TPM2B_PUBLIC *outPublic) {
            outPublic->publicArea.nameAlg);
     return false;
   }
+
+  // RSA parameters
   int n = GetRsaParams(size_in,
                        input,
                        outPublic->publicArea.parameters.rsaDetail,

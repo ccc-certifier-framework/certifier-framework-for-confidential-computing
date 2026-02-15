@@ -100,6 +100,7 @@ bool endorsement_test(local_tpm &tpm) {
     Tpm2_FlushContext(tpm, ek_handle);
     return false;
   }
+  printf("Endorsement Key\n");
   printf("Public blob: ");
   print_bytes(pub_blob_size, pub_blob);
   printf("\n");
@@ -118,6 +119,14 @@ bool endorsement_test(local_tpm &tpm) {
               (byte_t *)pub_out.publicArea.unique.rsa.buffer);
   printf("\n");
   printf("Exponent: %d\n", pub_out.publicArea.parameters.rsaDetail.exponent);
+  printf("\n");
+  byte_t reversed[256];
+  reverse_byte_copy((int)pub_out.publicArea.unique.rsa.size,
+                    (byte_t *)pub_out.publicArea.unique.rsa.buffer,
+                    reversed);
+
+  printf("Bytes reversed (%d):\n", (int)pub_out.publicArea.unique.rsa.size);
+  print_bytes((int)pub_out.publicArea.unique.rsa.size, reversed);
   printf("\n");
   Tpm2_FlushContext(tpm, ek_handle);
 
