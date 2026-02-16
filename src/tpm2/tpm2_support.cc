@@ -1849,5 +1849,220 @@ bool tpm_verify_attest(string &cert,
   return false;
 }
 
+#if 0
+
+// TCG template (rewrite)
+bool write_cred_and_secret(const char *path, TPM2B_ID_OBJECT *cred,
+        TPM2B_ENCRYPTED_SECRET *secret) {
+
+    bool result = false;
+
+    FILE *fp = fopen(path, "wb+");
+    if (!fp) {
+        return false;
+    }
+
+    result = files_write_header(fp, 1);
+    if (!result) {
+        goto out;
+    }
+
+    result = files_write_16(fp, cred->size);
+    if (!result) {
+        goto out;
+    }
+
+    result = files_write_bytes(fp, cred->credential, cred->size);
+    if (!result) {
+        goto out;
+    }
+
+    result = files_write_16(fp, secret->size);
+    if (!result) {
+        goto out;
+    }
+
+    result = files_write_bytes(fp, secret->secret, secret->size);
+    if (!result) {
+        goto out;
+    }
+
+    result = true;
+
+out:
+    fclose(fp);
+    return result;
+}
+
+bool tpm2_identity_util_calc_outer_integrity_hmac_key_and_dupsensitive_enc_key(
+        TPM2B_PUBLIC *parent_pub, TPM2B_NAME *pubname,
+        TPM2B_DIGEST *protection_seed, TPM2B_MAX_BUFFER *protection_hmac_key,
+        TPM2B_MAX_BUFFER *protection_enc_key) {
+
+    TPM2B null_2b = { .size = 0 };
+
+    TPMI_ALG_HASH parent_alg = parent_pub->publicArea.nameAlg;
+    UINT16 parent_hash_size = tpm2_alg_util_get_hash_size(parent_alg);
+
+    TSS2_RC rval = tpm2_kdfa(parent_alg, (TPM2B *) protection_seed, "INTEGRITY",
+            &null_2b, &null_2b, parent_hash_size * 8, protection_hmac_key);
+    if (rval != TPM2_RC_SUCCESS) {
+        return false;
+    }
+
+    TPM2_KEY_BITS pub_key_bits = get_pub_asym_key_bits(parent_pub);
+
+    rval = tpm2_kdfa(parent_alg, (TPM2B *) protection_seed, "STORAGE",
+            (TPM2B *) pubname, &null_2b, pub_key_bits, protection_enc_key);
+    if (rval != TPM2_RC_SUCCESS) {
+        return false;
+    }
+
+    return true;
+}
+
+bool share_secret_with_tpm2_rsa_public_key(TPM2B_DIGEST *protection_seed,
+        TPM2B_PUBLIC *parent_pub, const unsigned char *label, int label_len,
+        TPM2B_ENCRYPTED_SECRET *encrypted_protection_seed) {
+    bool rval = false;
+    EVP_PKEY_CTX *ctx = NULL;
+    TPMI_ALG_PUBLIC alg = parent_pub->publicArea.type;
+
+    EVP_PKEY *pkey = convert_pubkey_RSA(&parent_pub->publicArea);
+    if (pkey == NULL) {
+        return false;
+    }
+
+    TPMI_ALG_HASH parent_name_alg = parent_pub->publicArea.nameAlg;
+
+    // RSA Secret Sharing uses a randomly generated seed (Part 1, B.10.3).
+    protection_seed->size = tpm2_alg_util_get_hash_size(parent_name_alg);
+    int rc = RAND_bytes(protection_seed->buffer, protection_seed->size);
+    if (rc != 1) {
+        goto error;
+    }
+
+    // The seed value will be OAEP encrypted with a given L parameter.
+    ctx = EVP_PKEY_CTX_new(pkey, NULL);
+    if (!ctx) {
+    }
+
+    rc = EVP_PKEY_encrypt_init(ctx);
+    if (rc <= 0) {
+        goto error;
+    }
+
+    rc = EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING);
+    if (rc <= 0) {
+        goto error;
+    }
+
+    rc = EVP_PKEY_CTX_set_rsa_oaep_md(ctx,
+            tpm2_openssl_md_from_tpmhalg(parent_name_alg));
+    if (rc <= 0) {
+        goto error;
+    }
+
+    // the library will take ownership of the label
+    char *newlabel = strdup((const char *)label);
+    if (newlabel == NULL) {
+        goto error;
+    }
+
+    rc = EVP_PKEY_CTX_set0_rsa_oaep_label(ctx, newlabel, label_len);
+    if (rc <= 0) {
+        free(newlabel);
+        goto error;
+    }
+
+    size_t outlen = sizeof(TPMU_ENCRYPTED_SECRET);
+    if (EVP_PKEY_encrypt(ctx, encrypted_protection_seed->secret, &outlen,
+            protection_seed->buffer, protection_seed->size) <= 0) {
+        goto error;
+    }
+    encrypted_protection_seed->size = outlen;
+    rval = true;
+
+error:
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(pkey);
+    return rval;
+}
+
+#endif
+
+bool make_credential(local_tpm& tpm, string& incred, string* out) {
+#if 0
+    TPMI_ALG_HASH name_alg = ctx.public.publicArea.nameAlg;
+
+    // Generate and encrypt seed
+    TPM2B_DIGEST seed = TPM2B_TYPE_INIT(TPM2B_DIGEST, buffer);
+    TPM2B_ENCRYPTED_SECRET encrypted_seed = TPM2B_EMPTY_INIT;
+    unsigned char label[10] = { 'I', 'D', 'E', 'N', 'T', 'I', 'T', 'Y', 0 };
+    bool res = tpm2_identity_util_share_secret_with_public_key(&seed,
+            &ctx.public, label, 9, &encrypted_seed);
+    if (!res) {
+        return tool_rc_general_error;
+    }
+
+    // Perform identity structure calculations (off of the TPM)
+    TPM2B_MAX_BUFFER hmac_key;
+    TPM2B_MAX_BUFFER enc_key;
+    tpm2_identity_util_calc_outer_integrity_hmac_key_and_dupsensitive_enc_key(
+            &ctx.public, &ctx.object_name, &seed, &hmac_key, &enc_key);
+
+    // The ctx.credential needs to be marshalled into struct with
+    // both size and contents together (to be encrypted as a block)
+    TPM2B_MAX_BUFFER marshalled_inner_integrity = TPM2B_EMPTY_INIT;
+    marshalled_inner_integrity.size = ctx.credential.size
+            + sizeof(ctx.credential.size);
+    UINT16 cred_size = ctx.credential.size;
+    if (!tpm2_util_is_big_endian()) {
+        cred_size = tpm2_util_endian_swap_16(cred_size);
+    }
+    memcpy(marshalled_inner_integrity.buffer, &cred_size, sizeof(cred_size));
+    memcpy(&marshalled_inner_integrity.buffer[2], ctx.credential.buffer,
+            ctx.credential.size);
+
+    /*
+     * Perform inner encryption (encIdentity) and outer HMAC (outerHMAC)
+     */
+    TPM2B_DIGEST outer_hmac = TPM2B_EMPTY_INIT;
+    TPM2B_MAX_BUFFER encrypted_sensitive = TPM2B_EMPTY_INIT;
+    tpm2_identity_util_calculate_outer_integrity(name_alg, &ctx.object_name,
+            &marshalled_inner_integrity, &hmac_key, &enc_key,
+            &ctx.public.publicArea.parameters.rsaDetail.symmetric,
+            &encrypted_sensitive, &outer_hmac);
+
+    /*
+     * Package up the info to save
+     * cred_bloc = outer_hmac || encrypted_sensitive
+     * secret = encrypted_seed (with pubEK)
+     */
+    TPM2B_ID_OBJECT cred_blob = TPM2B_TYPE_INIT(TPM2B_ID_OBJECT, credential);
+
+    UINT16 outer_hmac_size = outer_hmac.size;
+    if (!tpm2_util_is_big_endian()) {
+        outer_hmac_size = tpm2_util_endian_swap_16(outer_hmac_size);
+    }
+    int offset = 0;
+    memcpy(cred_blob.credential + offset, &outer_hmac_size,
+            sizeof(outer_hmac.size));
+    offset += sizeof(outer_hmac.size);
+    memcpy(cred_blob.credential + offset, outer_hmac.buffer, outer_hmac.size);
+    offset += outer_hmac.size;
+
+    // NOTE: do NOT include the encrypted_sensitive size, since it is encrypted with the blob!
+            encrypted_sensitive.size);
+
+    cred_blob.size = outer_hmac.size + encrypted_sensitive.size
+            + sizeof(outer_hmac.size);
+
+    return write_cred_and_secret(ctx.out_file_path, &cred_blob,
+            &encrypted_seed) ? tool_rc_success : tool_rc_general_error;
+#endif
+  return false;
+}
+
 
 // ------------------------------------------------------------------------
