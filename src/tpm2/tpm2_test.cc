@@ -326,7 +326,6 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
   }
 #endif
 
-#if 0
   // Make/Activate Credential
   TPM_HANDLE ek_handle;
   string emptyAuth;
@@ -338,7 +337,7 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
     return false;
   }
 
-// Credential test
+  // Credential test
   TPM2B_DIGEST           credential;
   TPM2B_ID_OBJECT        credentialBlob;
   TPM2B_ENCRYPTED_SECRET secret;
@@ -412,9 +411,8 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
   printf("Recovered credential (%d): ", recovered_credential.size);
   print_bytes(recovered_credential.size, recovered_credential.buffer);
   printf("\n");
-  Tpm2_FlushContext(tpm, ek_handle);
-#endif
 
+  Tpm2_FlushContext(tpm, ek_handle);
   Tpm2_FlushContext(tpm, quote_handle);
   Tpm2_FlushContext(tpm, srk_handle);
   return true;
