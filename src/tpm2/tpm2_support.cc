@@ -1326,14 +1326,6 @@ bool verify_credential(local_tpm    &tpm,
   for (int i = 0; i < credential.size; i++)
     credential.buffer[i] = i + 1;
 
-  TPM2B_PUBLIC quoting_pub_out;
-  TPM2B_NAME quoting_pub_name;
-  TPM2B_NAME quoting_qualified_pub_name;
-  uint16_t quoting_pub_blob_size = 1024;
-  byte_t quoting_pub_blob[quoting_pub_blob_size];
-
-  memset((void*)&quoting_pub_out, 0, sizeof(TPM2B_PUBLIC));
-
   if (Tpm2_ReadPublic(tpm, quotingHandle,
                       &quoting_pub_blob_size, quoting_pub_blob,
                       &quoting_pub_out, &quoting_pub_name,
@@ -1352,10 +1344,6 @@ bool verify_credential(local_tpm    &tpm,
     printf("MakeCredential succeeded\n");
   } else {
     printf("MakeCredential failed\n");
-    Tpm2_FlushContext(tpm, quotingHandle);
-    Tpm2_FlushContext(tpm, srkHandle);
-    Tpm2_FlushContext(tpm, ekHandle);
-    return false;
   }
   printf("credBlob size: %d\n", credentialBlob.size);
   printf("secret size: %d\n", secret.size);
@@ -1368,15 +1356,9 @@ bool verify_credential(local_tpm    &tpm,
     print_bytes(recovered_credential.size, recovered_credential.buffer);
     printf("\n");
   } else {
-    printf("ActivateCredential failed\n");
-    Tpm2_FlushContext(tpm, quotingHandle);
-    Tpm2_FlushContext(tpm, srkHandle);
     Tpm2_FlushContext(tpm, ekHandle);
     return false;
   }
-  Tpm2_FlushContext(tpm, quotingHandle);
-  Tpm2_FlushContext(tpm, srkHandle);
-  Tpm2_FlushContext(tpm, ekHandle);
 #endif
   return true;
 }
@@ -1842,57 +1824,74 @@ bool tpm_verify_attest(key_message &quote_key,
   return true;
 }
 
+bool tpm_verify_attest(key_message &quote_key,
+                       const string& hash_alg,
+                       const string& scheme, 
+                       string      &to_quote,
+                       string      &quoted,
+                       string      &signature) {
+
+  // make sure to_quote matches "extraData" in quoted.
+  // make sure hash of quoted matches the decrypted one
+
+#if 0
+  // Initialize public quote key
+  if(1 != EVP_DigestVerifyInit(mdctx, NULL, EVP_sha256(), NULL, key)) {
+  }
+
+  // Initialize `key` with a public key */
+  if(1 != EVP_DigestVerifyUpdate(mdctx, msg, strlen(msg))) {
+  }
+
+  if(1 == EVP_DigestVerifyFinal(mdctx, sig, slen)) {
+    // Success
+  } else {
+    // Failure
+  }
+#endif
+  return false;
+}
+
 bool tpm_verify_attest(string &cert,
+                       const key_message& policy_public_key,
+                       const string& hash_alg,
+                       const string& scheme, 
                        string &to_quote,
                        string &quoted,
                        string &signature) {
-  return false;
+
+  // recover quote key form its cert
+  key_message quote_key;
+
+
+  return  tpm_verify_attest(quote_key,
+                       hash_alg,
+                       scheme,
+                       to_quote,
+                       quoted,
+                       signature):
 }
+
+// Sequence for quote key verification protocol is:
+//
+//    On client: Make a construct_request_credential_message to make
+//      request protobuf to send to provider
+//
+//    On provider:
+//      verify pcrs and properties
+//      produce quote key cert
+//      call make_credential to construct credential
+//
+//    On client
+//      Call activate credential to get quote key certificate
+//      and return it
+
 
 #if 0
 
 // TCG template (rewrite)
-bool write_cred_and_secret(const char *path, TPM2B_ID_OBJECT *cred,
-        TPM2B_ENCRYPTED_SECRET *secret) {
-
-    bool result = false;
-
-    FILE *fp = fopen(path, "wb+");
-    if (!fp) {
-        return false;
-    }
-
-    result = files_write_header(fp, 1);
-    if (!result) {
-        goto out;
-    }
-
-    result = files_write_16(fp, cred->size);
-    if (!result) {
-        goto out;
-    }
-
-    result = files_write_bytes(fp, cred->credential, cred->size);
-    if (!result) {
-        goto out;
-    }
-
-    result = files_write_16(fp, secret->size);
-    if (!result) {
-        goto out;
-    }
-
-    result = files_write_bytes(fp, secret->secret, secret->size);
-    if (!result) {
-        goto out;
-    }
-
-    result = true;
-
-out:
-    fclose(fp);
-    return result;
-}
+bool write_cred_and_secret(TPM2B_ID_OBJECT *cred
+        TPM2B_ENCRYPTED_SECRET *secret) 
 
 bool tpm2_identity_util_calc_outer_integrity_hmac_key_and_dupsensitive_enc_key(
         TPM2B_PUBLIC *parent_pub, TPM2B_NAME *pubname,
@@ -1989,9 +1988,18 @@ error:
     return rval;
 }
 
+// This makes the certificate on the provider given
+// the subject quote key, signing key, measurement (pcrs),
+// and proposed subject auth key
+bool construct_quote_key_cert(const key_message& signing_key,
+        const key_message& quote_public_key, const string& measurement,
+        string* cert_out) {
+}
+
 #endif
 
-bool make_credential(local_tpm& tpm, string& incred, string* out) {
+bool make_credential(const string& quoting_key_public_area, const string& cert_in,
+        const key_message& signing_key, string* out) {
 #if 0
     TPMI_ALG_HASH name_alg = ctx.public.publicArea.nameAlg;
 
@@ -2024,9 +2032,7 @@ bool make_credential(local_tpm& tpm, string& incred, string* out) {
     memcpy(&marshalled_inner_integrity.buffer[2], ctx.credential.buffer,
             ctx.credential.size);
 
-    /*
-     * Perform inner encryption (encIdentity) and outer HMAC (outerHMAC)
-     */
+    // Perform inner encryption (encIdentity) and outer HMAC (outerHMAC)
     TPM2B_DIGEST outer_hmac = TPM2B_EMPTY_INIT;
     TPM2B_MAX_BUFFER encrypted_sensitive = TPM2B_EMPTY_INIT;
     tpm2_identity_util_calculate_outer_integrity(name_alg, &ctx.object_name,
@@ -2053,7 +2059,7 @@ bool make_credential(local_tpm& tpm, string& incred, string* out) {
     offset += outer_hmac.size;
 
     // NOTE: do NOT include the encrypted_sensitive size, since it is encrypted with the blob!
-            encrypted_sensitive.size);
+    //        encrypted_sensitive.size);
 
     cred_blob.size = outer_hmac.size + encrypted_sensitive.size
             + sizeof(outer_hmac.size);
@@ -2061,6 +2067,23 @@ bool make_credential(local_tpm& tpm, string& incred, string* out) {
     return write_cred_and_secret(ctx.out_file_path, &cred_blob,
             &encrypted_seed) ? tool_rc_success : tool_rc_general_error;
 #endif
+  return false;
+}
+
+// This is the code on the client that requests a quote
+// key certificate using make credential on a provider
+// without a tpm
+bool make_credential_message(const string& endorser_public_area,
+        const string& endorser_cert_chain,
+        const key_message& quote_public_key, const string& measurement,
+        string* serialized_credential_request) {
+  return false;
+}
+
+// This is the code on the client which obtains the quote
+// key certificate from the make credential message constructed
+// on the provider using ActivateCredential
+bool recover_quote_key_certificate() {
   return false;
 }
 
