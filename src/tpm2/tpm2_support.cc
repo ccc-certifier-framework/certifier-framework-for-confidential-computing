@@ -1824,52 +1824,71 @@ bool tpm_verify_attest(key_message &quote_key,
   return true;
 }
 
-bool tpm_verify_attest(key_message &quote_key,
-                       const string& hash_alg,
-                       const string& scheme, 
-                       string      &to_quote,
-                       string      &quoted,
-                       string      &signature) {
+bool tpm_verify_attest(key_message  &quote_key,
+                       const string &hash_alg,
+                       const string &scheme,
+                       string       &to_quote,
+                       string       &quoted,
+                       string       &signature) {
+  EVP_PKEY   *key = nullptr;
+  EVP_MD_CTX *md_ctx = nullptr;
 
+  // TODO
   // make sure to_quote matches "extraData" in quoted.
   // make sure hash of quoted matches the decrypted one
 
-#if 0
   // Initialize public quote key
-  if(1 != EVP_DigestVerifyInit(mdctx, NULL, EVP_sha256(), NULL, key)) {
+  if (1 != EVP_DigestVerifyInit(md_ctx, NULL, EVP_sha256(), NULL, key)) {
+    printf("%s() error, line %d, EVP_DigestVerifyInit fails\n",
+           __func__,
+           __LINE__);
+    return false;
   }
 
-  // Initialize `key` with a public key */
-  if(1 != EVP_DigestVerifyUpdate(mdctx, msg, strlen(msg))) {
+  // Initialize `key` with a public key
+  if (1
+      != EVP_DigestVerifyUpdate(md_ctx,
+                                (byte_t *)quoted.data(),
+                                (int)quoted.size())) {
+    printf("%s() error, line %d, EVP_DigestVerifyUpdate fails\n",
+           __func__,
+           __LINE__);
+    return false;
   }
 
-  if(1 == EVP_DigestVerifyFinal(mdctx, sig, slen)) {
-    // Success
-  } else {
-    // Failure
+  if (1
+      != EVP_DigestVerifyFinal(md_ctx,
+                               (byte_t *)signature.data(),
+                               (int)signature.size())) {
+    printf("%s() error, line %d, EVP_DigestVerifyFinal fails\n",
+           __func__,
+           __LINE__);
+    // failure
+    return false;
   }
-#endif
-  return false;
+
+  EVP_MD_CTX_free(md_ctx);
+  return true;
 }
 
-bool tpm_verify_attest(string &cert,
-                       const key_message& policy_public_key,
-                       const string& hash_alg,
-                       const string& scheme, 
-                       string &to_quote,
-                       string &quoted,
-                       string &signature) {
+bool tpm_verify_attest(string            &cert,
+                       const key_message &policy_public_key,
+                       const string      &hash_alg,
+                       const string      &scheme,
+                       string            &to_quote,
+                       string            &quoted,
+                       string            &signature) {
 
   // recover quote key form its cert
   key_message quote_key;
 
 
-  return  tpm_verify_attest(quote_key,
-                       hash_alg,
-                       scheme,
-                       to_quote,
-                       quoted,
-                       signature):
+  return tpm_verify_attest(quote_key,
+                           hash_alg,
+                           scheme,
+                           to_quote,
+                           quoted,
+                           signature);
 }
 
 // Sequence for quote key verification protocol is:
@@ -1998,8 +2017,10 @@ bool construct_quote_key_cert(const key_message& signing_key,
 
 #endif
 
-bool make_credential(const string& quoting_key_public_area, const string& cert_in,
-        const key_message& signing_key, string* out) {
+bool make_credential(const string      &quoting_key_public_area,
+                     const string      &cert_in,
+                     const key_message &signing_key,
+                     string            *out) {
 #if 0
     TPMI_ALG_HASH name_alg = ctx.public.publicArea.nameAlg;
 
@@ -2073,17 +2094,18 @@ bool make_credential(const string& quoting_key_public_area, const string& cert_i
 // This is the code on the client that requests a quote
 // key certificate using make credential on a provider
 // without a tpm
-bool make_credential_message(const string& endorser_public_area,
-        const string& endorser_cert_chain,
-        const key_message& quote_public_key, const string& measurement,
-        string* serialized_credential_request) {
+bool make_credential_message(const key_message &quote_public_key,
+                             const string      &measurement,
+                             const string      &quote_public_area,
+                             string            *serialized_credential_request) {
   return false;
 }
 
 // This is the code on the client which obtains the quote
 // key certificate from the make credential message constructed
 // on the provider using ActivateCredential
-bool recover_quote_key_certificate() {
+bool recover_quote_key_certificate(const string &serialized_cred_response,
+                                   string       *cert) {
   return false;
 }
 

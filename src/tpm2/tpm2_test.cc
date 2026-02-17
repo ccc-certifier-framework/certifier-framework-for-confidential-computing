@@ -302,7 +302,9 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
   quote_key.set_key_format("vse-key");
 
   byte_t le_modulus[256];
-  reverse_byte_copy(256, (byte_t *)pub_out.publicArea.unique.rsa.buffer, le_modulus);
+  reverse_byte_copy(256,
+                    (byte_t *)pub_out.publicArea.unique.rsa.buffer,
+                    le_modulus);
   rsa->set_public_modulus(le_modulus, n);
   rsa->set_public_exponent((byte_t *)&le_exp, sizeof(uint32_t));
   print_key(quote_key);
@@ -328,7 +330,7 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
 
   // Make/Activate Credential
   TPM_HANDLE ek_handle;
-  string emptyAuth;
+  string     emptyAuth;
 
   if (!get_endorsement_key(tpm, &ek_handle)) {
     printf("%s() error, line %d, get_endorsement_key failed\n",
@@ -362,13 +364,15 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
   memset((void *)&quoting_pub_out, 0, sizeof(TPM2B_PUBLIC));
 
   if (!Tpm2_ReadPublic(tpm,
-                      quote_handle,
-                      &quoting_pub_blob_size,
-                      quoting_pub_blob,
-                      &quoting_pub_out,
-                      &quoting_pub_name,
-                      &quoting_qualified_pub_name)) {
-    printf("%s() error, line: %d, Cant read quote public\n", __func__, __LINE__);
+                       quote_handle,
+                       &quoting_pub_blob_size,
+                       quoting_pub_blob,
+                       &quoting_pub_out,
+                       &quoting_pub_name,
+                       &quoting_qualified_pub_name)) {
+    printf("%s() error, line: %d, Cant read quote public\n",
+           __func__,
+           __LINE__);
     Tpm2_FlushContext(tpm, quote_handle);
     Tpm2_FlushContext(tpm, srk_handle);
     Tpm2_FlushContext(tpm, ek_handle);
@@ -379,12 +383,14 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
   printf("\n");
 
   if (!Tpm2_MakeCredential(tpm,
-                          ek_handle,
-                          credential,
-                          quoting_pub_name,
-                          &credentialBlob,
-                          &secret)) {
-    printf("%s() error, line: %d, Cant MakeCredential failed\n", __func__, __LINE__);
+                           ek_handle,
+                           credential,
+                           quoting_pub_name,
+                           &credentialBlob,
+                           &secret)) {
+    printf("%s() error, line: %d, Cant MakeCredential failed\n",
+           __func__,
+           __LINE__);
     Tpm2_FlushContext(tpm, quote_handle);
     Tpm2_FlushContext(tpm, srk_handle);
     Tpm2_FlushContext(tpm, ek_handle);
@@ -394,14 +400,16 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
   printf("credBlob size: %d\n", credentialBlob.size);
   printf("secret size: %d\n", secret.size);
   if (!Tpm2_ActivateCredential(tpm,
-                              quote_handle,
-                              ek_handle,
-                              emptyAuth,
-                              emptyAuth,
-                              credentialBlob,
-                              secret,
-                              &recovered_credential)) {
-    printf("%s() error, line: %d, ActivateCredential failed\n", __func__, __LINE__);
+                               quote_handle,
+                               ek_handle,
+                               emptyAuth,
+                               emptyAuth,
+                               credentialBlob,
+                               secret,
+                               &recovered_credential)) {
+    printf("%s() error, line: %d, ActivateCredential failed\n",
+           __func__,
+           __LINE__);
     Tpm2_FlushContext(tpm, quote_handle);
     Tpm2_FlushContext(tpm, srk_handle);
     Tpm2_FlushContext(tpm, ek_handle);
