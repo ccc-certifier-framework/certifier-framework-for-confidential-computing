@@ -468,7 +468,6 @@ bool recover_sealing_secret(local_tpm    &tpm,
   }
 
   TPMA_OBJECT primary_flags;
-  *(uint32_t *)(&primary_flags) = 0;
   primary_flags.fixedTPM = 1;
   primary_flags.fixedParent = 1;
   primary_flags.sensitiveDataOrigin = 1;
@@ -1957,46 +1956,47 @@ bool share_secret_with_tpm2_rsa_public_key(TPM2B_DIGEST *protection_seed,
     protection_seed->size = tpm2_alg_util_get_hash_size(parent_name_alg);
     int rc = RAND_bytes(protection_seed->buffer, protection_seed->size);
     if (rc != 1) {
-        goto error;
+        return false;
     }
 
     // The seed value will be OAEP encrypted with a given L parameter.
     ctx = EVP_PKEY_CTX_new(pkey, NULL);
     if (!ctx) {
+        return false;
     }
 
     rc = EVP_PKEY_encrypt_init(ctx);
     if (rc <= 0) {
-        goto error;
+        return false;
     }
 
     rc = EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING);
     if (rc <= 0) {
-        goto error;
+        return false;
     }
 
     rc = EVP_PKEY_CTX_set_rsa_oaep_md(ctx,
             tpm2_openssl_md_from_tpmhalg(parent_name_alg));
     if (rc <= 0) {
-        goto error;
+        return false;
     }
 
     // the library will take ownership of the label
     char *newlabel = strdup((const char *)label);
     if (newlabel == NULL) {
-        goto error;
+        return false;
     }
 
     rc = EVP_PKEY_CTX_set0_rsa_oaep_label(ctx, newlabel, label_len);
     if (rc <= 0) {
         free(newlabel);
-        goto error;
+        return false;
     }
 
     size_t outlen = sizeof(TPMU_ENCRYPTED_SECRET);
     if (EVP_PKEY_encrypt(ctx, encrypted_protection_seed->secret, &outlen,
             protection_seed->buffer, protection_seed->size) <= 0) {
-        goto error;
+        return false;
     }
     encrypted_protection_seed->size = outlen;
     rval = true;
@@ -2007,15 +2007,16 @@ error:
     return rval;
 }
 
+#endif
+
 // This makes the certificate on the provider given
 // the subject quote key, signing key, measurement (pcrs),
 // and proposed subject auth key
 bool construct_quote_key_cert(const key_message& signing_key,
         const key_message& quote_public_key, const string& measurement,
         string* cert_out) {
+  return false;
 }
-
-#endif
 
 bool make_credential(const string      &quoting_key_public_area,
                      const string      &cert_in,

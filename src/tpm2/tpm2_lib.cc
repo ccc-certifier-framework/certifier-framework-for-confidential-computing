@@ -1270,19 +1270,25 @@ void FillPublicRsaTemplate(TPM_ALG_ID        enc_alg,
                            int               mod_size,
                            uint32_t          exp,
                            TPM2B_PUBLIC     &pub_key) {
+
   pub_key.publicArea.type = enc_alg;
   pub_key.publicArea.nameAlg = int_alg;
   pub_key.publicArea.objectAttributes = flags;
   pub_key.publicArea.parameters.rsaDetail.symmetric.algorithm = sym_alg;
+
+  // sym key size
   if (sym_alg != TPM_ALG_NULL) {
     pub_key.publicArea.parameters.rsaDetail.symmetric.keyBits.aes =
         sym_key_size;
     pub_key.publicArea.parameters.rsaDetail.symmetric.mode.aes = sym_mode;
   }
+
+  // scheme
   pub_key.publicArea.parameters.rsaDetail.scheme.scheme = sig_scheme;
   if (sig_scheme != TPM_ALG_NULL)
     pub_key.publicArea.parameters.rsaDetail.scheme.details.rsassa.hashAlg =
         TPM_ALG_SHA256;
+
   pub_key.publicArea.parameters.rsaDetail.keyBits = (uint16_t)mod_size;
   pub_key.publicArea.parameters.rsaDetail.exponent = exp;
 }
@@ -1370,6 +1376,17 @@ bool GetPublicOut(int                  size,
   return true;
 }
 
+/*
+ * TPMI_RH_HIERARCHY
+@primaryHandle
+TPM_RH_ENDORSEMENT, TPM_RH_OWNER, TPM_RH_PLATFORM+{PP}, or TPM_RH_NULL,
+Parameters
+TPM2B_SENSITIVE_CREATE inSensitive	the sensitive data,
+   (see TPM 2.0 Part 1, Sensitive Values).
+TPM2B_PUBLIC inPublic	the public template
+TPM2B_DATA outsideInfo  data that will be included in the creation data for
+TPML_PCR_SELECTION creationPCR  PCR that will be used in creation data
+ */
 bool Tpm2_CreatePrimary(local_tpm          &tpm,
                         TPM_HANDLE          owner,
                         string             &authString,
