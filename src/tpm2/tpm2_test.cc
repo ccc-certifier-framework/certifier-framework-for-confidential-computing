@@ -85,6 +85,19 @@ int g_policy_B_size= 32;
 bool endorsement_test(local_tpm &tpm, string authString) {
   TPM_HANDLE ek_handle;
 
+  string emptyAuth;
+  int size_buf = 128;
+  byte_t buf[size_buf];
+
+  int m = CreatePasswordAuthArea(emptyAuth, size_buf, buf);
+  if (m < 0) {
+    printf("%s() error, line %d, CreatePasswordAuthArea failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  authString.assign((char*)(buf + 2), m - 2);
+
   if (authString.size() == 0) {
     authString.assign((char*)g_policy_B, g_policy_B_size);
   }

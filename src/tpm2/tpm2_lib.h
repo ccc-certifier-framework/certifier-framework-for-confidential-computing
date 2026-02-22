@@ -183,6 +183,16 @@ int CreateSensitiveArea(string &authString,
                         string &sensitiveData,
                         int     size,
                         byte_t *buf);
+int CreatePasswordAuthArea(string &password, int size, byte_t *buf);
+int CreateSensitiveArea(string &authString,
+                        string &sensitiveData,
+                        int     size,
+                        byte_t *buf);
+int CreateSensitiveAreaWithSize(string &authString,
+                        string &sensitiveData,
+                        int     size,
+                        byte_t *buf);
+int SetPasswordData(string &password, int size, byte_t *buf);
 
 bool Tpm2_CreatePrimary(local_tpm          &tpm,
                         TPM_HANDLE          owner,

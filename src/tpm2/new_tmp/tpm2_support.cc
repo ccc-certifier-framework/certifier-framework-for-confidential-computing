@@ -709,6 +709,12 @@ bool get_endorsement_key(local_tpm &tpm, string* authString, TPM_HANDLE *ek_hand
   string sensitiveData;
   string outsideInfo;
 
+#ifdef DEBUG
+  printf("authstring: ");
+  print_bytes(authString->size(), (byte_t*)authString->data());
+  printf("\n");
+#endif
+
   // Create Endorsement key with handle ekHandle
   if (!Tpm2_CreatePrimary(tpm,
                           TPM_RH_ENDORSEMENT, // owner
