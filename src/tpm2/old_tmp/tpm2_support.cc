@@ -284,15 +284,10 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
   primary_flags.decrypt = 1;
   primary_flags.restricted = 1;
 
-  string sensitiveData;
-  string outsideInfo;
-
   // Creating a new SRK
   if (!Tpm2_CreatePrimary(tpm,
                           TPM_RH_OWNER,
                           srkAuth,
-                          sensitiveData,
-			  outsideInfo,
                           pcrSelect,
                           TPM_ALG_RSA,
                           TPM_ALG_SHA256,
@@ -372,18 +367,14 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
   *(uint32_t *)(&create_flags) = 0;
   create_flags.fixedTPM = 1;
   create_flags.fixedParent = 1;
-  string outsideData;
-  string authString;
-  string sensitveData;
-
-  authString.assign((char*)policy_digest.buffer, (int) policy_digest.size);
-  sensitiveData.assign((char*)secret.buffer, (int)secret.size);
 
   if (!Tpm2_CreateSealed(tpm,
                          srk_handle,
-                         authString,
-                         sensitiveData,
-                         outsideData,
+                         policy_digest.size,
+                         policy_digest.buffer,
+                         sealAuth,
+                         secret.size,
+                         secret.buffer,
                          pcrSelect,
                          TPM_ALG_SHA256,
                          create_flags,
@@ -484,14 +475,10 @@ bool recover_sealing_secret(local_tpm    &tpm,
   primary_flags.decrypt = 1;
   primary_flags.restricted = 1;
 
-  string sensitiveData;
-  string outsideInfo;
   // Creating a new SRK
   if (!Tpm2_CreatePrimary(tpm,
                           TPM_RH_OWNER,
                           srkAuth,
-                          sensitiveData,
-			  outsideInfo,
                           pcrSelect,
                           TPM_ALG_RSA,
                           TPM_ALG_SHA256,
@@ -621,70 +608,7 @@ bool make_and_install_endorsement_cert(local_tpm &tpm,
   return true;
 }
 
-/*
- *  B.4.4 Storage EK Templates
- *  B.4.4.1 Template H-1: RSA 2048 (Storage)
- *  From: TCG EK Credential Profile
- *        For TPM Family 2.0; Level 0
-
- *  Parameter         Type                      Content
- *  type              TPMI_ALG_PUBLIC           TPM_ALG_RSA
- *         TPMT_PUBLIC_PARMS
- *  nameAlg           TPMI_ALG_HASH             TPM_ALG_SHA256
- *  objectAttributes  TPMA_OBJECT
- *      fixedTPM = 1
- *      stClear = 0
- *      fixedParent = 1
- *      sensitiveDataOrigin = 1
- *      userWithAuth = 1
- *      adminWithPolicy = 1
- *      firmwareLimited = 0
- *      svnLimited = 0
- *      noDA = 0
- *      encryptedDuplication = 0
- *      restricted = 1
- *      decrypt = 1
- *      sign = 0
-
- *  authPolicy TPM2B_DIGEST
- *  size              UINT16                      32
- *  buffer            BYTE
- *      0xCA, 0x3D, 0x0A, 0x99, 0xA2, 0xB9,
- *      0x39, 0x06, 0xF7, 0xA3, 0x34, 0x24,
- *      0x14, 0xEF, 0xCF, 0xB3, 0xA3, 0x85,
- *      0xD4, 0x4C, 0xD1, 0xFD, 0x45, 0x90,
- *      0x89, 0xD1, 0x9B, 0x50, 0x71, 0xC0,
- *      0xB7, 0xA0
-
- *  This is policy B. PolicyBSHA256
- *  HSHA256(0x0...0 || 0x00000171 || PolicyASHA256 ||
- *  PolicyCSHA256)
-
- *  parameters        TPMS_RSA_PARMS
-
- *  symmetric->algorithm    TPMI_ALG_SYM_OBJECT     TPM_ALG_AES
- *  symmetric->keyBits      TPMI_AES_KEY_BITS       128
- *  symmetric->mode         TPMI_ALG_SYM_MODE       TPM_ALG_CFB
-      typedef struct {
-         TPMI_ALG_RSA_SCHEME scheme;
-          TPMU_ASYM_SCHEME    details;
-      } TPMT_RSA_SCHEME;
-      typedef TPMS_SCHEME_SIGHASH TPMS_SCHEME_ECDSA;
-        TPMT_SYM_DEF_OBJECT symmetric;
-        TPMT_RSA_SCHEME     scheme;
-        TPMI_RSA_KEY_BITS   keyBits;
-        uint32_t            exponent;
-      } TPMS_RSA_PARMS;
-
- *  scheme->scheme          TPMI_ALG_ASYM_SCHEME    TPM_ALG_NULL
- *  keyBits                 TPMI_RSA_KEY_BITS       2048
- *  exponent                UINT32                  0
- *  unique TPM2B_PUBLIC_KEY_RSA
- *  size                    UINT16                  0
- *  buffer                  BYTE                    Empty
- */
-
-bool get_endorsement_key(local_tpm &tpm, string* authString, TPM_HANDLE *ek_handle) {
+bool get_endorsement_key(local_tpm &tpm, TPM_HANDLE *ek_handle) {
   string emptyAuth;
 
   TPM2B_PUBLIC pub_out;
@@ -706,25 +630,20 @@ bool get_endorsement_key(local_tpm &tpm, string* authString, TPM_HANDLE *ek_hand
   primary_flags.decrypt = 1;
   primary_flags.restricted = 1;
 
-  string sensitiveData;
-  string outsideInfo;
-
   // Create Endorsement key with handle ekHandle
   if (!Tpm2_CreatePrimary(tpm,
-                          TPM_RH_ENDORSEMENT, // owner
-                          *authString,
-                          sensitiveData,
-			  outsideInfo,
-                          pcrSelect,          // pcrSelect
-                          TPM_ALG_RSA,        // enc_alg
-                          TPM_ALG_SHA256,     // int_alg
+                          TPM_RH_ENDORSEMENT,
+                          emptyAuth,
+                          pcrSelect,
+                          TPM_ALG_RSA,
+                          TPM_ALG_SHA256,
                           primary_flags,
-                          TPM_ALG_AES,        // sym_alg
-                          128,                // size (128)
-                          TPM_ALG_CFB,        // sym_mode
-                          TPM_ALG_NULL,       // sym_scheme
-                          2048,               // keyBits (mod size)
-                          0x00010001,         // exponent
+                          TPM_ALG_AES,
+                          256,
+                          TPM_ALG_CFB,
+                          TPM_ALG_NULL,
+                          2048,
+                          0x010001,
                           ek_handle,
                           &pub_out)) {
     printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);
@@ -1013,6 +932,8 @@ bool create_quote_hierarchy(local_tpm    &tpm,
                             byte_t       *pcrs,
                             const string &file_name) {
 
+  string     srkAuth;
+  string     quoteAuth;
   TPM_HANDLE srk_handle;
 
   TPM2B_PUBLIC       pub_out;
@@ -1037,17 +958,10 @@ bool create_quote_hierarchy(local_tpm    &tpm,
   primary_flags.decrypt = 1;
   primary_flags.restricted = 1;
 
-  string srkAuth;
-  string quoteAuth;
-  string sensitiveData;
-  string outsideInfo;
-
   // Storage root key
   if (!Tpm2_CreatePrimary(tpm,
                           TPM_RH_OWNER,
                           srkAuth,
-                          sensitiveData,
-			  outsideInfo,
                           pcrSelect,
                           TPM_ALG_RSA,
                           TPM_ALG_SHA256,
@@ -1128,7 +1042,6 @@ bool create_quote_hierarchy(local_tpm    &tpm,
                       srk_handle,
                       srkAuth,
                       quoteAuth,
-                      outsideInfo,
                       pcrSelect,
                       TPM_ALG_RSA,
                       TPM_ALG_SHA256,
@@ -1223,15 +1136,10 @@ bool recover_and_load_quote_hierarchy(local_tpm    &tpm,
   primary_flags.decrypt = 1;
   primary_flags.restricted = 1;
 
-  string sensitiveData;
-  string outsideInfo;
-
   // Storage root key
   if (!Tpm2_CreatePrimary(tpm,
                           TPM_RH_OWNER,
                           srkAuth,
-                          sensitiveData,
-			  outsideInfo,
                           pcrSelect,
                           TPM_ALG_RSA,
                           TPM_ALG_SHA256,

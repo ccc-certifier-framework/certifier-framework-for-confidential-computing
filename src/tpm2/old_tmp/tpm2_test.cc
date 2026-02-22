@@ -74,21 +74,10 @@ DEFINE_string(ek_cert_file_name, "ek-rsa2048.crt", "tpm cert file name");
 
 // ----------------------------------------------------------
 
-byte_t g_policy_B [32] = {
-    0xCA, 0x3D, 0x0A, 0x99, 0xA2, 0xB9, 0x39, 0x06,
-    0xF7, 0xA3, 0x34, 0x24, 0x14, 0xEF, 0xCF, 0xB3,
-    0xA3, 0x85, 0xD4, 0x4C, 0xD1, 0xFD, 0x45, 0x90,
-    0x89, 0xD1, 0x9B, 0x50, 0x71, 0xC0, 0xB7, 0xA0
-};
-int g_policy_B_size= 32;
-
-bool endorsement_test(local_tpm &tpm, string authString) {
+bool endorsement_test(local_tpm &tpm) {
   TPM_HANDLE ek_handle;
 
-  if (authString.size() == 0) {
-    authString.assign((char*)g_policy_B, g_policy_B_size);
-  }
-  if (!get_endorsement_key(tpm, &authString, &ek_handle)) {
+  if (!get_endorsement_key(tpm, &ek_handle)) {
     printf("%s() error, line %d, get_endorsement_key failed\n",
            __func__,
            __LINE__);
@@ -343,7 +332,7 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
   TPM_HANDLE ek_handle;
   string     emptyAuth;
 
-  if (!get_endorsement_key(tpm, &emptyAuth, &ek_handle)) {
+  if (!get_endorsement_key(tpm, &ek_handle)) {
     printf("%s() error, line %d, get_endorsement_key failed\n",
            __func__,
            __LINE__);
@@ -441,9 +430,7 @@ bool context_test(local_tpm &tpm) {
   TPM_HANDLE handle;
   uint16_t   size = 4096;
   byte_t     saveArea[4096];
-  string     authString;
-  string     sensitiveData;
-  string     outsideInfo;
+  string     authString("01020304");
 
   TPM2B_PUBLIC       pub_out;
   TPML_PCR_SELECTION pcrSelect;
@@ -460,8 +447,6 @@ bool context_test(local_tpm &tpm) {
   if (Tpm2_CreatePrimary(tpm,
                          TPM_RH_OWNER,
                          authString,
-                         sensitiveData,
-			 outsideInfo,
                          pcrSelect,
                          TPM_ALG_RSA,
                          TPM_ALG_SHA256,
@@ -668,10 +653,9 @@ int main(int an, char **av) {
   printf("Opened tpm: %s %d\n", FLAGS_tpm_device.c_str(), tpm.tpm_fd_);
 #endif
 
-  string authString;
   if (FLAGS_operation == "EndorsementTest") {
     printf("\n");
-    if (endorsement_test(tpm, authString)) {
+    if (endorsement_test(tpm)) {
       printf("endorsement test succeeded\n");
     } else {
       printf("endorsement test failed\n");
