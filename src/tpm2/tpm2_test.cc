@@ -163,6 +163,7 @@ bool endorsement_test(local_tpm &tpm, string authString) {
     Tpm2_FlushContext(tpm, ek_handle);
     return false;
   }
+  printf("\n");
   printf("Endorsement Key\n");
   printf("Public blob: ");
   print_bytes(pub_blob_size, pub_blob);

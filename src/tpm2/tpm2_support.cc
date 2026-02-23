@@ -630,7 +630,8 @@ bool make_and_install_endorsement_cert(local_tpm &tpm,
  *
  *  type TPMI_ALG_PUBLIC TPM_ALG_RSA
  *  nameAlg TPMI_ALG_HASH TPM_ALG_SHA256
- *  objectAttributes TPMA_OBJECT fixedTPM = 1
+ *  objectAttributes
+ *    fixedTPM = 1
  *    stClear = 0
  *    fixedParent = 1
  *    sensitiveDataOrigin = 1
@@ -683,7 +684,7 @@ bool get_endorsement_key(local_tpm  &tpm,
   primary_flags.fixedTPM = 1;
   primary_flags.fixedParent = 1;
   primary_flags.sensitiveDataOrigin = 1;
-  primary_flags.userWithAuth = 1;
+  primary_flags.adminWithPolicy = 1;
   primary_flags.decrypt = 1;
   primary_flags.restricted = 1;
 
@@ -715,7 +716,7 @@ bool get_endorsement_key(local_tpm  &tpm,
                           TPM_ALG_CFB,   // sym_mode
                           TPM_ALG_NULL,  // sym_scheme
                           2048,          // keyBits (mod size)
-                          0,             // exponent
+                          0x00010001,    // exponent
                           ek_handle,
                           &pub_out)) {
     printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);

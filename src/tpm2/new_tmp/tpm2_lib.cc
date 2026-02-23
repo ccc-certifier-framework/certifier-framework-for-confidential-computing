@@ -1388,7 +1388,7 @@ bool GetPublicOut(int                  size,
                   TPMT_TK_CREATION    *creation_ticket,
                   TPM2B_NAME          *name) {
 
-#ifdef DEBUG1
+#ifdef DEBUG
   printf("GetPublicOut\n");
   print_bytes(size, in);
   printf("\n");
@@ -1402,7 +1402,7 @@ bool GetPublicOut(int                  size,
   change_endian16((uint16_t *)current_in, (uint16_t *)&size_key_blob);
   current_in += sizeof(uint16_t);
   size_in -= sizeof(uint16_t);
-#ifdef DEBUG1
+#ifdef DEBUG
   printf("GetPublicOut, size_key_blob: %x %d\n", size_key_blob, size_key_blob);
 #endif
 
@@ -1488,7 +1488,6 @@ bool Tpm2_CreatePrimary(local_tpm          &tpm,
   uint16_t in_auth_size = authString.size();
   change_endian16(&in_auth_size, (uint16_t *)out);
   Update(sizeof(uint16_t), &out, &size_params, &space_left);
-
   IF_LESS_THAN_RETURN_FALSE(space_left, in_auth_size)
   memcpy(out, (byte_t *)authString.data(), authString.size());
   Update(in_auth_size, &out, &size_params, &space_left);
@@ -1566,7 +1565,7 @@ bool Tpm2_CreatePrimary(local_tpm          &tpm,
                          &cap,
                          &responseSize,
                          &responseCode);
-#ifdef DEBUG1
+#ifdef DEBUG
   print_response("CreatePrimary", cap, responseSize, responseCode, resp_buf);
 #else
   if (responseCode != 0)
