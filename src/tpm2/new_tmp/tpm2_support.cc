@@ -716,7 +716,8 @@ bool get_endorsement_key(local_tpm  &tpm,
                           TPM_ALG_CFB,   // sym_mode
                           TPM_ALG_NULL,  // sym_scheme
                           2048,          // keyBits (mod size)
-                          0x00010001,    // exponent
+                          // 0x00010001,    // exponent
+                          0x0,           // exponent
                           ek_handle,
                           &pub_out)) {
     printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);
@@ -724,6 +725,7 @@ bool get_endorsement_key(local_tpm  &tpm,
   }
 
 #ifdef DEBUG1
+  printf("\n");
   printf("Modulus from CreatePrimary (%d):\n",
          pub_out.publicArea.unique.rsa.size);
   print_bytes(pub_out.publicArea.unique.rsa.size,
