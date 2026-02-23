@@ -626,66 +626,41 @@ bool make_and_install_endorsement_cert(local_tpm &tpm,
 }
 
 /*
- *  B.4.4 Storage EK Templates
- *  B.4.4.1 Template H-1: RSA 2048 (Storage)
- *  From: TCG EK Credential Profile
- *        For TPM Family 2.0; Level 0
-
- *  Parameter         Type                      Content
- *  type              TPMI_ALG_PUBLIC           TPM_ALG_RSA
- *         TPMT_PUBLIC_PARMS
- *  nameAlg           TPMI_ALG_HASH             TPM_ALG_SHA256
- *  objectAttributes  TPMA_OBJECT
- *      fixedTPM = 1
- *      stClear = 0
- *      fixedParent = 1
- *      sensitiveDataOrigin = 1
- *      userWithAuth = 1
- *      adminWithPolicy = 1
- *      firmwareLimited = 0
- *      svnLimited = 0
- *      noDA = 0
- *      encryptedDuplication = 0
- *      restricted = 1
- *      decrypt = 1
- *      sign = 0
-
- *  authPolicy TPM2B_DIGEST
- *  size              UINT16                      32
- *  buffer            BYTE
- *      0xCA, 0x3D, 0x0A, 0x99, 0xA2, 0xB9,
- *      0x39, 0x06, 0xF7, 0xA3, 0x34, 0x24,
- *      0x14, 0xEF, 0xCF, 0xB3, 0xA3, 0x85,
- *      0xD4, 0x4C, 0xD1, 0xFD, 0x45, 0x90,
- *      0x89, 0xD1, 0x9B, 0x50, 0x71, 0xC0,
- *      0xB7, 0xA0
-
- *  This is policy B. PolicyBSHA256
- *  HSHA256(0x0...0 || 0x00000171 || PolicyASHA256 ||
- *  PolicyCSHA256)
-
- *  parameters        TPMS_RSA_PARMS
-
- *  symmetric->algorithm    TPMI_ALG_SYM_OBJECT     TPM_ALG_AES
- *  symmetric->keyBits      TPMI_AES_KEY_BITS       128
- *  symmetric->mode         TPMI_ALG_SYM_MODE       TPM_ALG_CFB
-      typedef struct {
-         TPMI_ALG_RSA_SCHEME scheme;
-          TPMU_ASYM_SCHEME    details;
-      } TPMT_RSA_SCHEME;
-      typedef TPMS_SCHEME_SIGHASH TPMS_SCHEME_ECDSA;
-        TPMT_SYM_DEF_OBJECT symmetric;
-        TPMT_RSA_SCHEME     scheme;
-        TPMI_RSA_KEY_BITS   keyBits;
-        uint32_t            exponent;
-      } TPMS_RSA_PARMS;
-
- *  scheme->scheme          TPMI_ALG_ASYM_SCHEME    TPM_ALG_NULL
- *  keyBits                 TPMI_RSA_KEY_BITS       2048
- *  exponent                UINT32                  0
- *  unique TPM2B_PUBLIC_KEY_RSA
- *  size                    UINT16                  0
- *  buffer                  BYTE                    Empty
+ * Template args
+ *
+ *  type TPMI_ALG_PUBLIC TPM_ALG_RSA
+ *  nameAlg TPMI_ALG_HASH TPM_ALG_SHA256
+ *  objectAttributes TPMA_OBJECT fixedTPM = 1
+ *    stClear = 0
+ *    fixedParent = 1
+ *    sensitiveDataOrigin = 1
+ *    userWithAuth = 0
+ *    adminWithPolicy = 1
+ *    noDA = 0
+ *    encryptedDuplication = 0
+ *    restricted = 1
+ *    decrypt = 1
+ *    sign = 0
+ *  authPolicy
+ *    0x83, 0x71, 0x97, 0x67, 0x44, 0x84,
+ *    0xB3, 0xF8, 0x1A, 0x90, 0xCC, 0x8D,
+ *    0x46, 0xA5, 0xD7, 0x24, 0xFD, 0x52,
+ *    0xD7, 0x6E, 0x06, 0x52, 0x0B, 0x64,
+ *    0xF2, 0xA1, 0xDA, 0x1B, 0x33, 0x14,
+ *    0x69, 0xAA
+ *  TPM2_PolicySecret(TPM_RH_ENDORSEMENT)
+ *  parameters
+ *  symmetric->algorithm TPM_ALG_AES
+ *  symmetric->keyBits 128
+ *  symmetric->mode TPM_ALG_CFB
+ *  symmetric->details NULL
+ *  scheme->scheme TPM_ALG_NULL
+ *  scheme->details NULL
+ *  keyBits 2048
+ *  exponent 0
+ *  unique
+ *    size UINT16 256
+ *    buffer BYTE All 0
  */
 
 bool get_endorsement_key(local_tpm  &tpm,
@@ -740,7 +715,7 @@ bool get_endorsement_key(local_tpm  &tpm,
                           TPM_ALG_CFB,   // sym_mode
                           TPM_ALG_NULL,  // sym_scheme
                           2048,          // keyBits (mod size)
-                          0,    // exponent
+                          0,             // exponent
                           ek_handle,
                           &pub_out)) {
     printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);

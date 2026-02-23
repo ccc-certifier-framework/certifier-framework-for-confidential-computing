@@ -1319,6 +1319,7 @@ void FillPublicRsaTemplate(TPM_ALG_ID        enc_alg,
                            TPM_ALG_ID        sig_scheme,
                            int               mod_size,
                            uint32_t          exp,
+                           string           &unique,
                            TPM2B_PUBLIC     &pub_key) {
 
   pub_key.publicArea.type = enc_alg;
@@ -1346,6 +1347,11 @@ void FillPublicRsaTemplate(TPM_ALG_ID        enc_alg,
 
   pub_key.publicArea.parameters.rsaDetail.keyBits = (uint16_t)mod_size;
   pub_key.publicArea.parameters.rsaDetail.exponent = exp;
+
+  pub_key.publicArea.unique.sym.size = unique.size();
+  memcpy(pub_key.publicArea.unique.sym.buffer,
+         (byte_t *)unique.data(),
+         unique.size());
 }
 
 void FillEmptyData(TPM2B_DATA &data) {
@@ -1439,17 +1445,6 @@ bool GetPublicOut(int                  size,
   return true;
 }
 
-/*
- * TPMI_RH_HIERARCHY
-@primaryHandle
-TPM_RH_ENDORSEMENT, TPM_RH_OWNER, TPM_RH_PLATFORM+{PP}, or TPM_RH_NULL,
-Parameters
-TPM2B_SENSITIVE_CREATE inSensitive      the sensitive data,
-   (see TPM 2.0 Part 1, Sensitive Values).
-TPM2B_PUBLIC inPublic   the public template
-TPM2B_DATA outsideInfo  data that will be included in the creation data for
-TPML_PCR_SELECTION creationPCR  PCR that will be used in creation data
- */
 bool Tpm2_CreatePrimary(local_tpm          &tpm,
                         TPM_HANDLE          owner,
                         string             &authString,
@@ -1478,12 +1473,12 @@ bool Tpm2_CreatePrimary(local_tpm          &tpm,
   memset(commandBuf, 0, 2 * MAX_SIZE_PARAMS);
   memset(params, 0, MAX_SIZE_PARAMS);
 
+  // Owner
   n = SetOwnerHandle(owner, space_left, out);
   IF_NEG_RETURN_FALSE(n);
   IF_LESS_THAN_RETURN_FALSE(space_left, n)
   Update(n, &out, &size_params, &space_left);
 
-  // I don't know why this is here
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   memset(out, 0, sizeof(uint16_t));
   Update(sizeof(uint16_t), &out, &size_params, &space_left);
@@ -1493,6 +1488,7 @@ bool Tpm2_CreatePrimary(local_tpm          &tpm,
   uint16_t in_auth_size = authString.size();
   change_endian16(&in_auth_size, (uint16_t *)out);
   Update(sizeof(uint16_t), &out, &size_params, &space_left);
+
   IF_LESS_THAN_RETURN_FALSE(space_left, in_auth_size)
   memcpy(out, (byte_t *)authString.data(), authString.size());
   Update(in_auth_size, &out, &size_params, &space_left);
@@ -1506,6 +1502,11 @@ bool Tpm2_CreatePrimary(local_tpm          &tpm,
 
   // Public Key
   TPM2B_PUBLIC pub_key;
+  string       unique;
+  byte_t       z[mod_size / 8];
+  memset(z, 0, mod_size / 8);
+  unique.assign((char *)z, mod_size / 8);
+
   FillPublicRsaTemplate(enc_alg,
                         int_alg,
                         flags,
@@ -1516,6 +1517,7 @@ bool Tpm2_CreatePrimary(local_tpm          &tpm,
                         sig_scheme,
                         mod_size,
                         exp,
+                        unique,
                         pub_key);
   n = Marshal_Public_Key_Info(pub_key, space_left, out);
   IF_NEG_RETURN_FALSE(n);
@@ -2660,6 +2662,10 @@ bool Tpm2_CreateKey(local_tpm           &tpm,
   string policyString;
 
   TPM2B_PUBLIC pub_key;
+  string       unique;
+  byte_t       z[mod_size / 8];
+  memset(z, 0, mod_size / 8);
+  unique.assign((char *)z, mod_size / 8);
   FillPublicRsaTemplate(enc_alg,
                         int_alg,
                         flags,
@@ -2670,6 +2676,7 @@ bool Tpm2_CreateKey(local_tpm           &tpm,
                         sig_scheme,
                         mod_size,
                         exp,
+                        unique,
                         pub_key);
 
   n = Marshal_Public_Key_Info(pub_key, space_left, in);
