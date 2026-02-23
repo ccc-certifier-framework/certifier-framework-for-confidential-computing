@@ -278,7 +278,6 @@ int GetRsaParams(uint16_t              size_in,
   input += sizeof(uint16_t);
   total_size += sizeof(uint16_t);
 
-  printf("***1\n");
   // symmetric bits (if present)
   if (rsaParams.symmetric.algorithm != TPM_ALG_NULL) {
     change_endian16((uint16_t *)input,
@@ -304,25 +303,20 @@ int GetRsaParams(uint16_t              size_in,
     total_size += sizeof(uint32_t);
   }
 
-  printf("***2\n");
   // Exponent
   change_endian32((uint32_t *)input, (uint32_t *)&rsaParams.exponent);
   input += sizeof(uint32_t);
   total_size += sizeof(uint32_t);
-  printf("exponent: %08x\n", rsaParams.exponent);
 
-  printf("***3\n");
   // modulus size
   change_endian16((uint16_t *)input, (uint16_t *)&rsa->size);
   input += sizeof(uint16_t);
   total_size += sizeof(uint16_t);
 
-  printf("***4\n");
   // modulus
   memcpy(rsa->buffer, input, rsa->size);
   input += rsa->size;
   total_size += rsa->size;
-  printf("***5\n");
   return total_size;
 }
 
@@ -1397,12 +1391,13 @@ bool GetPublicOut(int                  size,
   byte_t *current_in = in;
   int     size_in = size;
 
-#if 0
-  uint16_t size_in = 0;
+  uint16_t size_key_blob = 0;
 
-  change_endian16((uint16_t *)current_in, (uint16_t *)&size_in);
+  change_endian16((uint16_t *)current_in, (uint16_t *)&size_key_blob);
   current_in += sizeof(uint16_t);
-printf("GetPublicOut, size_in: %x\n", size_in);
+  size_in -= sizeof(uint16_t);
+#ifdef DEBUG1
+  printf("GetPublicOut, size_key_blob: %x %d\n", size_key_blob, size_key_blob);
 #endif
 
   // type
@@ -1592,8 +1587,8 @@ bool Tpm2_CreatePrimary(local_tpm          &tpm,
   size -= sizeof(uint32_t);
 
   // why?
-  current_in += 6;
-  size -= 6;
+  current_in += 4;
+  size -= 4;
 
   return GetPublicOut(size,
                       current_in,

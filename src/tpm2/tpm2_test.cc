@@ -96,10 +96,8 @@ bool endorsement_test(local_tpm &tpm, string authString) {
     return false;
   }
   authString.assign((char *)(buf + 2), m - 2);
+  policyString.assign((char *)g_policy_B, g_policy_B_size);
 
-  if (policyString.size() == 0) {
-    policyString.assign((char *)g_policy_B, g_policy_B_size);
-  }
   if (!get_endorsement_key(tpm, authString, policyString, &ek_handle)) {
     printf("%s() error, line %d, get_endorsement_key failed\n",
            __func__,
