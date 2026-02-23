@@ -127,13 +127,14 @@ bool Tpm2_ReadPcr(local_tpm          &tpm,
                   TPML_DIGEST        *digest);
 bool Tpm2_CreatePrimary(local_tpm          &tpm,
                         TPM_HANDLE          owner,
-			string             &authString,
-                        string              &sensitiveData,
-                        string              &outsideInfo,
+                        string             &authString,
+                        string             &sensitiveData,
+                        string             &outsideInfo,
                         TPML_PCR_SELECTION &pcr_selection,
                         TPM_ALG_ID          enc_alg,
                         TPM_ALG_ID          int_alg,
                         TPMA_OBJECT        &flags,
+                        string             &policyString,
                         TPM_ALG_ID          sym_alg,
                         TPMI_AES_KEY_BITS   sym_key_size,
                         TPMI_ALG_SYM_MODE   sym_mode,
@@ -179,20 +180,20 @@ bool Tpm2_PolicySecret(local_tpm     &tpm,
                        TPM2B_DIGEST  *policy_digest,
                        TPM2B_TIMEOUT *timeout,
                        TPMT_TK_AUTH  *ticket);
-int CreateSensitiveArea(string &authString,
-                        string &sensitiveData,
-                        int     size,
-                        byte_t *buf);
-int CreatePasswordAuthArea(string &password, int size, byte_t *buf);
-int CreateSensitiveArea(string &authString,
-                        string &sensitiveData,
-                        int     size,
-                        byte_t *buf);
-int CreateSensitiveAreaWithSize(string &authString,
-                        string &sensitiveData,
-                        int     size,
-                        byte_t *buf);
-int SetPasswordData(string &password, int size, byte_t *buf);
+int  CreateSensitiveArea(string &authString,
+                         string &sensitiveData,
+                         int     size,
+                         byte_t *buf);
+int  CreatePasswordAuthArea(string &password, int size, byte_t *buf);
+int  CreateSensitiveArea(string &authString,
+                         string &sensitiveData,
+                         int     size,
+                         byte_t *buf);
+int  CreateSensitiveAreaWithSize(string &authString,
+                                 string &sensitiveData,
+                                 int     size,
+                                 byte_t *buf);
+int  SetPasswordData(string &password, int size, byte_t *buf);
 
 bool Tpm2_CreatePrimary(local_tpm          &tpm,
                         TPM_HANDLE          owner,
@@ -203,6 +204,7 @@ bool Tpm2_CreatePrimary(local_tpm          &tpm,
                         TPM_ALG_ID          enc_alg,
                         TPM_ALG_ID          int_alg,
                         TPMA_OBJECT        &flags,
+                        string             &policyString,
                         TPM_ALG_ID          sym_alg,
                         TPMI_AES_KEY_BITS   sym_key_size,
                         TPMI_ALG_SYM_MODE   sym_mode,
@@ -212,7 +214,7 @@ bool Tpm2_CreatePrimary(local_tpm          &tpm,
                         TPM_HANDLE         *handle,
                         TPM2B_PUBLIC       *pub_out);
 bool Tpm2_CreateKey(local_tpm           &tpm,
-                    TPM_HANDLE          parent_handle,
+                    TPM_HANDLE           parent_handle,
                     string              &authString,
                     string              &sensitiveData,
                     string              &outsideData,
@@ -235,7 +237,7 @@ bool Tpm2_CreateKey(local_tpm           &tpm,
                     TPMT_TK_CREATION    *creation_ticket);
 bool Tpm2_CreateSealed(local_tpm           &tpm,
                        TPM_HANDLE           parent_handle,
-		       string              &authString,
+                       string              &authString,
                        string              &sensitiveData,
                        string              &outsideData,
                        TPML_PCR_SELECTION  &pcr_selection,

@@ -74,19 +74,18 @@ DEFINE_string(ek_cert_file_name, "ek-rsa2048.crt", "tpm cert file name");
 
 // ----------------------------------------------------------
 
-byte_t g_policy_B [32] = {
-    0xCA, 0x3D, 0x0A, 0x99, 0xA2, 0xB9, 0x39, 0x06,
-    0xF7, 0xA3, 0x34, 0x24, 0x14, 0xEF, 0xCF, 0xB3,
-    0xA3, 0x85, 0xD4, 0x4C, 0xD1, 0xFD, 0x45, 0x90,
-    0x89, 0xD1, 0x9B, 0x50, 0x71, 0xC0, 0xB7, 0xA0
-};
-int g_policy_B_size= 32;
+byte_t g_policy_B[32] = {0xCA, 0x3D, 0x0A, 0x99, 0xA2, 0xB9, 0x39, 0x06,
+                         0xF7, 0xA3, 0x34, 0x24, 0x14, 0xEF, 0xCF, 0xB3,
+                         0xA3, 0x85, 0xD4, 0x4C, 0xD1, 0xFD, 0x45, 0x90,
+                         0x89, 0xD1, 0x9B, 0x50, 0x71, 0xC0, 0xB7, 0xA0};
+int    g_policy_B_size = 32;
 
 bool endorsement_test(local_tpm &tpm, string authString) {
   TPM_HANDLE ek_handle;
 
+  string policyString;
   string emptyAuth;
-  int size_buf = 128;
+  int    size_buf = 128;
   byte_t buf[size_buf];
 
   int m = CreatePasswordAuthArea(emptyAuth, size_buf, buf);
@@ -96,12 +95,12 @@ bool endorsement_test(local_tpm &tpm, string authString) {
            __LINE__);
     return false;
   }
-  authString.assign((char*)(buf + 2), m - 2);
+  authString.assign((char *)(buf + 2), m - 2);
 
-  if (authString.size() == 0) {
-    authString.assign((char*)g_policy_B, g_policy_B_size);
+  if (policyString.size() == 0) {
+    policyString.assign((char *)g_policy_B, g_policy_B_size);
   }
-  if (!get_endorsement_key(tpm, &authString, &ek_handle)) {
+  if (!get_endorsement_key(tpm, authString, policyString, &ek_handle)) {
     printf("%s() error, line %d, get_endorsement_key failed\n",
            __func__,
            __LINE__);
@@ -356,7 +355,7 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
   TPM_HANDLE ek_handle;
   string     emptyAuth;
 
-  if (!get_endorsement_key(tpm, &emptyAuth, &ek_handle)) {
+  if (!get_endorsement_key(tpm, emptyAuth, emptyAuth, &ek_handle)) {
     printf("%s() error, line %d, get_endorsement_key failed\n",
            __func__,
            __LINE__);
@@ -457,6 +456,7 @@ bool context_test(local_tpm &tpm) {
   string     authString;
   string     sensitiveData;
   string     outsideInfo;
+  string     policyString;
 
   TPM2B_PUBLIC       pub_out;
   TPML_PCR_SELECTION pcrSelect;
@@ -474,11 +474,12 @@ bool context_test(local_tpm &tpm) {
                          TPM_RH_OWNER,
                          authString,
                          sensitiveData,
-			 outsideInfo,
+                         outsideInfo,
                          pcrSelect,
                          TPM_ALG_RSA,
                          TPM_ALG_SHA256,
                          primary_flags,
+                         policyString,
                          TPM_ALG_NULL,
                          (TPMI_AES_KEY_BITS)0,
                          TPM_ALG_ECB,

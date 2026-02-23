@@ -278,6 +278,7 @@ int GetRsaParams(uint16_t              size_in,
   input += sizeof(uint16_t);
   total_size += sizeof(uint16_t);
 
+  printf("***1\n");
   // symmetric bits (if present)
   if (rsaParams.symmetric.algorithm != TPM_ALG_NULL) {
     change_endian16((uint16_t *)input,
@@ -303,20 +304,25 @@ int GetRsaParams(uint16_t              size_in,
     total_size += sizeof(uint32_t);
   }
 
+  printf("***2\n");
   // Exponent
   change_endian32((uint32_t *)input, (uint32_t *)&rsaParams.exponent);
   input += sizeof(uint32_t);
   total_size += sizeof(uint32_t);
+  printf("exponent: %08x\n", rsaParams.exponent);
 
+  printf("***3\n");
   // modulus size
   change_endian16((uint16_t *)input, (uint16_t *)&rsa->size);
   input += sizeof(uint16_t);
   total_size += sizeof(uint16_t);
 
+  printf("***4\n");
   // modulus
   memcpy(rsa->buffer, input, rsa->size);
   input += rsa->size;
   total_size += rsa->size;
+  printf("***5\n");
   return total_size;
 }
 
@@ -891,7 +897,7 @@ int CreateSensitiveArea(string &authString,
   Update(sizeof(uint16_t), &out, &total_size, &space_left);
 
   IF_LESS_THAN_RETURN_FALSE(space_left, authString.size());
-  memcpy(out, (byte_t*)authString.data(), authString.size());
+  memcpy(out, (byte_t *)authString.data(), authString.size());
   Update(authString.size(), &out, &total_size, &space_left);
 
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t));
@@ -900,20 +906,20 @@ int CreateSensitiveArea(string &authString,
   Update(sizeof(uint16_t), &out, &total_size, &space_left);
 
   IF_LESS_THAN_RETURN_FALSE(space_left, sensitiveData.size());
-  memcpy(out, (byte_t*)sensitiveData.data(), sensitiveData.size());
+  memcpy(out, (byte_t *)sensitiveData.data(), sensitiveData.size());
   Update(sensitiveData.size(), &out, &total_size, &space_left);
 
   return total_size;
 }
 
 int CreateSensitiveAreaWithSize(string &authString,
-                        string &sensitiveData,
-                        int     size,
-                        byte_t *buf) {
+                                string &sensitiveData,
+                                int     size,
+                                byte_t *buf) {
   int     total_size = 0;
   int     space_left = size;
   byte_t *out = buf;
-  byte_t* pSize = out;
+  byte_t *pSize = out;
 
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t));
   Update(sizeof(uint16_t), &out, &total_size, &space_left);
@@ -924,7 +930,7 @@ int CreateSensitiveAreaWithSize(string &authString,
   Update(sizeof(uint16_t), &out, &total_size, &space_left);
 
   IF_LESS_THAN_RETURN_FALSE(space_left, authString.size());
-  memcpy(out, (byte_t*)authString.data(), authString.size());
+  memcpy(out, (byte_t *)authString.data(), authString.size());
   Update(authString.size(), &out, &total_size, &space_left);
 
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t));
@@ -933,11 +939,11 @@ int CreateSensitiveAreaWithSize(string &authString,
   Update(sizeof(uint16_t), &out, &total_size, &space_left);
 
   IF_LESS_THAN_RETURN_FALSE(space_left, sensitiveData.size());
-  memcpy(out, (byte_t*)sensitiveData.data(), sensitiveData.size());
+  memcpy(out, (byte_t *)sensitiveData.data(), sensitiveData.size());
   Update(sensitiveData.size(), &out, &total_size, &space_left);
 
-  uint16_t size_area = sizeof(uint16_t) + authString.size() +
-          sizeof(uint16_t) + sensitiveData.size();
+  uint16_t size_area = sizeof(uint16_t) + authString.size() + sizeof(uint16_t)
+                       + sensitiveData.size();
   change_endian16((uint16_t *)&size_area, (uint16_t *)pSize);
   return total_size;
 }
@@ -1084,7 +1090,7 @@ int Marshal_Public_Key_Info(TPM2B_PUBLIC &in, int size, byte_t *buf) {
   int     total_size = 0;
   int     space_left = size;
   byte_t *out = buf;
-  byte_t* pSpace = out;
+  byte_t *pSpace = out;
 
   // Total space
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
@@ -1107,9 +1113,7 @@ int Marshal_Public_Key_Info(TPM2B_PUBLIC &in, int size, byte_t *buf) {
 
   // authPolicy
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
-  change_endian16(
-      (uint16_t *)&in.publicArea.authPolicy.size,
-      (uint16_t *)out);
+  change_endian16((uint16_t *)&in.publicArea.authPolicy.size, (uint16_t *)out);
   Update(sizeof(uint16_t), &out, &total_size, &space_left);
   if (in.publicArea.authPolicy.size > 0) {
     IF_LESS_THAN_RETURN_FALSE(space_left, in.publicArea.authPolicy.size)
@@ -1166,9 +1170,7 @@ int Marshal_Public_Key_Info(TPM2B_PUBLIC &in, int size, byte_t *buf) {
 
   // Public Id
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
-  change_endian16(
-      (uint16_t *)&in.publicArea.unique.sym.size,
-      (uint16_t *)out);
+  change_endian16((uint16_t *)&in.publicArea.unique.sym.size, (uint16_t *)out);
   Update(sizeof(uint16_t), &out, &total_size, &space_left);
   if (in.publicArea.unique.sym.size > 0) {
     IF_LESS_THAN_RETURN_FALSE(space_left, in.publicArea.unique.sym.size)
@@ -1316,6 +1318,7 @@ int Marshal_Keyed_Hash_Info(TPM2B_PUBLIC &keyed_hash, int size, byte_t *buf) {
 void FillPublicRsaTemplate(TPM_ALG_ID        enc_alg,
                            TPM_ALG_ID        int_alg,
                            TPMA_OBJECT       flags,
+                           string           &policyString,
                            TPM_ALG_ID        sym_alg,
                            TPMI_AES_KEY_BITS sym_key_size,
                            TPMI_ALG_SYM_MODE sym_mode,
@@ -1327,6 +1330,11 @@ void FillPublicRsaTemplate(TPM_ALG_ID        enc_alg,
   pub_key.publicArea.type = enc_alg;
   pub_key.publicArea.nameAlg = int_alg;
   pub_key.publicArea.objectAttributes = flags;
+
+  pub_key.publicArea.authPolicy.size = policyString.size();
+  memcpy(pub_key.publicArea.authPolicy.buffer,
+         (byte_t *)policyString.data(),
+         policyString.size());
   pub_key.publicArea.parameters.rsaDetail.symmetric.algorithm = sym_alg;
 
   // sym key size
@@ -1374,39 +1382,46 @@ void FillKeyedHashTemplate(TPM_ALG_ID    enc_alg,
 
 bool GetPublicOut(int                  size,
                   byte_t              *in,
-                  TPM_HANDLE          *handle,
                   TPM2B_PUBLIC        *pub_out,
                   TPM2B_CREATION_DATA *creation_data,
                   TPM2B_DIGEST        *hash,
                   TPMT_TK_CREATION    *creation_ticket,
                   TPM2B_NAME          *name) {
 
-  byte_t *current_in = in;
-  change_endian32((uint32_t *)current_in, (uint32_t *)handle);
-  current_in += sizeof(TPM_HANDLE);
+#ifdef DEBUG1
+  printf("GetPublicOut\n");
+  print_bytes(size, in);
+  printf("\n");
+#endif
 
+  byte_t *current_in = in;
+  int     size_in = size;
+
+#if 0
   uint16_t size_in = 0;
 
   change_endian16((uint16_t *)current_in, (uint16_t *)&size_in);
   current_in += sizeof(uint16_t);
+printf("GetPublicOut, size_in: %x\n", size_in);
+#endif
 
   // type
   change_endian16((uint16_t *)current_in,
                   (uint16_t *)&pub_out->publicArea.type);
   current_in += sizeof(uint16_t);
-  size_in += sizeof(uint16_t);
+  size_in -= sizeof(uint16_t);
 
   // alg
   change_endian16((uint16_t *)current_in,
                   (uint16_t *)&pub_out->publicArea.nameAlg);
   current_in += sizeof(uint16_t);
-  size_in += sizeof(uint16_t);
+  size_in -= sizeof(uint16_t);
 
   // attributes
   change_endian32((uint32_t *)current_in,
                   (uint32_t *)&pub_out->publicArea.objectAttributes);
   current_in += sizeof(uint32_t);
-  size_in += sizeof(uint32_t);
+  size_in -= sizeof(uint32_t);
 
   // auth policy
   change_endian16((uint16_t *)current_in,
@@ -1449,6 +1464,7 @@ bool Tpm2_CreatePrimary(local_tpm          &tpm,
                         TPM_ALG_ID          enc_alg,
                         TPM_ALG_ID          int_alg,
                         TPMA_OBJECT        &flags,
+                        string             &policyString,
                         TPM_ALG_ID          sym_alg,
                         TPMI_AES_KEY_BITS   sym_key_size,
                         TPMI_ALG_SYM_MODE   sym_mode,
@@ -1480,10 +1496,10 @@ bool Tpm2_CreatePrimary(local_tpm          &tpm,
   // Auth goes here?
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   uint16_t in_auth_size = authString.size();
-  change_endian16(&in_auth_size, (uint16_t*)out);
+  change_endian16(&in_auth_size, (uint16_t *)out);
   Update(sizeof(uint16_t), &out, &size_params, &space_left);
   IF_LESS_THAN_RETURN_FALSE(space_left, in_auth_size)
-  memcpy(out, (byte_t*)authString.data(), authString.size());
+  memcpy(out, (byte_t *)authString.data(), authString.size());
   Update(in_auth_size, &out, &size_params, &space_left);
 
   // Sensitive area
@@ -1498,6 +1514,7 @@ bool Tpm2_CreatePrimary(local_tpm          &tpm,
   FillPublicRsaTemplate(enc_alg,
                         int_alg,
                         flags,
+                        policyString,
                         sym_alg,
                         sym_key_size,
                         sym_mode,
@@ -1512,7 +1529,7 @@ bool Tpm2_CreatePrimary(local_tpm          &tpm,
 
   TPM2B_DATA data;
   data.size = outsideInfo.size();
-  memcpy(data.buffer, (byte_t*)outsideInfo.data(), outsideInfo.size());
+  memcpy(data.buffer, (byte_t *)outsideInfo.data(), outsideInfo.size());
   n = Marshal_OutsideInfo(data, space_left, out);
   IF_NEG_RETURN_FALSE(n);
   IF_LESS_THAN_RETURN_FALSE(space_left, n)
@@ -1565,9 +1582,21 @@ bool Tpm2_CreatePrimary(local_tpm          &tpm,
   TPM2B_DIGEST        hash;
   TPMT_TK_CREATION    creation_ticket;
   TPM2B_NAME          name;
-  return GetPublicOut(responseSize - sizeof(TPM_RESPONSE),
-                      &resp_buf[sizeof(TPM_RESPONSE)],
-                      handle,
+
+  byte_t *current_in = &resp_buf[sizeof(TPM_RESPONSE)];
+  int     size = responseSize - sizeof(TPM_RESPONSE);
+
+  // handle
+  change_endian32((uint32_t *)current_in, (uint32_t *)handle);
+  current_in += sizeof(uint32_t);
+  size -= sizeof(uint32_t);
+
+  // why?
+  current_in += 6;
+  size -= 6;
+
+  return GetPublicOut(size,
+                      current_in,
                       pub_out,
                       &creation_data,
                       &hash,
@@ -2633,10 +2662,13 @@ bool Tpm2_CreateKey(local_tpm           &tpm,
   IF_NEG_RETURN_FALSE(n)
   Update(n, &in, &size_params, &space_left);
 
+  string policyString;
+
   TPM2B_PUBLIC pub_key;
   FillPublicRsaTemplate(enc_alg,
                         int_alg,
                         flags,
+                        policyString,
                         sym_alg,
                         sym_key_size,
                         sym_mode,
@@ -2710,9 +2742,9 @@ bool Tpm2_CreateKey(local_tpm           &tpm,
 
 bool Tpm2_CreateSealed(local_tpm           &tpm,
                        TPM_HANDLE           parent_handle,
-                       string&              authString,
-                       string&              sensitiveData,
-                       string&              outsideInfo,
+                       string              &authString,
+                       string              &sensitiveData,
+                       string              &outsideInfo,
                        TPML_PCR_SELECTION  &pcr_selection,
                        TPM_ALG_ID           int_alg,
                        TPMA_OBJECT         &flags,
@@ -2755,8 +2787,8 @@ bool Tpm2_CreateSealed(local_tpm           &tpm,
   FillKeyedHashTemplate(TPM_ALG_KEYEDHASH,
                         int_alg,
                         flags,
-                        authString.size(), //size_policy_digest,
-                        (byte_t*)authString.data(), //policy_digest,
+                        authString.size(),            // size_policy_digest,
+                        (byte_t *)authString.data(),  // policy_digest,
                         keyed_hash);
   n = Marshal_Keyed_Hash_Info(keyed_hash, space_left, in);
   IF_NEG_RETURN_FALSE(n)

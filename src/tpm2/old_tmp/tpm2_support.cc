@@ -2012,9 +2012,10 @@ error:
 // This makes the certificate on the provider given
 // the subject quote key, signing key, measurement (pcrs),
 // and proposed subject auth key
-bool construct_quote_key_cert(const key_message& signing_key,
-        const key_message& quote_public_key, const string& measurement,
-        string* cert_out) {
+bool construct_quote_key_cert(const key_message &signing_key,
+                              const key_message &quote_public_key,
+                              const string      &measurement,
+                              string            *cert_out) {
   return false;
 }
 

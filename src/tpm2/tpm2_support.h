@@ -43,7 +43,10 @@ bool make_and_install_endorsement_cert(local_tpm &tpm,
                                        string    &signng_key_file,
                                        int        nv_slot,
                                        string    *cert_out);
-bool get_endorsement_key(local_tpm &tpm, string* authString, TPM_HANDLE *ek_handle);
+bool get_endorsement_key(local_tpm  &tpm,
+                         string     &authString,
+                         string     &policyString,
+                         TPM_HANDLE *ek_handle);
 bool save_context(local_tpm &tpm, TPM_HANDLE &handle, string *out);
 bool load_context(local_tpm &tpm, TPM_HANDLE &handle, string &in);
 bool nv_increment_counter(local_tpm &tpm, int slot);

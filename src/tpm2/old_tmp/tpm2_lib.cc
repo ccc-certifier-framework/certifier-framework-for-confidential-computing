@@ -1058,7 +1058,7 @@ int Marshal_Public_Key_Info(TPM2B_PUBLIC &in, int size, byte_t *buf) {
     in.size += 2;
   }
   in.size += 12;
-printf("in.size: %x\n", in.size);
+  printf("in.size: %x\n", in.size);
 
   IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint16_t))
   change_endian16(&in.size, (uint16_t *)out);

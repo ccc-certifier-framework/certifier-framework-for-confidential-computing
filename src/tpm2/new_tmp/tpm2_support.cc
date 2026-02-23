@@ -286,17 +286,19 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
 
   string sensitiveData;
   string outsideInfo;
+  string emptyString;
 
   // Creating a new SRK
   if (!Tpm2_CreatePrimary(tpm,
                           TPM_RH_OWNER,
                           srkAuth,
                           sensitiveData,
-			  outsideInfo,
+                          outsideInfo,
                           pcrSelect,
                           TPM_ALG_RSA,
                           TPM_ALG_SHA256,
                           primary_flags,
+                          emptyString,
                           TPM_ALG_AES,
                           256,
                           TPM_ALG_CFB,
@@ -376,8 +378,8 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
   string authString;
   string sensitveData;
 
-  authString.assign((char*)policy_digest.buffer, (int) policy_digest.size);
-  sensitiveData.assign((char*)secret.buffer, (int)secret.size);
+  authString.assign((char *)policy_digest.buffer, (int)policy_digest.size);
+  sensitiveData.assign((char *)secret.buffer, (int)secret.size);
 
   if (!Tpm2_CreateSealed(tpm,
                          srk_handle,
@@ -486,16 +488,18 @@ bool recover_sealing_secret(local_tpm    &tpm,
 
   string sensitiveData;
   string outsideInfo;
+  string emptyString;
   // Creating a new SRK
   if (!Tpm2_CreatePrimary(tpm,
                           TPM_RH_OWNER,
                           srkAuth,
                           sensitiveData,
-			  outsideInfo,
+                          outsideInfo,
                           pcrSelect,
                           TPM_ALG_RSA,
                           TPM_ALG_SHA256,
                           primary_flags,
+                          emptyString,
                           TPM_ALG_AES,
                           256,
                           TPM_ALG_CFB,
@@ -684,8 +688,10 @@ bool make_and_install_endorsement_cert(local_tpm &tpm,
  *  buffer                  BYTE                    Empty
  */
 
-bool get_endorsement_key(local_tpm &tpm, string* authString, TPM_HANDLE *ek_handle) {
-  string emptyAuth;
+bool get_endorsement_key(local_tpm  &tpm,
+                         string     &authString,
+                         string     &policyString,
+                         TPM_HANDLE *ek_handle) {
 
   TPM2B_PUBLIC pub_out;
   TPM2B_NAME   pub_name;
@@ -711,26 +717,30 @@ bool get_endorsement_key(local_tpm &tpm, string* authString, TPM_HANDLE *ek_hand
 
 #ifdef DEBUG
   printf("authstring: ");
-  print_bytes(authString->size(), (byte_t*)authString->data());
+  print_bytes(authString.size(), (byte_t *)authString.data());
+  printf("\n");
+  printf("policyString: ");
+  print_bytes(policyString.size(), (byte_t *)policyString.data());
   printf("\n");
 #endif
 
   // Create Endorsement key with handle ekHandle
   if (!Tpm2_CreatePrimary(tpm,
-                          TPM_RH_ENDORSEMENT, // owner
-                          *authString,
+                          TPM_RH_ENDORSEMENT,  // owner
+                          authString,
                           sensitiveData,
-			  outsideInfo,
-                          pcrSelect,          // pcrSelect
-                          TPM_ALG_RSA,        // enc_alg
-                          TPM_ALG_SHA256,     // int_alg
+                          outsideInfo,
+                          pcrSelect,       // pcrSelect
+                          TPM_ALG_RSA,     // enc_alg
+                          TPM_ALG_SHA256,  // int_alg
                           primary_flags,
-                          TPM_ALG_AES,        // sym_alg
-                          128,                // size (128)
-                          TPM_ALG_CFB,        // sym_mode
-                          TPM_ALG_NULL,       // sym_scheme
-                          2048,               // keyBits (mod size)
-                          0x00010001,         // exponent
+                          policyString,
+                          TPM_ALG_AES,   // sym_alg
+                          128,           // size (128)
+                          TPM_ALG_CFB,   // sym_mode
+                          TPM_ALG_NULL,  // sym_scheme
+                          2048,          // keyBits (mod size)
+                          0x00010001,    // exponent
                           ek_handle,
                           &pub_out)) {
     printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);
@@ -1047,17 +1057,20 @@ bool create_quote_hierarchy(local_tpm    &tpm,
   string quoteAuth;
   string sensitiveData;
   string outsideInfo;
+  string policyString;
+  ;
 
   // Storage root key
   if (!Tpm2_CreatePrimary(tpm,
                           TPM_RH_OWNER,
                           srkAuth,
                           sensitiveData,
-			  outsideInfo,
+                          outsideInfo,
                           pcrSelect,
                           TPM_ALG_RSA,
                           TPM_ALG_SHA256,
                           primary_flags,
+                          policyString,
                           TPM_ALG_AES,
                           256,
                           TPM_ALG_CFB,
@@ -1231,17 +1244,19 @@ bool recover_and_load_quote_hierarchy(local_tpm    &tpm,
 
   string sensitiveData;
   string outsideInfo;
+  string policyString;
 
   // Storage root key
   if (!Tpm2_CreatePrimary(tpm,
                           TPM_RH_OWNER,
                           srkAuth,
                           sensitiveData,
-			  outsideInfo,
+                          outsideInfo,
                           pcrSelect,
                           TPM_ALG_RSA,
                           TPM_ALG_SHA256,
                           primary_flags,
+                          policyString,
                           TPM_ALG_AES,
                           256,
                           TPM_ALG_CFB,
@@ -2110,9 +2125,10 @@ error:
 // This makes the certificate on the provider given
 // the subject quote key, signing key, measurement (pcrs),
 // and proposed subject auth key
-bool construct_quote_key_cert(const key_message& signing_key,
-        const key_message& quote_public_key, const string& measurement,
-        string* cert_out) {
+bool construct_quote_key_cert(const key_message &signing_key,
+                              const key_message &quote_public_key,
+                              const string      &measurement,
+                              string            *cert_out) {
   return false;
 }
 
