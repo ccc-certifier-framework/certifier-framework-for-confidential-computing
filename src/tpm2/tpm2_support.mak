@@ -93,6 +93,10 @@ $(O)/tpm2_lib.o: $(S)/tpm2_lib.cc
 	@echo "compiling tpm2_lib.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/tpm2_lib.o $(S)/tpm2_lib.cc
 
+$(S)/tpm2.pb.cc $(S)/tpm2.pb.h: $(S)/tpm2.proto
+	@echo "creating protobuf files"
+	$(PROTO) -I=$(S) --cpp_out=$(S) $(S)/tpm2.proto
+
 $(O)/convert.o: $(S)/convert.cc
 	@echo "compiling convert.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/convert.o $(S)/convert.cc
