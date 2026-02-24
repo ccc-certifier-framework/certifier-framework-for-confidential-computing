@@ -2097,7 +2097,7 @@ bool Tpm2_ActivateCredential(local_tpm              &tpm,
 
 bool Tpm2_Load(local_tpm  &tpm,
                TPM_HANDLE  parent_handle,
-               string     &parentAuth,
+               string     &childAuth,
                int         size_public,
                byte_t     *inPublic,
                int         size_private,
@@ -2114,22 +2114,27 @@ bool Tpm2_Load(local_tpm  &tpm,
   int     space_left = MAX_SIZE_PARAMS;
   int     n;
 
+  // parent handle
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint32_t))
   change_endian32((uint32_t *)&parent_handle, (uint32_t *)in);
   Update(sizeof(uint32_t), &in, &size_params, &space_left);
 
+  // Auth index
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   memset(in, 0, 2);
   Update(sizeof(uint16_t), &in, &size_params, &space_left);
 
-  n = CreatePasswordAuthArea(parentAuth, MAX_SIZE_PARAMS, in);
+  n = CreatePasswordAuthArea(childAuth, MAX_SIZE_PARAMS, in);
   IF_NEG_RETURN_FALSE(n)
+  IF_LESS_THAN_RETURN_FALSE(space_left, n)
   Update(n, &in, &size_params, &space_left);
 
+  // Private key
   IF_LESS_THAN_RETURN_FALSE(space_left, size_private + 2)
   memcpy(in, inPrivate, size_private + 2);
   Update(size_private + 2, &in, &size_params, &space_left);
 
+  // Public key
   IF_LESS_THAN_RETURN_FALSE(space_left, size_public + 2)
   memcpy(in, inPublic, size_public + 2);
   Update(size_public + 2, &in, &size_params, &space_left);
@@ -2796,13 +2801,17 @@ bool Tpm2_CreateSealed(local_tpm           &tpm,
   change_endian32((uint32_t *)&parent_handle, (uint32_t *)in);
   Update(sizeof(uint32_t), &in, &size_params, &space_left);
 
+  // Auth session index
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   memset(in, 0, sizeof(uint16_t));
   Update(sizeof(uint16_t), &in, &size_params, &space_left);
 
-  n = CreateSensitiveArea(authString, sensitiveData, space_left, in);
+  // Sensitive area
+  n = CreateSensitiveAreaWithSize(authString, sensitiveData, space_left, in);
+  IF_LESS_THAN_RETURN_FALSE(space_left, n)
   Update(n, &in, &size_params, &space_left);
 
+  // Keyed Hash
   TPM2B_PUBLIC keyed_hash;
   FillKeyedHashTemplate(TPM_ALG_KEYEDHASH,
                         int_alg,
@@ -2812,16 +2821,22 @@ bool Tpm2_CreateSealed(local_tpm           &tpm,
                         keyed_hash);
   n = Marshal_Keyed_Hash_Info(keyed_hash, space_left, in);
   IF_NEG_RETURN_FALSE(n)
+  IF_LESS_THAN_RETURN_FALSE(space_left, n)
   Update(n, &in, &size_params, &space_left);
 
+  // Outside Data
   TPM2B_DATA data;
-  FillEmptyData(data);
+  data.size = outsideInfo.size();
+  memcpy(data.buffer, (byte_t*)outsideInfo.data(), data.size);
   n = Marshal_OutsideInfo(data, space_left, in);
   IF_NEG_RETURN_FALSE(n)
+  IF_LESS_THAN_RETURN_FALSE(space_left, n)
   Update(n, &in, &size_params, &space_left);
 
+  // PCRs
   n = Marshal_PCR_Long_Selection(pcr_selection, space_left, in);
   IF_NEG_RETURN_FALSE(n)
+  IF_LESS_THAN_RETURN_FALSE(space_left, n)
   Update(n, &in, &size_params, &space_left);
 
   int in_size = Tpm2_SetCommand(TPM_ST_SESSIONS,
@@ -2829,7 +2844,7 @@ bool Tpm2_CreateSealed(local_tpm           &tpm,
                                 (byte_t *)commandBuf,
                                 size_params,
                                 (byte_t *)params);
-#ifdef DEBUG
+#ifdef DEBUG1
   print_command("CreateSealed", in_size, commandBuf);
 #endif
   if (!tpm.send_command(in_size, (byte_t *)commandBuf)) {
@@ -2853,7 +2868,7 @@ bool Tpm2_CreateSealed(local_tpm           &tpm,
                          &cap,
                          &responseSize,
                          &responseCode);
-#ifdef DEBUG
+#ifdef DEBUG1
   print_response("CreateSealed", cap, responseSize, responseCode, resp_buf);
 #else
   if (responseCode != 0)

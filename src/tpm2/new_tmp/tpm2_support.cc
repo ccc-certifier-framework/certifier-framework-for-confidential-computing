@@ -289,6 +289,18 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
   string outsideInfo;
   string emptyString;
 
+  int    size_buf = 128;
+  byte_t buf[size_buf];
+
+  int m = CreatePasswordAuthArea(emptyAuth, size_buf, buf);
+  if (m < 0) {
+    printf("%s() error, line %d, CreatePasswordAuthArea failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  srkAuth.assign((char *)(buf + 2), m - 2);
+
   // Creating a new SRK
   if (!Tpm2_CreatePrimary(tpm,
                           TPM_RH_OWNER,
@@ -310,7 +322,7 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
                           &pub_out)) {
     printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);
   }
-#ifdef DEBUG2
+#ifdef DEBUG
   printf("\n");
   printf("%s() line %d, CreatePrimary succeeded\n", __func__, __LINE__);
 #endif
@@ -323,7 +335,7 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
     return false;
   }
 #ifdef DEBUG
-  printf("Secret: ");
+  printf("\nSecret: ");
   print_bytes(secret.size, secret.buffer);
   printf("\n");
 #endif
@@ -343,8 +355,8 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
            __LINE__);
     return false;
   }
-#ifdef DEBUG2
-  printf("Seal session succeeded\n");
+#ifdef DEBUG
+  printf("\nSeal session succeeded\n");
 #endif
 
   // Get policy digest
@@ -356,8 +368,8 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
            __LINE__);
     return false;
   }
-#ifdef DEBUG2
-  printf("Policy Digest: ");
+#ifdef DEBUG
+  printf("\nPolicy Digest: ");
   print_bytes(policy_digest.size, policy_digest.buffer);
   printf("\n");
   printf("\n");
@@ -425,7 +437,7 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
   key_info.set_pub_key((byte_t *)out_public, size_public + 2);
   key_info.set_priv_key((byte_t *)out_private, size_private + 2);
 
-#ifdef DEBUG2
+#ifdef DEBUG
   printf("After creation private size: %d, public size: %d\n",
          size_private,
          size_public);
@@ -447,6 +459,7 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
            seal_file.c_str());
     return false;
   }
+
   Tpm2_FlushContext(tpm, session_handle);
   Tpm2_FlushContext(tpm, srk_handle);
   return true;
@@ -459,7 +472,7 @@ bool recover_sealing_secret(local_tpm    &tpm,
                             string       *seal_secret) {
 
   string srkAuth;
-  string sealAuth;
+  string emptyAuth;
 
   TPM2B_PUBLIC       pub_out;
   TPML_PCR_SELECTION pcrSelect;
@@ -479,6 +492,18 @@ bool recover_sealing_secret(local_tpm    &tpm,
     add_pcr_selection(pcrs[i], TPM_ALG_SHA256, &pcrSelect);
   }
 
+  int    size_buf = 128;
+  byte_t buf[size_buf];
+
+  int m = CreatePasswordAuthArea(emptyAuth, size_buf, buf);
+  if (m < 0) {
+    printf("%s() error, line %d, CreatePasswordAuthArea failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  srkAuth.assign((char *)(buf + 2), m - 2);
+
   TPMA_OBJECT primary_flags;
   primary_flags.fixedTPM = 1;
   primary_flags.fixedParent = 1;
@@ -489,7 +514,8 @@ bool recover_sealing_secret(local_tpm    &tpm,
 
   string sensitiveData;
   string outsideInfo;
-  string emptyString;
+  string sealAuth;
+
   // Creating a new SRK
   if (!Tpm2_CreatePrimary(tpm,
                           TPM_RH_OWNER,
@@ -500,7 +526,7 @@ bool recover_sealing_secret(local_tpm    &tpm,
                           TPM_ALG_RSA,
                           TPM_ALG_SHA256,
                           primary_flags,
-                          emptyString,
+                          emptyAuth,
                           TPM_ALG_AES,
                           256,
                           TPM_ALG_CFB,
@@ -512,7 +538,7 @@ bool recover_sealing_secret(local_tpm    &tpm,
     printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);
     return false;
   }
-#ifdef DEBUG2
+#ifdef DEBUG
   printf("%s() line %d, CreatePrimary succeeded\n", __func__, __LINE__);
 #endif
 
@@ -534,8 +560,8 @@ bool recover_sealing_secret(local_tpm    &tpm,
     return false;
   }
 
-#ifdef DEBUG2
-  printf("After recovery private size: %d, public size: %d\n",
+#ifdef DEBUG
+  printf("\nAfter recovery private size: %d, public size: %d\n",
          (int)key_info.priv_key().size(),
          (int)key_info.pub_key().size());
 #endif
@@ -588,22 +614,22 @@ bool recover_sealing_secret(local_tpm    &tpm,
     return false;
   }
 #ifdef DEBUG
-  printf("Unseal succeeded, unsealed (%d): ", unsealed_size);
+  printf("\nUnseal succeeded, unsealed (%d): ", unsealed_size);
   print_bytes(unsealed_size, unsealed);
   printf("\n");
 #endif
 
   TPM2B_SENSITIVE_DATA *unsealed_return =
       (TPM2B_SENSITIVE_DATA *)(&unsealed[2]);
-#ifdef DEBUG2
+#ifdef DEBUG
   uint16_t ss;
   change_endian16(&unsealed_return->size, &ss);
-  printf("Sensitive data size: %d\n", ss);
+  printf("\nSensitive data size: %d\n", ss);
 #endif
   TPM2B_DATA *sym = (TPM2B_DATA *)unsealed_return->buffer;
   uint16_t    sb;
   change_endian16(&(sym->size), &sb);
-#ifdef DEBUG2
+#ifdef DEBUG
   printf("\n");
   printf("Buffer (%d): ", sb);
   print_bytes(sb, sym->buffer);
