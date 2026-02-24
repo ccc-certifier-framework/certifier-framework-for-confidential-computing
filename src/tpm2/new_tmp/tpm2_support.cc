@@ -38,6 +38,7 @@
 // File: tpm2_support.cc
 
 #define MAX_SIZE_PARAMS 16384
+
 #define DEBUG
 
 void print_mask(int n, byte *m) {
@@ -199,7 +200,7 @@ bool create_seal_session(local_tpm          &tpm,
            __LINE__);
     return false;
   }
-#ifdef DEBUG2
+#ifdef DEBUG
   printf("\n");
   printf("Tpm2_StartAuthSession succeeds handle: %08x\n", *session_handle);
   printf("initial nonce (%d): ", initial_nonce.size);
@@ -216,7 +217,7 @@ bool create_seal_session(local_tpm          &tpm,
     Tpm2_FlushContext(tpm, *session_handle);
     return false;
   }
-#ifdef DEBUG2
+#ifdef DEBUG
   printf("\n");
   printf("%s() line %d, PolicyGetDigest before Pcr succeeded: \n",
          __func__,
@@ -232,7 +233,7 @@ bool create_seal_session(local_tpm          &tpm,
     Tpm2_FlushContext(tpm, *session_handle);
     return false;
   }
-#ifdef DEBUG2
+#ifdef DEBUG
   printf("%s(), line %d, Tpm2_PolicyPassword succeeded\n", __func__, __LINE__);
 #endif
 
@@ -245,7 +246,7 @@ bool create_seal_session(local_tpm          &tpm,
     Tpm2_FlushContext(tpm, *session_handle);
     return false;
   }
-#ifdef DEBUG2
+#ifdef DEBUG
   printf("%s(), line %d, Tpm2_PolicyPcr succeeded\n", __func__, __LINE__);
 #endif
 
@@ -553,8 +554,8 @@ bool recover_sealing_secret(local_tpm    &tpm,
     Tpm2_FlushContext(tpm, srk_handle);
     return false;
   }
-#ifdef DEBUG2
-  printf("Load succeeded\n");
+#ifdef DEBUG
+  printf("\nLoad succeeded\n");
 #endif
 
   if (!create_seal_session(tpm, pcrSelect, &session_handle)) {
@@ -1036,7 +1037,19 @@ bool create_quote_hierarchy(local_tpm    &tpm,
   string sensitiveData;
   string outsideInfo;
   string policyString;
-  ;
+  string emptyAuth;
+
+  int    size_buf = 128;
+  byte_t buf[size_buf];
+
+  int m = CreatePasswordAuthArea(emptyAuth, size_buf, buf);
+  if (m < 0) {
+    printf("%s() error, line %d, CreatePasswordAuthArea failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  srkAuth.assign((char *)(buf + 2), m - 2);
 
   // Storage root key
   if (!Tpm2_CreatePrimary(tpm,
@@ -1061,7 +1074,7 @@ bool create_quote_hierarchy(local_tpm    &tpm,
     return false;
   }
 
-#ifdef DEBUG2
+#ifdef DEBUG
   printf("\nCreate hierarchy\n");
   printf("CreatePrimary succeeded\n");
   print_pcrs(tpm, num_pcrs, pcrs);
@@ -1120,11 +1133,13 @@ bool create_quote_hierarchy(local_tpm    &tpm,
   create_flags.sign = 1;
   create_flags.restricted = 1;
 
+  quoteAuth = srkAuth;
+
   // Quote key
   if (!Tpm2_CreateKey(tpm,
                       srk_handle,
-                      srkAuth,
                       quoteAuth,
+                      sensitiveData,
                       outsideInfo,
                       pcrSelect,
                       TPM_ALG_RSA,
@@ -1222,7 +1237,20 @@ bool recover_and_load_quote_hierarchy(local_tpm    &tpm,
 
   string sensitiveData;
   string outsideInfo;
+  string emptyAuth;
   string policyString;
+
+  int    size_buf = 128;
+  byte_t buf[size_buf];
+
+  int m = CreatePasswordAuthArea(emptyAuth, size_buf, buf);
+  if (m < 0) {
+    printf("%s() error, line %d, CreatePasswordAuthArea failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  srkAuth.assign((char *)(buf + 2), m - 2);
 
   // Storage root key
   if (!Tpm2_CreatePrimary(tpm,
@@ -1247,7 +1275,7 @@ bool recover_and_load_quote_hierarchy(local_tpm    &tpm,
     return false;
   }
 
-#ifdef DEBUG2
+#ifdef DEBUG
   printf("\nRecover hierarchy\n");
   printf("CreatePrimary succeeded\n");
   print_pcrs(tpm, num_pcrs, pcrs);
@@ -1308,7 +1336,7 @@ bool recover_and_load_quote_hierarchy(local_tpm    &tpm,
     Tpm2_FlushContext(tpm, *srk_handle);
     return false;
   }
-#ifdef DEBUG2
+#ifdef DEBUG
   printf("\nRecoverKey\n");
   printf("Private: ");
   print_bytes((int)key_info.priv_key().size(),
@@ -1338,7 +1366,7 @@ bool recover_and_load_quote_hierarchy(local_tpm    &tpm,
   }
 
 #ifdef DEBUG
-  printf("Load succeeded\n");
+  printf("\nLoad succeeded\n");
 #endif
   return true;
 }
@@ -1387,7 +1415,7 @@ bool do_quote(local_tpm  &tpm,
   signature->assign((char *)sig, sig_size);
 
 #ifdef DEBUG
-  printf("Quote succeeded, quoted (%d): ", quote_size);
+  printf("\nQuote succeeded, quoted (%d): ", quote_size);
   print_bytes(quote_size, quoted_buf);
   printf("\n");
   printf("Sig (%d): ", sig_size);

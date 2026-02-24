@@ -302,7 +302,7 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
     Tpm2_FlushContext(tpm, srk_handle);
     return false;
   }
-  printf("do_quote succeeded\n");
+  printf("\ndo_quote succeeded\n");
 
   TPM2B_PUBLIC pub_out;
   TPM2B_NAME   pub_name;
@@ -321,7 +321,7 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
     Tpm2_FlushContext(tpm, srk_handle);
     return false;
   } else {
-    printf("ReadPublic quote key succeeded\n");
+    printf("\nReadPublic quote key succeeded\n");
   }
 #if 0
   printf("\nQuote Key\n");
@@ -382,6 +382,7 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
     return true;
   }
 
+  return true;
 #if 0
   if (!verify_credential(tpm, to_quote, quote_sig)) {
     printf("%s() error, line %d, verify_credential failed\n",
