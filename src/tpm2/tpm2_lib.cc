@@ -1479,11 +1479,12 @@ bool Tpm2_CreatePrimary(local_tpm          &tpm,
   IF_LESS_THAN_RETURN_FALSE(space_left, n)
   Update(n, &out, &size_params, &space_left);
 
+  // Auth session index?  Ask Paul about this.
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   memset(out, 0, sizeof(uint16_t));
   Update(sizeof(uint16_t), &out, &size_params, &space_left);
 
-  // Auth goes here?
+  // Auth
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   uint16_t in_auth_size = authString.size();
   change_endian16(&in_auth_size, (uint16_t *)out);

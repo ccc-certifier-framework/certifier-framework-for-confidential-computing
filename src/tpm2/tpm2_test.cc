@@ -137,6 +137,7 @@ bool endorsement_test(local_tpm &tpm, string authString) {
            __LINE__);
     return false;
   }
+
   authString.assign((char *)(buf + 2), m - 2);
   policyString.assign((char *)g_policy_rsa_2048, sizeof(g_policy_rsa_2048));
 
