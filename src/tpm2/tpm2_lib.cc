@@ -2124,10 +2124,14 @@ bool Tpm2_Load(local_tpm  &tpm,
   memset(in, 0, 2);
   Update(sizeof(uint16_t), &in, &size_params, &space_left);
 
-  n = CreatePasswordAuthArea(childAuth, MAX_SIZE_PARAMS, in);
-  IF_NEG_RETURN_FALSE(n)
-  IF_LESS_THAN_RETURN_FALSE(space_left, n)
-  Update(n, &in, &size_params, &space_left);
+  // Auth
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
+  uint16_t in_auth_size = childAuth.size();
+  change_endian16(&in_auth_size, (uint16_t *)in);
+  Update(sizeof(uint16_t), &in, &size_params, &space_left);
+  IF_LESS_THAN_RETURN_FALSE(space_left, in_auth_size)
+  memcpy(in, (byte_t *)childAuth.data(), childAuth.size());
+  Update(in_auth_size, &in, &size_params, &space_left);
 
   // Private key
   IF_LESS_THAN_RETURN_FALSE(space_left, size_private + 2)
@@ -2770,7 +2774,7 @@ bool Tpm2_CreateSealed(local_tpm           &tpm,
                        string              &sealAuth,
                        string              &sensitiveData,
                        string              &outsideInfo,
-		       string		   &policyHash,
+                       string              &policyHash,
                        TPML_PCR_SELECTION  &pcr_selection,
                        TPM_ALG_ID           int_alg,
                        TPMA_OBJECT         &flags,
@@ -2838,7 +2842,7 @@ bool Tpm2_CreateSealed(local_tpm           &tpm,
   // Outside Data
   TPM2B_DATA data;
   data.size = outsideInfo.size();
-  memcpy(data.buffer, (byte_t*)outsideInfo.data(), data.size);
+  memcpy(data.buffer, (byte_t *)outsideInfo.data(), data.size);
   n = Marshal_OutsideInfo(data, space_left, in);
   IF_NEG_RETURN_FALSE(n)
   IF_LESS_THAN_RETURN_FALSE(space_left, n)
@@ -2912,7 +2916,7 @@ bool ComputeHmac(int          size_buf,
 
 bool Tpm2_Unseal(local_tpm    &tpm,
                  TPM_HANDLE    item_handle,
-                 string       &parentAuth,
+                 string       &authString,
                  TPM_HANDLE    session_handle,
                  TPM2B_NONCE  &nonce,
                  byte_t        session_attributes,
@@ -2933,14 +2937,17 @@ bool Tpm2_Unseal(local_tpm    &tpm,
   memset(params_buf, 0, MAX_SIZE_PARAMS);
   memset(resp_buf, 0, MAX_SIZE_PARAMS);
 
+  // handle
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint32_t))
   change_endian32((uint32_t *)&item_handle, (uint32_t *)in);
   Update(sizeof(uint32_t), &in, &size_params, &space_left);
 
+  // Auth index
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   memset(in, 0, sizeof(uint16_t));
   Update(sizeof(uint16_t), &in, &size_params, &space_left);
 
+  // Auth area begins
   byte_t *auth_area_size_ptr = in;
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   memset(in, 0, sizeof(uint16_t));
@@ -2948,6 +2955,7 @@ bool Tpm2_Unseal(local_tpm    &tpm,
 
   uint16_t start_of_auth_area = size_params;
 
+  // Session handle
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint32_t))
   change_endian32((uint32_t *)&session_handle, (uint32_t *)in);
   Update(sizeof(uint32_t), &in, &size_params, &space_left);
@@ -2957,14 +2965,15 @@ bool Tpm2_Unseal(local_tpm    &tpm,
   memset(in, 0, sizeof(uint16_t));
   Update(sizeof(uint16_t), &in, &size_params, &space_left);
 
+  // Session attributes
   IF_LESS_THAN_RETURN_FALSE(space_left, 1)
   *in = session_attributes;
   Update(1, &in, &size_params, &space_left);
 
-  // password
-  n = SetPasswordData(parentAuth, space_left, in);
-  IF_NEG_RETURN_FALSE(n)
-  Update(n, &in, &size_params, &space_left);
+  // empty
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
+  memset(in, 0, sizeof(uint16_t));
+  Update(sizeof(uint16_t), &in, &size_params, &space_left);
 
   uint16_t auth_area = size_params - start_of_auth_area;
   change_endian16(&auth_area, (uint16_t *)auth_area_size_ptr);
@@ -4378,7 +4387,7 @@ bool CalculateSessionHmac(ProtectedSessionAuthInfo &in,
   byte_t     toHash[256];
   byte_t     cpHash[32];
 
-#if 1
+#ifdef DEBUG
   printf("\nCalculateSessionHmac\n");
 #endif
 
@@ -4402,7 +4411,7 @@ bool CalculateSessionHmac(ProtectedSessionAuthInfo &in,
          in.targetAuthValue_.size);
   sizeHmacKey += in.targetAuthValue_.size;
 
-#if 1
+#ifdef DEBUG
   printf("hmac_key: ");
   print_bytes(sizeHmacKey, hmac_key);
   printf("\n");
@@ -4430,7 +4439,7 @@ bool CalculateSessionHmac(ProtectedSessionAuthInfo &in,
   current_out_size += size_parms;
   room_left -= size_parms;
 
-#if 1
+#ifdef DEBUG
   printf("toHash for cpHash: ");
   print_bytes(current_out_size, toHash);
   printf("\n");
@@ -4449,7 +4458,7 @@ bool CalculateSessionHmac(ProtectedSessionAuthInfo &in,
     current_out_size = 32;
   }
 
-#if 1
+#ifdef DEBUG
   printf("cpHash: ");
   print_bytes(current_out_size, cpHash);
   printf("\n");
@@ -4467,7 +4476,7 @@ bool CalculateSessionHmac(ProtectedSessionAuthInfo &in,
   memcpy(current, &in.tpmSessionAttributes_, 1);
   Update(1, &current, &current_out_size, &room_left);
 
-#if 1
+#ifdef DEBUG
   printf("Hmac in: ");
   print_bytes(current_out_size, toHash);
   printf("\n");
@@ -4492,7 +4501,7 @@ bool CalculateSessionHmac(ProtectedSessionAuthInfo &in,
   HMAC_Final(hctx, hmac, (unsigned *)size_hmac);
   HMAC_CTX_free(hctx);
 
-#if 1
+#ifdef DEBUG
   printf("Hmac out: ");
   print_bytes(*size_hmac, hmac);
   printf("\n\n");
@@ -4507,7 +4516,7 @@ bool CalculateSessionKey(ProtectedSessionAuthInfo &in, TPM2B_DIGEST &rawSalt) {
   int sizeKey = SizeHash(in.hash_alg_);
   in.sessionKeySize_ = sizeKey;
 
-#if 1
+#ifdef DEBUG
   printf("\nCalculateSessionKey\n");
   printf("Auth value: ");
   print_bytes(in.targetAuthValue_.size, in.targetAuthValue_.buffer);
@@ -4526,7 +4535,7 @@ bool CalculateSessionKey(ProtectedSessionAuthInfo &in, TPM2B_DIGEST &rawSalt) {
   contextU.assign((const char *)in.newNonce_.buffer, in.newNonce_.size);
   contextV.assign((const char *)in.oldNonce_.buffer, in.oldNonce_.size);
 
-#if 1
+#ifdef DEBUG
   printf("CalculateSessionKey KDFa:\n");
   printf("    key    : ");
   print_bytes(key.size(), (byte_t *)key.data());
@@ -4554,7 +4563,7 @@ bool CalculateSessionKey(ProtectedSessionAuthInfo &in, TPM2B_DIGEST &rawSalt) {
     return false;
   }
 
-#if 1
+#ifdef DEBUG
   printf("CalculateSessionKey, key: ");
   print_bytes(sizeKey, in.sessionKey_);
   printf("\n");
@@ -4597,7 +4606,7 @@ int CalculateandSetProtectedAuth(ProtectedSessionAuthInfo &authInfo,
   newNonce.size = authInfo.oldNonce_.size;
   RAND_bytes(newNonce.buffer, newNonce.size);
 
-#if 1
+#ifdef DEBUG
   printf("CalculateandSetProtectedAuth nonce: ");
   print_bytes(newNonce.size, newNonce.buffer);
   printf("\n");
@@ -4605,7 +4614,7 @@ int CalculateandSetProtectedAuth(ProtectedSessionAuthInfo &authInfo,
 
   RollNonces(authInfo, newNonce);
 
-#if 1
+#ifdef DEBUG
   printf("\nAfter RollNounces in CalculateandSetProtectedAuth\n");
   printf("newNonce: ");
   print_bytes(authInfo.newNonce_.size, authInfo.newNonce_.buffer);
@@ -4678,7 +4687,7 @@ bool GetandVerifyProtectedAuth(ProtectedSessionAuthInfo &authInfo,
                                int                       size_params,
                                byte_t                   *params) {
 
-#if 1
+#ifdef DEBUG
   printf("GetandVerifyProtectedAuth: ");
   print_bytes(size_in, in);
   printf("\n");
@@ -4707,7 +4716,7 @@ bool GetandVerifyProtectedAuth(ProtectedSessionAuthInfo &authInfo,
   memcpy(submitted_hmac.buffer, current, submitted_hmac.size);
   current += submitted_hmac.size;
 
-#if 1
+#ifdef DEBUG
   printf("NewNonce: ");
   print_bytes(newNonce.size, newNonce.buffer);
   printf("\n");
@@ -4718,7 +4727,7 @@ bool GetandVerifyProtectedAuth(ProtectedSessionAuthInfo &authInfo,
 
   RollNonces(authInfo, newNonce);
 
-#if 1
+#ifdef DEBUG
   printf("\nAfter RollNounces in GetandVerifyProtectedAuth\n");
   printf("newNonce: ");
   print_bytes(authInfo.newNonce_.size, authInfo.newNonce_.buffer);

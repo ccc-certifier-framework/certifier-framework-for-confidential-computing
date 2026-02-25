@@ -400,7 +400,7 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
                          sealAuth,
                          sensitiveData,
                          outsideData,
-			 policyDigest,
+                         policyDigest,
                          pcrSelect,
                          TPM_ALG_SHA256,
                          create_flags,
@@ -474,6 +474,7 @@ bool recover_sealing_secret(local_tpm    &tpm,
                             string       *seal_secret) {
 
   string srkAuth;
+  string sealAuth;
   string emptyAuth;
 
   TPM2B_PUBLIC       pub_out;
@@ -504,7 +505,9 @@ bool recover_sealing_secret(local_tpm    &tpm,
            __LINE__);
     return false;
   }
+
   srkAuth.assign((char *)(buf + 2), m - 2);
+  sealAuth.assign((char *)(buf + 2), m - 2);
 
   TPMA_OBJECT primary_flags;
   primary_flags.fixedTPM = 1;
@@ -516,7 +519,6 @@ bool recover_sealing_secret(local_tpm    &tpm,
 
   string sensitiveData;
   string outsideInfo;
-  string sealAuth;
 
   // Creating a new SRK
   if (!Tpm2_CreatePrimary(tpm,
@@ -746,7 +748,7 @@ bool get_endorsement_key(local_tpm  &tpm,
                           TPM_ALG_NULL,  // sym_scheme
                           2048,          // keyBits (mod size)
                           // 0x00010001,    // exponent
-                          0x0,           // exponent
+                          0x0,  // exponent
                           ek_handle,
                           &pub_out)) {
     printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);
@@ -1280,6 +1282,7 @@ bool recover_and_load_quote_hierarchy(local_tpm    &tpm,
     return false;
   }
   srkAuth.assign((char *)(buf + 2), m - 2);
+  quoteAuth.assign((char *)(buf + 2), m - 2);
 
   // Storage root key
   if (!Tpm2_CreatePrimary(tpm,
