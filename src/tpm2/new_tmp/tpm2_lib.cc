@@ -1168,7 +1168,7 @@ int Marshal_Public_Key_Info(TPM2B_PUBLIC &in, int size, byte_t *buf) {
   Update(sizeof(uint16_t), &out, &total_size, &space_left);
   if (in.publicArea.unique.sym.size > 0) {
     IF_LESS_THAN_RETURN_FALSE(space_left, in.publicArea.unique.sym.size)
-    memcpy(out, in.publicArea.authPolicy.buffer, in.publicArea.unique.sym.size);
+    memcpy(out, in.publicArea.unique.sym.buffer, in.publicArea.unique.sym.size);
     Update(in.publicArea.unique.sym.size, &out, &total_size, &space_left);
   }
 
@@ -2767,9 +2767,10 @@ bool Tpm2_CreateKey(local_tpm           &tpm,
 
 bool Tpm2_CreateSealed(local_tpm           &tpm,
                        TPM_HANDLE           parent_handle,
-                       string              &authString,
+                       string              &sealAuth,
                        string              &sensitiveData,
                        string              &outsideInfo,
+		       string		   &policyHash,
                        TPML_PCR_SELECTION  &pcr_selection,
                        TPM_ALG_ID           int_alg,
                        TPMA_OBJECT         &flags,
@@ -2806,8 +2807,18 @@ bool Tpm2_CreateSealed(local_tpm           &tpm,
   memset(in, 0, sizeof(uint16_t));
   Update(sizeof(uint16_t), &in, &size_params, &space_left);
 
+  // Auth for seal
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
+  uint16_t in_auth_size = sealAuth.size();
+  change_endian16(&in_auth_size, (uint16_t *)in);
+  Update(sizeof(uint16_t), &in, &size_params, &space_left);
+  IF_LESS_THAN_RETURN_FALSE(space_left, in_auth_size)
+  memcpy(in, (byte_t *)sealAuth.data(), sealAuth.size());
+  Update(in_auth_size, &in, &size_params, &space_left);
+
   // Sensitive area
-  n = CreateSensitiveAreaWithSize(authString, sensitiveData, space_left, in);
+  string emptyAuth;
+  n = CreateSensitiveAreaWithSize(emptyAuth, sensitiveData, space_left, in);
   IF_LESS_THAN_RETURN_FALSE(space_left, n)
   Update(n, &in, &size_params, &space_left);
 
@@ -2816,8 +2827,8 @@ bool Tpm2_CreateSealed(local_tpm           &tpm,
   FillKeyedHashTemplate(TPM_ALG_KEYEDHASH,
                         int_alg,
                         flags,
-                        authString.size(),            // size_policy_digest,
-                        (byte_t *)authString.data(),  // policy_digest,
+                        policyHash.size(),            // size_policy_digest,
+                        (byte_t *)policyHash.data(),  // policy_digest,
                         keyed_hash);
   n = Marshal_Keyed_Hash_Info(keyed_hash, space_left, in);
   IF_NEG_RETURN_FALSE(n)

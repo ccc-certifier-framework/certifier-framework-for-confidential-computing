@@ -300,6 +300,7 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
     return false;
   }
   srkAuth.assign((char *)(buf + 2), m - 2);
+  sealAuth.assign((char *)(buf + 2), m - 2);
 
   // Creating a new SRK
   if (!Tpm2_CreatePrimary(tpm,
@@ -388,17 +389,18 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
   create_flags.fixedTPM = 1;
   create_flags.fixedParent = 1;
   string outsideData;
-  string authString;
   string sensitveData;
+  string policyDigest;
 
-  authString.assign((char *)policy_digest.buffer, (int)policy_digest.size);
+  policyDigest.assign((char *)policy_digest.buffer, (int)policy_digest.size);
   sensitiveData.assign((char *)secret.buffer, (int)secret.size);
 
   if (!Tpm2_CreateSealed(tpm,
                          srk_handle,
-                         authString,
+                         sealAuth,
                          sensitiveData,
                          outsideData,
+			 policyDigest,
                          pcrSelect,
                          TPM_ALG_SHA256,
                          create_flags,
@@ -1076,6 +1078,7 @@ bool create_quote_hierarchy(local_tpm    &tpm,
     return false;
   }
   srkAuth.assign((char *)(buf + 2), m - 2);
+  quoteAuth.assign((char *)(buf + 2), m - 2);
 
   // Storage root key
   if (!Tpm2_CreatePrimary(tpm,
