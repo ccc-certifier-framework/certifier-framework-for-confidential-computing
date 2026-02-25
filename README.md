@@ -1,4 +1,4 @@
-[![OpenSSF Best Practices] (https://www.bestpractices.dev/projects/8912/badge) (https://www.bestpractices.dev/projects/8912)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8912/badge)](https://www.bestpractices.dev/projects/8912)
 
 # Certifier Framework for Confidential Computing
 
