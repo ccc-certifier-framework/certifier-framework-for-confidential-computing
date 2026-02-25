@@ -2144,7 +2144,7 @@ bool Tpm2_Load(local_tpm  &tpm,
                                 (byte_t *)commandBuf,
                                 size_params,
                                 (byte_t *)params_buf);
-#ifdef DEBUG
+#ifdef DEBUG1
   print_command("Load", in_size, commandBuf);
 #endif
   if (!tpm.send_command(in_size, (byte_t *)commandBuf)) {
@@ -2168,7 +2168,7 @@ bool Tpm2_Load(local_tpm  &tpm,
                          &cap,
                          &responseSize,
                          &responseCode);
-#ifdef DEBUG
+#ifdef DEBUG1
   print_response("Load", cap, responseSize, responseCode, resp_buf);
 #else
   if (responseCode != 0)
