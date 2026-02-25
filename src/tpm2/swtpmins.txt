@@ -317,6 +317,8 @@ tpm2_nvread -T swtpm:port=2321 -C o 0x01c00002 -o tool_ek_rsa_cert.bin
 ./tpm2_test.exe --operation=EndorsementTest --tpm_device=/dev/tpm1
 ./tpm2_test.exe --operation=SealTest --tpm_device=/dev/tpm1
 ./tpm2_test.exe --operation=QuoteTest --tpm_device=/dev/tpm1
+
+
 ./tpm2_test.exe --operation=NvTest --tpm_device=/dev/tpm1
 
 To decode error messages:

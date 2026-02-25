@@ -1548,7 +1548,7 @@ bool Tpm2_CreatePrimary(local_tpm          &tpm,
     printf("%s() error, line %d, send_command failed\n", __func__, __LINE__);
     return false;
   }
-#ifdef DEBUG1
+#ifdef DEBUG
   print_command("CreatePrimary", in_size, commandBuf);
 #endif
 
@@ -2148,7 +2148,7 @@ bool Tpm2_Load(local_tpm  &tpm,
                                 (byte_t *)commandBuf,
                                 size_params,
                                 (byte_t *)params_buf);
-#ifdef DEBUG1
+#ifdef DEBUG
   print_command("Load", in_size, commandBuf);
 #endif
   if (!tpm.send_command(in_size, (byte_t *)commandBuf)) {
@@ -2172,7 +2172,7 @@ bool Tpm2_Load(local_tpm  &tpm,
                          &cap,
                          &responseSize,
                          &responseCode);
-#ifdef DEBUG1
+#ifdef DEBUG
   print_response("Load", cap, responseSize, responseCode, resp_buf);
 #else
   if (responseCode != 0)
@@ -2240,7 +2240,6 @@ bool get_public_out(uint16_t size_in, byte_t *input, TPM2B_PUBLIC *outPublic) {
   return true;
 }
 
-#define DEBUG1
 bool Tpm2_ReadNvPublic(local_tpm  &tpm,
                        TPM_HANDLE  handle,
                        uint32_t   *index,
@@ -2725,7 +2724,7 @@ bool Tpm2_CreateKey(local_tpm           &tpm,
                                 (byte_t *)commandBuf,
                                 size_params,
                                 (byte_t *)params);
-#ifdef DEBUG1
+#ifdef DEBUG
   print_command("CreateKey", in_size, commandBuf);
 #endif
   if (!tpm.send_command(in_size, (byte_t *)commandBuf)) {
@@ -2749,7 +2748,7 @@ bool Tpm2_CreateKey(local_tpm           &tpm,
                          &cap,
                          &responseSize,
                          &responseCode);
-#ifdef DEBUG1
+#ifdef DEBUG
   print_response("CreateKey", cap, responseSize, responseCode, resp_buf);
 #else
   if (responseCode != 0)
@@ -2859,7 +2858,7 @@ bool Tpm2_CreateSealed(local_tpm           &tpm,
                                 (byte_t *)commandBuf,
                                 size_params,
                                 (byte_t *)params);
-#ifdef DEBUG1
+#ifdef DEBUG
   print_command("CreateSealed", in_size, commandBuf);
 #endif
   if (!tpm.send_command(in_size, (byte_t *)commandBuf)) {
@@ -2883,7 +2882,7 @@ bool Tpm2_CreateSealed(local_tpm           &tpm,
                          &cap,
                          &responseSize,
                          &responseCode);
-#ifdef DEBUG1
+#ifdef DEBUG
   print_response("CreateSealed", cap, responseSize, responseCode, resp_buf);
 #else
   if (responseCode != 0)

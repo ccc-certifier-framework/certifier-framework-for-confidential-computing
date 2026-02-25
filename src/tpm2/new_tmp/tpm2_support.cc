@@ -133,7 +133,7 @@ bool create_pcr_policy(local_tpm    &tpm,
            __LINE__);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("Tpm2_StartAuthSession succeeded\n");
 #endif
 
@@ -146,7 +146,7 @@ bool create_pcr_policy(local_tpm    &tpm,
     Tpm2_FlushContext(tpm, session_handle);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("%s(), line %d, Tpm2_PolicyPcr succeeded\n", __func__, __LINE__);
 #endif
 
@@ -156,7 +156,7 @@ bool create_pcr_policy(local_tpm    &tpm,
     Tpm2_FlushContext(tpm, session_handle);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("%s() line %d, PolicyGetDigest before Pcr succeeded: \n",
          __func__,
          __LINE__);
@@ -200,7 +200,7 @@ bool create_seal_session(local_tpm          &tpm,
            __LINE__);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\n");
   printf("Tpm2_StartAuthSession succeeds handle: %08x\n", *session_handle);
   printf("initial nonce (%d): ", initial_nonce.size);
@@ -217,7 +217,7 @@ bool create_seal_session(local_tpm          &tpm,
     Tpm2_FlushContext(tpm, *session_handle);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\n");
   printf("%s() line %d, PolicyGetDigest before Pcr succeeded: \n",
          __func__,
@@ -233,7 +233,7 @@ bool create_seal_session(local_tpm          &tpm,
     Tpm2_FlushContext(tpm, *session_handle);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("%s(), line %d, Tpm2_PolicyPassword succeeded\n", __func__, __LINE__);
 #endif
 
@@ -246,7 +246,7 @@ bool create_seal_session(local_tpm          &tpm,
     Tpm2_FlushContext(tpm, *session_handle);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("%s(), line %d, Tpm2_PolicyPcr succeeded\n", __func__, __LINE__);
 #endif
 
@@ -323,7 +323,7 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
                           &pub_out)) {
     printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\n");
   printf("%s() line %d, CreatePrimary succeeded\n", __func__, __LINE__);
 #endif
@@ -335,7 +335,7 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
     printf("%s() error, line %d, Can't get random key\n", __func__, __LINE__);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\nSecret: ");
   print_bytes(secret.size, secret.buffer);
   printf("\n");
@@ -356,7 +356,7 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
            __LINE__);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\nSeal session succeeded\n");
 #endif
 
@@ -369,7 +369,7 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
            __LINE__);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\nPolicy Digest: ");
   print_bytes(policy_digest.size, policy_digest.buffer);
   printf("\n");
@@ -439,7 +439,7 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
   key_info.set_pub_key((byte_t *)out_public, size_public + 2);
   key_info.set_priv_key((byte_t *)out_private, size_private + 2);
 
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("After creation private size: %d, public size: %d\n",
          size_private,
          size_public);
@@ -542,7 +542,7 @@ bool recover_sealing_secret(local_tpm    &tpm,
     printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("%s() line %d, CreatePrimary succeeded\n", __func__, __LINE__);
 #endif
 
@@ -564,7 +564,7 @@ bool recover_sealing_secret(local_tpm    &tpm,
     return false;
   }
 
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\nAfter recovery private size: %d, public size: %d\n",
          (int)key_info.priv_key().size(),
          (int)key_info.pub_key().size());
@@ -584,7 +584,7 @@ bool recover_sealing_secret(local_tpm    &tpm,
     Tpm2_FlushContext(tpm, srk_handle);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\nLoad succeeded\n");
 #endif
 
@@ -617,7 +617,7 @@ bool recover_sealing_secret(local_tpm    &tpm,
     Tpm2_FlushContext(tpm, srk_handle);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\nUnseal succeeded, unsealed (%d): ", unsealed_size);
   print_bytes(unsealed_size, unsealed);
   printf("\n");
@@ -625,7 +625,7 @@ bool recover_sealing_secret(local_tpm    &tpm,
 
   TPM2B_SENSITIVE_DATA *unsealed_return =
       (TPM2B_SENSITIVE_DATA *)(&unsealed[2]);
-#ifdef DEBUG
+#ifdef DEBUG2
   uint16_t ss;
   change_endian16(&unsealed_return->size, &ss);
   printf("\nSensitive data size: %d\n", ss);
@@ -633,9 +633,9 @@ bool recover_sealing_secret(local_tpm    &tpm,
   TPM2B_DATA *sym = (TPM2B_DATA *)unsealed_return->buffer;
   uint16_t    sb;
   change_endian16(&(sym->size), &sb);
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\n");
-  printf("Buffer (%d): ", sb);
+  printf("Secret (%d): ", sb);
   print_bytes(sb, sym->buffer);
   printf("\n");
 #endif
@@ -722,7 +722,7 @@ bool get_endorsement_key(local_tpm  &tpm,
   string sensitiveData;
   string outsideInfo;
 
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("authstring: ");
   print_bytes(authString.size(), (byte_t *)authString.data());
   printf("\n");
@@ -747,7 +747,6 @@ bool get_endorsement_key(local_tpm  &tpm,
                           TPM_ALG_CFB,   // sym_mode
                           TPM_ALG_NULL,  // sym_scheme
                           2048,          // keyBits (mod size)
-                          // 0x00010001,    // exponent
                           0x0,  // exponent
                           ek_handle,
                           &pub_out)) {
@@ -1105,7 +1104,7 @@ bool create_quote_hierarchy(local_tpm    &tpm,
     return false;
   }
 
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\nCreate hierarchy\n");
   printf("CreatePrimary succeeded\n");
   print_pcrs(tpm, num_pcrs, pcrs);
@@ -1307,7 +1306,7 @@ bool recover_and_load_quote_hierarchy(local_tpm    &tpm,
     return false;
   }
 
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\nRecover hierarchy\n");
   printf("CreatePrimary succeeded\n");
   print_pcrs(tpm, num_pcrs, pcrs);
@@ -1368,7 +1367,7 @@ bool recover_and_load_quote_hierarchy(local_tpm    &tpm,
     Tpm2_FlushContext(tpm, *srk_handle);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\nRecoverKey\n");
   printf("Private: ");
   print_bytes((int)key_info.priv_key().size(),
@@ -1397,7 +1396,7 @@ bool recover_and_load_quote_hierarchy(local_tpm    &tpm,
     return false;
   }
 
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\nLoad succeeded\n");
 #endif
   return true;
@@ -1446,7 +1445,7 @@ bool do_quote(local_tpm  &tpm,
   quoted->assign((char *)quoted_buf, quote_size);
   signature->assign((char *)sig, sig_size);
 
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\nQuote succeeded, quoted (%d): ", quote_size);
   print_bytes(quote_size, quoted_buf);
   printf("\n");
@@ -1577,7 +1576,7 @@ bool tpm_init(const string &device_name,
 
   // seal hierarchy
   if (file_size(g_seal_hierarchy_file_name) == -1) {
-#ifdef DEBUG
+#ifdef DEBUG2
     printf("Creating Seal hierarchy\n");
 #endif
     if (!create_seal_hierarchy_and_secret(g_tpm,
@@ -1602,7 +1601,7 @@ bool tpm_init(const string &device_name,
 
   // quote hierarchy
   if (file_size(g_quote_hierarchy_file_name) == -1) {
-#ifdef DEBUG
+#ifdef DEBUG2
     printf("Creating Quote hierarchy\n");
 #endif
     if (!create_quote_hierarchy(g_tpm,
@@ -1920,7 +1919,7 @@ bool tpm_verify_attest(key_message &quote_key,
                        string      &to_quote,
                        string      &quoted,
                        string      &signature) {
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("tpm_verify_attest:\n");
   print_key(quote_key);
   printf("\n");
@@ -1947,7 +1946,7 @@ bool tpm_verify_attest(key_message &quote_key,
     printf("%s() error, line %d, decode_quoted fails\n", __func__, __LINE__);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("tpm_verify_attest:\n\n");
   printf("  extra data: ");
   print_bytes((int)extra_data.size(), (byte_t *)extra_data.data());
