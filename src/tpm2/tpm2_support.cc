@@ -1783,9 +1783,15 @@ bool tpm_unseal(string &sealed, string *unsealed) {
   return true;
 }
 
-bool tpm_attest(string &to_quote, string *quoted, string *signature) {
+bool local_tpm_attest(TPM_HANDLE &quote_handle,
+                      TPM_ALG_ID  hash_alg,
+                      TPM_HANDLE &srk_handle,
+                      int         num_pcrs,
+                      byte_t     *pcrs,
+                      string     &to_quote,
+                      string     *quoted,
+                      string     *signature) {
 
-  // Initialized?
   if (!g_tpm_environment_initialized) {
     printf("%s() error, line %d, environment not initialized\n",
            __func__,
@@ -1793,36 +1799,55 @@ bool tpm_attest(string &to_quote, string *quoted, string *signature) {
     return false;
   }
 
-#if 0
-  // may be needed later
-  signed_report tpm_report;
-  // optional string report_format             = 1;
-  // optional bytes report                     = 2;
-  // optional key_message signing_key          = 3;
-  // optional string signing_algorithm         = 4;
-  // optional bytes signature                  = 5;
-  tpm_attestation_message tpm_attest_msg;
-  // optional bytes what_was_said              = 1;
-  // optional bytes reported_attestation       = 2;
-
-  // hash what to say
-  /*
-  int  hash_len = 48;
-  byte hash[hash_len];
-
-  sev_attestation_message the_attestation;
-  the_attestation.set_what_was_said(what_to_say, what_to_say_size);
-
-  if (!digest_message(Digest_method_sha_384,
-                      what_to_say,
-                      what_to_say_size,
-                      hash,
-                      hash_len)) {
-    printf("digest_message failed\n");
+  if (hash_alg != TPM_ALG_SHA256) {
+    printf("%s() error, line %d, unsupported hashing algorithm\n",
+           __func__,
+           __LINE__);
     return false;
   }
-  */
+
+  unsigned int d_len = 32;
+  byte_t       digest[d_len];
+  if (!digest_message(Digest_method_sha_256,
+                      (const byte_t *)to_quote.data(),
+                      (int)to_quote.size(),
+                      digest,
+                      d_len)) {
+    printf("%s() error, line %d, digest_message failed\n", __func__, __LINE__);
+    return false;
+  }
+
+#ifdef DEBUG
+  printf("\nHashed to quote: ");
+  print_bytes((int)d_len, digest);
+  printf("\n");
 #endif
+
+  string hashed_to_quote;
+  hashed_to_quote.assign((char *)digest, d_len);
+
+  if (!do_quote(g_tpm,
+                srk_handle,
+                num_pcrs,
+                pcrs,
+                quote_handle,
+                hashed_to_quote,
+                quoted,
+                signature)) {
+    printf("%s() error, line %d, quote failed\n", __func__, __LINE__);
+    return false;
+  }
+  return true;
+}
+
+bool tpm_attest(string &to_quote, string *quoted, string *signature) {
+
+  if (!g_tpm_environment_initialized) {
+    printf("%s() error, line %d, environment not initialized\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
 
   if (!do_quote(g_tpm,
                 g_srk_handle,
@@ -1984,7 +2009,6 @@ bool decode_quoted(int                 size_buf,
   uint16_t d_size = 0;
   change_endian16((uint16_t *)buf, &d_size);
   buf += sizeof(uint16_t);
-  ;
   size_buf -= sizeof(uint16_t);
 
   if (size_buf < d_size) {
@@ -2033,7 +2057,7 @@ bool tpm_verify_attest(key_message  &quote_key,
   }
 
 #ifdef DEBUG
-  printf("tpm_verify_attest:\n\n");
+  printf("\ntpm_verify_attest:\n\n");
   printf("  extra data: ");
   print_bytes((int)extra_data.size(), (byte_t *)extra_data.data());
   printf("\n");

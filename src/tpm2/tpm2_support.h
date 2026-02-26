@@ -97,8 +97,17 @@ bool tpm_init(const string &device_name,
               int           num_pcrs,
               byte_t       *pcrs);
 bool tpm_close();
+
 bool tpm_seal(string &unsealed, string *sealed);
 bool tpm_unseal(string &sealed, string *unsealed);
+bool local_tpm_attest(TPM_HANDLE &quote_handle,
+                      TPM_ALG_ID  hash_alg,
+                      TPM_HANDLE &srk_handle,
+                      int         num_pcrs,
+                      byte_t     *pcrs,
+                      string     &to_quote,
+                      string     *quoted,
+                      string     *signature);
 bool tpm_attest(string &to_quote, string *quoted, string *signature);
 bool tpm_verify_attest(string &cert,
                        string &to_quote,
