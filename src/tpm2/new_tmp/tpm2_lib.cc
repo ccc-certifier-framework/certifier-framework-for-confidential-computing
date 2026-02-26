@@ -3016,8 +3016,8 @@ bool Tpm2_Unseal(local_tpm    &tpm,
 bool Tpm2_Quote(local_tpm          &tpm,
                 TPM_HANDLE          signingHandle,
                 string             &parentAuth,
-                int                 quote_size,
-                byte_t             *toQuote,
+                int                 to_quote_size,
+                byte_t             *to_quote,
                 TPMT_SIG_SCHEME     scheme,
                 TPML_PCR_SELECTION &pcr_selection,
                 TPM_ALG_ID          sig_alg,
@@ -3040,30 +3040,33 @@ bool Tpm2_Quote(local_tpm          &tpm,
   memset(resp_buf, 0, MAX_SIZE_PARAMS);
   memset(params_buf, 0, MAX_SIZE_PARAMS);
 
+  // Quote Handle
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint32_t))
   change_endian32((uint32_t *)&signingHandle, (uint32_t *)in);
   Update(sizeof(uint32_t), &in, &size_params, &space_left);
 
   FillSignatureSchemeTemplate(sig_alg, hash_alg, scheme);
 
+  // Auth index
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   memset(in, 0, sizeof(uint16_t));
   Update(sizeof(uint16_t), &in, &size_params, &space_left);
 
+  // auth
   n = CreatePasswordAuthArea(parentAuth, space_left, in);
   IF_NEG_RETURN_FALSE(n);
   Update(n, &in, &size_params, &space_left);
 
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
-  change_endian16((uint16_t *)&quote_size, (uint16_t *)in);
+  change_endian16((uint16_t *)&to_quote_size, (uint16_t *)in);
   Update(sizeof(uint16_t), &in, &size_params, &space_left);
 
-  IF_LESS_THAN_RETURN_FALSE(space_left, quote_size)
-  memcpy(in, toQuote, quote_size);
-  Update(quote_size, &in, &size_params, &space_left);
-
+  // to_quote
+  IF_LESS_THAN_RETURN_FALSE(space_left, to_quote_size)
+  memcpy(in, to_quote, to_quote_size);
+  Update(to_quote_size, &in, &size_params, &space_left);
   uint16_t algorithm = TPM_ALG_NULL;
-  IF_LESS_THAN_RETURN_FALSE(space_left, quote_size)
+  IF_LESS_THAN_RETURN_FALSE(space_left, to_quote_size)
   change_endian16((uint16_t *)&algorithm, (uint16_t *)in);
   Update(sizeof(uint16_t), &in, &size_params, &space_left);
 
@@ -3071,10 +3074,12 @@ bool Tpm2_Quote(local_tpm          &tpm,
   memset(in, 0, sizeof(uint16_t));
   Update(sizeof(uint16_t), &in, &size_params, &space_left);
 
+  // Sig scheme info
   n = Marshal_Signature_Scheme_Info(scheme, space_left, in);
   IF_NEG_RETURN_FALSE(n);
   Update(n, &in, &size_params, &space_left);
 
+  // PCRs
   n = Marshal_PCR_Short_Selection(pcr_selection.pcrSelections[0],
                                   space_left,
                                   in);
