@@ -1948,6 +1948,7 @@ bool tpm_verify_attest(key_message  &quote_key,
     printf("%s() error, line %d, decode_quoted fails\n", __func__, __LINE__);
     return false;
   }
+
 #ifdef DEBUG
   printf("tpm_verify_attest:\n\n");
   printf("  extra data: ");
@@ -1967,26 +1968,31 @@ bool tpm_verify_attest(key_message  &quote_key,
   printf("\n");
 #endif
 
-  // hash quoted data
-  // vertify extra_data == to_quote
-  // check pcr_section
-  // decrypt signature and check the hashes match
-
-  return true;
-}
-
-bool tpm_verify_attest(key_message  &quote_key,
-                       const string &hash_alg,
-                       const string &scheme,
-                       string       &to_quote,
-                       string       &quoted,
-                       string       &signature) {
-  EVP_PKEY   *key = nullptr;
+  // Get key for openssl
+  EVP_PKEY   *key = pkey_from_key((const key_message&)quote_key);
   EVP_MD_CTX *md_ctx = nullptr;
 
-  // TODO
+  if (key == nullptr) {
+    printf("%s() error, line %d, can't get pkey from key\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  // check pcr_section
+  // decrypt signature and check the hashes match
   // make sure to_quote matches "extraData" in quoted.
   // make sure hash of quoted matches the decrypted one
+
+  if (hash_name != Digest_method_sha_256) {
+    printf("%s() error, line %d, unsupported hash (not sha256) %s %s\n",
+           __func__,
+           __LINE__,
+	   hash_name.c_str(),
+	   Digest_method_sha256);
+    return false;
+  }
+  return true;
 
   // Initialize public quote key
   if (1 != EVP_DigestVerifyInit(md_ctx, NULL, EVP_sha256(), NULL, key)) {
@@ -1996,7 +2002,8 @@ bool tpm_verify_attest(key_message  &quote_key,
     return false;
   }
 
-  // Initialize `key` with a public key
+  printf("\nEVP_DigestVerifyInit succeeded\n");
+
   if (1
       != EVP_DigestVerifyUpdate(md_ctx,
                                 (byte_t *)quoted.data(),
@@ -2007,6 +2014,8 @@ bool tpm_verify_attest(key_message  &quote_key,
     return false;
   }
 
+  printf("\nEVP_DigestVerifyUpdate succeeded\n");
+
   if (1
       != EVP_DigestVerifyFinal(md_ctx,
                                (byte_t *)signature.data(),
@@ -2014,18 +2023,18 @@ bool tpm_verify_attest(key_message  &quote_key,
     printf("%s() error, line %d, EVP_DigestVerifyFinal fails\n",
            __func__,
            __LINE__);
-    // failure
     return false;
   }
 
+  printf("\nEVP_DigestVerifyFinal succeeded\n");
+
+  // free key and md_ctx
   EVP_MD_CTX_free(md_ctx);
   return true;
 }
 
 bool tpm_verify_attest(string            &cert,
                        const key_message &policy_public_key,
-                       const string      &hash_alg,
-                       const string      &scheme,
                        string            &to_quote,
                        string            &quoted,
                        string            &signature) {
@@ -2033,13 +2042,16 @@ bool tpm_verify_attest(string            &cert,
   // recover quote key form its cert
   key_message quote_key;
 
-
+#if 0
   return tpm_verify_attest(quote_key,
-                           hash_alg,
-                           scheme,
                            to_quote,
                            quoted,
+                           hash_alg,
+                           scheme,
                            signature);
+#else
+  return false;
+#endif
 }
 
 // Sequence for quote key verification protocol is:
