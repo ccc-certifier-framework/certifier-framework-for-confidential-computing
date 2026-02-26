@@ -1528,6 +1528,7 @@ TPM_HANDLE g_srk_handle;
 TPM_HANDLE g_quote_handle;
 int        g_num_pcrs;
 byte_t     g_pcrs[32];
+TPM2B_PUBLIC g_public_quote_key;
 
 bool tpm_init(const string &device_name,
               const string &endorsement_cert_file_name,
@@ -1639,10 +1640,40 @@ bool tpm_init(const string &device_name,
            g_quote_hierarchy_file_name.c_str());
     return false;
   }
+
+#if 0
+  TPM2B_NAME   q_pub_name;
+  TPM2B_NAME   q_qualified_pub_name;
+  uint16_t     q_pub_blob_size = 4096;
+  byte_t       q_pub_blob[q_pub_blob_size]
+
+  if (!Tpm2_ReadPublic(g_tpm,
+                       g_quote_handle,
+                       &q_pub_blob_size,
+                       q_pub_blob,
+                       &g_public_quote_key,
+                       &q_pub_name,
+                       &q_qualified_pub_name)) {
+    printf("%s() error, line %d, ReadPublic failed\n", __func__, __LINE__);
+    Tpm2_FlushContext(tpm, *srk_handle);
+    return false;
+  }
+  printf("Type: %d\n", g_public_quote_key.publicArea.type);
+  printf("Name: %d\n", g_public_quote_key.publicArea.nameAlg);
+  printf("Scheme: %d\n", g_public_quote_key.publicArea.parameters.rsaDetail.scheme.scheme);
+  printf("Bytes (%d):\n", (int)g_public_quote_key.publicArea.unique.rsa.size);
+  print_bytes((int)g_public_quote_key.publicArea.unique.rsa.size,
+              (byte_t *)g_public_quote_key.publicArea.unique.rsa.buffer);
+  printf("\n");
+  printf("Exponent: %d\n", g_public_quote_key.publicArea.parameters.rsaDetail.exponent);
+  printf("\n");
+#endif
+
   g_num_pcrs = num_pcrs;
   memcpy(g_pcrs, pcrs, num_pcrs);
   g_tpm_initialized = true;
   g_tpm_environment_initialized = true;
+
   return true;
 }
 
@@ -1702,6 +1733,7 @@ bool tpm_unseal(string &sealed, string *unsealed) {
 }
 
 bool tpm_attest(string &to_quote, string *quoted, string *signature) {
+
   // Initialized?
   if (!g_tpm_environment_initialized) {
     printf("%s() error, line %d, environment not initialized\n",
