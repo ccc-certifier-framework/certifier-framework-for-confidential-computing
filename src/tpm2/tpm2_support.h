@@ -103,9 +103,11 @@ bool tpm_verify_attest(string &cert,
                        string &to_quote,
                        string &quoted,
                        string &signature);
-bool tpm_verify_attest(key_message &quote_key,
-                       string      &to_quote,
-                       string      &quoted,
-                       string      &signature);
+bool tpm_verify_attest(key_message  &quote_key,
+                       string       &to_quote,
+                       string       &quoted,
+                       const string &hash_name,
+                       const string &sig_scheme,
+                       string       &signature);
 
 #endif

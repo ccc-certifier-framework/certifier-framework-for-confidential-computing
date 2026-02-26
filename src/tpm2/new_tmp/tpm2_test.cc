@@ -185,15 +185,6 @@ bool endorsement_test(local_tpm &tpm, string authString) {
   printf("\n");
   printf("Exponent: %d\n", pub_out.publicArea.parameters.rsaDetail.exponent);
   printf("\n");
-#if 0
-  byte_t reversed[256];
-  reverse_byte_copy((int)pub_out.publicArea.unique.rsa.size,
-                    (byte_t *)pub_out.publicArea.unique.rsa.buffer,
-                    reversed);
-  printf("Bytes reversed (%d):\n", (int)pub_out.publicArea.unique.rsa.size);
-  print_bytes((int)pub_out.publicArea.unique.rsa.size, reversed);
-  printf("\n");
-#endif
 
   Tpm2_FlushContext(tpm, ek_handle);
 
@@ -320,15 +311,15 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
     Tpm2_FlushContext(tpm, quote_handle);
     Tpm2_FlushContext(tpm, srk_handle);
     return false;
-  } else {
-    printf("\nReadPublic quote key succeeded\n");
   }
-#if 0
+
+#ifdef DEBUG2
   printf("\nQuote Key\n");
   printf("  Pubout size: %d\n", pub_out.size);
   printf("  Type: %d\n", pub_out.publicArea.type);
-  printf("  Alg name: %x\n", pub_out.publicArea.nameAlg);
-  printf("  Scheme: %d\n", pub_out.publicArea.parameters.rsaDetail.scheme.scheme);
+  printf("  Hash Alg name: %x\n", pub_out.publicArea.nameAlg);
+  printf("  Scheme: %02x\n",
+         pub_out.publicArea.parameters.rsaDetail.scheme.scheme);
   printf("  Modulus (%d):\n", (int)pub_out.publicArea.unique.rsa.size);
   print_bytes((int)pub_out.publicArea.unique.rsa.size,
               (byte_t *)pub_out.publicArea.unique.rsa.buffer);
@@ -365,24 +356,71 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
 
   quote_key.set_key_name("quote-key-tpm");
   quote_key.set_key_format("vse-key");
-
-  byte_t le_modulus[256];
-  reverse_byte_copy(256,
-                    (byte_t *)pub_out.publicArea.unique.rsa.buffer,
-                    le_modulus);
-  rsa->set_public_modulus(le_modulus, n);
+  rsa->set_public_modulus(pub_out.publicArea.unique.rsa.buffer, n);
   rsa->set_public_exponent((byte_t *)&le_exp, sizeof(uint32_t));
-  print_key(quote_key);
+
+  string hash_alg_name;
+  string sig_scheme_name;
+
+  switch (pub_out.publicArea.nameAlg) {
+    default:
+      printf("%s() error, line: %d, bad modulus size failed\n",
+             __func__,
+             __LINE__);
+      Tpm2_FlushContext(tpm, quote_handle);
+      Tpm2_FlushContext(tpm, srk_handle);
+      return false;
+    case TPM_ALG_SHA256:
+      hash_alg_name.assign(Digest_method_sha_256);
+      break;
+    case TPM_ALG_SHA384:
+      hash_alg_name.assign(Digest_method_sha_384);
+      break;
+    case TPM_ALG_SHA512:
+      hash_alg_name.assign(Digest_method_sha_512);
+      break;
+  }
+
+  switch (pub_out.publicArea.parameters.rsaDetail.scheme.scheme) {
+    default:
+      printf("%s() error, line: %d, bad modulus size failed\n",
+             __func__,
+             __LINE__);
+      Tpm2_FlushContext(tpm, quote_handle);
+      Tpm2_FlushContext(tpm, srk_handle);
+      return false;
+    case TPM_ALG_RSASSA:
+      sig_scheme_name.assign("ssa");
+      break;
+    case TPM_ALG_RSAPSS:
+      sig_scheme_name.assign("pss");
+      break;
+    case TPM_ALG_OAEP:
+      sig_scheme_name.assign("oaep");
+      break;
+  }
+
+  printf("\n");
+  printf("hash name: %s\n", hash_alg_name.c_str());
+  printf("signature scheme: %s\n", sig_scheme_name.c_str());
   printf("\n");
 
-  if (!tpm_verify_attest(quote_key, to_quote, quoted, signature)) {
+  if (!tpm_verify_attest(quote_key,
+                         to_quote,
+                         quoted,
+                         hash_alg_name,
+                         sig_scheme_name,
+                         signature)) {
     printf("%s() error, line: %d, Cant verify quote\n", __func__, __LINE__);
     Tpm2_FlushContext(tpm, quote_handle);
     Tpm2_FlushContext(tpm, srk_handle);
     return true;
   }
 
+  Tpm2_FlushContext(tpm, quote_handle);
+  Tpm2_FlushContext(tpm, srk_handle);
   return true;
+
 #if 0
   if (!verify_credential(tpm, to_quote, quote_sig)) {
     printf("%s() error, line %d, verify_credential failed\n",

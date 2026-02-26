@@ -747,7 +747,7 @@ bool get_endorsement_key(local_tpm  &tpm,
                           TPM_ALG_CFB,   // sym_mode
                           TPM_ALG_NULL,  // sym_scheme
                           2048,          // keyBits (mod size)
-                          0x0,  // exponent
+                          0x0,           // exponent
                           ek_handle,
                           &pub_out)) {
     printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);
@@ -1915,11 +1915,13 @@ bool decode_quoted(int                 size_buf,
   return true;
 }
 
-bool tpm_verify_attest(key_message &quote_key,
-                       string      &to_quote,
-                       string      &quoted,
-                       string      &signature) {
-#ifdef DEBUG2
+bool tpm_verify_attest(key_message  &quote_key,
+                       string       &to_quote,
+                       string       &quoted,
+                       const string &hash_name,
+                       const string &sig_scheme,
+                       string       &signature) {
+#ifdef DEBUG
   printf("tpm_verify_attest:\n");
   print_key(quote_key);
   printf("\n");
@@ -1946,7 +1948,7 @@ bool tpm_verify_attest(key_message &quote_key,
     printf("%s() error, line %d, decode_quoted fails\n", __func__, __LINE__);
     return false;
   }
-#ifdef DEBUG2
+#ifdef DEBUG
   printf("tpm_verify_attest:\n\n");
   printf("  extra data: ");
   print_bytes((int)extra_data.size(), (byte_t *)extra_data.data());
