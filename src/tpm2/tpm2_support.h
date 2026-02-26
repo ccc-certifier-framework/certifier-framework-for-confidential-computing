@@ -96,6 +96,7 @@ bool tpm_init(const string &device_name,
               const string &quote_hierarchy_file_name,
               int           num_pcrs,
               byte_t       *pcrs);
+bool tpm_close();
 bool tpm_seal(string &unsealed, string *sealed);
 bool tpm_unseal(string &sealed, string *unsealed);
 bool tpm_attest(string &to_quote, string *quoted, string *signature);

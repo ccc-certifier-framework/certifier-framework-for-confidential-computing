@@ -1514,21 +1514,61 @@ bool verify_credential(local_tpm    &tpm,
 
 //----------------------------------------------------------------------
 
-bool       g_tpm_initialized = false;
-bool       g_tpm_environment_initialized = false;
-local_tpm  g_tpm;
-int        g_seal_key_type;
-string     g_seal_key;
-string     g_endorsement_cert;
-string     g_endorsement_cert_file_name;
-string     g_seal_hierarchy_file_name;
-string     g_quote_hierarchy_file_name;
-string     g_seal_thing;
-TPM_HANDLE g_srk_handle;
-TPM_HANDLE g_quote_handle;
-int        g_num_pcrs;
-byte_t     g_pcrs[32];
+local_tpm g_tpm;
+
+bool g_tpm_initialized = false;
+bool g_tpm_environment_initialized = false;
+
+TPM_HANDLE g_ek_handle = 0;
+TPM_HANDLE g_srk_handle = 0;
+TPM_HANDLE g_quote_handle = 0;
+
+int          g_seal_key_type;
+string       g_seal_key;
+string       g_endorsement_cert;
+string       g_endorsement_cert_file_name;
+string       g_seal_hierarchy_file_name;
+string       g_quote_hierarchy_file_name;
+string       g_seal_thing;
+int          g_num_pcrs;
+byte_t       g_pcrs[32];
 TPM2B_PUBLIC g_public_quote_key;
+
+
+bool tpm_close() {
+
+#ifdef DEBUG
+  printf("\ntpm_close()\n");
+#endif
+
+  if (!g_tpm_initialized) {
+    return true;
+  }
+
+  if (g_ek_handle != 0) {
+    Tpm2_FlushContext(g_tpm, g_ek_handle);
+    g_ek_handle = 0;
+  }
+  if (g_srk_handle != 0) {
+    Tpm2_FlushContext(g_tpm, g_srk_handle);
+    g_srk_handle = 0;
+  }
+  if (g_quote_handle != 0) {
+    Tpm2_FlushContext(g_tpm, g_quote_handle);
+    g_quote_handle = 0;
+  }
+
+  if (g_tpm_initialized) {
+    g_tpm.close_tpm();
+    g_tpm_initialized = false;
+  }
+  g_tpm_environment_initialized = false;
+
+#ifdef DEBUG
+  printf("tpm_close() returning\n");
+#endif
+  return true;
+}
 
 bool tpm_init(const string &device_name,
               const string &endorsement_cert_file_name,
@@ -1536,9 +1576,11 @@ bool tpm_init(const string &device_name,
               const string &quote_hierarchy_file_name,
               int           num_pcrs,
               byte_t       *pcrs) {
+
   g_endorsement_cert_file_name = endorsement_cert_file_name;
   g_seal_hierarchy_file_name = seal_hierarchy_file_name;
   g_quote_hierarchy_file_name = quote_hierarchy_file_name;
+
   if (g_seal_hierarchy_file_name == "") {
     printf("%s() error, line %d, no seal key file name\n", __func__, __LINE__);
     return false;
@@ -1574,12 +1616,17 @@ bool tpm_init(const string &device_name,
            device_name.c_str());
     return false;
   }
+#ifdef DEBUG
+  printf("tpm_init, opened tpm: %s %d\n", device_name.c_str(), g_tpm.tpm_fd_);
+#endif
+  g_tpm_initialized = true;
 
+#if 0
   // seal hierarchy
   if (file_size(g_seal_hierarchy_file_name) == -1) {
-#ifdef DEBUG2
-    printf("Creating Seal hierarchy\n");
-#endif
+#  ifdef DEBUG
+    printf("tpm_init, Creating Seal hierarchy\n");
+#  endif
     if (!create_seal_hierarchy_and_secret(g_tpm,
                                           num_pcrs,
                                           pcrs,
@@ -1602,9 +1649,9 @@ bool tpm_init(const string &device_name,
 
   // quote hierarchy
   if (file_size(g_quote_hierarchy_file_name) == -1) {
-#ifdef DEBUG2
-    printf("Creating Quote hierarchy\n");
-#endif
+#  ifdef DEBUG
+    printf("tpm_init, Creating Quote hierarchy\n");
+#  endif
     if (!create_quote_hierarchy(g_tpm,
                                 num_pcrs,
                                 pcrs,
@@ -1641,11 +1688,10 @@ bool tpm_init(const string &device_name,
     return false;
   }
 
-#if 0
   TPM2B_NAME   q_pub_name;
   TPM2B_NAME   q_qualified_pub_name;
   uint16_t     q_pub_blob_size = 4096;
-  byte_t       q_pub_blob[q_pub_blob_size]
+  byte_t       q_pub_blob[q_pub_blob_size];
 
   if (!Tpm2_ReadPublic(g_tpm,
                        g_quote_handle,
@@ -1655,25 +1701,30 @@ bool tpm_init(const string &device_name,
                        &q_pub_name,
                        &q_qualified_pub_name)) {
     printf("%s() error, line %d, ReadPublic failed\n", __func__, __LINE__);
-    Tpm2_FlushContext(tpm, *srk_handle);
     return false;
   }
+#  ifdef DEBUG
+  printf("\nQuote key\n");
   printf("Type: %d\n", g_public_quote_key.publicArea.type);
   printf("Name: %d\n", g_public_quote_key.publicArea.nameAlg);
   printf("Scheme: %d\n", g_public_quote_key.publicArea.parameters.rsaDetail.scheme.scheme);
-  printf("Bytes (%d):\n", (int)g_public_quote_key.publicArea.unique.rsa.size);
+  printf("Modulus (%d):\n", (int)g_public_quote_key.publicArea.unique.rsa.size);
   print_bytes((int)g_public_quote_key.publicArea.unique.rsa.size,
               (byte_t *)g_public_quote_key.publicArea.unique.rsa.buffer);
   printf("\n");
   printf("Exponent: %d\n", g_public_quote_key.publicArea.parameters.rsaDetail.exponent);
   printf("\n");
+#  endif
+
 #endif
 
   g_num_pcrs = num_pcrs;
   memcpy(g_pcrs, pcrs, num_pcrs);
-  g_tpm_initialized = true;
   g_tpm_environment_initialized = true;
 
+#ifdef DEBUG2
+  printf("tpm_init, returns true\n");
+#endif
   return true;
 }
 
@@ -2001,7 +2052,7 @@ bool tpm_verify_attest(key_message  &quote_key,
 #endif
 
   // Get key for openssl
-  EVP_PKEY   *key = pkey_from_key((const key_message&)quote_key);
+  EVP_PKEY   *key = pkey_from_key((const key_message &)quote_key);
   EVP_MD_CTX *md_ctx = nullptr;
 
   if (key == nullptr) {
@@ -2020,8 +2071,8 @@ bool tpm_verify_attest(key_message  &quote_key,
     printf("%s() error, line %d, unsupported hash (not sha256) %s %s\n",
            __func__,
            __LINE__,
-	   hash_name.c_str(),
-	   Digest_method_sha256);
+           hash_name.c_str(),
+           Digest_method_sha256);
     return false;
   }
 

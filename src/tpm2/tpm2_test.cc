@@ -65,6 +65,7 @@ DEFINE_string(quote_hierearchy_name,
               "quote_hierarchy.bin",
               "quote hierarch save file name");
 DEFINE_string(ek_cert_file_name, "ek-rsa2048.crt", "tpm cert file name");
+DEFINE_int32(num_pcrs, 1, "number of pcrs");
 
 #ifndef GFLAGS_NS
 #  define GFLAGS_NS google
@@ -313,7 +314,7 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
     return false;
   }
 
-#ifdef DEBUG2
+#ifdef DEBUG
   printf("\nQuote Key\n");
   printf("  Pubout size: %d\n", pub_out.size);
   printf("  Type: %d\n", pub_out.publicArea.type);
@@ -730,19 +731,19 @@ bool get_cert(local_tpm &tpm, const string &file_name, string *out) {
 // ------------------------------------------------------------------------
 
 int main(int an, char **av) {
-  local_tpm tpm;
 
-#if 0
-  if (!tpm_init(const string &device_name,
-              const string &endorsement_cert_file_name,
-              const string &seal_hierarchy_file_name,
-              const string &quote_hierarchy_file_name)) {
+  GFLAGS_NS::ParseCommandLineFlags(&an, &av, true);
+
+  byte_t pcrs[1];
+  if (!tpm_init(FLAGS_tpm_device,
+                FLAGS_ek_cert_file_name,
+                FLAGS_seal_hierearchy_name,
+                FLAGS_quote_hierearchy_name,
+                1,
+                pcrs)) {
     printf("%s() error, line %d, tpm_init failed\n", __func__, __LINE__);
     return false;
   }
-#endif
-
-  GFLAGS_NS::ParseCommandLineFlags(&an, &av, true);
 
   if (FLAGS_operation == "") {
     printf("operations:\n");
@@ -755,53 +756,46 @@ int main(int an, char **av) {
     return 1;
   }
 
-  if (!tpm.open_tpm(FLAGS_tpm_device.c_str())) {
-    printf("Can't open tpm: %s\n", FLAGS_tpm_device.c_str());
-    return 1;
-  }
-#ifdef DEBUG
-  printf("Opened tpm: %s %d\n", FLAGS_tpm_device.c_str(), tpm.tpm_fd_);
-#endif
-
-  string authString;
+  extern local_tpm g_tpm;
+  string           authString;
   if (FLAGS_operation == "EndorsementTest") {
     printf("\n");
-    if (endorsement_test(tpm, authString)) {
+    if (endorsement_test(g_tpm, authString)) {
       printf("endorsement test succeeded\n");
     } else {
       printf("endorsement test failed\n");
     }
   } else if (FLAGS_operation == "SealTest") {
     printf("\n");
-    if (seal_test(tpm, 7, FLAGS_seal_hierearchy_name)) {
+    if (seal_test(g_tpm, 7, FLAGS_seal_hierearchy_name)) {
       printf("seal test succeeded\n");
     } else {
       printf("seal test failed\n");
     }
   } else if (FLAGS_operation == "QuoteTest") {
     printf("\n");
-    if (quote_test(tpm, FLAGS_quote_hierearchy_name)) {
+    if (quote_test(g_tpm, FLAGS_quote_hierearchy_name)) {
       printf("quote test succeeded\n");
     } else {
       printf("quote test failed\n");
     }
   } else if (FLAGS_operation == "ContextTest") {
     printf("\n");
-    if (context_test(tpm)) {
+    if (context_test(g_tpm)) {
       printf("context test succeeded\n");
     } else {
       printf("context test failed\n");
     }
   } else if (FLAGS_operation == "NvTest") {
     printf("\n");
-    if (nv_test(tpm)) {
+    if (nv_test(g_tpm)) {
       printf("nv test succeeded\n");
     } else {
       printf("nv test failed\n");
     }
   } else if (FLAGS_operation == "GetCert") {
     string cert;
-    if (get_cert(tpm, FLAGS_ek_cert_file_name, &cert)) {
+    if (get_cert(g_tpm, FLAGS_ek_cert_file_name, &cert)) {
       printf("get cert test succeeded\n");
     } else {
       printf("get cert test failed\n");
@@ -811,5 +805,6 @@ int main(int an, char **av) {
     printf("No such operation (%s)\n", FLAGS_operation.c_str());
   }
 
-  tpm.close_tpm();
+  tpm_close();
+  return 0;
 }
