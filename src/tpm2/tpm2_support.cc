@@ -1922,7 +1922,7 @@ bool tpm_verify_attest(key_message  &quote_key,
                        const string &sig_scheme,
                        string       &signature) {
 #ifdef DEBUG
-  printf("tpm_verify_attest:\n");
+  printf("\ntpm_verify_attest:\n");
   print_key(quote_key);
   printf("\n");
 
@@ -1992,6 +1992,28 @@ bool tpm_verify_attest(key_message  &quote_key,
 	   Digest_method_sha256);
     return false;
   }
+
+#if 0
+  RSA *r = RSA_new();
+  if (!key_to_RSA(key, r)) {
+    printf("%s() error, line: %d, verify_signed_claim: key_to_RSA failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  rsa_private_decrypt(RSA  *key,
+                      byte *enc_data,
+                      int   data_len,
+                      byte *decrypted,
+                      int  *size_out)
+  success = rsa_sha256_verify(
+      r,
+      (int)signed_claim.serialized_claim_message().size(),
+      (byte *)signed_claim.serialized_claim_message().data(),
+      (int)signed_claim.signature().size(),
+      (byte *)signed_claim.signature().data());
+  RSA_free(r);
+#endif
   return true;
 
   // Initialize public quote key
