@@ -1792,13 +1792,6 @@ bool local_tpm_attest(TPM_HANDLE &quote_handle,
                       string     *quoted,
                       string     *signature) {
 
-  if (!g_tpm_environment_initialized) {
-    printf("%s() error, line %d, environment not initialized\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-
   if (hash_alg != TPM_ALG_SHA256) {
     printf("%s() error, line %d, unsupported hashing algorithm\n",
            __func__,
@@ -2043,6 +2036,33 @@ bool tpm_verify_attest(key_message  &quote_key,
   print_bytes((int)signature.size(), (byte_t *)signature.data());
   printf("\n");
 #endif
+
+  if (hash_name != Digest_method_sha_256) {
+    printf("%s() error, line %d, unsupported hashing algorithm\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  unsigned int d_len = 32;
+  byte_t       digest[d_len];
+  if (!digest_message(Digest_method_sha_256,
+                      (const byte_t *)to_quote.data(),
+                      (int)to_quote.size(),
+                      digest,
+                      d_len)) {
+    printf("%s() error, line %d, digest_message failed\n", __func__, __LINE__);
+    return false;
+  }
+
+#ifdef DEBUG
+  printf("\nHashed to quote: ");
+  print_bytes((int)d_len, digest);
+  printf("\n");
+#endif
+
+  string hashed_to_quote;
+  hashed_to_quote.assign((char *)digest, d_len);
 
   string             extra_data;
   TPML_PCR_SELECTION pcrSelect;

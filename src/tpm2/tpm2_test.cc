@@ -279,6 +279,7 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
   string quoted;
   string signature;
 
+#if 0
   if (!do_quote(tpm,
                 srk_handle,
                 num_pcrs,
@@ -287,6 +288,22 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
                 to_quote,
                 &quoted,
                 &signature)) {
+    printf("%s() error, line %d, do_quote failed\n",
+           __func__,
+           __LINE__);
+    Tpm2_FlushContext(tpm, quote_handle);
+    Tpm2_FlushContext(tpm, srk_handle);
+    return false;
+  }
+#else
+  if (!local_tpm_attest(quote_handle,
+                        TPM_ALG_SHA256,
+                        srk_handle,
+                        num_pcrs,
+                        pcrs,
+                        to_quote,
+                        &quoted,
+                        &signature)) {
     printf("%s() error, line %d, recover_sealing_secret failed\n",
            __func__,
            __LINE__);
@@ -294,6 +311,7 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
     Tpm2_FlushContext(tpm, srk_handle);
     return false;
   }
+#endif
   printf("\ndo_quote succeeded\n");
 
   TPM2B_PUBLIC pub_out;
