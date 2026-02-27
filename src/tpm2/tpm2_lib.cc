@@ -2022,30 +2022,12 @@ bool Tpm2_ActivateCredential(local_tpm              &tpm,
   change_endian32((uint32_t *)&keyHandle, (uint32_t *)in);
   Update(sizeof(uint32_t), &in, &total_size, &space_left);
 
-#if 0
-  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
-  memset(in, 0, sizeof(uint16_t));
-  Update(sizeof(uint16_t), &in, &total_size, &space_left);
-
-  // twin auth areas
-  byte_t   activeAuthArea[512];
-  byte_t   keyAuthArea[512];
-  byte_t   outAuthArea[512];
-  int      n = CreatePasswordAuthArea(activeAuth, 512, activeAuthArea);
-  int      m = CreatePasswordAuthArea(keyAuth, 512, keyAuthArea);
-  uint16_t k = m + n - 4;
-  change_endian16(&k, (uint16_t *)outAuthArea);
-  memcpy(&outAuthArea[2], &activeAuthArea[2], n - 2);
-  memcpy(&outAuthArea[n], &keyAuthArea[2], m - 2);
-  memcpy(in, outAuthArea, k + 2);
-  Update(k + 2, &in, &total_size, &space_left);
-#else
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   memset(in, 0, sizeof(uint16_t));
   Update(sizeof(uint16_t), &in, &total_size, &space_left);
 
   // Auth session index
-  uint16_t* pSize = (uint16_t*)in;
+  uint16_t *pSize = (uint16_t *)in;
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   memset(in, 0, sizeof(uint16_t));
   Update(sizeof(uint16_t), &in, &total_size, &space_left);
@@ -2070,7 +2052,6 @@ bool Tpm2_ActivateCredential(local_tpm              &tpm,
 
   uint16_t k = auth_size1 + auth_size2;
   change_endian16(&k, pSize);
-#endif
 
   change_endian16((uint16_t *)&credentialBlob.size, (uint16_t *)in);
   Update(sizeof(uint16_t), &in, &total_size, &space_left);
