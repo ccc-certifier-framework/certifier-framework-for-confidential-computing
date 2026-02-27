@@ -2067,6 +2067,7 @@ bool tpm_verify_attest(key_message  &quote_key,
   string             extra_data;
   TPML_PCR_SELECTION pcrSelect;
   string             pcr_digest;
+
   if (!decode_quoted((int)quoted.size(),
                      (byte_t *)quoted.data(),
                      &extra_data,
@@ -2095,17 +2096,6 @@ bool tpm_verify_attest(key_message  &quote_key,
   printf("\n");
 #endif
 
-  // Get key for openssl
-  EVP_PKEY   *key = pkey_from_key((const key_message &)quote_key);
-  EVP_MD_CTX *md_ctx = nullptr;
-
-  if (key == nullptr) {
-    printf("%s() error, line %d, can't get pkey from key\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-
   // check pcr_section
   // decrypt signature and check the hashes match
   // make sure to_quote matches "extraData" in quoted.
@@ -2120,28 +2110,33 @@ bool tpm_verify_attest(key_message  &quote_key,
     return false;
   }
 
-#if 0
-  RSA *r = RSA_new();
-  if (!key_to_RSA(key, r)) {
-    printf("%s() error, line: %d, verify_signed_claim: key_to_RSA failed\n",
+  unsigned int d_len2 = 32;
+  byte_t       digest2[d_len2];
+  if (!digest_message(Digest_method_sha_256,
+                      (const byte_t *)quoted.data(),
+                      (int)quoted.size(),
+                      digest2,
+                      d_len2)) {
+    printf("%s() error, line %d, digest_message failed\n", __func__, __LINE__);
+    return false;
+  }
+
+#ifdef DEBUG
+  printf("\nHashed quoted: ");
+  print_bytes((int)d_len2, digest2);
+  printf("\n");
+#endif
+
+  // Get key for openssl
+  EVP_PKEY   *key = pkey_from_key((const key_message &)quote_key);
+  EVP_MD_CTX *md_ctx = EVP_MD_CTX_new();
+
+  if (key == nullptr) {
+    printf("%s() error, line %d, can't get pkey from key\n",
            __func__,
            __LINE__);
     return false;
   }
-  rsa_private_decrypt(RSA  *key,
-                      byte *enc_data,
-                      int   data_len,
-                      byte *decrypted,
-                      int  *size_out)
-  success = rsa_sha256_verify(
-      r,
-      (int)signed_claim.serialized_claim_message().size(),
-      (byte *)signed_claim.serialized_claim_message().data(),
-      (int)signed_claim.signature().size(),
-      (byte *)signed_claim.signature().data());
-  RSA_free(r);
-#endif
-  return true;
 
   // Initialize public quote key
   if (1 != EVP_DigestVerifyInit(md_ctx, NULL, EVP_sha256(), NULL, key)) {
@@ -2150,21 +2145,21 @@ bool tpm_verify_attest(key_message  &quote_key,
            __LINE__);
     return false;
   }
-
+#ifdef DEBUG
   printf("\nEVP_DigestVerifyInit succeeded\n");
-
+#endif
   if (1
       != EVP_DigestVerifyUpdate(md_ctx,
-                                (byte_t *)quoted.data(),
+                                (const byte_t *)quoted.data(),
                                 (int)quoted.size())) {
     printf("%s() error, line %d, EVP_DigestVerifyUpdate fails\n",
            __func__,
            __LINE__);
     return false;
   }
-
+#ifdef DEBUG
   printf("\nEVP_DigestVerifyUpdate succeeded\n");
-
+#endif
   if (1
       != EVP_DigestVerifyFinal(md_ctx,
                                (byte_t *)signature.data(),
@@ -2174,11 +2169,14 @@ bool tpm_verify_attest(key_message  &quote_key,
            __LINE__);
     return false;
   }
-
+#ifdef DEBUG
   printf("\nEVP_DigestVerifyFinal succeeded\n");
+#endif
 
   // free key and md_ctx
   EVP_MD_CTX_free(md_ctx);
+  PKEY_free(key);
+
   return true;
 }
 

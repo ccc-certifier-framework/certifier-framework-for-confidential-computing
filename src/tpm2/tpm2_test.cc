@@ -419,11 +419,6 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
       break;
   }
 
-  printf("\n");
-  printf("hash name: %s\n", hash_alg_name.c_str());
-  printf("signature scheme: %s\n", sig_scheme_name.c_str());
-  printf("\n");
-
   if (!tpm_verify_attest(quote_key,
                          to_quote,
                          quoted,
