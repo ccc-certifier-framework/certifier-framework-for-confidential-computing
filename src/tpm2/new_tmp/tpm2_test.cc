@@ -435,18 +435,8 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
   Tpm2_FlushContext(tpm, srk_handle);
   return true;
 
+  // Make/Activate Credential test
 #if 0
-  if (!verify_credential(tpm, to_quote, quote_sig)) {
-    printf("%s() error, line %d, verify_credential failed\n",
-           __func__,
-           __LINE__);
-    Tpm2_FlushContext(tpm, quote_handle);
-    Tpm2_FlushContext(tpm, srk_handle);
-    return false;
-  }
-#endif
-
-  // Make/Activate Credential
   TPM_HANDLE ek_handle;
   string     emptyAuth;
 
@@ -456,91 +446,12 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
            __LINE__);
     return false;
   }
-
-  // Credential test
-  TPM2B_DIGEST           credential;
-  TPM2B_ID_OBJECT        credentialBlob;
-  TPM2B_ENCRYPTED_SECRET secret;
-  TPM2B_DIGEST           recovered_credential;
-
-  memset((void *)&credential, 0, sizeof(TPM2B_DIGEST));
-  memset((void *)&secret, 0, sizeof(TPM2B_ENCRYPTED_SECRET));
-  memset((void *)&credentialBlob, 0, sizeof(TPM2B_ID_OBJECT));
-
-  // TODO: Make a real secret here for MakeCredential with
-  // size 32 bits.
-  credential.size = 32;
-  for (int i = 0; i < credential.size; i++)
-    credential.buffer[i] = i + 1;
-
-  TPM2B_PUBLIC quoting_pub_out;
-  TPM2B_NAME   quoting_pub_name;
-  TPM2B_NAME   quoting_qualified_pub_name;
-  uint16_t     quoting_pub_blob_size = 1024;
-  byte_t       quoting_pub_blob[quoting_pub_blob_size];
-
-  memset((void *)&quoting_pub_out, 0, sizeof(TPM2B_PUBLIC));
-
-  if (!Tpm2_ReadPublic(tpm,
-                       quote_handle,
-                       &quoting_pub_blob_size,
-                       quoting_pub_blob,
-                       &quoting_pub_out,
-                       &quoting_pub_name,
-                       &quoting_qualified_pub_name)) {
-    printf("%s() error, line: %d, Cant read quote public\n",
-           __func__,
-           __LINE__);
-    Tpm2_FlushContext(tpm, quote_handle);
-    Tpm2_FlushContext(tpm, srk_handle);
-    Tpm2_FlushContext(tpm, ek_handle);
-    return false;
+  if (!credential_test(local_tpm    &tpm,
+                     TPM_HANDLE& ek_handle,
+                     TPM_HANDLE& quote_handle)) {
   }
-  printf("Active Name (%d): ", quoting_pub_name.size);
-  print_bytes(quoting_pub_name.size, quoting_pub_name.name);
-  printf("\n");
-
-  if (!Tpm2_MakeCredential(tpm,
-                           ek_handle,
-                           credential,
-                           quoting_pub_name,
-                           &credentialBlob,
-                           &secret)) {
-    printf("%s() error, line: %d, Cant MakeCredential failed\n",
-           __func__,
-           __LINE__);
-    Tpm2_FlushContext(tpm, quote_handle);
-    Tpm2_FlushContext(tpm, srk_handle);
-    Tpm2_FlushContext(tpm, ek_handle);
-  }
-
-  printf("MakeCredential succeeded\n");
-  printf("credBlob size: %d\n", credentialBlob.size);
-  printf("secret size: %d\n", secret.size);
-  if (!Tpm2_ActivateCredential(tpm,
-                               quote_handle,
-                               ek_handle,
-                               emptyAuth,
-                               emptyAuth,
-                               credentialBlob,
-                               secret,
-                               &recovered_credential)) {
-    printf("%s() error, line: %d, ActivateCredential failed\n",
-           __func__,
-           __LINE__);
-    Tpm2_FlushContext(tpm, quote_handle);
-    Tpm2_FlushContext(tpm, srk_handle);
-    Tpm2_FlushContext(tpm, ek_handle);
-    return false;
-  }
-  printf("ActivateCredential succeeded\n");
-  printf("Recovered credential (%d): ", recovered_credential.size);
-  print_bytes(recovered_credential.size, recovered_credential.buffer);
-  printf("\n");
-
-  Tpm2_FlushContext(tpm, ek_handle);
-  Tpm2_FlushContext(tpm, quote_handle);
-  Tpm2_FlushContext(tpm, srk_handle);
+#endif
+  tpm_close();
   return true;
 }
 

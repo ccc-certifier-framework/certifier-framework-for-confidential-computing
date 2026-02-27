@@ -1456,62 +1456,6 @@ bool do_quote(local_tpm  &tpm,
   return true;
 }
 
-bool verify_credential(local_tpm    &tpm,
-                       const string &to_quote,
-                       const string &quote) {
-#if 0
-  TPM2B_DIGEST credential;
-  TPM2B_ID_OBJECT credentialBlob;
-  TPM2B_ENCRYPTED_SECRET secret;
-  TPM2B_DIGEST recovered_credential;
-
-  memset((void*)&credential, 0, sizeof(TPM2B_DIGEST));
-  memset((void*)&secret, 0, sizeof(TPM2B_ENCRYPTED_SECRET));
-  memset((void*)&credentialBlob, 0, sizeof(TPM2B_ID_OBJECT));
-
-  // TODO: Make a real secret here for MakeCredential with
-  // size 32 bits.
-  credential.size = 20;
-  for (int i = 0; i < credential.size; i++)
-    credential.buffer[i] = i + 1;
-
-  if (Tpm2_ReadPublic(tpm, quotingHandle,
-                      &quoting_pub_blob_size, quoting_pub_blob,
-                      &quoting_pub_out, &quoting_pub_name,
-                      &quoting_qualified_pub_name)) {
-    printf("ReadPublic succeeded\n");
-  } else {
-    printf("ReadPublic failed\n");
-    return false;
-  }
-  printf("Active Name (%d): ", quoting_pub_name.size);
-  print_bytes(quoting_pub_name.size, quoting_pub_name.name);
-  printf("\n");
-
-  if (Tpm2_MakeCredential(tpm, ekHandle, credential, quoting_pub_name,
-                          &credentialBlob, &secret)) {
-    printf("MakeCredential succeeded\n");
-  } else {
-    printf("MakeCredential failed\n");
-  }
-  printf("credBlob size: %d\n", credentialBlob.size);
-  printf("secret size: %d\n", secret.size);
-  if (Tpm2_ActivateCredential(tpm, quotingHandle, ekHandle,
-                              srkAuth, emptyAuth,
-                              credentialBlob, secret,
-                              &recovered_credential)) {
-    printf("ActivateCredential succeeded\n");
-    printf("Recovered credential (%d): ", recovered_credential.size);
-    print_bytes(recovered_credential.size, recovered_credential.buffer);
-    printf("\n");
-  } else {
-    Tpm2_FlushContext(tpm, ekHandle);
-    return false;
-  }
-#endif
-  return true;
-}
-
 //----------------------------------------------------------------------
 
 local_tpm g_tpm;
@@ -2175,7 +2119,7 @@ bool tpm_verify_attest(key_message  &quote_key,
 
   // free key and md_ctx
   EVP_MD_CTX_free(md_ctx);
-  PKEY_free(key);
+  EVP_PKEY_free(key);
 
   return true;
 }
@@ -2215,110 +2159,6 @@ bool tpm_verify_attest(string            &cert,
 //      Call activate credential to get quote key certificate
 //      and return it
 
-
-#if 0
-
-// TCG template (rewrite)
-bool write_cred_and_secret(TPM2B_ID_OBJECT *cred
-        TPM2B_ENCRYPTED_SECRET *secret) 
-
-bool tpm2_identity_util_calc_outer_integrity_hmac_key_and_dupsensitive_enc_key(
-        TPM2B_PUBLIC *parent_pub, TPM2B_NAME *pubname,
-        TPM2B_DIGEST *protection_seed, TPM2B_MAX_BUFFER *protection_hmac_key,
-        TPM2B_MAX_BUFFER *protection_enc_key) {
-
-    TPM2B null_2b = { .size = 0 };
-
-    TPMI_ALG_HASH parent_alg = parent_pub->publicArea.nameAlg;
-    UINT16 parent_hash_size = tpm2_alg_util_get_hash_size(parent_alg);
-
-    TSS2_RC rval = tpm2_kdfa(parent_alg, (TPM2B *) protection_seed, "INTEGRITY",
-            &null_2b, &null_2b, parent_hash_size * 8, protection_hmac_key);
-    if (rval != TPM2_RC_SUCCESS) {
-        return false;
-    }
-
-    TPM2_KEY_BITS pub_key_bits = get_pub_asym_key_bits(parent_pub);
-
-    rval = tpm2_kdfa(parent_alg, (TPM2B *) protection_seed, "STORAGE",
-            (TPM2B *) pubname, &null_2b, pub_key_bits, protection_enc_key);
-    if (rval != TPM2_RC_SUCCESS) {
-        return false;
-    }
-
-    return true;
-}
-
-bool share_secret_with_tpm2_rsa_public_key(TPM2B_DIGEST *protection_seed,
-        TPM2B_PUBLIC *parent_pub, const unsigned char *label, int label_len,
-        TPM2B_ENCRYPTED_SECRET *encrypted_protection_seed) {
-    bool rval = false;
-    EVP_PKEY_CTX *ctx = NULL;
-    TPMI_ALG_PUBLIC alg = parent_pub->publicArea.type;
-
-    EVP_PKEY *pkey = convert_pubkey_RSA(&parent_pub->publicArea);
-    if (pkey == NULL) {
-        return false;
-    }
-
-    TPMI_ALG_HASH parent_name_alg = parent_pub->publicArea.nameAlg;
-
-    // RSA Secret Sharing uses a randomly generated seed (Part 1, B.10.3).
-    protection_seed->size = tpm2_alg_util_get_hash_size(parent_name_alg);
-    int rc = RAND_bytes(protection_seed->buffer, protection_seed->size);
-    if (rc != 1) {
-        return false;
-    }
-
-    // The seed value will be OAEP encrypted with a given L parameter.
-    ctx = EVP_PKEY_CTX_new(pkey, NULL);
-    if (!ctx) {
-        return false;
-    }
-
-    rc = EVP_PKEY_encrypt_init(ctx);
-    if (rc <= 0) {
-        return false;
-    }
-
-    rc = EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING);
-    if (rc <= 0) {
-        return false;
-    }
-
-    rc = EVP_PKEY_CTX_set_rsa_oaep_md(ctx,
-            tpm2_openssl_md_from_tpmhalg(parent_name_alg));
-    if (rc <= 0) {
-        return false;
-    }
-
-    // the library will take ownership of the label
-    char *newlabel = strdup((const char *)label);
-    if (newlabel == NULL) {
-        return false;
-    }
-
-    rc = EVP_PKEY_CTX_set0_rsa_oaep_label(ctx, newlabel, label_len);
-    if (rc <= 0) {
-        free(newlabel);
-        return false;
-    }
-
-    size_t outlen = sizeof(TPMU_ENCRYPTED_SECRET);
-    if (EVP_PKEY_encrypt(ctx, encrypted_protection_seed->secret, &outlen,
-            protection_seed->buffer, protection_seed->size) <= 0) {
-        return false;
-    }
-    encrypted_protection_seed->size = outlen;
-    rval = true;
-
-error:
-    EVP_PKEY_CTX_free(ctx);
-    EVP_PKEY_free(pkey);
-    return rval;
-}
-
-#endif
 
 // This makes the certificate on the provider given
 // the subject quote key, signing key, measurement (pcrs),
@@ -2422,5 +2262,113 @@ bool recover_quote_key_certificate(const string &serialized_cred_response,
   return false;
 }
 
+// ------------------------------------------------------------------------
+
+bool credential_test(local_tpm &tpm,
+                     TPM_HANDLE ek_handle,
+                     TPM_HANDLE srk_handle,
+                     TPM_HANDLE quote_handle) {
+  string policyString;
+  string authString;
+  string emptyAuth;
+  int    size_buf = 128;
+  byte_t buf[size_buf];
+
+  int m = CreatePasswordAuthArea(emptyAuth, size_buf, buf);
+  if (m < 0) {
+    printf("%s() error, line %d, CreatePasswordAuthArea failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  extern byte_t g_policy_rsa_2048[32];
+  authString.assign((char *)(buf + 2), m - 2);
+  policyString.assign((char *)g_policy_rsa_2048, sizeof(g_policy_rsa_2048));
+
+  if (!get_endorsement_key(tpm, authString, policyString, &g_ek_handle)) {
+    printf("%s() error, line %d, get_endorsement_key failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  TPM2B_DIGEST           credential;
+  TPM2B_ID_OBJECT        credentialBlob;
+  TPM2B_ENCRYPTED_SECRET secret;
+  TPM2B_DIGEST           recovered_credential;
+
+  memset((void *)&credential, 0, sizeof(TPM2B_DIGEST));
+  memset((void *)&secret, 0, sizeof(TPM2B_ENCRYPTED_SECRET));
+  memset((void *)&credentialBlob, 0, sizeof(TPM2B_ID_OBJECT));
+
+  // TODO: Make a real secret here for MakeCredential with
+  // size 32 bits.
+  credential.size = 32;
+  for (int i = 0; i < credential.size; i++)
+    credential.buffer[i] = i + 1;
+
+  TPM2B_PUBLIC quoting_pub_out;
+  TPM2B_NAME   quoting_pub_name;
+  TPM2B_NAME   quoting_qualified_pub_name;
+  uint16_t     quoting_pub_blob_size = 1024;
+  byte_t       quoting_pub_blob[quoting_pub_blob_size];
+  memset((void *)&quoting_pub_out, 0, sizeof(TPM2B_PUBLIC));
+
+  if (!Tpm2_ReadPublic(tpm,
+                       quote_handle,
+                       &quoting_pub_blob_size,
+                       quoting_pub_blob,
+                       &quoting_pub_out,
+                       &quoting_pub_name,
+                       &quoting_qualified_pub_name)) {
+    printf("%s() error, line %d, ReadPublic failed\n", __func__, __LINE__);
+    return false;
+  }
+#ifdef DEBUG
+  printf("ReadPublic succeeded\n");
+  printf("Active Name (%d): ", quoting_pub_name.size);
+  print_bytes(quoting_pub_name.size, quoting_pub_name.name);
+  printf("\n");
+#endif
+
+  if (!Tpm2_MakeCredential(tpm,
+                           ek_handle,
+                           credential,
+                           quoting_pub_name,
+                           &credentialBlob,
+                           &secret)) {
+    printf("%s() error, line %d, Tpm2_MakeCredential failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+#ifdef DEBUG
+  printf("MakeCredential succeeded\n");
+  printf("credBlob size: %d\n", credentialBlob.size);
+  printf("secret size: %d\n", secret.size);
+#endif
+  if (!Tpm2_ActivateCredential(tpm,
+                               quote_handle,
+                               ek_handle,
+                               authString,
+                               authString,
+                               credentialBlob,
+                               secret,
+                               &recovered_credential)) {
+    printf("%s() error, line %d, Tpm2_ActivateCredential failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+#ifdef DEBUG
+  printf("ActivateCredential succeeded\n");
+  printf("Recovered credential (%d): ", recovered_credential.size);
+  print_bytes(recovered_credential.size, recovered_credential.buffer);
+  printf("\n");
+#endif
+
+  return true;
+}
 
 // ------------------------------------------------------------------------
