@@ -61,6 +61,9 @@ bool write_nv_handle(local_tpm &tpm,
                      TPM_HANDLE handle,
                      string    &authString,
                      string    &in);
+
+// ---------------------------------------------------------------
+
 bool create_pcr_policy(local_tpm    &tpm,
                        int           num_pcrs,
                        byte_t       *pcrs,
@@ -87,9 +90,6 @@ bool do_quote(local_tpm  &tpm,
               string     &to_quote,
               string     *quoted,
               string     *signature);
-bool verify_credential(local_tpm    &tpm,
-                       const string &to_quote,
-                       const string &quote);
 bool tpm_init(const string &device_name,
               const string &endorsement_cert_file_name,
               const string &seal_hierarchy_file_name,
@@ -120,4 +120,9 @@ bool tpm_verify_attest(key_message  &quote_key,
                        const string &sig_scheme,
                        string       &signature);
 
+bool credential_test(local_tpm  &tpm,
+                     TPM_HANDLE &srk_handle,
+                     TPM_HANDLE &quote_handle);
+
+// ---------------------------------------------------------------
 #endif

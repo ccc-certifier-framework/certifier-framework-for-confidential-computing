@@ -1970,6 +1970,9 @@ bool tpm_verify_attest(key_message  &quote_key,
   print_key(quote_key);
   printf("\n");
 
+  printf("hash name: %s, sig scheme: %s\n",
+         hash_name.c_str(),
+         sig_scheme.c_str());
   printf("to_quote: ");
   print_bytes((int)to_quote.size(), (byte_t *)to_quote.data());
   printf("\n");
@@ -1988,6 +1991,7 @@ bool tpm_verify_attest(key_message  &quote_key,
     return false;
   }
 
+  // Hash the thing to be quoted
   unsigned int d_len = 32;
   byte_t       digest[d_len];
   if (!digest_message(Digest_method_sha_256,
@@ -2081,6 +2085,10 @@ bool tpm_verify_attest(key_message  &quote_key,
            __LINE__);
     return false;
   }
+  if (md_ctx == nullptr) {
+    printf("%s() error, line %d, can't get context\n", __func__, __LINE__);
+    return false;
+  }
 
   // Initialize public quote key
   if (1 != EVP_DigestVerifyInit(md_ctx, NULL, EVP_sha256(), NULL, key)) {
@@ -2089,7 +2097,7 @@ bool tpm_verify_attest(key_message  &quote_key,
            __LINE__);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\nEVP_DigestVerifyInit succeeded\n");
 #endif
   if (1
@@ -2101,7 +2109,7 @@ bool tpm_verify_attest(key_message  &quote_key,
            __LINE__);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\nEVP_DigestVerifyUpdate succeeded\n");
 #endif
   if (1
@@ -2113,7 +2121,7 @@ bool tpm_verify_attest(key_message  &quote_key,
            __LINE__);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\nEVP_DigestVerifyFinal succeeded\n");
 #endif
 
@@ -2144,6 +2152,8 @@ bool tpm_verify_attest(string            &cert,
   return false;
 #endif
 }
+
+// ------------------------------------------------------------------------
 
 // Sequence for quote key verification protocol is:
 //
@@ -2264,15 +2274,16 @@ bool recover_quote_key_certificate(const string &serialized_cred_response,
 
 // ------------------------------------------------------------------------
 
-bool credential_test(local_tpm &tpm,
-                     TPM_HANDLE ek_handle,
-                     TPM_HANDLE srk_handle,
-                     TPM_HANDLE quote_handle) {
-  string policyString;
-  string authString;
-  string emptyAuth;
-  int    size_buf = 128;
-  byte_t buf[size_buf];
+bool credential_test(local_tpm  &tpm,
+                     TPM_HANDLE &srk_handle,
+                     TPM_HANDLE &quote_handle) {
+
+  TPM_HANDLE ek_handle = 0;
+  string     policyString;
+  string     authString;
+  string     emptyAuth;
+  int        size_buf = 128;
+  byte_t     buf[size_buf];
 
   int m = CreatePasswordAuthArea(emptyAuth, size_buf, buf);
   if (m < 0) {
@@ -2286,12 +2297,15 @@ bool credential_test(local_tpm &tpm,
   authString.assign((char *)(buf + 2), m - 2);
   policyString.assign((char *)g_policy_rsa_2048, sizeof(g_policy_rsa_2048));
 
-  if (!get_endorsement_key(tpm, authString, policyString, &g_ek_handle)) {
+  if (!get_endorsement_key(tpm, authString, policyString, &ek_handle)) {
     printf("%s() error, line %d, get_endorsement_key failed\n",
            __func__,
            __LINE__);
     return false;
   }
+#ifdef DEBUG
+  printf("\nGot endorsement key %08x\n", ek_handle);
+#endif
 
   TPM2B_DIGEST           credential;
   TPM2B_ID_OBJECT        credentialBlob;
@@ -2323,10 +2337,11 @@ bool credential_test(local_tpm &tpm,
                        &quoting_pub_name,
                        &quoting_qualified_pub_name)) {
     printf("%s() error, line %d, ReadPublic failed\n", __func__, __LINE__);
+    Tpm2_FlushContext(tpm, ek_handle);
     return false;
   }
 #ifdef DEBUG
-  printf("ReadPublic succeeded\n");
+  printf("Credential tests, ReadPublic succeeded\n");
   printf("Active Name (%d): ", quoting_pub_name.size);
   print_bytes(quoting_pub_name.size, quoting_pub_name.name);
   printf("\n");
@@ -2341,12 +2356,17 @@ bool credential_test(local_tpm &tpm,
     printf("%s() error, line %d, Tpm2_MakeCredential failed\n",
            __func__,
            __LINE__);
+    Tpm2_FlushContext(tpm, ek_handle);
     return false;
   }
 #ifdef DEBUG
   printf("MakeCredential succeeded\n");
   printf("credBlob size: %d\n", credentialBlob.size);
+  print_bytes(credentialBlob.size, credentialBlob.credential);
+  printf("\n");
   printf("secret size: %d\n", secret.size);
+  print_bytes(secret.size, secret.secret);
+  printf("\n");
 #endif
   if (!Tpm2_ActivateCredential(tpm,
                                quote_handle,
@@ -2359,6 +2379,7 @@ bool credential_test(local_tpm &tpm,
     printf("%s() error, line %d, Tpm2_ActivateCredential failed\n",
            __func__,
            __LINE__);
+    Tpm2_FlushContext(tpm, ek_handle);
     return false;
   }
 #ifdef DEBUG
@@ -2368,6 +2389,7 @@ bool credential_test(local_tpm &tpm,
   printf("\n");
 #endif
 
+  Tpm2_FlushContext(tpm, ek_handle);
   return true;
 }
 

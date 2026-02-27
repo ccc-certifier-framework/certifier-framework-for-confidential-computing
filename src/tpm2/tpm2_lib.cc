@@ -1953,7 +1953,7 @@ bool Tpm2_MakeCredential(local_tpm              &tpm,
                                 commandBuf,
                                 total_size,
                                 params);
-#ifdef DEBUG
+#ifdef DEBUG1
   print_command("MakeCredential", in_size, commandBuf);
 #endif
   if (!tpm.send_command(in_size, commandBuf)) {
@@ -1972,7 +1972,7 @@ bool Tpm2_MakeCredential(local_tpm              &tpm,
                          &cap,
                          &responseSize,
                          &responseCode);
-#ifdef DEBUG
+#ifdef DEBUG1
   print_response("MakeCredential", cap, responseSize, responseCode, resp_buf);
 #else
   if (responseCode != 0)
@@ -2022,6 +2022,7 @@ bool Tpm2_ActivateCredential(local_tpm              &tpm,
   change_endian32((uint32_t *)&keyHandle, (uint32_t *)in);
   Update(sizeof(uint32_t), &in, &total_size, &space_left);
 
+#if 0
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   memset(in, 0, sizeof(uint16_t));
   Update(sizeof(uint16_t), &in, &total_size, &space_left);
@@ -2038,6 +2039,34 @@ bool Tpm2_ActivateCredential(local_tpm              &tpm,
   memcpy(&outAuthArea[n], &keyAuthArea[2], m - 2);
   memcpy(in, outAuthArea, k + 2);
   Update(k + 2, &in, &total_size, &space_left);
+#else
+  // Auth session index
+  uint16_t* pSize = (uint16_t*)in;
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
+  memset(in, 0, sizeof(uint16_t));
+  Update(sizeof(uint16_t), &in, &total_size, &space_left);
+
+  // Auth 1
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
+  uint16_t auth_size1 = activeAuth.size();
+  change_endian16(&auth_size1, (uint16_t *)in);
+  Update(sizeof(uint16_t), &in, &total_size, &space_left);
+  IF_LESS_THAN_RETURN_FALSE(space_left, auth_size1)
+  memcpy(in, (byte_t *)activeAuth.data(), activeAuth.size());
+  Update(auth_size1, &in, &total_size, &space_left);
+
+  // Auth 2
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
+  uint16_t auth_size2 = keyAuth.size();
+  change_endian16(&auth_size2, (uint16_t *)in);
+  Update(sizeof(uint16_t), &in, &total_size, &space_left);
+  IF_LESS_THAN_RETURN_FALSE(space_left, auth_size2)
+  memcpy(in, (byte_t *)keyAuth.data(), keyAuth.size());
+  Update(auth_size2, &in, &total_size, &space_left);
+
+  uint16_t k = auth_size1 + auth_size2 ; // + 2 * sizeof(uint16_t);
+  change_endian16(&k, pSize);
+#endif
 
   change_endian16((uint16_t *)&credentialBlob.size, (uint16_t *)in);
   Update(sizeof(uint16_t), &in, &total_size, &space_left);
@@ -2054,7 +2083,7 @@ bool Tpm2_ActivateCredential(local_tpm              &tpm,
                                 commandBuf,
                                 total_size,
                                 params);
-#ifdef DEBUG
+#ifdef DEBUG1
   print_command("ActivateCredential", in_size, commandBuf);
 #endif
   if (!tpm.send_command(in_size, commandBuf)) {
@@ -2073,7 +2102,7 @@ bool Tpm2_ActivateCredential(local_tpm              &tpm,
                          &cap,
                          &responseSize,
                          &responseCode);
-#ifdef DEBUG
+#ifdef DEBUG1
   print_response("ActivateCredential",
                  cap,
                  responseSize,

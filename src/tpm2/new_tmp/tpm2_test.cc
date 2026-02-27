@@ -279,23 +279,6 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
   string quoted;
   string signature;
 
-#if 0
-  if (!do_quote(tpm,
-                srk_handle,
-                num_pcrs,
-                pcrs,
-                quote_handle,
-                to_quote,
-                &quoted,
-                &signature)) {
-    printf("%s() error, line %d, do_quote failed\n",
-           __func__,
-           __LINE__);
-    Tpm2_FlushContext(tpm, quote_handle);
-    Tpm2_FlushContext(tpm, srk_handle);
-    return false;
-  }
-#else
   if (!local_tpm_attest(quote_handle,
                         TPM_ALG_SHA256,
                         srk_handle,
@@ -311,7 +294,6 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
     Tpm2_FlushContext(tpm, srk_handle);
     return false;
   }
-#endif
   printf("\ndo_quote succeeded\n");
 
   TPM2B_PUBLIC pub_out;
@@ -430,27 +412,18 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
     Tpm2_FlushContext(tpm, srk_handle);
     return true;
   }
-
-  Tpm2_FlushContext(tpm, quote_handle);
-  Tpm2_FlushContext(tpm, srk_handle);
-  return true;
+#ifdef DEBUG
+  printf("\ntpm_verify_attest suceeded\n");
+#endif
 
   // Make/Activate Credential test
-#if 0
-  TPM_HANDLE ek_handle;
-  string     emptyAuth;
-
-  if (!get_endorsement_key(tpm, emptyAuth, emptyAuth, &ek_handle)) {
-    printf("%s() error, line %d, get_endorsement_key failed\n",
-           __func__,
-           __LINE__);
+  if (!credential_test(tpm, srk_handle, quote_handle)) {
+    printf("%s() error, line %d, credential_test failed\n", __func__, __LINE__);
     return false;
   }
-  if (!credential_test(local_tpm    &tpm,
-                     TPM_HANDLE& ek_handle,
-                     TPM_HANDLE& quote_handle)) {
-  }
-#endif
+  Tpm2_FlushContext(tpm, quote_handle);
+  Tpm2_FlushContext(tpm, srk_handle);
+
   tpm_close();
   return true;
 }
