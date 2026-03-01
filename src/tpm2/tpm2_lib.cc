@@ -789,12 +789,12 @@ int SetPasswordData(string &password, int size, byte_t *buf) {
     }
   }
   uint16_t size_out = num_auth_bytes;
-  IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint16_t))
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   change_endian16(&size_out, (uint16_t *)out);
   Update(sizeof(uint16_t), &out, &total_size, &space_left);
 
   if (num_auth_bytes > 0) {
-    IF_LESS_THAN_RETURN_MINUS1(space_left, num_auth_bytes)
+    IF_LESS_THAN_RETURN_FALSE(space_left, num_auth_bytes)
     memcpy(out, auth, num_auth_bytes);
     Update(num_auth_bytes, &out, &total_size, &space_left);
   }
@@ -809,23 +809,23 @@ int CreatePasswordAuthArea(string &password, int size, byte_t *buf) {
   byte_t  *pLen = out;
 
   // size of pw auth area (filled later)
-  IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint16_t));
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t));
   memset(out, 0, 2);
   Update(sizeof(uint16_t), &out, &total_size, &space_left);
 
   // policy handle
   uint32_t policy = TPM_RS_PW;
-  IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint32_t));
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint32_t));
   change_endian32(&policy, (uint32_t *)out);
   Update(sizeof(uint32_t), &out, &total_size, &space_left);
 
   // Nonce size (must be 0)
-  IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint16_t));
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t));
   memset(out, 0, sizeof(uint16_t));
   Update(sizeof(uint16_t), &out, &total_size, &space_left);
 
   // sessionAttributes (must be 1)
-  IF_LESS_THAN_RETURN_MINUS1(space_left, 1);
+  IF_LESS_THAN_RETURN_FALSE(space_left, 1);
   *out = 1;
   Update(1, &out, &total_size, &space_left);
 
@@ -850,24 +850,24 @@ int CreateSensitiveArea(int     size_in,
   byte_t *out = buf;
   byte_t *pSize = out;
 
-  IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint16_t));
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t));
   memset(out, 0, sizeof(uint16_t));
   Update(sizeof(uint16_t), &out, &total_size, &space_left);
 
-  IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint16_t));
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t));
   change_endian16((uint16_t *)&size_in, (uint16_t *)out);
   Update(sizeof(uint16_t), &out, &total_size, &space_left);
   if (size_in > 0) {
-    IF_LESS_THAN_RETURN_MINUS1(size_in, sizeof(uint16_t));
+    IF_LESS_THAN_RETURN_FALSE(size_in, sizeof(uint16_t));
     memcpy(out, in, size_in);
     Update(size_in, &out, &total_size, &space_left);
   }
 
-  IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint16_t));
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t));
   change_endian16((uint16_t *)&size_data, (uint16_t *)out);
   Update(sizeof(uint16_t), &out, &total_size, &space_left);
   if (size_data > 0) {
-    IF_LESS_THAN_RETURN_MINUS1(size_data, sizeof(uint16_t));
+    IF_LESS_THAN_RETURN_FALSE(size_data, sizeof(uint16_t));
     memcpy(out, data, size_data);
     Update(size_data, &out, &total_size, &space_left);
   }
@@ -1034,47 +1034,47 @@ int Marshal_AuthSession_Info(TPMI_DH_OBJECT         &tpm_obj,
   int     space_left = size;
   byte_t *out = out_buf;
 
-  IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint32_t))
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint32_t))
   change_endian32((uint32_t *)&tpm_obj, (uint32_t *)out);
   Update(sizeof(uint32_t), &out, &total_size, &space_left);
 
-  IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint32_t))
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint32_t))
   change_endian32((uint32_t *)&bind_obj, (uint32_t *)out);
   Update(sizeof(uint32_t), &out, &total_size, &space_left);
 
-  IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint16_t))
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   change_endian16((uint16_t *)&initial_nonce.size, (uint16_t *)out);
   Update(sizeof(uint16_t), &out, &total_size, &space_left);
 
-  IF_LESS_THAN_RETURN_MINUS1(space_left, initial_nonce.size)
+  IF_LESS_THAN_RETURN_FALSE(space_left, initial_nonce.size)
   memcpy(out, initial_nonce.buffer, initial_nonce.size);
   Update(initial_nonce.size, &out, &total_size, &space_left);
 
-  IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint16_t))
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   change_endian16((uint16_t *)&salt.size, (uint16_t *)out);
   Update(sizeof(uint16_t), &out, &total_size, &space_left);
 
-  IF_LESS_THAN_RETURN_MINUS1(space_left, salt.size)
+  IF_LESS_THAN_RETURN_FALSE(space_left, salt.size)
   memcpy(out, salt.secret, salt.size);
   Update(salt.size, &out, &total_size, &space_left);
 
   *out = session_type;
   Update(1, &out, &total_size, &space_left);
 
-  IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint16_t))
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   change_endian16((uint16_t *)&symmetric.algorithm, (uint16_t *)out);
   Update(sizeof(uint16_t), &out, &total_size, &space_left);
 
   if (symmetric.algorithm != TPM_ALG_NULL) {
-    IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint16_t))
+    IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
     change_endian16((uint16_t *)&symmetric.keyBits.aes, (uint16_t *)out);
     Update(sizeof(uint16_t), &out, &total_size, &space_left);
-    IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint16_t))
+    IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
     change_endian16((uint16_t *)&symmetric.mode.aes, (uint16_t *)out);
     Update(sizeof(uint16_t), &out, &total_size, &space_left);
   }
 
-  IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint16_t))
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   change_endian16((uint16_t *)&hash_alg, (uint16_t *)out);
   Update(sizeof(uint16_t), &out, &total_size, &space_left);
   return total_size;
@@ -1183,11 +1183,11 @@ int Marshal_OutsideInfo(TPM2B_DATA &in, int size, byte_t *buf) {
   int     space_left = size;
   byte_t *out = buf;
 
-  IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint16_t))
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   change_endian16(&in.size, (uint16_t *)out);
   Update(sizeof(uint16_t), &out, &total_size, &space_left);
 
-  IF_LESS_THAN_RETURN_MINUS1(space_left, in.size)
+  IF_LESS_THAN_RETURN_FALSE(space_left, in.size)
   memcpy(out, in.buffer, in.size);
   Update(in.size, &out, &total_size, &space_left);
 
@@ -1204,21 +1204,21 @@ int Marshal_PCR_Long_Selection(TPML_PCR_SELECTION &in, int size, byte_t *buf) {
     Update(sizeof(uint32_t), &out, &total_size, &space_left);
     return sizeof(uint32_t);
   }
-  IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint32_t))
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint32_t))
   change_endian32(&in.count, (uint32_t *)out);
   Update(sizeof(uint32_t), &out, &total_size, &space_left);
 
   for (int i = 0; i < static_cast<int>(in.count); i++) {
 
-    IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint16_t))
+    IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
     change_endian16(&in.pcrSelections[i].hash, (uint16_t *)out);
     Update(sizeof(uint16_t), &out, &total_size, &space_left);
 
-    IF_LESS_THAN_RETURN_MINUS1(space_left, 1)
+    IF_LESS_THAN_RETURN_FALSE(space_left, 1)
     *out = in.pcrSelections[i].sizeofSelect;
     Update(1, &out, &total_size, &space_left);
 
-    IF_LESS_THAN_RETURN_MINUS1(space_left, in.pcrSelections[i].sizeofSelect)
+    IF_LESS_THAN_RETURN_FALSE(space_left, in.pcrSelections[i].sizeofSelect)
     memcpy(out,
            in.pcrSelections[i].pcrSelect,
            in.pcrSelections[i].sizeofSelect);
@@ -1249,11 +1249,11 @@ int Marshal_Signature_Scheme_Info(TPMT_SIG_SCHEME &sig_scheme,
   int     space_left = size;
   byte_t *out = buf;
 
-  IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint16_t))
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   change_endian16(&sig_scheme.scheme, (uint16_t *)out);
   Update(sizeof(uint16_t), &out, &total_size, &space_left);
 
-  IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint16_t))
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   change_endian16(&sig_scheme.details.rsassa.hashAlg, (uint16_t *)out);
   Update(sizeof(uint16_t), &out, &total_size, &space_left);
   return total_size;
@@ -1266,41 +1266,46 @@ int Marshal_Keyed_Hash_Info(TPM2B_PUBLIC &keyed_hash, int size, byte_t *buf) {
   byte_t *pSize = out;
 
   // size to fill in later
-  IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint16_t))
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   memset(out, 0, 2);
   Update(sizeof(uint16_t), &out, &total_size, &space_left);
 
-  IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint16_t))
+  // type
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   change_endian16(&keyed_hash.publicArea.type, (uint16_t *)out);
   Update(sizeof(uint16_t), &out, &total_size, &space_left);
 
-  IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint16_t))
+  // alg
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   change_endian16(&keyed_hash.publicArea.nameAlg, (uint16_t *)out);
   Update(sizeof(uint16_t), &out, &total_size, &space_left);
 
-  IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint32_t))
+  // attributes
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint32_t))
   change_endian32((uint32_t *)&keyed_hash.publicArea.objectAttributes,
                   (uint32_t *)out);
   Update(sizeof(uint32_t), &out, &total_size, &space_left);
 
-  IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint16_t))
+  // policy
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   change_endian16(&keyed_hash.publicArea.authPolicy.size, (uint16_t *)out);
   Update(sizeof(uint16_t), &out, &total_size, &space_left);
 
-  IF_LESS_THAN_RETURN_MINUS1(space_left, keyed_hash.publicArea.authPolicy.size)
+  IF_LESS_THAN_RETURN_FALSE(space_left, keyed_hash.publicArea.authPolicy.size)
   memcpy(out,
          keyed_hash.publicArea.authPolicy.buffer,
          keyed_hash.publicArea.authPolicy.size);
   Update(keyed_hash.publicArea.authPolicy.size, &out, &total_size, &space_left);
 
-  IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint16_t))
+  // scheme
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   change_endian16(
       &keyed_hash.publicArea.parameters.keyedHashDetail.scheme.scheme,
       (uint16_t *)out);
   Update(sizeof(uint16_t), &out, &total_size, &space_left);
 
   // public id
-  IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint16_t))
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   memset(out, 0, sizeof(uint16_t));
   Update(sizeof(uint16_t), &out, &total_size, &space_left);
 
@@ -4671,28 +4676,28 @@ int CalculateandSetProtectedAuth(ProtectedSessionAuthInfo &authInfo,
   uint32_t sizeAuth = sizeof(uint32_t) + sizeof(uint16_t) + sizeof(byte_t)
                       + sizeof(uint16_t) + sizeHmac + authInfo.oldNonce_.size;
 
-  IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint16_t))
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   change_endian32((uint32_t *)&sizeAuth, (uint32_t *)out);
   Update(sizeof(uint32_t), &out, &space_used, &space_left);
 
-  IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint32_t))
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint32_t))
   change_endian32((uint32_t *)&authInfo.sessionHandle_, (uint32_t *)out);
   Update(sizeof(uint32_t), &out, &space_used, &space_left);
 
-  IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint16_t))
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   change_endian16((uint16_t *)&authInfo.newNonce_.size, (uint16_t *)out);
   Update(sizeof(uint16_t), &out, &space_used, &space_left);
-  IF_LESS_THAN_RETURN_MINUS1(space_left, authInfo.newNonce_.size)
+  IF_LESS_THAN_RETURN_FALSE(space_left, authInfo.newNonce_.size)
   memcpy(out, authInfo.newNonce_.buffer, authInfo.newNonce_.size);
   Update(authInfo.newNonce_.size, &out, &space_used, &space_left);
-  IF_LESS_THAN_RETURN_MINUS1(space_left, 1)
+  IF_LESS_THAN_RETURN_FALSE(space_left, 1)
   *out = authInfo.tpmSessionAttributes_;
   Update(1, &out, &space_used, &space_left);
 
-  IF_LESS_THAN_RETURN_MINUS1(space_left, sizeof(uint16_t))
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   change_endian16((uint16_t *)&sizeHmac, (uint16_t *)out);
   Update(sizeof(uint16_t), &out, &space_used, &space_left);
-  IF_LESS_THAN_RETURN_MINUS1(space_left, sizeHmac)
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeHmac)
   memcpy(out, hmac, sizeHmac);
   Update(sizeHmac, &out, &space_used, &space_left);
 

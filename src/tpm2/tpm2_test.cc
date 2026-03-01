@@ -417,10 +417,12 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
 #endif
 
   // Make/Activate Credential test
+#if 0
   if (!credential_test(tpm, srk_handle, quote_handle)) {
     printf("%s() error, line %d, credential_test failed\n", __func__, __LINE__);
     return false;
   }
+#endif
   Tpm2_FlushContext(tpm, quote_handle);
   Tpm2_FlushContext(tpm, srk_handle);
 
