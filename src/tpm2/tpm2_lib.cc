@@ -1447,7 +1447,8 @@ bool GetPublicOut(int                  size,
 
 bool Tpm2_CreatePrimary(local_tpm          &tpm,
                         TPM_HANDLE          owner,
-                        string             &authString,
+                        string             &parentAuth,
+                        string             &childAuth,
                         string             &sensitiveData,
                         string             &outsideInfo,
                         TPML_PCR_SELECTION &pcr_selection,
@@ -1486,16 +1487,16 @@ bool Tpm2_CreatePrimary(local_tpm          &tpm,
 
   // Auth
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
-  uint16_t in_auth_size = authString.size();
+  uint16_t in_auth_size = parentAuth.size();
   change_endian16(&in_auth_size, (uint16_t *)out);
   Update(sizeof(uint16_t), &out, &size_params, &space_left);
   IF_LESS_THAN_RETURN_FALSE(space_left, in_auth_size)
-  memcpy(out, (byte_t *)authString.data(), authString.size());
+  memcpy(out, (byte_t *)parentAuth.data(), parentAuth.size());
   Update(in_auth_size, &out, &size_params, &space_left);
 
   // Sensitive area
-  string emptyString;
-  n = CreateSensitiveAreaWithSize(emptyString, sensitiveData, space_left, out);
+  string emptyAuth;
+  n = CreateSensitiveAreaWithSize(emptyAuth, sensitiveData, space_left, out);
   IF_NEG_RETURN_FALSE(n);
   IF_LESS_THAN_RETURN_FALSE(space_left, n)
   Update(n, &out, &size_params, &space_left);
@@ -2633,7 +2634,8 @@ bool GetCreateOut(int                  size,
 
 bool Tpm2_CreateKey(local_tpm           &tpm,
                     TPM_HANDLE           parent_handle,
-                    string              &authString,
+                    string              &parentAuth,
+                    string              &childAuth,
                     string              &sensitiveData,
                     string              &outsideInfo,
                     TPML_PCR_SELECTION  &pcr_selection,
@@ -2676,12 +2678,12 @@ bool Tpm2_CreateKey(local_tpm           &tpm,
 
   // Auth
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
-  uint16_t in_auth_size = authString.size();
+  uint16_t in_auth_size = parentAuth.size();
   change_endian16(&in_auth_size, (uint16_t *)in);
   Update(sizeof(uint16_t), &in, &size_params, &space_left);
 
   IF_LESS_THAN_RETURN_FALSE(space_left, in_auth_size)
-  memcpy(in, (byte_t *)authString.data(), authString.size());
+  memcpy(in, (byte_t *)parentAuth.data(), parentAuth.size());
   Update(in_auth_size, &in, &size_params, &space_left);
 
   // Sensitive area
@@ -2784,7 +2786,8 @@ bool Tpm2_CreateKey(local_tpm           &tpm,
 
 bool Tpm2_CreateSealed(local_tpm           &tpm,
                        TPM_HANDLE           parent_handle,
-                       string              &sealAuth,
+                       string              &parentAuth,
+                       string              &childAuth,
                        string              &sensitiveData,
                        string              &outsideInfo,
                        string              &policyHash,
@@ -2824,13 +2827,13 @@ bool Tpm2_CreateSealed(local_tpm           &tpm,
   memset(in, 0, sizeof(uint16_t));
   Update(sizeof(uint16_t), &in, &size_params, &space_left);
 
-  // Auth for seal
+  // Auth for parent
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
-  uint16_t in_auth_size = sealAuth.size();
+  uint16_t in_auth_size = parentAuth.size();
   change_endian16(&in_auth_size, (uint16_t *)in);
   Update(sizeof(uint16_t), &in, &size_params, &space_left);
   IF_LESS_THAN_RETURN_FALSE(space_left, in_auth_size)
-  memcpy(in, (byte_t *)sealAuth.data(), sealAuth.size());
+  memcpy(in, (byte_t *)parentAuth.data(), parentAuth.size());
   Update(in_auth_size, &in, &size_params, &space_left);
 
   // Sensitive area

@@ -452,6 +452,7 @@ bool context_test(local_tpm &tpm) {
   if (Tpm2_CreatePrimary(tpm,
                          TPM_RH_OWNER,
                          authString,
+                         authString,
                          sensitiveData,
                          outsideInfo,
                          pcrSelect,
