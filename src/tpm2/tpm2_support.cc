@@ -194,426 +194,426 @@ bool create_seal_session(local_tpm          &tpm,
                              TPM_ALG_SHA256,
                              session_handle,
                              &nonce_obj)) {
-            printf("\n");
-            printf("%s() error, line %d, Tpm2_StartAuthSession fails\n",
-                   __func__,
-                   __LINE__);
-            return false;
-          }
+    printf("\n");
+    printf("%s() error, line %d, Tpm2_StartAuthSession fails\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
 #ifdef DEBUG2
-          printf("\n");
-          printf("Tpm2_StartAuthSession succeeds handle: %08x\n", *session_handle);
-          printf("initial nonce (%d): ", initial_nonce.size);
-          print_bytes(initial_nonce.size, initial_nonce.buffer);
-          printf("\n");
-          printf("nonce (%d): ", nonce_obj.size);
-          print_bytes(nonce_obj.size, nonce_obj.buffer);
-          printf("\n");
+  printf("\n");
+  printf("Tpm2_StartAuthSession succeeds handle: %08x\n", *session_handle);
+  printf("initial nonce (%d): ", initial_nonce.size);
+  print_bytes(initial_nonce.size, initial_nonce.buffer);
+  printf("\n");
+  printf("nonce (%d): ", nonce_obj.size);
+  print_bytes(nonce_obj.size, nonce_obj.buffer);
+  printf("\n");
 #endif
 
-          TPM2B_DIGEST policy_digest;
-          if (!Tpm2_PolicyGetDigest(tpm, *session_handle, &policy_digest)) {
-            printf("%s() error, line %d, PolicyGetDigest failed\n", __func__, __LINE__);
-            Tpm2_FlushContext(tpm, *session_handle);
-            return false;
-          }
+  TPM2B_DIGEST policy_digest;
+  if (!Tpm2_PolicyGetDigest(tpm, *session_handle, &policy_digest)) {
+    printf("%s() error, line %d, PolicyGetDigest failed\n", __func__, __LINE__);
+    Tpm2_FlushContext(tpm, *session_handle);
+    return false;
+  }
 #ifdef DEBUG2
-          printf("\n");
-          printf("%s() line %d, PolicyGetDigest before Pcr succeeded: \n",
-                 __func__,
-                 __LINE__);
-          print_bytes(policy_digest.size, policy_digest.buffer);
-          printf("\n");
+  printf("\n");
+  printf("%s() line %d, PolicyGetDigest before Pcr succeeded: \n",
+         __func__,
+         __LINE__);
+  print_bytes(policy_digest.size, policy_digest.buffer);
+  printf("\n");
 #endif
 
-          if (!Tpm2_PolicyPassword(tpm, *session_handle)) {
-            printf("%s() error, line %d, Tpm2_PolicyPassword fails\n",
-                   __func__,
-                   __LINE__);
-            Tpm2_FlushContext(tpm, *session_handle);
-            return false;
-          }
+  if (!Tpm2_PolicyPassword(tpm, *session_handle)) {
+    printf("%s() error, line %d, Tpm2_PolicyPassword fails\n",
+           __func__,
+           __LINE__);
+    Tpm2_FlushContext(tpm, *session_handle);
+    return false;
+  }
 #ifdef DEBUG2
-          printf("%s(), line %d, Tpm2_PolicyPassword succeeded\n", __func__, __LINE__);
+  printf("%s(), line %d, Tpm2_PolicyPassword succeeded\n", __func__, __LINE__);
 #endif
 
-          TPM2B_DIGEST expected_digest;
-          expected_digest.size = 0;
-          if (!Tpm2_PolicyPcr(tpm, *session_handle, expected_digest, pcrSelect)) {
-            printf("%s() error, line %d, Tpm2_StartAuthSession fails\n",
-                   __func__,
-                   __LINE__);
-            Tpm2_FlushContext(tpm, *session_handle);
-            return false;
-          }
+  TPM2B_DIGEST expected_digest;
+  expected_digest.size = 0;
+  if (!Tpm2_PolicyPcr(tpm, *session_handle, expected_digest, pcrSelect)) {
+    printf("%s() error, line %d, Tpm2_StartAuthSession fails\n",
+           __func__,
+           __LINE__);
+    Tpm2_FlushContext(tpm, *session_handle);
+    return false;
+  }
 #ifdef DEBUG2
-          printf("%s(), line %d, Tpm2_PolicyPcr succeeded\n", __func__, __LINE__);
+  printf("%s(), line %d, Tpm2_PolicyPcr succeeded\n", __func__, __LINE__);
 #endif
 
-          return true;
-        }
+  return true;
+}
 
-        bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
-                                              int           num_pcrs,
-                                              byte_t       *pcrs,
-                                              const string &seal_file) {
+bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
+                                      int           num_pcrs,
+                                      byte_t       *pcrs,
+                                      const string &seal_file) {
 
-          string             srkAuth;
-          string             sealAuth;
-          string             emptyAuth;
-          TPM2B_PUBLIC       pub_out;
-          TPML_PCR_SELECTION pcrSelect;
-          memset((void *)&pcrSelect, 0, sizeof(TPML_PCR_SELECTION));
+  string             srkAuth;
+  string             sealAuth;
+  string             emptyAuth;
+  TPM2B_PUBLIC       pub_out;
+  TPML_PCR_SELECTION pcrSelect;
+  memset((void *)&pcrSelect, 0, sizeof(TPML_PCR_SELECTION));
 
-          TPM_HANDLE srk_handle;
+  TPM_HANDLE srk_handle;
 
-          if (num_pcrs < 1) {
-            printf("%s() error, line %d: No pcrs\n", __func__, __LINE__);
-            return false;
-          }
-          init_single_pcr_selection(pcrs[0], TPM_ALG_SHA256, &pcrSelect);
-          for (int i = 1; i < num_pcrs; i++) {
-            add_pcr_selection(pcrs[i], TPM_ALG_SHA256, &pcrSelect);
-          }
+  if (num_pcrs < 1) {
+    printf("%s() error, line %d: No pcrs\n", __func__, __LINE__);
+    return false;
+  }
+  init_single_pcr_selection(pcrs[0], TPM_ALG_SHA256, &pcrSelect);
+  for (int i = 1; i < num_pcrs; i++) {
+    add_pcr_selection(pcrs[i], TPM_ALG_SHA256, &pcrSelect);
+  }
 
-          TPMA_OBJECT primary_flags;
-          *(uint32_t *)(&primary_flags) = 0;
-          primary_flags.fixedTPM = 1;
-          primary_flags.fixedParent = 1;
-          primary_flags.sensitiveDataOrigin = 1;
-          primary_flags.userWithAuth = 1;
-          primary_flags.decrypt = 1;
-          primary_flags.restricted = 1;
+  TPMA_OBJECT primary_flags;
+  *(uint32_t *)(&primary_flags) = 0;
+  primary_flags.fixedTPM = 1;
+  primary_flags.fixedParent = 1;
+  primary_flags.sensitiveDataOrigin = 1;
+  primary_flags.userWithAuth = 1;
+  primary_flags.decrypt = 1;
+  primary_flags.restricted = 1;
 
-          string sensitiveData;
-          string outsideInfo;
-          string emptyString;
+  string sensitiveData;
+  string outsideInfo;
+  string emptyString;
 
-          int    size_buf = 128;
-          byte_t buf[size_buf];
+  int    size_buf = 128;
+  byte_t buf[size_buf];
 
-          int m = CreatePasswordAuthArea(emptyAuth, size_buf, buf);
-          if (m < 0) {
-            printf("%s() error, line %d, CreatePasswordAuthArea failed\n",
-                   __func__,
-                   __LINE__);
-            return false;
-          }
-          srkAuth.assign((char *)(buf + 2), m - 2);
-          sealAuth.assign((char *)(buf + 2), m - 2);
+  int m = CreatePasswordAuthArea(emptyAuth, size_buf, buf);
+  if (m < 0) {
+    printf("%s() error, line %d, CreatePasswordAuthArea failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  srkAuth.assign((char *)(buf + 2), m - 2);
+  sealAuth.assign((char *)(buf + 2), m - 2);
 
-          // Creating a new SRK
-          if (!Tpm2_CreatePrimary(tpm,
-                                  TPM_RH_OWNER,
-                                  srkAuth,
-                                  srkAuth,
-                                  sensitiveData,
-                                  outsideInfo,
-                                  pcrSelect,
-                                  TPM_ALG_RSA,
-                                  TPM_ALG_SHA256,
-                                  primary_flags,
-                                  emptyString,
-                                  TPM_ALG_AES,
-                                  256,
-                                  TPM_ALG_CFB,
-                                  TPM_ALG_NULL,
-                                  2048,
-                                  0x010001,
-                                  &srk_handle,
-                                  &pub_out)) {
-            printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);
-          }
+  // Creating a new SRK
+  if (!Tpm2_CreatePrimary(tpm,
+                          TPM_RH_OWNER,
+                          srkAuth,
+                          srkAuth,
+                          sensitiveData,
+                          outsideInfo,
+                          pcrSelect,
+                          TPM_ALG_RSA,
+                          TPM_ALG_SHA256,
+                          primary_flags,
+                          emptyString,
+                          TPM_ALG_AES,
+                          256,
+                          TPM_ALG_CFB,
+                          TPM_ALG_NULL,
+                          2048,
+                          0x010001,
+                          &srk_handle,
+                          &pub_out)) {
+    printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);
+  }
 #ifdef DEBUG2
-          printf("\n");
-          printf("%s() line %d, CreatePrimary succeeded\n", __func__, __LINE__);
+  printf("\n");
+  printf("%s() line %d, CreatePrimary succeeded\n", __func__, __LINE__);
 #endif
 
-          TPM2B_DIGEST secret;
-          secret.size = 32;
-          if (!Tpm2_GetRandom(tpm, secret.size, secret.buffer)) {
-            printf("\n");
-            printf("%s() error, line %d, Can't get random key\n", __func__, __LINE__);
-            return false;
-          }
+  TPM2B_DIGEST secret;
+  secret.size = 32;
+  if (!Tpm2_GetRandom(tpm, secret.size, secret.buffer)) {
+    printf("\n");
+    printf("%s() error, line %d, Can't get random key\n", __func__, __LINE__);
+    return false;
+  }
 #ifdef DEBUG2
-          printf("\nSecret: ");
-          print_bytes(secret.size, secret.buffer);
-          printf("\n");
+  printf("\nSecret: ");
+  print_bytes(secret.size, secret.buffer);
+  printf("\n");
 #endif
 
-          TPM2B_DIGEST digest_out;
-          TPM2B_NONCE  initial_nonce;
-          TPM2B_NONCE  nonce_obj;
-          TPM_HANDLE   session_handle;
+  TPM2B_DIGEST digest_out;
+  TPM2B_NONCE  initial_nonce;
+  TPM2B_NONCE  nonce_obj;
+  TPM_HANDLE   session_handle;
 
-          initial_nonce.size = 32;
-          memset(initial_nonce.buffer, 0, initial_nonce.size);
+  initial_nonce.size = 32;
+  memset(initial_nonce.buffer, 0, initial_nonce.size);
 
-          if (!create_seal_session(tpm, pcrSelect, &session_handle)) {
-            printf("\n");
-            printf("%s() error, line %d, create_seal_session failed\n",
-                   __func__,
-                   __LINE__);
-            return false;
-          }
+  if (!create_seal_session(tpm, pcrSelect, &session_handle)) {
+    printf("\n");
+    printf("%s() error, line %d, create_seal_session failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
 #ifdef DEBUG2
-          printf("\nSeal session succeeded\n");
+  printf("\nSeal session succeeded\n");
 #endif
 
-          // Get policy digest
-          TPM2B_DIGEST policy_digest;
-          if (!Tpm2_PolicyGetDigest(tpm, session_handle, &policy_digest)) {
-            printf("\n");
-            printf("%s() error, line %d, Tpm2_PolicyGetDigest failed\n",
-                   __func__,
-                   __LINE__);
-            return false;
-          }
+  // Get policy digest
+  TPM2B_DIGEST policy_digest;
+  if (!Tpm2_PolicyGetDigest(tpm, session_handle, &policy_digest)) {
+    printf("\n");
+    printf("%s() error, line %d, Tpm2_PolicyGetDigest failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
 #ifdef DEBUG2
-          printf("\nPolicy Digest: ");
-          print_bytes(policy_digest.size, policy_digest.buffer);
-          printf("\n");
-          printf("\n");
+  printf("\nPolicy Digest: ");
+  print_bytes(policy_digest.size, policy_digest.buffer);
+  printf("\n");
+  printf("\n");
 #endif
 
-          // Creating new sealed key
-          TPM2B_CREATION_DATA creation_out;
-          TPMT_TK_CREATION    creation_ticket;
-          int                 size_public = MAX_SIZE_PARAMS;
-          byte_t              out_public[MAX_SIZE_PARAMS];
-          int                 size_private = MAX_SIZE_PARAMS;
-          byte_t              out_private[MAX_SIZE_PARAMS];
+  // Creating new sealed key
+  TPM2B_CREATION_DATA creation_out;
+  TPMT_TK_CREATION    creation_ticket;
+  int                 size_public = MAX_SIZE_PARAMS;
+  byte_t              out_public[MAX_SIZE_PARAMS];
+  int                 size_private = MAX_SIZE_PARAMS;
+  byte_t              out_private[MAX_SIZE_PARAMS];
 
-          TPMA_OBJECT create_flags;
-          *(uint32_t *)(&create_flags) = 0;
-          create_flags.fixedTPM = 1;
-          create_flags.fixedParent = 1;
-          string outsideData;
-          string sensitveData;
-          string policyDigest;
+  TPMA_OBJECT create_flags;
+  *(uint32_t *)(&create_flags) = 0;
+  create_flags.fixedTPM = 1;
+  create_flags.fixedParent = 1;
+  string outsideData;
+  string sensitveData;
+  string policyDigest;
 
-          policyDigest.assign((char *)policy_digest.buffer, (int)policy_digest.size);
-          sensitiveData.assign((char *)secret.buffer, (int)secret.size);
+  policyDigest.assign((char *)policy_digest.buffer, (int)policy_digest.size);
+  sensitiveData.assign((char *)secret.buffer, (int)secret.size);
 
-          if (!Tpm2_CreateSealed(tpm,
-                                 srk_handle,
-                                 srkAuth,
-                                 sealAuth,
-                                 sensitiveData,
-                                 outsideData,
-                                 policyDigest,
-                                 pcrSelect,
-                                 TPM_ALG_SHA256,
-                                 create_flags,
-                                 TPM_ALG_NULL,
-                                 (TPMI_AES_KEY_BITS)0,
-                                 TPM_ALG_ECB,
-                                 TPM_ALG_RSASSA,
-                                 2048,
-                                 0x010001,
-                                 &size_public,
-                                 out_public,
-                                 &size_private,
-                                 out_private,
-                                 &creation_out,
-                                 &digest_out,
-                                 &creation_ticket)) {
-            printf("%s() error, line %d, Create with digest failed\n",
-                   __func__,
-                   __LINE__);
-            Tpm2_FlushContext(tpm, session_handle);
-            return false;
-          }
-#ifdef DEBUG2
-          printf("\n");
-          printf("Create with digest succeeded private size: %d, public size: %d\n",
-                 size_private,
-                 size_public);
-#endif
-
-          // Save the stuff for load
-          tpm_load_key_info key_info;
-
-          key_info.set_hierarchy_name("Seal-Key-Hierarchy");
-
-          // See the note in create quote hierarchy
-          key_info.set_pub_key((byte_t *)out_public, size_public + 2);
-          key_info.set_priv_key((byte_t *)out_private, size_private + 2);
-
-#ifdef DEBUG2
-          printf("After creation private size: %d, public size: %d\n",
-                 size_private,
-                 size_public);
-#endif
-
-          string serialized_key_info;
-          if (!key_info.SerializeToString(&serialized_key_info)) {
-            printf("\n");
-            printf("%s() error, line: %d, Can't serialize key_info\n",
-                   __func__,
-                   __LINE__);
-            return false;
-          }
-          if (!write_file_from_string(seal_file, serialized_key_info)) {
-            printf("\n");
-            printf("%s() error, line: %d, Can't writ key_inf file %s\n",
-                   __func__,
-                   __LINE__,
-                   seal_file.c_str());
-            return false;
-          }
-
-          Tpm2_FlushContext(tpm, session_handle);
-          Tpm2_FlushContext(tpm, srk_handle);
-          return true;
-        }
-
-        bool recover_sealing_secret(local_tpm    &tpm,
-                                    int           num_pcrs,
-                                    byte_t       *pcrs,
-                                    const string &file_name,
-                                    string       *seal_secret) {
-
-          string srkAuth;
-          string sealAuth;
-          string emptyAuth;
-
-          TPM2B_PUBLIC       pub_out;
-          TPML_PCR_SELECTION pcrSelect;
-          memset((void *)&pcrSelect, 0, sizeof(TPML_PCR_SELECTION));
-
-          TPM_HANDLE srk_handle;
-          TPM_HANDLE seal_handle;
-          TPM_HANDLE session_handle;
-
-          if (num_pcrs < 1) {
-            printf("\n");
-            printf("%s() error, line %d: No pcrs\n", __func__, __LINE__);
-            return false;
-          }
-          init_single_pcr_selection(pcrs[0], TPM_ALG_SHA256, &pcrSelect);
-          for (int i = 1; i < num_pcrs; i++) {
-            add_pcr_selection(pcrs[i], TPM_ALG_SHA256, &pcrSelect);
-          }
-
-          int    size_buf = 128;
-          byte_t buf[size_buf];
-
-          int m = CreatePasswordAuthArea(emptyAuth, size_buf, buf);
-          if (m < 0) {
-            printf("%s() error, line %d, CreatePasswordAuthArea failed\n",
-                   __func__,
-                   __LINE__);
-            return false;
-          }
-
-          srkAuth.assign((char *)(buf + 2), m - 2);
-          sealAuth.assign((char *)(buf + 2), m - 2);
-
-          TPMA_OBJECT primary_flags;
-          primary_flags.fixedTPM = 1;
-          primary_flags.fixedParent = 1;
-          primary_flags.sensitiveDataOrigin = 1;
-          primary_flags.userWithAuth = 1;
-          primary_flags.decrypt = 1;
-          primary_flags.restricted = 1;
-
-          string sensitiveData;
-          string outsideInfo;
-
-          // Creating a new SRK
-          if (!Tpm2_CreatePrimary(tpm,
-                                  TPM_RH_OWNER,
-                                  srkAuth,
-                                  srkAuth,
-                                  sensitiveData,
-                                  outsideInfo,
-                                  pcrSelect,
-                                  TPM_ALG_RSA,
-                                  TPM_ALG_SHA256,
-                                  primary_flags,
-                                  emptyAuth,
-                                  TPM_ALG_AES,
-                                  256,
-                                  TPM_ALG_CFB,
-                                  TPM_ALG_NULL,
-                                  2048,
-                                  0x010001,
-                                  &srk_handle,
-                                  &pub_out)) {
-            printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);
-            return false;
-          }
-#ifdef DEBUG2
-          printf("%s() line %d, CreatePrimary succeeded\n", __func__, __LINE__);
-#endif
-
-          // Get info for load
-          tpm_load_key_info key_info;
-          string            serialized_key_info;
-
-          if (!read_file_into_string(file_name, &serialized_key_info)) {
-            printf("%s() error, line %d, Can't read seal file %s\n",
-                   __func__,
-                   __LINE__,
-                   file_name.c_str());
-            return false;
-          }
-          if (!key_info.ParseFromString(serialized_key_info)) {
-            printf("%s() error, line: %d, Can't deserialize key_info\n",
-                   __func__,
-                   __LINE__);
-            return false;
-          }
-
-#ifdef DEBUG2
-          printf("\nAfter recovery private size: %d, public size: %d\n",
-                 (int)key_info.priv_key().size(),
-                 (int)key_info.pub_key().size());
-#endif
-          TPM2B_NAME name;
-          if (!Tpm2_Load(tpm,
+  if (!Tpm2_CreateSealed(tpm,
                          srk_handle,
+                         srkAuth,
                          sealAuth,
-                         key_info.pub_key().size() - 2,
-                         (byte_t *)key_info.pub_key().data(),
-                         key_info.priv_key().size() - 2,
-                         (byte_t *)key_info.priv_key().data(),
-                         &seal_handle,
-                         &name)) {
-            printf("\n");
-            printf("%s() error, line %d, Load failed\n", __func__, __LINE__);
-            Tpm2_FlushContext(tpm, srk_handle);
-            return false;
-          }
+                         sensitiveData,
+                         outsideData,
+                         policyDigest,
+                         pcrSelect,
+                         TPM_ALG_SHA256,
+                         create_flags,
+                         TPM_ALG_NULL,
+                         (TPMI_AES_KEY_BITS)0,
+                         TPM_ALG_ECB,
+                         TPM_ALG_RSASSA,
+                         2048,
+                         0x010001,
+                         &size_public,
+                         out_public,
+                         &size_private,
+                         out_private,
+                         &creation_out,
+                         &digest_out,
+                         &creation_ticket)) {
+    printf("%s() error, line %d, Create with digest failed\n",
+           __func__,
+           __LINE__);
+    Tpm2_FlushContext(tpm, session_handle);
+    return false;
+  }
 #ifdef DEBUG2
-          printf("\nLoad succeeded\n");
+  printf("\n");
+  printf("Create with digest succeeded private size: %d, public size: %d\n",
+         size_private,
+         size_public);
 #endif
 
-          if (!create_seal_session(tpm, pcrSelect, &session_handle)) {
-            printf("%s() error, line %d, create_seal_session failed\n",
-                   __func__,
-                   __LINE__);
-            Tpm2_FlushContext(tpm, seal_handle);
-            Tpm2_FlushContext(tpm, srk_handle);
-            return false;
-          }
+  // Save the stuff for load
+  tpm_load_key_info key_info;
 
-          int          unsealed_size = MAX_SIZE_PARAMS;
-          byte_t       unsealed[MAX_SIZE_PARAMS];
-          TPM2B_DIGEST hmac;
-          TPM2B_NONCE  nonce_obj;
-          hmac.size = 0;
-          if (!Tpm2_Unseal(tpm,
-                           seal_handle,
-                           sealAuth,
-                           session_handle,
-                           nonce_obj,
-                           0x01,
-                           hmac,
-                           &unsealed_size,
-                           unsealed)) {
+  key_info.set_hierarchy_name("Seal-Key-Hierarchy");
+
+  // See the note in create quote hierarchy
+  key_info.set_pub_key((byte_t *)out_public, size_public + 2);
+  key_info.set_priv_key((byte_t *)out_private, size_private + 2);
+
+#ifdef DEBUG2
+  printf("After creation private size: %d, public size: %d\n",
+         size_private,
+         size_public);
+#endif
+
+  string serialized_key_info;
+  if (!key_info.SerializeToString(&serialized_key_info)) {
+    printf("\n");
+    printf("%s() error, line: %d, Can't serialize key_info\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if (!write_file_from_string(seal_file, serialized_key_info)) {
+    printf("\n");
+    printf("%s() error, line: %d, Can't writ key_inf file %s\n",
+           __func__,
+           __LINE__,
+           seal_file.c_str());
+    return false;
+  }
+
+  Tpm2_FlushContext(tpm, session_handle);
+  Tpm2_FlushContext(tpm, srk_handle);
+  return true;
+}
+
+bool recover_sealing_secret(local_tpm    &tpm,
+                            int           num_pcrs,
+                            byte_t       *pcrs,
+                            const string &file_name,
+                            string       *seal_secret) {
+
+  string srkAuth;
+  string sealAuth;
+  string emptyAuth;
+
+  TPM2B_PUBLIC       pub_out;
+  TPML_PCR_SELECTION pcrSelect;
+  memset((void *)&pcrSelect, 0, sizeof(TPML_PCR_SELECTION));
+
+  TPM_HANDLE srk_handle;
+  TPM_HANDLE seal_handle;
+  TPM_HANDLE session_handle;
+
+  if (num_pcrs < 1) {
+    printf("\n");
+    printf("%s() error, line %d: No pcrs\n", __func__, __LINE__);
+    return false;
+  }
+  init_single_pcr_selection(pcrs[0], TPM_ALG_SHA256, &pcrSelect);
+  for (int i = 1; i < num_pcrs; i++) {
+    add_pcr_selection(pcrs[i], TPM_ALG_SHA256, &pcrSelect);
+  }
+
+  int    size_buf = 128;
+  byte_t buf[size_buf];
+
+  int m = CreatePasswordAuthArea(emptyAuth, size_buf, buf);
+  if (m < 0) {
+    printf("%s() error, line %d, CreatePasswordAuthArea failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  srkAuth.assign((char *)(buf + 2), m - 2);
+  sealAuth.assign((char *)(buf + 2), m - 2);
+
+  TPMA_OBJECT primary_flags;
+  primary_flags.fixedTPM = 1;
+  primary_flags.fixedParent = 1;
+  primary_flags.sensitiveDataOrigin = 1;
+  primary_flags.userWithAuth = 1;
+  primary_flags.decrypt = 1;
+  primary_flags.restricted = 1;
+
+  string sensitiveData;
+  string outsideInfo;
+
+  // Creating a new SRK
+  if (!Tpm2_CreatePrimary(tpm,
+                          TPM_RH_OWNER,
+                          srkAuth,
+                          srkAuth,
+                          sensitiveData,
+                          outsideInfo,
+                          pcrSelect,
+                          TPM_ALG_RSA,
+                          TPM_ALG_SHA256,
+                          primary_flags,
+                          emptyAuth,
+                          TPM_ALG_AES,
+                          256,
+                          TPM_ALG_CFB,
+                          TPM_ALG_NULL,
+                          2048,
+                          0x010001,
+                          &srk_handle,
+                          &pub_out)) {
+    printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);
+    return false;
+  }
+#ifdef DEBUG2
+  printf("%s() line %d, CreatePrimary succeeded\n", __func__, __LINE__);
+#endif
+
+  // Get info for load
+  tpm_load_key_info key_info;
+  string            serialized_key_info;
+
+  if (!read_file_into_string(file_name, &serialized_key_info)) {
+    printf("%s() error, line %d, Can't read seal file %s\n",
+           __func__,
+           __LINE__,
+           file_name.c_str());
+    return false;
+  }
+  if (!key_info.ParseFromString(serialized_key_info)) {
+    printf("%s() error, line: %d, Can't deserialize key_info\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+#ifdef DEBUG2
+  printf("\nAfter recovery private size: %d, public size: %d\n",
+         (int)key_info.priv_key().size(),
+         (int)key_info.pub_key().size());
+#endif
+  TPM2B_NAME name;
+  if (!Tpm2_Load(tpm,
+                 srk_handle,
+                 sealAuth,
+                 key_info.pub_key().size() - 2,
+                 (byte_t *)key_info.pub_key().data(),
+                 key_info.priv_key().size() - 2,
+                 (byte_t *)key_info.priv_key().data(),
+                 &seal_handle,
+                 &name)) {
+    printf("\n");
+    printf("%s() error, line %d, Load failed\n", __func__, __LINE__);
+    Tpm2_FlushContext(tpm, srk_handle);
+    return false;
+  }
+#ifdef DEBUG2
+  printf("\nLoad succeeded\n");
+#endif
+
+  if (!create_seal_session(tpm, pcrSelect, &session_handle)) {
+    printf("%s() error, line %d, create_seal_session failed\n",
+           __func__,
+           __LINE__);
+    Tpm2_FlushContext(tpm, seal_handle);
+    Tpm2_FlushContext(tpm, srk_handle);
+    return false;
+  }
+
+  int          unsealed_size = MAX_SIZE_PARAMS;
+  byte_t       unsealed[MAX_SIZE_PARAMS];
+  TPM2B_DIGEST hmac;
+  TPM2B_NONCE  nonce_obj;
+  hmac.size = 0;
+  if (!Tpm2_Unseal(tpm,
+                   seal_handle,
+                   sealAuth,
+                   session_handle,
+                   nonce_obj,
+                   0x01,
+                   hmac,
+                   &unsealed_size,
+                   unsealed)) {
     printf("%s() error, line %d, unseal failed\n", __func__, __LINE__);
     Tpm2_FlushContext(tpm, session_handle);
     Tpm2_FlushContext(tpm, seal_handle);
