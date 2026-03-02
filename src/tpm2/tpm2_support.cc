@@ -789,6 +789,10 @@ bool get_endorsement_key(local_tpm  &tpm,
   printf("\n");
   printf("Exponent: %d\n", pub_out.publicArea.parameters.rsaDetail.exponent);
   printf("\n");
+  printf("Policy: ");
+  print_bytes(pub_out.publicArea.authPolicy.size,
+              pub_out.publicArea.authPolicy.buffer);
+  printf("\n");
 #endif
 
   return true;
@@ -1031,8 +1035,8 @@ bool extend_pcrs(local_tpm &tpm, int pcr_num) {
 }
 
 bool create_quote_session(local_tpm          &tpm,
-                         TPML_PCR_SELECTION &pcrSelect,
-                         TPM_HANDLE         *session_handle) {
+                          TPML_PCR_SELECTION &pcrSelect,
+                          TPM_HANDLE         *session_handle) {
 
   TPM2B_DIGEST           digest_out;
   TPM2B_NONCE            initial_nonce;
@@ -1228,11 +1232,9 @@ bool create_quote_hierarchy(local_tpm    &tpm,
 #endif
 
   // Create the policy for the quote key
-  TPM_HANDLE session_handle = 0;
+  TPM_HANDLE   session_handle = 0;
   TPM2B_DIGEST policy_digest;
-  if (!create_quote_session(tpm,
-                         pcrSelect,
-                         &session_handle)) {
+  if (!create_quote_session(tpm, pcrSelect, &session_handle)) {
     printf("%s() error, line %d, create_quote_session failed\n",
            __func__,
            __LINE__);
@@ -1244,10 +1246,10 @@ bool create_quote_hierarchy(local_tpm    &tpm,
     return false;
   }
   Tpm2_FlushContext(tpm, session_handle);
-  policyString.assign((char*)policy_digest.buffer, policy_digest.size);
+  policyString.assign((char *)policy_digest.buffer, policy_digest.size);
 #ifdef DEBUG
   printf("policy for quote: ");
-  print_bytes(policyString.size(), (byte_t*) policyString.data());
+  print_bytes(policyString.size(), (byte_t *)policyString.data());
 #endif
 
   TPM2B_CREATION_DATA creation_out;
@@ -2433,10 +2435,19 @@ bool credential_test(local_tpm  &tpm,
   print_bytes(secret.size, secret.secret);
   printf("\n");
 #endif
+
+  // get policy digest for quote
+  string policyDigest;
+  printf("Policy: ");
+  print_bytes(quoting_pub_out.publicArea.authPolicy.size,
+              quoting_pub_out.publicArea.authPolicy.buffer);
+  printf("\n");
+  policyDigest.assign((char *)quoting_pub_out.publicArea.authPolicy.buffer,
+                      quoting_pub_out.publicArea.authPolicy.size);
   if (!Tpm2_ActivateCredential(tpm,
                                quote_handle,
                                ek_handle,
-                               authString,
+                               policyDigest,
                                authString,
                                credentialBlob,
                                secret,
