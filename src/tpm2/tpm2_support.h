@@ -120,9 +120,10 @@ bool tpm_verify_attest(key_message  &quote_key,
                        const string &sig_scheme,
                        string       &signature);
 
-bool credential_test(local_tpm  &tpm,
-                     TPM_HANDLE &srk_handle,
-                     TPM_HANDLE &quote_handle);
+bool credential_test(local_tpm          &tpm,
+                     TPML_PCR_SELECTION &pcrSelect,
+                     TPM_HANDLE         &srk_handle,
+                     TPM_HANDLE         &quote_handle);
 
 // ---------------------------------------------------------------
 #endif

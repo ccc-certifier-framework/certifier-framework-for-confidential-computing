@@ -1036,6 +1036,7 @@ bool extend_pcrs(local_tpm &tpm, int pcr_num) {
 
 bool create_quote_session(local_tpm          &tpm,
                           TPML_PCR_SELECTION &pcrSelect,
+                          string             *nonce,
                           TPM_HANDLE         *session_handle) {
 
   TPM2B_DIGEST           digest_out;
@@ -1066,7 +1067,9 @@ bool create_quote_session(local_tpm          &tpm,
            __LINE__);
     return false;
   }
-#ifdef DEBUG2
+  nonce->assign((char *)nonce_obj.buffer, nonce_obj.size);
+
+#ifdef DEBUG
   printf("\n");
   printf("Tpm2_StartAuthSession succeeds handle: %08x\n", *session_handle);
   printf("initial nonce (%d): ", initial_nonce.size);
@@ -1234,7 +1237,8 @@ bool create_quote_hierarchy(local_tpm    &tpm,
   // Create the policy for the quote key
   TPM_HANDLE   session_handle = 0;
   TPM2B_DIGEST policy_digest;
-  if (!create_quote_session(tpm, pcrSelect, &session_handle)) {
+  string       nonce;
+  if (!create_quote_session(tpm, pcrSelect, &nonce, &session_handle)) {
     printf("%s() error, line %d, create_quote_session failed\n",
            __func__,
            __LINE__);
@@ -2341,9 +2345,10 @@ bool recover_quote_key_certificate(const string &serialized_cred_response,
 
 // ------------------------------------------------------------------------
 
-bool credential_test(local_tpm  &tpm,
-                     TPM_HANDLE &srk_handle,
-                     TPM_HANDLE &quote_handle) {
+bool credential_test(local_tpm          &tpm,
+                     TPML_PCR_SELECTION &pcrSelect,
+                     TPM_HANDLE         &srk_handle,
+                     TPM_HANDLE         &quote_handle) {
 
   TPM_HANDLE ek_handle = 0;
   string     policyString;
@@ -2436,18 +2441,62 @@ bool credential_test(local_tpm  &tpm,
   printf("\n");
 #endif
 
-  // get policy digest for quote
-  string policyDigest;
+#ifdef DEBUG
+  TPM_HANDLE session_handle = 0;
+  string     policyDigest;
+  string     nonce;
+
   printf("Policy: ");
   print_bytes(quoting_pub_out.publicArea.authPolicy.size,
               quoting_pub_out.publicArea.authPolicy.buffer);
   printf("\n");
   policyDigest.assign((char *)quoting_pub_out.publicArea.authPolicy.buffer,
                       quoting_pub_out.publicArea.authPolicy.size);
+  printf("Calling create_quote_session\n");
+  if (!create_quote_session(tpm, pcrSelect, &nonce, &session_handle)) {
+    printf("%s() error, line %d, create_quote_session failed\n",
+           __func__,
+           __LINE__);
+  }
+
+  // session handle empty_nonce attributes (1) empty
+  string  quoteAuth;
+  byte_t  q[256];
+  int     n = 0;
+  byte_t *cur = q;
+  change_endian32((uint32_t *)&session_handle, (uint32_t *)cur);
+  cur += sizeof(uint32_t);
+  n += sizeof(uint32_t);
+  n += 1;
+  uint16_t t = nonce.size();
+  change_endian16(&t, (uint16_t *)cur);
+  cur += sizeof(uint16_t);
+  n += sizeof(uint16_t);
+  memcpy(cur, (byte_t *)nonce.data(), t);
+  cur += t;
+  n += t;
+  *cur = 1;
+  cur += 1;
+  *((uint16_t *)cur) = 0;
+  cur += sizeof(uint16_t);
+  n += sizeof(uint16_t);
+  quoteAuth.assign((char *)q, n);
+
+  printf("Session handle: %08x\n", session_handle);
+  printf("Buffer: ");
+  print_bytes(quoteAuth.size(), (byte_t *)quoteAuth.data());
+  printf("\n");
+  printf("AuthString: ");
+  print_bytes(authString.size(), (byte_t *)authString.data());
+  printf("\n");
+  Tpm2_FlushContext(tpm, ek_handle);
+  Tpm2_FlushContext(tpm, session_handle);
+  return true;
+#endif
   if (!Tpm2_ActivateCredential(tpm,
                                quote_handle,
                                ek_handle,
-                               policyDigest,
+                               quoteAuth,
                                authString,
                                credentialBlob,
                                secret,
@@ -2456,6 +2505,7 @@ bool credential_test(local_tpm  &tpm,
            __func__,
            __LINE__);
     Tpm2_FlushContext(tpm, ek_handle);
+    Tpm2_FlushContext(tpm, session_handle);
     return false;
   }
 #ifdef DEBUG
@@ -2465,6 +2515,7 @@ bool credential_test(local_tpm  &tpm,
   printf("\n");
 #endif
 
+  Tpm2_FlushContext(tpm, session_handle);
   Tpm2_FlushContext(tpm, ek_handle);
   return true;
 }

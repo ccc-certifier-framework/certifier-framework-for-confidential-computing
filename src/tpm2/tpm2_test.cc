@@ -417,8 +417,21 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
 #endif
 
   // Make/Activate Credential test
-#if 0
-  if (!credential_test(tpm, srk_handle, quote_handle)) {
+#if 1
+  TPML_PCR_SELECTION pcrSelect;
+  memset((void *)&pcrSelect, 0, sizeof(TPML_PCR_SELECTION));
+  string policyString;
+
+  if (num_pcrs < 1) {
+    printf("%s() error, line %d: No pcrs\n", __func__, __LINE__);
+    return false;
+  }
+  init_single_pcr_selection(pcrs[0], TPM_ALG_SHA256, &pcrSelect);
+  for (int i = 1; i < num_pcrs; i++) {
+    add_pcr_selection(pcrs[i], TPM_ALG_SHA256, &pcrSelect);
+  }
+
+  if (!credential_test(tpm, pcrSelect, srk_handle, quote_handle)) {
     printf("%s() error, line %d, credential_test failed\n", __func__, __LINE__);
     return false;
   }
