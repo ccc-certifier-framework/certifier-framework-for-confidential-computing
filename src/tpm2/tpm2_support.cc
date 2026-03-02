@@ -1030,6 +1030,91 @@ bool extend_pcrs(local_tpm &tpm, int pcr_num) {
   return true;
 }
 
+bool create_quote_session(local_tpm          &tpm,
+                         TPML_PCR_SELECTION &pcrSelect,
+                         TPM_HANDLE         *session_handle) {
+
+  TPM2B_DIGEST           digest_out;
+  TPM2B_NONCE            initial_nonce;
+  TPM2B_ENCRYPTED_SECRET salt;
+  TPMT_SYM_DEF           symmetric;
+  TPM2B_NONCE            nonce_obj;
+
+  initial_nonce.size = 32;
+  memset(initial_nonce.buffer, 0, initial_nonce.size);
+  salt.size = 0;
+  symmetric.algorithm = TPM_ALG_NULL;
+
+  // Start auth session
+  if (!Tpm2_StartAuthSession(tpm,
+                             TPM_RH_NULL,
+                             TPM_RH_NULL,
+                             initial_nonce,
+                             salt,
+                             TPM_SE_POLICY,
+                             symmetric,
+                             TPM_ALG_SHA256,
+                             session_handle,
+                             &nonce_obj)) {
+    printf("\n");
+    printf("%s() error, line %d, Tpm2_StartAuthSession fails\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+#ifdef DEBUG2
+  printf("\n");
+  printf("Tpm2_StartAuthSession succeeds handle: %08x\n", *session_handle);
+  printf("initial nonce (%d): ", initial_nonce.size);
+  print_bytes(initial_nonce.size, initial_nonce.buffer);
+  printf("\n");
+  printf("nonce (%d): ", nonce_obj.size);
+  print_bytes(nonce_obj.size, nonce_obj.buffer);
+  printf("\n");
+#endif
+
+  TPM2B_DIGEST policy_digest;
+  if (!Tpm2_PolicyGetDigest(tpm, *session_handle, &policy_digest)) {
+    printf("%s() error, line %d, PolicyGetDigest failed\n", __func__, __LINE__);
+    Tpm2_FlushContext(tpm, *session_handle);
+    return false;
+  }
+#ifdef DEBUG2
+  printf("\n");
+  printf("%s() line %d, PolicyGetDigest before Pcr succeeded: \n",
+         __func__,
+         __LINE__);
+  print_bytes(policy_digest.size, policy_digest.buffer);
+  printf("\n");
+#endif
+
+  if (!Tpm2_PolicyPassword(tpm, *session_handle)) {
+    printf("%s() error, line %d, Tpm2_PolicyPassword fails\n",
+           __func__,
+           __LINE__);
+    Tpm2_FlushContext(tpm, *session_handle);
+    return false;
+  }
+#ifdef DEBUG2
+  printf("%s(), line %d, Tpm2_PolicyPassword succeeded\n", __func__, __LINE__);
+#endif
+
+  TPM2B_DIGEST expected_digest;
+  expected_digest.size = 0;
+  if (!Tpm2_PolicyPcr(tpm, *session_handle, expected_digest, pcrSelect)) {
+    printf("%s() error, line %d, Tpm2_StartAuthSession fails\n",
+           __func__,
+           __LINE__);
+    Tpm2_FlushContext(tpm, *session_handle);
+    return false;
+  }
+#ifdef DEBUG2
+  printf("%s(), line %d, Tpm2_PolicyPcr succeeded\n", __func__, __LINE__);
+#endif
+
+  return true;
+}
+
 bool create_quote_hierarchy(local_tpm    &tpm,
                             int           num_pcrs,
                             byte_t       *pcrs,
@@ -1140,6 +1225,29 @@ bool create_quote_hierarchy(local_tpm    &tpm,
   printf("\n");
   printf("Exponent: %d\n", pub_out.publicArea.parameters.rsaDetail.exponent);
   printf("\n");
+#endif
+
+  // Create the policy for the quote key
+  TPM_HANDLE session_handle = 0;
+  TPM2B_DIGEST policy_digest;
+  if (!create_quote_session(tpm,
+                         pcrSelect,
+                         &session_handle)) {
+    printf("%s() error, line %d, create_quote_session failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if (!Tpm2_PolicyGetDigest(tpm, session_handle, &policy_digest)) {
+    printf("%s() error, line %d, PolicyGetDigest failed\n", __func__, __LINE__);
+    Tpm2_FlushContext(tpm, session_handle);
+    return false;
+  }
+  Tpm2_FlushContext(tpm, session_handle);
+  policyString.assign((char*)policy_digest.buffer, policy_digest.size);
+#ifdef DEBUG
+  printf("policy for quote: ");
+  print_bytes(policyString.size(), (byte_t*) policyString.data());
 #endif
 
   TPM2B_CREATION_DATA creation_out;
