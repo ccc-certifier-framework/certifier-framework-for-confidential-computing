@@ -309,7 +309,7 @@ tpm2_nvread -T swtpm:port=2321 -C o 0x01c00002 -o tool_ek_rsa_cert.bin
 ./tpm2_util.exe --tpm_device="/dev/tpm1" --pcr_num=7 --command=EndorsementTest
 ./tpm2_util.exe --tpm_device="/dev/tpm1" --command=ContextTest
 ./tpm2_util.exe --tpm_device="/dev/tpm1" --pcr_num=7 --command=SealTest
-./tpm2_util.exe --tpm_device="/dev/tpm1" --command=KeyTest
+.d/tpm2_util.exe --tpm_device="/dev/tpm1" --command=KeyTest
 ./tpm2_util.exe --tpm_device="/dev/tpm1" --command=NvTest
 ./tpm2_util.exe --tpm_device="/dev/tpm1" --pcr_num=7 --command=QuoteTest
 

@@ -1453,14 +1453,13 @@ bool GetPublicOut(int                  size,
 bool Tpm2_CreatePrimary(local_tpm          &tpm,
                         TPM_HANDLE          owner,
                         string             &parentAuth,
-                        string             &childAuth,
                         string             &sensitiveData,
                         string             &outsideInfo,
+                        string             &policyString,
                         TPML_PCR_SELECTION &pcr_selection,
                         TPM_ALG_ID          enc_alg,
                         TPM_ALG_ID          int_alg,
                         TPMA_OBJECT        &flags,
-                        string             &policyString,
                         TPM_ALG_ID          sym_alg,
                         TPMI_AES_KEY_BITS   sym_key_size,
                         TPMI_ALG_SYM_MODE   sym_mode,
@@ -2640,9 +2639,9 @@ bool GetCreateOut(int                  size,
 bool Tpm2_CreateKey(local_tpm           &tpm,
                     TPM_HANDLE           parent_handle,
                     string              &parentAuth,
-                    string              &childAuth,
                     string              &sensitiveData,
                     string              &outsideInfo,
+                    string              &policyString,
                     TPML_PCR_SELECTION  &pcr_selection,
                     TPM_ALG_ID           enc_alg,
                     TPM_ALG_ID           int_alg,
@@ -2698,8 +2697,6 @@ bool Tpm2_CreateKey(local_tpm           &tpm,
   IF_LESS_THAN_RETURN_FALSE(space_left, n)
   Update(n, &in, &size_params, &space_left);
 
-  string policyString;
-
   // Public key
   TPM2B_PUBLIC pub_key;
   string       unique;
@@ -2745,7 +2742,7 @@ bool Tpm2_CreateKey(local_tpm           &tpm,
                                 (byte_t *)commandBuf,
                                 size_params,
                                 (byte_t *)params);
-#ifdef DEBUG
+#ifdef DEBUG1
   print_command("CreateKey", in_size, commandBuf);
 #endif
   if (!tpm.send_command(in_size, (byte_t *)commandBuf)) {
@@ -2769,7 +2766,7 @@ bool Tpm2_CreateKey(local_tpm           &tpm,
                          &cap,
                          &responseSize,
                          &responseCode);
-#ifdef DEBUG
+#ifdef DEBUG1
   print_response("CreateKey", cap, responseSize, responseCode, resp_buf);
 #else
   if (responseCode != 0)
@@ -2792,7 +2789,6 @@ bool Tpm2_CreateKey(local_tpm           &tpm,
 bool Tpm2_CreateSealed(local_tpm           &tpm,
                        TPM_HANDLE           parent_handle,
                        string              &parentAuth,
-                       string              &childAuth,
                        string              &sensitiveData,
                        string              &outsideInfo,
                        string              &policyHash,
@@ -2847,7 +2843,7 @@ bool Tpm2_CreateSealed(local_tpm           &tpm,
   IF_LESS_THAN_RETURN_FALSE(space_left, n)
   Update(n, &in, &size_params, &space_left);
 
-  // Keyed Hash
+  // Keyed Hash (in the unique area)
   TPM2B_PUBLIC keyed_hash;
   FillKeyedHashTemplate(TPM_ALG_KEYEDHASH,
                         int_alg,
@@ -2880,7 +2876,7 @@ bool Tpm2_CreateSealed(local_tpm           &tpm,
                                 (byte_t *)commandBuf,
                                 size_params,
                                 (byte_t *)params);
-#ifdef DEBUG
+#ifdef DEBUG1
   print_command("CreateSealed", in_size, commandBuf);
 #endif
   if (!tpm.send_command(in_size, (byte_t *)commandBuf)) {
@@ -2904,7 +2900,7 @@ bool Tpm2_CreateSealed(local_tpm           &tpm,
                          &cap,
                          &responseSize,
                          &responseCode);
-#ifdef DEBUG
+#ifdef DEBUG1
   print_response("CreateSealed", cap, responseSize, responseCode, resp_buf);
 #else
   if (responseCode != 0)

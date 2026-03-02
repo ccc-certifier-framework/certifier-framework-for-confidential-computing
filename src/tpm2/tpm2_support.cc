@@ -259,8 +259,6 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
                                       const string &seal_file) {
 
   string             srkAuth;
-  string             sealAuth;
-  string             emptyAuth;
   TPM2B_PUBLIC       pub_out;
   TPML_PCR_SELECTION pcrSelect;
   memset((void *)&pcrSelect, 0, sizeof(TPML_PCR_SELECTION));
@@ -292,7 +290,7 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
   int    size_buf = 128;
   byte_t buf[size_buf];
 
-  int m = CreatePasswordAuthArea(emptyAuth, size_buf, buf);
+  int m = CreatePasswordAuthArea(emptyString, size_buf, buf);
   if (m < 0) {
     printf("%s() error, line %d, CreatePasswordAuthArea failed\n",
            __func__,
@@ -300,20 +298,18 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
     return false;
   }
   srkAuth.assign((char *)(buf + 2), m - 2);
-  sealAuth.assign((char *)(buf + 2), m - 2);
 
   // Creating a new SRK
   if (!Tpm2_CreatePrimary(tpm,
                           TPM_RH_OWNER,
                           srkAuth,
-                          srkAuth,
                           sensitiveData,
                           outsideInfo,
+                          emptyString,
                           pcrSelect,
                           TPM_ALG_RSA,
                           TPM_ALG_SHA256,
                           primary_flags,
-                          emptyString,
                           TPM_ALG_AES,
                           256,
                           TPM_ALG_CFB,
@@ -370,7 +366,7 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
            __LINE__);
     return false;
   }
-#ifdef DEBUG2
+#ifdef DEBUG
   printf("\nPolicy Digest: ");
   print_bytes(policy_digest.size, policy_digest.buffer);
   printf("\n");
@@ -399,7 +395,6 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
   if (!Tpm2_CreateSealed(tpm,
                          srk_handle,
                          srkAuth,
-                         sealAuth,
                          sensitiveData,
                          outsideData,
                          policyDigest,
@@ -521,19 +516,19 @@ bool recover_sealing_secret(local_tpm    &tpm,
 
   string sensitiveData;
   string outsideInfo;
+  string policyString;
 
   // Creating a new SRK
   if (!Tpm2_CreatePrimary(tpm,
                           TPM_RH_OWNER,
                           srkAuth,
-                          srkAuth,
                           sensitiveData,
                           outsideInfo,
+                          policyString,
                           pcrSelect,
                           TPM_ALG_RSA,
                           TPM_ALG_SHA256,
                           primary_flags,
-                          emptyAuth,
                           TPM_ALG_AES,
                           256,
                           TPM_ALG_CFB,
@@ -738,14 +733,13 @@ bool get_endorsement_key(local_tpm  &tpm,
   if (!Tpm2_CreatePrimary(tpm,
                           TPM_RH_ENDORSEMENT,  // owner
                           authString,
-                          authString,
                           sensitiveData,
                           outsideInfo,
+                          policyString,
                           pcrSelect,       // pcrSelect
                           TPM_ALG_RSA,     // enc_alg
                           TPM_ALG_SHA256,  // int_alg
                           primary_flags,
-                          policyString,
                           TPM_ALG_AES,   // sym_alg
                           128,           // size (128)
                           TPM_ALG_CFB,   // sym_mode
@@ -1046,6 +1040,7 @@ bool create_quote_hierarchy(local_tpm    &tpm,
   TPM2B_PUBLIC       pub_out;
   TPML_PCR_SELECTION pcrSelect;
   memset((void *)&pcrSelect, 0, sizeof(TPML_PCR_SELECTION));
+  string policyString;
 
   if (num_pcrs < 1) {
     printf("%s() error, line %d: No pcrs\n", __func__, __LINE__);
@@ -1066,10 +1061,8 @@ bool create_quote_hierarchy(local_tpm    &tpm,
   primary_flags.restricted = 1;
 
   string srkAuth;
-  string quoteAuth;
   string sensitiveData;
   string outsideInfo;
-  string policyString;
   string emptyAuth;
 
   int    size_buf = 128;
@@ -1083,20 +1076,18 @@ bool create_quote_hierarchy(local_tpm    &tpm,
     return false;
   }
   srkAuth.assign((char *)(buf + 2), m - 2);
-  quoteAuth.assign((char *)(buf + 2), m - 2);
 
   // Storage root key
   if (!Tpm2_CreatePrimary(tpm,
                           TPM_RH_OWNER,
                           srkAuth,
-                          srkAuth,
                           sensitiveData,
                           outsideInfo,
+                          policyString,
                           pcrSelect,
                           TPM_ALG_RSA,
                           TPM_ALG_SHA256,
                           primary_flags,
-                          policyString,
                           TPM_ALG_AES,
                           256,
                           TPM_ALG_CFB,
@@ -1168,15 +1159,13 @@ bool create_quote_hierarchy(local_tpm    &tpm,
   create_flags.sign = 1;
   create_flags.restricted = 1;
 
-  quoteAuth = srkAuth;
-
   // Quote key
   if (!Tpm2_CreateKey(tpm,
                       srk_handle,
                       srkAuth,
-                      quoteAuth,
                       sensitiveData,
                       outsideInfo,
+                      policyString,
                       pcrSelect,
                       TPM_ALG_RSA,
                       TPM_ALG_SHA256,
@@ -1287,20 +1276,18 @@ bool recover_and_load_quote_hierarchy(local_tpm    &tpm,
     return false;
   }
   srkAuth.assign((char *)(buf + 2), m - 2);
-  quoteAuth.assign((char *)(buf + 2), m - 2);
 
   // Storage root key
   if (!Tpm2_CreatePrimary(tpm,
                           TPM_RH_OWNER,
                           srkAuth,
-                          srkAuth,
                           sensitiveData,
                           outsideInfo,
+                          policyString,
                           pcrSelect,
                           TPM_ALG_RSA,
                           TPM_ALG_SHA256,
                           primary_flags,
-                          policyString,
                           TPM_ALG_AES,
                           256,
                           TPM_ALG_CFB,
@@ -1391,7 +1378,7 @@ bool recover_and_load_quote_hierarchy(local_tpm    &tpm,
   // There are two bytes after the keys that dont count.
   if (!Tpm2_Load(tpm,
                  *srk_handle,
-                 quoteAuth,
+                 srkAuth,
                  (int)key_info.pub_key().size() - 2,
                  (byte_t *)key_info.pub_key().data(),
                  (int)key_info.priv_key().size() - 2,
