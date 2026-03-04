@@ -654,150 +654,6 @@ bool make_and_install_endorsement_cert(local_tpm &tpm,
   return true;
 }
 
-/*
- * Template args
- *
- *  type TPMI_ALG_PUBLIC TPM_ALG_RSA
- *  nameAlg TPMI_ALG_HASH TPM_ALG_SHA256
- *  objectAttributes
- *    fixedTPM = 1
- *    stClear = 0
- *    fixedParent = 1
- *    sensitiveDataOrigin = 1
- *    userWithAuth = 0
- *    adminWithPolicy = 1
- *    noDA = 0
- *    encryptedDuplication = 0
- *    restricted = 1
- *    decrypt = 1
- *    sign = 0
- *  authPolicy
- *    0x83, 0x71, 0x97, 0x67, 0x44, 0x84,
- *    0xB3, 0xF8, 0x1A, 0x90, 0xCC, 0x8D,
- *    0x46, 0xA5, 0xD7, 0x24, 0xFD, 0x52,
- *    0xD7, 0x6E, 0x06, 0x52, 0x0B, 0x64,
- *    0xF2, 0xA1, 0xDA, 0x1B, 0x33, 0x14,
- *    0x69, 0xAA
- *  TPM2_PolicySecret(TPM_RH_ENDORSEMENT)
- *  parameters
- *  symmetric->algorithm TPM_ALG_AES
- *  symmetric->keyBits 128
- *  symmetric->mode TPM_ALG_CFB
- *  symmetric->details NULL
- *  scheme->scheme TPM_ALG_NULL
- *  scheme->details NULL
- *  keyBits 2048
- *  exponent 0
- *  unique
- *    size UINT16 256
- *    buffer BYTE All 0
- */
-
-bool get_endorsement_key(local_tpm  &tpm,
-                         string     &authString,
-                         string     &policyString,
-                         TPM_HANDLE *ek_handle) {
-
-  TPM2B_PUBLIC pub_out;
-  TPM2B_NAME   pub_name;
-  TPM2B_NAME   qualified_pub_name;
-  uint16_t     pub_blob_size = 4096;
-  byte_t       pub_blob[pub_blob_size];
-
-  TPML_PCR_SELECTION pcrSelect;
-  memset((void *)&pcrSelect, 0, sizeof(TPML_PCR_SELECTION));
-
-  // TPM_RH_ENDORSEMENT
-  TPMA_OBJECT primary_flags;
-  *(uint32_t *)(&primary_flags) = 0;
-  primary_flags.fixedTPM = 1;
-  primary_flags.fixedParent = 1;
-  primary_flags.sensitiveDataOrigin = 1;
-  primary_flags.adminWithPolicy = 1;
-  primary_flags.decrypt = 1;
-  primary_flags.restricted = 1;
-
-  string sensitiveData;
-  string outsideInfo;
-
-#ifdef DEBUG2
-  printf("authstring: ");
-  print_bytes(authString.size(), (byte_t *)authString.data());
-  printf("\n");
-  printf("policyString: ");
-  print_bytes(policyString.size(), (byte_t *)policyString.data());
-  printf("\n");
-#endif
-
-  // Create Endorsement key with handle ekHandle
-  if (!Tpm2_CreatePrimary(tpm,
-                          TPM_RH_ENDORSEMENT,  // owner
-                          authString,
-                          sensitiveData,
-                          outsideInfo,
-                          policyString,
-                          pcrSelect,       // pcrSelect
-                          TPM_ALG_RSA,     // enc_alg
-                          TPM_ALG_SHA256,  // int_alg
-                          primary_flags,
-                          TPM_ALG_AES,   // sym_alg
-                          128,           // size (128)
-                          TPM_ALG_CFB,   // sym_mode
-                          TPM_ALG_NULL,  // sym_scheme
-                          2048,          // keyBits (mod size)
-                          0x0,           // exponent
-                          ek_handle,
-                          &pub_out)) {
-    printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);
-    return false;
-  }
-
-#ifdef DEBUG1
-  printf("\n");
-  printf("Modulus from CreatePrimary (%d):\n",
-         pub_out.publicArea.unique.rsa.size);
-  print_bytes(pub_out.publicArea.unique.rsa.size,
-              pub_out.publicArea.unique.rsa.buffer);
-  printf("\n");
-  printf("CreatePrimary succeeded primary: %08x\n", *ek_handle);
-  if (!Tpm2_ReadPublic(tpm,
-                       *ek_handle,
-                       &pub_blob_size,
-                       pub_blob,
-                       &pub_out,
-                       &pub_name,
-                       &qualified_pub_name)) {
-    printf("%s() error, line %d, ReadPublic failed\n", __func__, __LINE__);
-    return false;
-  }
-  printf("ReadPublic, Public blob: ");
-  print_bytes(pub_blob_size, pub_blob);
-  printf("\n");
-  printf("Name: ");
-  print_bytes(pub_name.size, pub_name.name);
-  printf("\n");
-  printf("Qualified name: ");
-  print_bytes(qualified_pub_name.size, qualified_pub_name.name);
-  printf("\n");
-  printf("Pubout size: %d\n", pub_out.size);
-  printf("Type: %d\n", pub_out.publicArea.type);
-  printf("Name: %d\n", pub_out.publicArea.nameAlg);
-  printf("Scheme: %d\n", pub_out.publicArea.parameters.rsaDetail.scheme.scheme);
-  printf("Bytes (%d):\n", (int)pub_out.publicArea.unique.rsa.size);
-  print_bytes((int)pub_out.publicArea.unique.rsa.size,
-              (byte_t *)pub_out.publicArea.unique.rsa.buffer);
-  printf("\n");
-  printf("Exponent: %d\n", pub_out.publicArea.parameters.rsaDetail.exponent);
-  printf("\n");
-  printf("Policy: ");
-  print_bytes(pub_out.publicArea.authPolicy.size,
-              pub_out.publicArea.authPolicy.buffer);
-  printf("\n");
-#endif
-
-  return true;
-}
-
 bool get_endorsement_cert(const string &file_name, string *out) {
   return read_file_into_string(file_name, out);
 }
@@ -1034,6 +890,84 @@ bool extend_pcrs(local_tpm &tpm, int pcr_num) {
   return true;
 }
 
+bool create_endorsement_session(local_tpm          &tpm,
+                                string             &authString,
+                                string             *nonce,
+                                TPM_HANDLE         *session_handle) {
+
+  TPM2B_DIGEST           digest_out;
+  TPM2B_NONCE            initial_nonce;
+  TPM2B_ENCRYPTED_SECRET salt;
+  TPMT_SYM_DEF           symmetric;
+  TPM2B_NONCE            nonce_obj;
+
+  initial_nonce.size = 32;
+  memset(initial_nonce.buffer, 0, initial_nonce.size);
+  salt.size = 0;
+  symmetric.algorithm = TPM_ALG_NULL;
+
+  // Start auth session
+  if (!Tpm2_StartAuthSession(tpm,
+                             TPM_RH_NULL,
+                             TPM_RH_NULL,
+                             initial_nonce,
+                             salt,
+                             TPM_SE_POLICY,
+                             symmetric,
+                             TPM_ALG_SHA256,
+                             session_handle,
+                             &nonce_obj)) {
+    printf("\n");
+    printf("%s() error, line %d, Tpm2_StartAuthSession fails\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  nonce->assign((char *)nonce_obj.buffer, nonce_obj.size);
+
+  TPM2B_DIGEST policy_digest;
+  if (!Tpm2_PolicyGetDigest(tpm, *session_handle, &policy_digest)) {
+    printf("%s() error, line %d, PolicyGetDigest failed\n", __func__, __LINE__);
+    Tpm2_FlushContext(tpm, *session_handle);
+    return false;
+  }
+#ifdef DEBUG
+  printf("auth session handle: %08x\n", *session_handle);
+  printf("starting digest: ");
+  print_bytes(policy_digest.size, policy_digest.buffer);
+  printf("\n");
+#endif
+
+  TPM2B_TIMEOUT timeout;
+  TPMT_TK_AUTH  ticket;
+  int zero = 0;
+  if (!Tpm2_PolicySecret(tpm,
+                         TPM_RH_ENDORSEMENT,
+                         authString,
+			 *session_handle,
+			 zero,
+                         &policy_digest,
+                         &timeout,
+                         &ticket)) {
+    printf("%s() error, line %d, PolicySecret failed\n", __func__, __LINE__);
+    Tpm2_FlushContext(tpm, *session_handle);
+    return false;
+  }
+
+  if (!Tpm2_PolicyGetDigest(tpm, *session_handle, &policy_digest)) {
+    printf("%s() error, line %d, PolicyGetDigest failed\n", __func__, __LINE__);
+    Tpm2_FlushContext(tpm, *session_handle);
+    return false;
+  }
+#ifdef DEBUG
+  printf("Returned digest: ");
+  print_bytes(policy_digest.size, policy_digest.buffer);
+  printf("\n");
+#endif
+
+  return true;
+}
+
 bool create_quote_session(local_tpm          &tpm,
                           TPML_PCR_SELECTION &pcrSelect,
                           string             *nonce,
@@ -1117,6 +1051,161 @@ bool create_quote_session(local_tpm          &tpm,
   }
 #ifdef DEBUG2
   printf("%s(), line %d, Tpm2_PolicyPcr succeeded\n", __func__, __LINE__);
+#endif
+
+  return true;
+}
+
+/*
+ * Template args
+ *
+ *  type TPMI_ALG_PUBLIC TPM_ALG_RSA
+ *  nameAlg TPMI_ALG_HASH TPM_ALG_SHA256
+ *  objectAttributes
+ *    fixedTPM = 1
+ *    stClear = 0
+ *    fixedParent = 1
+ *    sensitiveDataOrigin = 1
+ *    userWithAuth = 0
+ *    adminWithPolicy = 1
+ *    noDA = 0
+ *    encryptedDuplication = 0
+ *    restricted = 1
+ *    decrypt = 1
+ *    sign = 0
+ *  authPolicy
+ *    0x83, 0x71, 0x97, 0x67, 0x44, 0x84,
+ *    0xB3, 0xF8, 0x1A, 0x90, 0xCC, 0x8D,
+ *    0x46, 0xA5, 0xD7, 0x24, 0xFD, 0x52,
+ *    0xD7, 0x6E, 0x06, 0x52, 0x0B, 0x64,
+ *    0xF2, 0xA1, 0xDA, 0x1B, 0x33, 0x14,
+ *    0x69, 0xAA
+ *  TPM2_PolicySecret(TPM_RH_ENDORSEMENT)
+ *  parameters
+ *  symmetric->algorithm TPM_ALG_AES
+ *  symmetric->keyBits 128
+ *  symmetric->mode TPM_ALG_CFB
+ *  symmetric->details NULL
+ *  scheme->scheme TPM_ALG_NULL
+ *  scheme->details NULL
+ *  keyBits 2048
+ *  exponent 0
+ *  unique
+ *    size UINT16 256
+ *    buffer BYTE All 0
+ */
+
+bool get_endorsement_key(local_tpm  &tpm,
+                         string     &authString,
+                         string     &policyString,
+                         TPM_HANDLE *ek_handle) {
+
+  TPM2B_PUBLIC pub_out;
+  TPM2B_NAME   pub_name;
+  TPM2B_NAME   qualified_pub_name;
+  uint16_t     pub_blob_size = 4096;
+  byte_t       pub_blob[pub_blob_size];
+
+  TPML_PCR_SELECTION pcrSelect;
+  memset((void *)&pcrSelect, 0, sizeof(TPML_PCR_SELECTION));
+
+  // TPM_RH_ENDORSEMENT
+  TPMA_OBJECT primary_flags;
+  *(uint32_t *)(&primary_flags) = 0;
+  primary_flags.fixedTPM = 1;
+  primary_flags.fixedParent = 1;
+  primary_flags.sensitiveDataOrigin = 1;
+  primary_flags.adminWithPolicy = 1;
+  primary_flags.decrypt = 1;
+  primary_flags.restricted = 1;
+
+  string sensitiveData;
+  string outsideInfo;
+  string nonce;
+
+#ifdef DEBUG2
+  printf("authstring: ");
+  print_bytes(authString.size(), (byte_t *)authString.data());
+  printf("\n");
+  printf("policyString: ");
+  print_bytes(policyString.size(), (byte_t *)policyString.data());
+  printf("\n");
+#endif
+
+  TPM_HANDLE session_handle = 0;
+  if (!create_endorsement_session(tpm,
+                             authString,
+                             &nonce,
+                             &session_handle)) {
+    printf("%s() error, line %d, create_endorsement_session failed\n", __func__, __LINE__);
+    return false;
+  }
+  Tpm2_FlushContext(tpm, session_handle);
+
+  // Create Endorsement key with handle ekHandle
+  if (!Tpm2_CreatePrimary(tpm,
+                          TPM_RH_ENDORSEMENT,  // owner
+                          authString,
+                          sensitiveData,
+                          outsideInfo,
+                          policyString,
+                          pcrSelect,       // pcrSelect
+                          TPM_ALG_RSA,     // enc_alg
+                          TPM_ALG_SHA256,  // int_alg
+                          primary_flags,
+                          TPM_ALG_AES,   // sym_alg
+                          128,           // size (128)
+                          TPM_ALG_CFB,   // sym_mode
+                          TPM_ALG_NULL,  // sym_scheme
+                          2048,          // keyBits (mod size)
+                          0x0,           // exponent
+                          ek_handle,
+                          &pub_out)) {
+    printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);
+    return false;
+  }
+
+#ifdef DEBUG1
+  printf("\n");
+  printf("Modulus from CreatePrimary (%d):\n",
+         pub_out.publicArea.unique.rsa.size);
+  print_bytes(pub_out.publicArea.unique.rsa.size,
+              pub_out.publicArea.unique.rsa.buffer);
+  printf("\n");
+  printf("CreatePrimary succeeded primary: %08x\n", *ek_handle);
+  if (!Tpm2_ReadPublic(tpm,
+                       *ek_handle,
+                       &pub_blob_size,
+                       pub_blob,
+                       &pub_out,
+                       &pub_name,
+                       &qualified_pub_name)) {
+    printf("%s() error, line %d, ReadPublic failed\n", __func__, __LINE__);
+    return false;
+  }
+  printf("ReadPublic, Public blob: ");
+  print_bytes(pub_blob_size, pub_blob);
+  printf("\n");
+  printf("Name: ");
+  print_bytes(pub_name.size, pub_name.name);
+  printf("\n");
+  printf("Qualified name: ");
+  print_bytes(qualified_pub_name.size, qualified_pub_name.name);
+  printf("\n");
+  printf("Pubout size: %d\n", pub_out.size);
+  printf("Type: %d\n", pub_out.publicArea.type);
+  printf("Name: %d\n", pub_out.publicArea.nameAlg);
+  printf("Scheme: %d\n", pub_out.publicArea.parameters.rsaDetail.scheme.scheme);
+  printf("Bytes (%d):\n", (int)pub_out.publicArea.unique.rsa.size);
+  print_bytes((int)pub_out.publicArea.unique.rsa.size,
+              (byte_t *)pub_out.publicArea.unique.rsa.buffer);
+  printf("\n");
+  printf("Exponent: %d\n", pub_out.publicArea.parameters.rsaDetail.exponent);
+  printf("\n");
+  printf("Policy: ");
+  print_bytes(pub_out.publicArea.authPolicy.size,
+              pub_out.publicArea.authPolicy.buffer);
+  printf("\n");
 #endif
 
   return true;

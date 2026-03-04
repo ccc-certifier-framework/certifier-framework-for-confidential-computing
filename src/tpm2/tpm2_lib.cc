@@ -1627,6 +1627,9 @@ bool GetLoadOut(int         size,
 
 bool Tpm2_PolicySecret(local_tpm     &tpm,
                        TPM_HANDLE     handle,
+                       string        &authString,
+                       TPM_HANDLE     session_handle,
+		       int	      expiration,
                        TPM2B_DIGEST  *policy_digest,
                        TPM2B_TIMEOUT *timeout,
                        TPMT_TK_AUTH  *ticket) {
@@ -1639,24 +1642,58 @@ bool Tpm2_PolicySecret(local_tpm     &tpm,
   int     total_size = 0;
   int     space_left = MAX_SIZE_PARAMS;
 
+  // Hierarchy handle
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint32_t))
   change_endian32((uint32_t *)&handle, (uint32_t *)in);
   Update(sizeof(uint32_t), &in, &total_size, &space_left);
 
+  // policy session
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint32_t))
+  change_endian32((uint32_t *)&session_handle, (uint32_t *)in);
+  Update(sizeof(uint32_t), &in, &total_size, &space_left);
+
+  // Auth session index?  Ask Paul about this.
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
-  change_endian16((uint16_t *)&policy_digest->size, (uint16_t *)in);
+  memset(in, 0, sizeof(uint16_t));
   Update(sizeof(uint16_t), &in, &total_size, &space_left);
 
-  IF_LESS_THAN_RETURN_FALSE(space_left, policy_digest->size)
-  memcpy(in, policy_digest->buffer, policy_digest->size);
-  Update(policy_digest->size, &in, &total_size, &space_left);
+  // Auth
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
+  uint16_t in_auth_size = authString.size();
+  change_endian16(&in_auth_size, (uint16_t *)in);
+  Update(sizeof(uint16_t), &in, &total_size, &space_left);
+  IF_LESS_THAN_RETURN_FALSE(space_left, in_auth_size)
+  memcpy(in, (byte_t *)authString.data(), authString.size());
+  Update(in_auth_size, &in, &total_size, &space_left);
 
-  int in_size = Tpm2_SetCommand(TPM_ST_NO_SESSIONS,
+  uint16_t zero = 0;
+
+  // empty nonce
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
+  change_endian16((uint16_t *)&zero, (uint16_t *)in);
+  Update(sizeof(uint16_t), &in, &total_size, &space_left);
+
+  // empty digest
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
+  change_endian16((uint16_t *)&zero, (uint16_t *)in);
+  Update(sizeof(uint16_t), &in, &total_size, &space_left);
+
+  // empty nonce
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
+  change_endian16((uint16_t *)&zero, (uint16_t *)in);
+  Update(sizeof(uint16_t), &in, &total_size, &space_left);
+
+  // expiration
+  IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint32_t))
+  change_endian32((uint32_t *)&expiration, (uint32_t *)in);
+  Update(sizeof(uint32_t), &in, &total_size, &space_left);
+
+  int in_size = Tpm2_SetCommand(TPM_ST_SESSIONS,
                                 TPM_CC_PolicySecret,
                                 commandBuf,
                                 total_size,
                                 params);
-#ifdef DEBUG
+#ifdef DEBUG1
   print_command("PolicySecret", in_size, commandBuf);
 #endif
   if (!tpm.send_command(in_size, commandBuf)) {
@@ -1675,7 +1712,7 @@ bool Tpm2_PolicySecret(local_tpm     &tpm,
                          &cap,
                          &responseSize,
                          &responseCode);
-#ifdef DEBUG
+#ifdef DEBUG1
   print_response("PolicySecret", cap, responseSize, responseCode, resp_buf);
 #else
   if (responseCode != 0)
