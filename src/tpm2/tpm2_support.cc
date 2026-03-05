@@ -2535,7 +2535,9 @@ bool credential_test(local_tpm          &tpm,
 
   // Quote auth session
   TPM_HANDLE quote_session_handle = 0;
+#ifdef DEBUG
   printf("\nCalling create_quote_session\n");
+#endif
   nonce.clear();
   if (!create_quote_session(tpm, pcrSelect, &nonce, &quote_session_handle)) {
     printf("%s() error, line %d, create_quote_session failed\n",
@@ -2565,6 +2567,7 @@ bool credential_test(local_tpm          &tpm,
   n += sizeof(uint16_t);
   quoteAuth.assign((char *)auth_buf, n);
 
+#ifdef DEBUG
   printf("Quote Session handle: %08x\n", quote_session_handle);
   printf("Quote auth: ");
   print_bytes(quoteAuth.size(), (byte_t *)quoteAuth.data());
@@ -2572,11 +2575,14 @@ bool credential_test(local_tpm          &tpm,
   printf("Nonce (%d): ", (int)nonce.size());
   print_bytes(nonce.size(), (byte_t *)nonce.data());
   printf("\n");
+#endif
 
   // endorsement auth session
   TPM_HANDLE endorsement_session_handle = 0;
   string endorsementAuth;
+#ifdef DEBUG
   printf("\nCalling create_endorsement_session\n");
+#endif
   nonce.clear();
   if (!create_endorsement_session(tpm,
                                 authString,
@@ -2611,6 +2617,7 @@ bool credential_test(local_tpm          &tpm,
   n += sizeof(uint16_t);
   endorsementAuth.assign((char *)auth_buf, n);
 
+#ifdef DEBUG
   printf("Endorsement  Session handle: %08x\n", endorsement_session_handle);
   printf("Endorsement Auth string: ");
   print_bytes(endorsementAuth.size(), (byte_t *)endorsementAuth.data());
@@ -2618,6 +2625,7 @@ bool credential_test(local_tpm          &tpm,
   printf("Nonce (%d): ", (int)nonce.size());
   print_bytes(nonce.size(), (byte_t *)nonce.data());
   printf("\n");
+#endif
 #if 1
   Tpm2_FlushContext(tpm, ek_handle);
   Tpm2_FlushContext(tpm, quote_session_handle);
@@ -2641,6 +2649,7 @@ bool credential_test(local_tpm          &tpm,
     Tpm2_FlushContext(tpm, endorsement_session_handle);
     return false;
   }
+
 #ifdef DEBUG
   printf("\nActivateCredential succeeded\n");
   printf("Recovered credential (%d): ", recovered_credential.size);
