@@ -926,8 +926,8 @@ bool create_endorsement_session(local_tpm          &tpm,
     Tpm2_FlushContext(tpm, *session_handle);
     return false;
   }
-#ifdef DEBUG2
-  printf("auth session handle: %08x\n", *session_handle);
+#ifdef DEBUG
+  printf("Endorsement auth session handle: %08x\n", *session_handle);
   printf("starting digest: ");
   print_bytes(policy_digest.size, policy_digest.buffer);
   printf("\n");
@@ -1040,6 +1040,12 @@ bool create_quote_session(local_tpm          &tpm,
     Tpm2_FlushContext(tpm, *session_handle);
     return false;
   }
+#ifdef DEBUG
+  printf("pcrs at create_quote\n");
+  int num_pcrs = 1;
+  byte_t pcrs[1] = {7};
+  print_pcrs(tpm, num_pcrs, pcrs);
+#endif
 #ifdef DEBUG2
   printf("%s(), line %d, Tpm2_PolicyPcr succeeded\n", __func__, __LINE__);
 #endif
@@ -2568,8 +2574,8 @@ bool credential_test(local_tpm          &tpm,
   quoteAuth.assign((char *)auth_buf, n);
 
 #ifdef DEBUG
-  printf("Quote Session handle: %08x\n", quote_session_handle);
-  printf("Quote auth: ");
+  printf("Quote session handle: %08x\n", quote_session_handle);
+  printf("Quote auth      : ");
   print_bytes(quoteAuth.size(), (byte_t *)quoteAuth.data());
   printf("\n");
   printf("Nonce (%d): ", (int)nonce.size());
@@ -2618,14 +2624,20 @@ bool credential_test(local_tpm          &tpm,
   endorsementAuth.assign((char *)auth_buf, n);
 
 #ifdef DEBUG
-  printf("Endorsement  Session handle: %08x\n", endorsement_session_handle);
-  printf("Endorsement Auth string: ");
+  printf("Endorsement session handle: %08x\n", endorsement_session_handle);
+  printf("Endorsement auth: ");
   print_bytes(endorsementAuth.size(), (byte_t *)endorsementAuth.data());
   printf("\n");
   printf("Nonce (%d): ", (int)nonce.size());
   print_bytes(nonce.size(), (byte_t *)nonce.data());
   printf("\n");
+  int num_pcrs = 1;
+  byte_t pcrs[1] = {7};
+  printf("PCRs at activate:\n");
+  print_pcrs(tpm, num_pcrs, pcrs);
+  printf("\n");
 #endif
+
 #if 1
   Tpm2_FlushContext(tpm, ek_handle);
   Tpm2_FlushContext(tpm, quote_session_handle);
