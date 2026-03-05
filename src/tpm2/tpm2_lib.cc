@@ -1693,7 +1693,7 @@ bool Tpm2_PolicySecret(local_tpm     &tpm,
                                 commandBuf,
                                 total_size,
                                 params);
-#ifdef DEBUG1
+#ifdef DEBUG
   print_command("PolicySecret", in_size, commandBuf);
 #endif
   if (!tpm.send_command(in_size, commandBuf)) {
@@ -1712,7 +1712,7 @@ bool Tpm2_PolicySecret(local_tpm     &tpm,
                          &cap,
                          &responseSize,
                          &responseCode);
-#ifdef DEBUG1
+#ifdef DEBUG
   print_response("PolicySecret", cap, responseSize, responseCode, resp_buf);
 #else
   if (responseCode != 0)
@@ -2779,7 +2779,7 @@ bool Tpm2_CreateKey(local_tpm           &tpm,
                                 (byte_t *)commandBuf,
                                 size_params,
                                 (byte_t *)params);
-#ifdef DEBUG1
+#ifdef DEBUG
   print_command("CreateKey", in_size, commandBuf);
 #endif
   if (!tpm.send_command(in_size, (byte_t *)commandBuf)) {
@@ -2803,7 +2803,7 @@ bool Tpm2_CreateKey(local_tpm           &tpm,
                          &cap,
                          &responseSize,
                          &responseCode);
-#ifdef DEBUG1
+#ifdef DEBUG
   print_response("CreateKey", cap, responseSize, responseCode, resp_buf);
 #else
   if (responseCode != 0)
@@ -2913,7 +2913,7 @@ bool Tpm2_CreateSealed(local_tpm           &tpm,
                                 (byte_t *)commandBuf,
                                 size_params,
                                 (byte_t *)params);
-#ifdef DEBUG1
+#ifdef DEBUG
   print_command("CreateSealed", in_size, commandBuf);
 #endif
   if (!tpm.send_command(in_size, (byte_t *)commandBuf)) {
@@ -2937,7 +2937,7 @@ bool Tpm2_CreateSealed(local_tpm           &tpm,
                          &cap,
                          &responseSize,
                          &responseCode);
-#ifdef DEBUG1
+#ifdef DEBUG
   print_response("CreateSealed", cap, responseSize, responseCode, resp_buf);
 #else
   if (responseCode != 0)

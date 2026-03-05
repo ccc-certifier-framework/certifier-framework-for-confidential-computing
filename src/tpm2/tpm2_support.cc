@@ -931,7 +931,7 @@ bool create_endorsement_session(local_tpm          &tpm,
     Tpm2_FlushContext(tpm, *session_handle);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("auth session handle: %08x\n", *session_handle);
   printf("starting digest: ");
   print_bytes(policy_digest.size, policy_digest.buffer);
@@ -954,13 +954,13 @@ bool create_endorsement_session(local_tpm          &tpm,
     return false;
   }
 
+#ifdef DEBUG
   if (!Tpm2_PolicyGetDigest(tpm, *session_handle, &policy_digest)) {
     printf("%s() error, line %d, PolicyGetDigest failed\n", __func__, __LINE__);
     Tpm2_FlushContext(tpm, *session_handle);
     return false;
   }
-#ifdef DEBUG
-  printf("Returned digest: ");
+  printf("Endorsement returned digest: ");
   print_bytes(policy_digest.size, policy_digest.buffer);
   printf("\n");
 #endif
@@ -1003,7 +1003,7 @@ bool create_quote_session(local_tpm          &tpm,
   }
   nonce->assign((char *)nonce_obj.buffer, nonce_obj.size);
 
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\n");
   printf("Tpm2_StartAuthSession succeeds handle: %08x\n", *session_handle);
   printf("initial nonce (%d): ", initial_nonce.size);
@@ -1132,15 +1132,15 @@ bool get_endorsement_key(local_tpm  &tpm,
   printf("\n");
 #endif
 
-  TPM_HANDLE session_handle = 0;
+  TPM_HANDLE endorsement_session_handle = 0;
   if (!create_endorsement_session(tpm,
                              authString,
                              &nonce,
-                             &session_handle)) {
+                             &endorsement_session_handle)) {
     printf("%s() error, line %d, create_endorsement_session failed\n", __func__, __LINE__);
     return false;
   }
-  Tpm2_FlushContext(tpm, session_handle);
+  Tpm2_FlushContext(tpm, endorsement_session_handle);
 
   // Create Endorsement key with handle ekHandle
   if (!Tpm2_CreatePrimary(tpm,
@@ -2530,30 +2530,30 @@ bool credential_test(local_tpm          &tpm,
   printf("\n");
 #endif
 
-#ifdef DEBUG
-  TPM_HANDLE session_handle = 0;
-  string     policyDigest;
   string     nonce;
-
+  string     policyDigest;
   printf("Policy: ");
   print_bytes(quoting_pub_out.publicArea.authPolicy.size,
               quoting_pub_out.publicArea.authPolicy.buffer);
   printf("\n");
   policyDigest.assign((char *)quoting_pub_out.publicArea.authPolicy.buffer,
                       quoting_pub_out.publicArea.authPolicy.size);
-  printf("Calling create_quote_session\n");
-  if (!create_quote_session(tpm, pcrSelect, &nonce, &session_handle)) {
+
+  byte_t  auth_buf[256];
+  int     n = 0;
+
+  // Quote auth session
+  TPM_HANDLE quote_session_handle = 0;
+  printf("\nCalling create_quote_session\n");
+  if (!create_quote_session(tpm, pcrSelect, &nonce, &quote_session_handle)) {
     printf("%s() error, line %d, create_quote_session failed\n",
            __func__,
            __LINE__);
   }
-
-  // session handle empty_nonce attributes (1) empty
+  // quote key auth
   string  quoteAuth;
-  byte_t  q[256];
-  int     n = 0;
-  byte_t *cur = q;
-  change_endian32((uint32_t *)&session_handle, (uint32_t *)cur);
+  byte_t *cur = auth_buf;
+  change_endian32((uint32_t *)&quote_session_handle, (uint32_t *)cur);
   cur += sizeof(uint32_t);
   n += sizeof(uint32_t);
   n += 1;
@@ -2569,24 +2569,62 @@ bool credential_test(local_tpm          &tpm,
   *((uint16_t *)cur) = 0;
   cur += sizeof(uint16_t);
   n += sizeof(uint16_t);
-  quoteAuth.assign((char *)q, n);
+  quoteAuth.assign((char *)auth_buf, n);
 
-  printf("Session handle: %08x\n", session_handle);
-  printf("Buffer: ");
+  printf("Quote Session handle: %08x\n", quote_session_handle);
+  printf("Quote auth: ");
   print_bytes(quoteAuth.size(), (byte_t *)quoteAuth.data());
   printf("\n");
-  printf("AuthString: ");
-  print_bytes(authString.size(), (byte_t *)authString.data());
+
+  // endorsement auth session
+  TPM_HANDLE endorsement_session_handle = 0;
+  string endorsementAuth;
+  printf("\nCalling create_endorsement_session\n");
+  if (!create_endorsement_session(tpm,
+                                authString,
+                                &nonce,
+                                &endorsement_session_handle)) {
+    printf("%s() error, line %d, create_endorsement _session failed\n",
+           __func__,
+           __LINE__);
+  }
+
+  // endorsement auth
+  n = 0;
+  cur = auth_buf;
+  change_endian32((uint32_t *)&endorsement_session_handle, (uint32_t *)cur);
+  cur += sizeof(uint32_t);
+  n += sizeof(uint32_t);
+  n += 1;
+  t = nonce.size();
+  change_endian16(&t, (uint16_t *)cur);
+  cur += sizeof(uint16_t);
+  n += sizeof(uint16_t);
+  memcpy(cur, (byte_t *)nonce.data(), t);
+  cur += t;
+  n += t;
+  *cur = 1;
+  cur += 1;
+  *((uint16_t *)cur) = 0;
+  cur += sizeof(uint16_t);
+  n += sizeof(uint16_t);
+  endorsementAuth.assign((char *)auth_buf, n);
+
+  printf("Endorsement  Session handle: %08x\n", endorsement_session_handle);
+  printf("Endorsement Auth string: ");
+  print_bytes(endorsementAuth.size(), (byte_t *)endorsementAuth.data());
   printf("\n");
+
   Tpm2_FlushContext(tpm, ek_handle);
-  Tpm2_FlushContext(tpm, session_handle);
+  Tpm2_FlushContext(tpm, quote_session_handle);
+  Tpm2_FlushContext(tpm, endorsement_session_handle);
   return true;
-#endif
+
   if (!Tpm2_ActivateCredential(tpm,
                                quote_handle,
                                ek_handle,
                                quoteAuth,
-                               authString,
+                               endorsementAuth,
                                credentialBlob,
                                secret,
                                &recovered_credential)) {
@@ -2594,7 +2632,8 @@ bool credential_test(local_tpm          &tpm,
            __func__,
            __LINE__);
     Tpm2_FlushContext(tpm, ek_handle);
-    Tpm2_FlushContext(tpm, session_handle);
+    Tpm2_FlushContext(tpm, quote_session_handle);
+    Tpm2_FlushContext(tpm, endorsement_session_handle);
     return false;
   }
 #ifdef DEBUG
@@ -2604,8 +2643,9 @@ bool credential_test(local_tpm          &tpm,
   printf("\n");
 #endif
 
-  Tpm2_FlushContext(tpm, session_handle);
   Tpm2_FlushContext(tpm, ek_handle);
+  Tpm2_FlushContext(tpm, quote_session_handle);
+  Tpm2_FlushContext(tpm, endorsement_session_handle);
   return true;
 }
 
