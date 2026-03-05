@@ -209,7 +209,6 @@ bool create_seal_session(local_tpm          &tpm,
   printf("nonce (%d): ", nonce_obj.size);
   print_bytes(nonce_obj.size, nonce_obj.buffer);
   printf("\n");
-#endif
 
   TPM2B_DIGEST policy_digest;
   if (!Tpm2_PolicyGetDigest(tpm, *session_handle, &policy_digest)) {
@@ -217,14 +216,12 @@ bool create_seal_session(local_tpm          &tpm,
     Tpm2_FlushContext(tpm, *session_handle);
     return false;
   }
-#ifdef DEBUG2
   printf("\n");
   printf("%s() line %d, PolicyGetDigest before Pcr succeeded: \n",
          __func__,
          __LINE__);
   print_bytes(policy_digest.size, policy_digest.buffer);
   printf("\n");
-#endif
 
   if (!Tpm2_PolicyPassword(tpm, *session_handle)) {
     printf("%s() error, line %d, Tpm2_PolicyPassword fails\n",
@@ -233,7 +230,6 @@ bool create_seal_session(local_tpm          &tpm,
     Tpm2_FlushContext(tpm, *session_handle);
     return false;
   }
-#ifdef DEBUG2
   printf("%s(), line %d, Tpm2_PolicyPassword succeeded\n", __func__, __LINE__);
 #endif
 
@@ -367,9 +363,8 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
     return false;
   }
 #ifdef DEBUG
-  printf("\nPolicy Digest: ");
+  printf("Policy Digest: ");
   print_bytes(policy_digest.size, policy_digest.buffer);
-  printf("\n");
   printf("\n");
 #endif
 
@@ -1012,7 +1007,6 @@ bool create_quote_session(local_tpm          &tpm,
   printf("nonce (%d): ", nonce_obj.size);
   print_bytes(nonce_obj.size, nonce_obj.buffer);
   printf("\n");
-#endif
 
   TPM2B_DIGEST policy_digest;
   if (!Tpm2_PolicyGetDigest(tpm, *session_handle, &policy_digest)) {
@@ -1020,14 +1014,12 @@ bool create_quote_session(local_tpm          &tpm,
     Tpm2_FlushContext(tpm, *session_handle);
     return false;
   }
-#ifdef DEBUG2
   printf("\n");
   printf("%s() line %d, PolicyGetDigest before Pcr succeeded: \n",
          __func__,
          __LINE__);
   print_bytes(policy_digest.size, policy_digest.buffer);
   printf("\n");
-#endif
 
   if (!Tpm2_PolicyPassword(tpm, *session_handle)) {
     printf("%s() error, line %d, Tpm2_PolicyPassword fails\n",
@@ -1036,7 +1028,6 @@ bool create_quote_session(local_tpm          &tpm,
     Tpm2_FlushContext(tpm, *session_handle);
     return false;
   }
-#ifdef DEBUG2
   printf("%s(), line %d, Tpm2_PolicyPassword succeeded\n", __func__, __LINE__);
 #endif
 
@@ -1678,7 +1669,7 @@ TPM2B_PUBLIC g_public_quote_key;
 
 bool tpm_close() {
 
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\ntpm_close()\n");
 #endif
 
@@ -1705,7 +1696,7 @@ bool tpm_close() {
   }
   g_tpm_environment_initialized = false;
 
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("tpm_close() returning\n");
 #endif
   return true;
@@ -2528,14 +2519,14 @@ bool credential_test(local_tpm          &tpm,
   printf("secret size: %d\n", secret.size);
   print_bytes(secret.size, secret.secret);
   printf("\n");
-#endif
-
-  string     nonce;
-  string     policyDigest;
   printf("Policy: ");
   print_bytes(quoting_pub_out.publicArea.authPolicy.size,
               quoting_pub_out.publicArea.authPolicy.buffer);
   printf("\n");
+#endif
+
+  string     nonce;
+  string     policyDigest;
   policyDigest.assign((char *)quoting_pub_out.publicArea.authPolicy.buffer,
                       quoting_pub_out.publicArea.authPolicy.size);
 

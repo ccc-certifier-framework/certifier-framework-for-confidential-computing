@@ -444,7 +444,6 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
   Tpm2_FlushContext(tpm, quote_handle);
   Tpm2_FlushContext(tpm, srk_handle);
 
-  tpm_close();
   return true;
 }
 
