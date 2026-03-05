@@ -2541,6 +2541,8 @@ bool credential_test(local_tpm          &tpm,
     printf("%s() error, line %d, create_quote_session failed\n",
            __func__,
            __LINE__);
+    Tpm2_FlushContext(tpm, ek_handle);
+    return false;
   }
   // quote key auth
   string  quoteAuth;
@@ -2583,6 +2585,9 @@ bool credential_test(local_tpm          &tpm,
     printf("%s() error, line %d, create_endorsement _session failed\n",
            __func__,
            __LINE__);
+    Tpm2_FlushContext(tpm, ek_handle);
+    Tpm2_FlushContext(tpm, quote_handle);
+    return false;
   }
 
   // endorsement auth
@@ -2637,7 +2642,7 @@ bool credential_test(local_tpm          &tpm,
     return false;
   }
 #ifdef DEBUG
-  printf("ActivateCredential succeeded\n");
+  printf("\nActivateCredential succeeded\n");
   printf("Recovered credential (%d): ", recovered_credential.size);
   print_bytes(recovered_credential.size, recovered_credential.buffer);
   printf("\n");
