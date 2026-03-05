@@ -1130,7 +1130,6 @@ bool get_endorsement_key(local_tpm  &tpm,
   printf("policyString: ");
   print_bytes(policyString.size(), (byte_t *)policyString.data());
   printf("\n");
-#endif
 
   TPM_HANDLE endorsement_session_handle = 0;
   if (!create_endorsement_session(tpm,
@@ -1141,6 +1140,7 @@ bool get_endorsement_key(local_tpm  &tpm,
     return false;
   }
   Tpm2_FlushContext(tpm, endorsement_session_handle);
+#endif
 
   // Create Endorsement key with handle ekHandle
   if (!Tpm2_CreatePrimary(tpm,
@@ -2545,6 +2545,7 @@ bool credential_test(local_tpm          &tpm,
   // Quote auth session
   TPM_HANDLE quote_session_handle = 0;
   printf("\nCalling create_quote_session\n");
+  nonce.clear();
   if (!create_quote_session(tpm, pcrSelect, &nonce, &quote_session_handle)) {
     printf("%s() error, line %d, create_quote_session failed\n",
            __func__,
@@ -2575,11 +2576,15 @@ bool credential_test(local_tpm          &tpm,
   printf("Quote auth: ");
   print_bytes(quoteAuth.size(), (byte_t *)quoteAuth.data());
   printf("\n");
+  printf("Nonce (%d): ", (int)nonce.size());
+  print_bytes(nonce.size(), (byte_t *)nonce.data());
+  printf("\n");
 
   // endorsement auth session
   TPM_HANDLE endorsement_session_handle = 0;
   string endorsementAuth;
   printf("\nCalling create_endorsement_session\n");
+  nonce.clear();
   if (!create_endorsement_session(tpm,
                                 authString,
                                 &nonce,
@@ -2614,11 +2619,15 @@ bool credential_test(local_tpm          &tpm,
   printf("Endorsement Auth string: ");
   print_bytes(endorsementAuth.size(), (byte_t *)endorsementAuth.data());
   printf("\n");
-
+  printf("Nonce (%d): ", (int)nonce.size());
+  print_bytes(nonce.size(), (byte_t *)nonce.data());
+  printf("\n");
+#if 1
   Tpm2_FlushContext(tpm, ek_handle);
   Tpm2_FlushContext(tpm, quote_session_handle);
   Tpm2_FlushContext(tpm, endorsement_session_handle);
   return true;
+#endif
 
   if (!Tpm2_ActivateCredential(tpm,
                                quote_handle,

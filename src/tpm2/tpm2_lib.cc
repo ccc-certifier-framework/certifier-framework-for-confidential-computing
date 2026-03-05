@@ -2095,11 +2095,13 @@ bool Tpm2_ActivateCredential(local_tpm              &tpm,
   uint16_t k = auth_size1 + auth_size2;
   change_endian16(&k, pSize);
 
+  // Cred blob
   change_endian16((uint16_t *)&credentialBlob.size, (uint16_t *)in);
   Update(sizeof(uint16_t), &in, &total_size, &space_left);
   memcpy(in, credentialBlob.credential, credentialBlob.size);
   Update(credentialBlob.size, &in, &total_size, &space_left);
 
+  // Secret
   change_endian16((uint16_t *)&secret.size, (uint16_t *)in);
   Update(sizeof(uint16_t), &in, &total_size, &space_left);
   memcpy(in, secret.secret, secret.size);

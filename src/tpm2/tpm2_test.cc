@@ -431,6 +431,11 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
     add_pcr_selection(pcrs[i], TPM_ALG_SHA256, &pcrSelect);
   }
 
+#ifdef DEBUG
+  printf("PCRs: \n");
+  print_pcrs(tpm, num_pcrs, pcrs);
+#endif
+
   if (!credential_test(tpm, pcrSelect, srk_handle, quote_handle)) {
     printf("%s() error, line %d, credential_test failed\n", __func__, __LINE__);
     return false;
