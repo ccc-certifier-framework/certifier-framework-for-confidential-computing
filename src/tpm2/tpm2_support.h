@@ -117,7 +117,9 @@ bool tpm_verify_attest(key_message  &quote_key,
                        string       &signature);
 
 bool make_credential(const TPM2B_PUBLIC &quoting_key,
+                     TPM2B_NAME         &name,
                      const string       &cert_in,
+                     TPM2B_DIGEST       &credential,
                      string             *cred_blob,
                      string             *encrypted_secret);
 

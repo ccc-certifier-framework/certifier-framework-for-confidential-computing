@@ -2343,13 +2343,14 @@ bool construct_quote_key_cert(const key_message &signing_key,
 }
 
 bool make_credential(const TPM2B_PUBLIC &quoting_key,
+                     TPM2B_NAME         &name,
                      const string       &cert_in,
+                     TPM2B_DIGEST       &credential,
                      string             *cred_blob,
                      string             *encrypted_secret) {
 
   //  create secret
   TPM_ALG_ID name_id = quoting_key.publicArea.nameAlg;
-  // TPM2B_DIGEST           seed;
   TPM2B_ENCRYPTED_SECRET encrypted_seed;
   TPM2B_MAX_BUFFER       hmac_key;
   TPM2B_MAX_BUFFER       enc_key;
@@ -2384,11 +2385,11 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   RAND_bytes(seed, size_seed);
 
 #if 0
+
   // Get endorsement public key, which is protector key
   X509  *endorsement_cert = nullptr;
-  byte_t *p = endorsement_blob;
-  endorsement_cert =
-      d2i_X509(nullptr, (const byte_t **)&p, size_endorsement_blob);
+  byte_t *p = (byte_t*)cert.data();
+  endorsement_cert = d2i_X509(nullptr, (const byte_t **)&p, cert.size());
   EVP_PKEY *protector_evp_key = X509_get_pubkey(endorsement_cert);
   RSA      *protector_key = EVP_PKEY_get1_RSA(protector_evp_key);
   RSA_up_ref(protector_key);
@@ -2397,6 +2398,7 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   //   args: to, from, label, len
   int    size_secret = 256;
   byte_t secret_buf[256];
+
   RSA_padding_add_PKCS1_OAEP(secret_buf,
                              256,
                              seed,
@@ -2409,14 +2411,26 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
                              protector_key,
                              RSA_NO_PADDING);
   if (n <= 0) {
+    printf("%s() error, line %d, RSA_public_encrypt fails\n", __func__, __LINE__);
     return false;
   }
+
   unmarshaled_encrypted_secret->size = n;
   change_endian16((uint16_t *)&unmarshaled_encrypted_secret->size,
                   &marshaled_encrypted_secret->size);
   memcpy(marshaled_encrypted_secret->secret,
          unmarshaled_encrypted_secret->secret,
          unmarshaled_encrypted_secret->size);
+
+  TPM2B_NAME             marshaled_name;
+  int                    size_encIdentity;
+  byte_t                 *encIdentity;
+
+  TPM2B_ENCRYPTED_SECRET unmarshaled_encrypted_secret;
+  TPM2B_ENCRYPTED_SECRET marshaled_encrypted_secret;
+
+  TPM2B_DIGEST           unmarshaled_integrityHmac;
+  TPM2B_DIGEST           marshaled_integrityHmac;
 
   byte_t symKey[MAX_SIZE_PARAMS];
   string label;
@@ -2429,13 +2443,13 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   label = "STORAGE";
   key.assign((const char *)seed, size_seed);
   contextV.clear();
-  name.assign((const char *)unmarshaled_name.name, unmarshaled_name.size);
   if (!KDFa(hash_alg_id, key, label, name, contextV, 128, 32, symKey)) {
     printf("%s() error, line %d, Can't KDFa symKey\n", __func__, __LINE__);
     return false;
   }
 
   // 4. encIdentity
+  TPM2B_DIGEST           marshaled_credential;
   if (!AesCFBEncrypt(symKey,
                      unmarshaled_credential.size + sizeof(uint16_t),
                      (byte_t *)&marshaled_credential,
@@ -2491,7 +2505,7 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   memcpy(marshaled_integrityHmac->buffer,
          unmarshaled_integrityHmac->buffer,
          size_hmacKey);
-#  ifdef DEBUG
+#ifdef DEBUG
   printf("encIdentity: ");
   print_bytes(*size_encIdentity, (byte_t *)encIdentity);
   printf("\n");
@@ -2504,7 +2518,7 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   printf("marsh-hmac : ");
   print_bytes(size_hmacKey + 2, (byte_t *)&marshaled_integrityHmac);
   printf("\n");
-#  endif
+#endif
 
 #endif
 
@@ -2637,9 +2651,9 @@ bool credential_test(local_tpm          &tpm,
   string endorsement_cert;
   get_endorsement_cert(tpm, &endorsement_cert);
   make_credential(quoting_pub_out,
-		     endorsement_cert,
+                     endorsement_cert,
                      string             *cred_blob,
-		     string             *encrypted_secret)
+                     string             *encrypted_secret)
 #endif
 
   // Activate
