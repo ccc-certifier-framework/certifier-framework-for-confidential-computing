@@ -2548,43 +2548,9 @@ bool credential_test(local_tpm          &tpm,
   byte_t auth_buf[256];
   int    n = 0;
 
-  // Quote auth session
-  TPM_HANDLE quote_session_handle = 0;
-#ifdef DEBUG
-  printf("\nCalling create_quote_session\n");
-#endif
-  nonce.clear();
-  if (!create_quote_session(tpm, pcrSelect, &nonce, &quote_session_handle)) {
-    printf("%s() error, line %d, create_quote_session failed\n",
-           __func__,
-           __LINE__);
-    Tpm2_FlushContext(tpm, ek_handle);
-    return false;
-  }
-  // quote key auth
-  string  quoteAuth;
-  byte_t *cur = auth_buf;
-  change_endian32((uint32_t *)&quote_session_handle, (uint32_t *)cur);
-  cur += sizeof(uint32_t);
-  n += sizeof(uint32_t);
-  n += 1;
-  uint16_t t = nonce.size();
-  change_endian16(&t, (uint16_t *)cur);
-  cur += sizeof(uint16_t);
-  n += sizeof(uint16_t);
-  memcpy(cur, (byte_t *)nonce.data(), t);
-  cur += t;
-  n += t;
-  *cur = 1;
-  cur += 1;
-  *((uint16_t *)cur) = 0;
-  cur += sizeof(uint16_t);
-  n += sizeof(uint16_t);
-  quoteAuth.assign((char *)auth_buf, n);
+  string quoteAuth = authString;
 
 #ifdef DEBUG
-  printf("Quote session handle: %08x\n", quote_session_handle);
-  printf("Quote auth      : ");
   print_bytes(quoteAuth.size(), (byte_t *)quoteAuth.data());
   printf("\n");
   printf("Nonce (%d): ", (int)nonce.size());
@@ -2613,12 +2579,12 @@ bool credential_test(local_tpm          &tpm,
 
   // endorsement auth
   n = 0;
-  cur = auth_buf;
+  byte_t *cur = auth_buf;
   change_endian32((uint32_t *)&endorsement_session_handle, (uint32_t *)cur);
   cur += sizeof(uint32_t);
   n += sizeof(uint32_t);
   n += 1;
-  t = nonce.size();
+  uint16_t t = nonce.size();
   change_endian16(&t, (uint16_t *)cur);
   cur += sizeof(uint16_t);
   n += sizeof(uint16_t);
@@ -2647,13 +2613,6 @@ bool credential_test(local_tpm          &tpm,
   printf("\n");
 #endif
 
-#if 0
-  Tpm2_FlushContext(tpm, ek_handle);
-  Tpm2_FlushContext(tpm, quote_session_handle);
-  Tpm2_FlushContext(tpm, endorsement_session_handle);
-  return true;
-#endif
-
   if (!Tpm2_ActivateCredential(tpm,
                                quote_handle,
                                ek_handle,
@@ -2666,7 +2625,6 @@ bool credential_test(local_tpm          &tpm,
            __func__,
            __LINE__);
     Tpm2_FlushContext(tpm, ek_handle);
-    Tpm2_FlushContext(tpm, quote_session_handle);
     Tpm2_FlushContext(tpm, endorsement_session_handle);
     return false;
   }
@@ -2679,7 +2637,6 @@ bool credential_test(local_tpm          &tpm,
 #endif
 
   Tpm2_FlushContext(tpm, ek_handle);
-  Tpm2_FlushContext(tpm, quote_session_handle);
   Tpm2_FlushContext(tpm, endorsement_session_handle);
   return true;
 }
