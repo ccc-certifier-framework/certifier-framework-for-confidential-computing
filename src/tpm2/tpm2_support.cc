@@ -199,38 +199,6 @@ bool create_seal_session(local_tpm          &tpm,
            __LINE__);
     return false;
   }
-#ifdef DEBUG2
-  printf("\n");
-  printf("Tpm2_StartAuthSession succeeds handle: %08x\n", *session_handle);
-  printf("initial nonce (%d): ", initial_nonce.size);
-  print_bytes(initial_nonce.size, initial_nonce.buffer);
-  printf("\n");
-  printf("nonce (%d): ", nonce_obj.size);
-  print_bytes(nonce_obj.size, nonce_obj.buffer);
-  printf("\n");
-
-  TPM2B_DIGEST policy_digest;
-  if (!Tpm2_PolicyGetDigest(tpm, *session_handle, &policy_digest)) {
-    printf("%s() error, line %d, PolicyGetDigest failed\n", __func__, __LINE__);
-    Tpm2_FlushContext(tpm, *session_handle);
-    return false;
-  }
-  printf("\n");
-  printf("%s() line %d, PolicyGetDigest before Pcr succeeded: \n",
-         __func__,
-         __LINE__);
-  print_bytes(policy_digest.size, policy_digest.buffer);
-  printf("\n");
-
-  if (!Tpm2_PolicyPassword(tpm, *session_handle)) {
-    printf("%s() error, line %d, Tpm2_PolicyPassword fails\n",
-           __func__,
-           __LINE__);
-    Tpm2_FlushContext(tpm, *session_handle);
-    return false;
-  }
-  printf("%s(), line %d, Tpm2_PolicyPassword succeeded\n", __func__, __LINE__);
-#endif
 
   TPM2B_DIGEST expected_digest;
   expected_digest.size = 0;
@@ -361,7 +329,7 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
            __LINE__);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("Policy Digest: ");
   print_bytes(policy_digest.size, policy_digest.buffer);
   printf("\n");
@@ -925,7 +893,7 @@ bool create_endorsement_session(local_tpm  &tpm,
     Tpm2_FlushContext(tpm, *session_handle);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("Endorsement auth session handle: %08x\n", *session_handle);
   printf("starting digest: ");
   print_bytes(policy_digest.size, policy_digest.buffer);
@@ -2470,7 +2438,7 @@ bool credential_test(local_tpm          &tpm,
            __LINE__);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG1
   printf("\nGot endorsement key %08x\n", ek_handle);
 #endif
 
@@ -2507,7 +2475,7 @@ bool credential_test(local_tpm          &tpm,
     Tpm2_FlushContext(tpm, ek_handle);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG1
   printf("Credential tests, ReadPublic succeeded\n");
   printf("Active Name (%d): ", quoting_pub_name.size);
   print_bytes(quoting_pub_name.size, quoting_pub_name.name);
@@ -2550,7 +2518,7 @@ bool credential_test(local_tpm          &tpm,
 
   string quoteAuth = authString;
 
-#ifdef DEBUG
+#ifdef DEBUG1
   print_bytes(quoteAuth.size(), (byte_t *)quoteAuth.data());
   printf("\n");
   printf("Nonce (%d): ", (int)nonce.size());
@@ -2561,7 +2529,7 @@ bool credential_test(local_tpm          &tpm,
   // endorsement auth session
   TPM_HANDLE endorsement_session_handle = 0;
   string     endorsementAuth;
-#ifdef DEBUG
+#ifdef DEBUG1
   printf("\nCalling create_endorsement_session\n");
 #endif
   nonce.clear();
@@ -2598,7 +2566,7 @@ bool credential_test(local_tpm          &tpm,
   n += sizeof(uint16_t);
   endorsementAuth.assign((char *)auth_buf, n);
 
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("Endorsement session handle: %08x\n", endorsement_session_handle);
   printf("Endorsement auth: ");
   print_bytes(endorsementAuth.size(), (byte_t *)endorsementAuth.data());
@@ -2630,7 +2598,7 @@ bool credential_test(local_tpm          &tpm,
   }
 
 #ifdef DEBUG
-  printf("\nActivateCredential succeeded\n");
+  printf("ActivateCredential succeeded\n");
   printf("Recovered credential (%d): ", recovered_credential.size);
   print_bytes(recovered_credential.size, recovered_credential.buffer);
   printf("\n");

@@ -627,15 +627,9 @@ bool get_pcr_value(int                 size,
     current_in += sizeof(uint16_t);
     pcr_out->pcrSelections[i].sizeofSelect = *current_in;
     current_in += 1;
-#if 0
-    memcpy(pcr_out->pcrSelections[i].pcrSelect,
-           current_in,
-           pcr_out->pcrSelections[i].sizeofSelect);
-#else
     reverse_byte_copy(pcr_out->pcrSelections[i].sizeofSelect,
                       current_in,
                       pcr_out->pcrSelections[i].pcrSelect);
-#endif
     current_in += pcr_out->pcrSelections[i].sizeofSelect;
   }
 
@@ -1228,15 +1222,9 @@ int Marshal_PCR_Long_Selection(TPML_PCR_SELECTION &in, int size, byte_t *buf) {
     Update(1, &out, &total_size, &space_left);
 
     IF_LESS_THAN_RETURN_FALSE(space_left, in.pcrSelections[i].sizeofSelect)
-#if 0
-    memcpy(out,
-           in.pcrSelections[i].pcrSelect,
-           in.pcrSelections[i].sizeofSelect);
-#else
     reverse_byte_copy(in.pcrSelections[i].sizeofSelect,
                       in.pcrSelections[i].pcrSelect,
                       out);
-#endif
     Update(in.pcrSelections[i].sizeofSelect, &out, &total_size, &space_left);
   }
   return total_size;
