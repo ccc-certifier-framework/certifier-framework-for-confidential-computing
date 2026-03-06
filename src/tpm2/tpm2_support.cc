@@ -41,10 +41,9 @@
 
 #define DEBUG
 
-void print_mask(int n, byte *m) {
-  byte *p = m + n - 1;
+void print_mask(int n, byte_t *m) {
   while (n-- > 0)
-    printf("%02x", *(p--));
+    printf("%02x", *(m++));
 }
 
 bool print_pcrs(local_tpm &tpm, int num_pcrs, byte *pcrs) {
@@ -885,10 +884,10 @@ bool extend_pcrs(local_tpm &tpm, int pcr_num) {
   return true;
 }
 
-bool create_endorsement_session(local_tpm          &tpm,
-                                string             &authString,
-                                string             *nonce,
-                                TPM_HANDLE         *session_handle) {
+bool create_endorsement_session(local_tpm  &tpm,
+                                string     &authString,
+                                string     *nonce,
+                                TPM_HANDLE *session_handle) {
 
   TPM2B_DIGEST           digest_out;
   TPM2B_NONCE            initial_nonce;
@@ -935,12 +934,12 @@ bool create_endorsement_session(local_tpm          &tpm,
 
   TPM2B_TIMEOUT timeout;
   TPMT_TK_AUTH  ticket;
-  int zero = 0;
+  int           zero = 0;
   if (!Tpm2_PolicySecret(tpm,
                          TPM_RH_ENDORSEMENT,
                          authString,
-			 *session_handle,
-			 zero,
+                         *session_handle,
+                         zero,
                          &policy_digest,
                          &timeout,
                          &ticket)) {
@@ -1042,7 +1041,7 @@ bool create_quote_session(local_tpm          &tpm,
   }
 #ifdef DEBUG
   printf("pcrs at create_quote\n");
-  int num_pcrs = 1;
+  int    num_pcrs = 1;
   byte_t pcrs[1] = {7};
   print_pcrs(tpm, num_pcrs, pcrs);
 #endif
@@ -1130,10 +1129,12 @@ bool get_endorsement_key(local_tpm  &tpm,
 
   TPM_HANDLE endorsement_session_handle = 0;
   if (!create_endorsement_session(tpm,
-                             authString,
-                             &nonce,
-                             &endorsement_session_handle)) {
-    printf("%s() error, line %d, create_endorsement_session failed\n", __func__, __LINE__);
+                                  authString,
+                                  &nonce,
+                                  &endorsement_session_handle)) {
+    printf("%s() error, line %d, create_endorsement_session failed\n",
+           __func__,
+           __LINE__);
     return false;
   }
   Tpm2_FlushContext(tpm, endorsement_session_handle);
@@ -1358,6 +1359,7 @@ bool create_quote_hierarchy(local_tpm    &tpm,
   create_flags.userWithAuth = 1;
   create_flags.sign = 1;
   create_flags.restricted = 1;
+  // create_flags.adminWithPolicy = 1;
 
   // Quote key
   if (!Tpm2_CreateKey(tpm,
@@ -2127,7 +2129,13 @@ bool decode_quoted(int                 size_buf,
       printf("%s() error, line %d, buffer too short\n", __func__, __LINE__);
       return false;
     }
+#if 0
     memcpy(pcrSelect->pcrSelections[i].pcrSelect, buf, size_selection);
+#else
+    reverse_byte_copy(size_selection,
+                      buf,
+                      pcrSelect->pcrSelections[i].pcrSelect);
+#endif
     buf += size_selection;
     size_buf -= size_selection;
   }
@@ -2229,7 +2237,8 @@ bool tpm_verify_attest(key_message  &quote_key,
     printf("    hash: %04x, size of select: %d, mask: ",
            pcrSelect.pcrSelections[i].hash,
            pcrSelect.pcrSelections[i].sizeofSelect);
-    print_bytes(PCR_SELECT_MAX, pcrSelect.pcrSelections[i].pcrSelect);
+    print_mask(pcrSelect.pcrSelections[i].sizeofSelect,
+               pcrSelect.pcrSelections[i].pcrSelect);
     printf("\n");
   }
   printf("  pcr digest (%d): ", (int)pcr_digest.size());
@@ -2531,13 +2540,13 @@ bool credential_test(local_tpm          &tpm,
   printf("\n");
 #endif
 
-  string     nonce;
-  string     policyDigest;
+  string nonce;
+  string policyDigest;
   policyDigest.assign((char *)quoting_pub_out.publicArea.authPolicy.buffer,
                       quoting_pub_out.publicArea.authPolicy.size);
 
-  byte_t  auth_buf[256];
-  int     n = 0;
+  byte_t auth_buf[256];
+  int    n = 0;
 
   // Quote auth session
   TPM_HANDLE quote_session_handle = 0;
@@ -2585,15 +2594,15 @@ bool credential_test(local_tpm          &tpm,
 
   // endorsement auth session
   TPM_HANDLE endorsement_session_handle = 0;
-  string endorsementAuth;
+  string     endorsementAuth;
 #ifdef DEBUG
   printf("\nCalling create_endorsement_session\n");
 #endif
   nonce.clear();
   if (!create_endorsement_session(tpm,
-                                authString,
-                                &nonce,
-                                &endorsement_session_handle)) {
+                                  authString,
+                                  &nonce,
+                                  &endorsement_session_handle)) {
     printf("%s() error, line %d, create_endorsement _session failed\n",
            __func__,
            __LINE__);
@@ -2631,14 +2640,14 @@ bool credential_test(local_tpm          &tpm,
   printf("Nonce (%d): ", (int)nonce.size());
   print_bytes(nonce.size(), (byte_t *)nonce.data());
   printf("\n");
-  int num_pcrs = 1;
+  int    num_pcrs = 1;
   byte_t pcrs[1] = {7};
   printf("PCRs at activate:\n");
   print_pcrs(tpm, num_pcrs, pcrs);
   printf("\n");
 #endif
 
-#if 1
+#if 0
   Tpm2_FlushContext(tpm, ek_handle);
   Tpm2_FlushContext(tpm, quote_session_handle);
   Tpm2_FlushContext(tpm, endorsement_session_handle);

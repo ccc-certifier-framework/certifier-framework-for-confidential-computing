@@ -614,19 +614,28 @@ bool get_pcr_value(int                 size,
                    uint32_t           *updateCounter,
                    TPML_PCR_SELECTION *pcr_out,
                    TPML_DIGEST        *values) {
+
   byte_t *current_in = in;
   change_endian32((uint32_t *)current_in, updateCounter);
   current_in += sizeof(uint32_t);
+
   change_endian32((uint32_t *)current_in, &pcr_out->count);
   current_in += sizeof(uint32_t);
+
   for (int i = 0; i < static_cast<int>(pcr_out->count); i++) {
     change_endian16((uint16_t *)current_in, &pcr_out->pcrSelections[i].hash);
     current_in += sizeof(uint16_t);
     pcr_out->pcrSelections[i].sizeofSelect = *current_in;
     current_in += 1;
+#if 0
     memcpy(pcr_out->pcrSelections[i].pcrSelect,
            current_in,
            pcr_out->pcrSelections[i].sizeofSelect);
+#else
+    reverse_byte_copy(pcr_out->pcrSelections[i].sizeofSelect,
+                      current_in,
+                      pcr_out->pcrSelections[i].pcrSelect);
+#endif
     current_in += pcr_out->pcrSelections[i].sizeofSelect;
   }
 
@@ -1219,9 +1228,15 @@ int Marshal_PCR_Long_Selection(TPML_PCR_SELECTION &in, int size, byte_t *buf) {
     Update(1, &out, &total_size, &space_left);
 
     IF_LESS_THAN_RETURN_FALSE(space_left, in.pcrSelections[i].sizeofSelect)
+#if 0
     memcpy(out,
            in.pcrSelections[i].pcrSelect,
            in.pcrSelections[i].sizeofSelect);
+#else
+    reverse_byte_copy(in.pcrSelections[i].sizeofSelect,
+                      in.pcrSelections[i].pcrSelect,
+                      out);
+#endif
     Update(in.pcrSelections[i].sizeofSelect, &out, &total_size, &space_left);
   }
   return total_size;
@@ -1629,7 +1644,7 @@ bool Tpm2_PolicySecret(local_tpm     &tpm,
                        TPM_HANDLE     handle,
                        string        &authString,
                        TPM_HANDLE     session_handle,
-		       int	      expiration,
+                       int            expiration,
                        TPM2B_DIGEST  *policy_digest,
                        TPM2B_TIMEOUT *timeout,
                        TPMT_TK_AUTH  *ticket) {

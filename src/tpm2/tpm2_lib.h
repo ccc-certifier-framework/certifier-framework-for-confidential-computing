@@ -179,7 +179,7 @@ bool Tpm2_PolicySecret(local_tpm     &tpm,
                        TPM_HANDLE     handle,
                        string        &authString,
                        TPM_HANDLE     session_handle,
-		       int            expiration,
+                       int            expiration,
                        TPM2B_DIGEST  *policy_digest,
                        TPM2B_TIMEOUT *timeout,
                        TPMT_TK_AUTH  *ticket);
