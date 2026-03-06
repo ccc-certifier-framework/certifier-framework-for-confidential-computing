@@ -39,10 +39,6 @@ bool recover_sealing_secret(local_tpm    &tpm,
                             byte_t       *pcrs,
                             const string &file_name,
                             string       *seal_secret);
-bool make_and_install_endorsement_cert(local_tpm &tpm,
-                                       string    &signng_key_file,
-                                       int        nv_slot,
-                                       string    *cert_out);
 bool get_endorsement_key(local_tpm  &tpm,
                          string     &authString,
                          string     &policyString,
@@ -119,6 +115,11 @@ bool tpm_verify_attest(key_message  &quote_key,
                        const string &hash_name,
                        const string &sig_scheme,
                        string       &signature);
+
+bool make_credential(const TPM2B_PUBLIC &quoting_key,
+                     const string       &cert_in,
+                     string             *cred_blob,
+                     string             *encrypted_secret);
 
 bool credential_test(local_tpm          &tpm,
                      TPML_PCR_SELECTION &pcrSelect,

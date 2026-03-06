@@ -607,15 +607,6 @@ bool recover_sealing_secret(local_tpm    &tpm,
   return true;
 }
 
-bool make_and_install_endorsement_cert(local_tpm &tpm,
-                                       string    &signng_key_file,
-                                       int        nv_slot,
-                                       string    *cert_out) {
-  // EK Certificate is at 0x01c00002 (RSA) or 0x01c0000a (ECC)
-  // in nvram
-  return true;
-}
-
 bool get_endorsement_cert(const string &file_name, string *out) {
   return read_file_into_string(file_name, out);
 }
@@ -2353,26 +2344,25 @@ bool construct_quote_key_cert(const key_message &signing_key,
 
 bool make_credential(const TPM2B_PUBLIC &quoting_key,
                      const string       &cert_in,
-                     const key_message  &signing_key,
-                     string             *out) {
+                     string             *cred_blob,
+                     string             *encrypted_secret) {
 
   //  create secret
-  TPM_ALG_ID             name_id = quoting_key.publicArea.nameAlg;
-  TPM2B_DIGEST           seed;
+  TPM_ALG_ID name_id = quoting_key.publicArea.nameAlg;
+  // TPM2B_DIGEST           seed;
   TPM2B_ENCRYPTED_SECRET encrypted_seed;
   TPM2B_MAX_BUFFER       hmac_key;
   TPM2B_MAX_BUFFER       enc_key;
 
-  /*
-   * Performs the following steps:
-   *   1. Generate a random secret, which is the actual credential data
-   *       or a key to decrypt it.
-   *   2. Obtain the public EK of the target TPM.
-   *   3. Obtain the "name" of the Attestation Identity Key (AIK) on the target
-   * TPM.
-   *   4.  Wrap the generated secret data using EK.
-   */
-
+  //
+  // Performs the following steps:
+  //   1. Generate a random secret, which is the actual credential data
+  //       or a key to decrypt it.
+  //   2. Obtain the public EK of the target TPM.
+  //   3. Obtain the "name" of the Attestation Identity Key (AIK) on the target
+  // TPM.
+  //   4.  Wrap the generated secret data using EK.
+  //
   // share secret with public key(&seed, label, 9, &encrypted_seed)
   // tpm2_kdfa(parent_alg, (TPM2B *) protection_seed, "INTEGRITY",
   //           &null_2b, &null_2b, parent_hash_size * 8, protection_hmac_key)
@@ -2384,6 +2374,139 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   // secret = encrypted_seed (with pubEK) // use oaep
   //  (EVP_PKEY_encrypt(ctx, encrypted_protection_seed->secret, &outlen,
   //        protection_seed->buffer, protection_seed->size)
+
+  byte_t zero_iv[32];
+  memset(zero_iv, 0, 32);
+
+  // 1. Generate seed
+  int    size_seed = 16;
+  byte_t seed[32];
+  RAND_bytes(seed, size_seed);
+
+#if 0
+  // Get endorsement public key, which is protector key
+  X509  *endorsement_cert = nullptr;
+  byte_t *p = endorsement_blob;
+  endorsement_cert =
+      d2i_X509(nullptr, (const byte_t **)&p, size_endorsement_blob);
+  EVP_PKEY *protector_evp_key = X509_get_pubkey(endorsement_cert);
+  RSA      *protector_key = EVP_PKEY_get1_RSA(protector_evp_key);
+  RSA_up_ref(protector_key);
+
+  // 2. Secret= E(protector_key, seed || "IDENTITY")
+  //   args: to, from, label, len
+  int    size_secret = 256;
+  byte_t secret_buf[256];
+  RSA_padding_add_PKCS1_OAEP(secret_buf,
+                             256,
+                             seed,
+                             size_seed,
+                             (byte_t *)"IDENTITY",
+                             strlen("IDENTITY") + 1);
+  int n = RSA_public_encrypt(size_secret,
+                             secret_buf,
+                             unmarshaled_encrypted_secret->secret,
+                             protector_key,
+                             RSA_NO_PADDING);
+  if (n <= 0) {
+    return false;
+  }
+  unmarshaled_encrypted_secret->size = n;
+  change_endian16((uint16_t *)&unmarshaled_encrypted_secret->size,
+                  &marshaled_encrypted_secret->size);
+  memcpy(marshaled_encrypted_secret->secret,
+         unmarshaled_encrypted_secret->secret,
+         unmarshaled_encrypted_secret->size);
+
+  byte_t symKey[MAX_SIZE_PARAMS];
+  string label;
+  string key;
+  string contextU;
+  string contextV;
+  string name;
+
+  // 3. Calculate symKey
+  label = "STORAGE";
+  key.assign((const char *)seed, size_seed);
+  contextV.clear();
+  name.assign((const char *)unmarshaled_name.name, unmarshaled_name.size);
+  if (!KDFa(hash_alg_id, key, label, name, contextV, 128, 32, symKey)) {
+    printf("%s() error, line %d, Can't KDFa symKey\n", __func__, __LINE__);
+    return false;
+  }
+
+  // 4. encIdentity
+  if (!AesCFBEncrypt(symKey,
+                     unmarshaled_credential.size + sizeof(uint16_t),
+                     (byte_t *)&marshaled_credential,
+                     16,
+                     zero_iv,
+                     size_encIdentity,
+                     encIdentity)) {
+    printf("%s() error, line %d, Can't AesCFBEncrypt\n", __func__, __LINE__);
+    return false;
+  }
+
+  int    size_hmacKey = SizeHash(hash_alg_id);
+  byte_t hmacKey[128];
+
+  // 5. HMACkey ≔ KDFa (ekNameAlg, seed, “INTEGRITY”, NULL, NULL, bits)
+  label = "INTEGRITY";
+  if (!KDFa(hash_alg_id,
+            key,
+            label,
+            contextV,
+            contextV,
+            8 * SizeHash(hash_alg_id),
+            32,
+            hmacKey)) {
+    printf("%s() error, line %d, Can't KDFa hmacKey\n", __func__, __LINE__);
+    return false;
+  }
+
+  // 6. Calculate outerMac = HMAC(hmacKey, encIdentity || name);
+  HMAC_CTX *hctx = nullptr;
+  hctx = HMAC_CTX_new();
+  if (hctx == nullptr) {
+    printf("%s() error, line %d, Can't get hmac context\n", __func__, __LINE__);
+    return false;
+  }
+
+  if (hash_alg_id != TPM_ALG_SHA256) {
+    printf("%s() error, line %d, unsupported hmac\n", __func__, __LINE__);
+    return false;
+  }
+  HMAC_Init_ex(hctx, hmacKey, size_hmacKey, EVP_sha256(), nullptr);
+  HMAC_Update(hctx, (const byte_t *)encIdentity, (size_t)*size_encIdentity);
+  HMAC_Update(hctx, (const byte_t *)name.data(), name.size());
+  // HMAC_Update(&hctx, (const byte_t*)&marshaled_name.name, name.size());
+  unmarshaled_integrityHmac->size = size_hmacKey;
+  HMAC_Final(hctx,
+             unmarshaled_integrityHmac->buffer,
+             (uint32_t *)&size_hmacKey);
+  HMAC_CTX_free(hctx);
+
+  // integrityHMAC
+  change_endian16((uint16_t *)&size_hmacKey, &marshaled_integrityHmac->size);
+  memcpy(marshaled_integrityHmac->buffer,
+         unmarshaled_integrityHmac->buffer,
+         size_hmacKey);
+#  ifdef DEBUG
+  printf("encIdentity: ");
+  print_bytes(*size_encIdentity, (byte_t *)encIdentity);
+  printf("\n");
+  printf("name       : ");
+  print_bytes(name.size(), (byte_t *)name.data());
+  printf("\n");
+  printf("hmac       : ");
+  print_bytes(size_hmacKey, (byte_t *)unmarshaled_integrityHmac->buffer);
+  printf("\n");
+  printf("marsh-hmac : ");
+  print_bytes(size_hmacKey + 2, (byte_t *)&marshaled_integrityHmac);
+  printf("\n");
+#  endif
+
+#endif
 
   return false;
 }
@@ -2494,6 +2617,7 @@ bool credential_test(local_tpm          &tpm,
     Tpm2_FlushContext(tpm, ek_handle);
     return false;
   }
+
 #ifdef DEBUG
   printf("MakeCredential succeeded\n");
   printf("credBlob size: %d\n", credentialBlob.size);
@@ -2508,6 +2632,17 @@ bool credential_test(local_tpm          &tpm,
   printf("\n");
 #endif
 
+  // Standalone makecredential
+#if 0
+  string endorsement_cert;
+  get_endorsement_cert(tpm, &endorsement_cert);
+  make_credential(quoting_pub_out,
+		     endorsement_cert,
+                     string             *cred_blob,
+		     string             *encrypted_secret)
+#endif
+
+  // Activate
   string nonce;
   string policyDigest;
   policyDigest.assign((char *)quoting_pub_out.publicArea.authPolicy.buffer,
