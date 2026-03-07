@@ -4439,22 +4439,17 @@ bool CalculateSessionKey(ProtectedSessionAuthInfo &in, TPM2B_DIGEST &rawSalt) {
   printf("\n");
 #endif
 
-  string key_out;
+  string   key_out;
   uint32_t size_bits = sizeKey * NBITSINBYTE;
   uint32_t endian_size_bits;
-  string info = contextU + contextV;
+  string   info = contextU + contextV;
   change_endian32(&size_bits, &endian_size_bits);
-  info.append((char*)&endian_size_bits, sizeof(uint32_t));
-  if (!kdf_hkdf(in.hash_alg_,
-              key,
-              label,
-              info,
-              sizeKey,
-              &key_out)) {
+  info.append((char *)&endian_size_bits, sizeof(uint32_t));
+  if (!kdf_hkdf(in.hash_alg_, key, label, info, sizeKey, &key_out)) {
     printf("%s() error, line %d, Can't KDFa symKey\n", __func__, __LINE__);
     return false;
   }
-  memcpy(in.sessionKey_, (byte_t*)key_out.data(), sizeKey);
+  memcpy(in.sessionKey_, (byte_t *)key_out.data(), sizeKey);
 
 #ifdef DEBUG
   printf("CalculateSessionKey, key: ");

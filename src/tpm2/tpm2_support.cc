@@ -2349,7 +2349,6 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
                      string             *cred_blob,
                      string             *encrypted_secret) {
 
-
   //
   // Performs the following steps:
   //   1. Generate a random secret, which is the actual credential data
