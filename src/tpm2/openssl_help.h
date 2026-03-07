@@ -49,6 +49,12 @@ bool AesCtrCrypt(int     key_size_bits,
                  int     size,
                  byte_t *in,
                  byte_t *out);
+bool kdf_hkdf(uint16_t hashAlg,
+              string  &salt,
+              string  &ikm,
+              string  &info,
+              int      out_len,
+              string  *key_out);
 bool KDFa(uint16_t hashAlg,
           string  &key,
           string  &label,

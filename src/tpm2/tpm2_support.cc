@@ -2370,7 +2370,7 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   // secret = encrypted_seed (with pubEK) // use oaep
   //  (EVP_PKEY_encrypt(ctx, encrypted_protection_seed->secret, &outlen,
   //        protection_seed->buffer, protection_seed->size)
-  
+
   TPM_ALG_ID hash_alg_id = quoting_key.publicArea.nameAlg;
 
   byte_t zero_iv[32];
@@ -2444,29 +2444,52 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
 
   byte_t symKey[MAX_SIZE_PARAMS];
   string label;
-  string key;
+  string salt;
   string contextU;
   string contextV;
 
   // 3. Calculate symKey
   label = "STORAGE";
-  key.assign((const char *)seed, size_seed);
+  salt.assign((const char *)seed, size_seed);
   contextV.clear();
+#if 0
   if (!KDFa(hash_alg_id,
             key,
             label,
             quote_key_name,
             contextV,
-            // 128,
-	    8 * SizeHash(hash_alg_id),
+	    128,
             32,
             symKey)) {
     printf("%s() error, line %d, Can't KDFa symKey\n", __func__, __LINE__);
     return false;
   }
+#else
+  // KDFa(ekNameAlg, seed, "STORAGE", name, NULL, bits)
+  contextU = "STORAGE";
+  string   sym_key;
+  uint32_t size_symKey_bits = 128;
+  uint16_t name_size = quote_key_name.size();
+  uint32_t endian_size_symKey_bits;
+  uint16_t endian_name_size;
+  change_endian32(&size_symKey_bits, &endian_size_symKey_bits);
+  change_endian16(&name_size, &endian_name_size);
+
+  // ContextV is name || 128
+  contextV.clear();
+  contextV.append((char *)&endian_name_size, 2);
+  contextV.append((char *)quote_key_name.data(), name_size);
+  contextV.append((char *)&endian_size_symKey_bits, sizeof(uint32_t));
+  if (!kdf_hkdf(hash_alg_id, salt, contextU, contextV, 16, &sym_key)) {
+    printf("%s() error, line %d, Can't KDFa symKey\n", __func__, __LINE__);
+    return false;
+  }
+  int size_symKey = size_symKey_bits / 8;
+  memcpy(symKey, (byte_t *)sym_key.data(), size_symKey);
+#endif
 #ifdef DEBUG
-  printf("\nsymKey           : ");
-  print_bytes(32, symKey);
+  printf("\nsymKey (%d)      : ", size_symKey);
+  print_bytes(size_symKey, symKey);
   printf("\n");
 #endif
 
@@ -2502,6 +2525,7 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   TPM2B_DIGEST unmarshaled_integrityHmac;
   TPM2B_DIGEST marshaled_integrityHmac;
   label = "INTEGRITY";
+#if 0
   if (!KDFa(hash_alg_id,
             key,
             label,
@@ -2513,6 +2537,28 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
     printf("%s() error, line %d, Can't KDFa hmacKey\n", __func__, __LINE__);
     return false;
   }
+#else
+  // KDFa(ekNameAlg, seed, "INTEGRITY", NULL, NULL, bits)
+  contextU = "INTEGRITY";
+  string   hmac_key;
+  uint32_t hmac_size_bits = size_hmacKey * 8;
+  uint32_t endian_size_hmacKey_bits;
+  change_endian32(&hmac_size_bits, &endian_size_hmacKey_bits);
+
+  // ContextV is endian_size_hmacKey_bits
+  contextV.clear();
+  contextV.append((char *)&endian_name_size, sizeof(uint32_t));
+  if (!kdf_hkdf(hash_alg_id,
+                salt,
+                contextU,
+                contextV,
+                size_hmacKey,
+                &hmac_key)) {
+    printf("%s() error, line %d, Can't KDFa symKey\n", __func__, __LINE__);
+    return false;
+  }
+  memcpy(hmacKey, (byte_t *)hmac_key.data(), size_hmacKey);
+#endif
 #ifdef DEBUG
   printf("hmacKey (%d)     : ", size_hmacKey);
   print_bytes(size_hmacKey, hmacKey);
@@ -2784,12 +2830,12 @@ bool credential_test(local_tpm          &tpm,
     return false;
   }
 
-#ifdef DEBUG
+#  ifdef DEBUG
   printf("ActivateCredential succeeded\n");
   printf("Recovered credential (%d): ", recovered_credential.size);
   print_bytes(recovered_credential.size, recovered_credential.buffer);
   printf("\n");
-#endif
+#  endif
 #endif
 
   // Standalone makecredential

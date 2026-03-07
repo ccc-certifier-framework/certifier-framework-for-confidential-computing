@@ -19,6 +19,10 @@
 #include <openssl/hmac.h>
 #include <openssl/rand.h>
 #include <openssl_help.h>
+#include <openssl/core_names.h>
+#include <openssl/kdf.h>
+#include <openssl/params.h>
+
 
 #include <string>
 using std::string;
@@ -168,6 +172,46 @@ void XorBlocks(int size, byte_t *in1, byte_t *in2, byte_t *out) {
     out[i] = in1[i] ^ in2[i];
 }
 
+bool kdf_hkdf(uint16_t hashAlg,
+              string  &salt,
+              string  &ikm,
+              string  &info,
+              int      out_len,
+              string  *key_out) {
+  if (hashAlg != TPM_ALG_SHA256) {
+    printf("%s() error, line %d, unsupported algorithm\n", __func__, __LINE__);
+    return false;
+  }
+  EVP_KDF      *kdf = EVP_KDF_fetch(NULL, "HKDF", NULL);
+  EVP_KDF_CTX  *kctx = EVP_KDF_CTX_new(kdf);
+  unsigned char out[out_len];
+
+  OSSL_PARAM params[] = {
+      OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+                                       (char *)"SHA256",
+                                       0),
+      OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+                                        (byte_t *)ikm.data(),
+                                        ikm.size()),
+      OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
+                                        (byte_t *)salt.data(),
+                                        salt.size()),
+      OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
+                                        (byte_t *)info.data(),
+                                        info.size()),
+      OSSL_PARAM_construct_end()};
+
+  if (EVP_KDF_derive(kctx, out, sizeof(out), params) != 1) {
+    return false;
+  }
+
+  EVP_KDF_CTX_free(kctx);
+  EVP_KDF_free(kdf);
+
+  key_out->assign((char *)out, out_len);
+  return true;
+}
+
 bool KDFa(uint16_t hashAlg,
           string  &key,
           string  &label,
@@ -176,36 +220,35 @@ bool KDFa(uint16_t hashAlg,
           int      bits,
           int      out_size,
           byte_t  *out) {
-  uint32_t  len = 32;
-  uint32_t  counter = 0;
-  int       bytes_left = (bits + 7) / 8;
-  byte_t   *current_out = out;
-  int       size_buf = 0;
-  byte_t    buf[MAX_SIZE_PARAMS];
-  int       n;
-  HMAC_CTX *ctx = HMAC_CTX_new();
-
-  if (ctx == nullptr) {
-    printf("%s() error, line %d, Can't get hmac context\n", __func__, __LINE__);
-  }
+  uint32_t len = 32;
+  uint32_t counter = 0;
+  int      bytes_left = (bits + 7) / 8;
+  byte_t  *current_out = out;
+  int      size_buf = 0;
+  byte_t   buf[MAX_SIZE_PARAMS];
+  int      n;
 
   memset(buf, 0, 128);
-  change_endian32(&counter, (uint32_t *)&buf[size_buf]);
+
+  change_endian32(&counter, (uint32_t *)buf);
   size_buf += sizeof(uint32_t);
   n = strlen(label.c_str()) + 1;
   if ((size_buf + n) > MAX_SIZE_PARAMS) {
     return false;
   }
+
   memcpy(&buf[size_buf], label.data(), n);
   size_buf += n;
   if ((size_buf + contextU.size()) > MAX_SIZE_PARAMS) {
     return false;
   }
+
   memcpy(&buf[size_buf], contextU.data(), contextU.size());
   size_buf += contextU.size();
   if ((size_buf + contextV.size()) > MAX_SIZE_PARAMS) {
     return false;
   }
+
   memcpy(&buf[size_buf], contextV.data(), contextV.size());
   size_buf += contextV.size();
   if ((size_buf + sizeof(uint32_t)) > MAX_SIZE_PARAMS) {
@@ -215,13 +258,21 @@ bool KDFa(uint16_t hashAlg,
   size_buf += sizeof(uint32_t);
 
   while (bytes_left > 0) {
+    HMAC_CTX *ctx = HMAC_CTX_new();
+    if (ctx == nullptr) {
+      printf("%s() error, line %d, Can't get hmac context\n",
+             __func__,
+             __LINE__);
+    }
     counter++;
     change_endian32(&counter, (uint32_t *)buf);
 
     if (hashAlg == TPM_ALG_SHA1) {
       HMAC_Init_ex(ctx, key.data(), key.size(), EVP_sha1(), nullptr);
-    } else {
+    } else if (hashAlg == TPM_ALG_SHA256) {
       HMAC_Init_ex(ctx, key.data(), key.size(), EVP_sha256(), nullptr);
+    } else {
+      printf("%s() error, line %d, unsupported hash alg\n", __func__, __LINE__);
     }
     HMAC_Update(ctx, buf, size_buf);
     HMAC_Final(ctx, current_out, &len);
