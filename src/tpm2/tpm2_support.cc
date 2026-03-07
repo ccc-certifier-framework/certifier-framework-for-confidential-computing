@@ -2515,7 +2515,7 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   cred_blob->append((char*)unmarshaled_integrityHmac.buffer, size_hmacKey);
   cred_blob->append((char*)encIdentity, size_encIdentity);
 
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\nencIdentity: ");
   print_bytes(size_encIdentity, (byte_t *)encIdentity);
   printf("\n");
@@ -2640,7 +2640,7 @@ bool credential_test(local_tpm          &tpm,
   }
 
 #ifdef DEBUG
-  printf("MakeCredential succeeded\n");
+  printf("TPM MakeCredential succeeded\n");
   printf("credBlob size: %d\n", credentialBlob.size);
   print_bytes(credentialBlob.size, credentialBlob.credential);
   printf("\n");
@@ -2653,35 +2653,6 @@ bool credential_test(local_tpm          &tpm,
   printf("\n");
 #endif
 
-  // Standalone makecredential
-  string endorsement_cert;
-  if (!get_endorsement_cert(tpm, &endorsement_cert)) {
-    printf("%s() error, line %d, create_endorsement _session failed\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-#ifdef DEBUG
-  printf("get_endorsement_cert succeeded\n");
-#endif
-
-  // make_credential
-  string quote_key_name;
-  quote_key_name.assign((char *)quoting_pub_name.name, quoting_pub_name.size);
-  string cred;
-  string cred_blob_out;
-  string encrypted_secret_out;
-  cred.assign((char *)credential.buffer, credential.size);
-  if (!make_credential(quoting_pub_out,
-                       quote_key_name,
-                       endorsement_cert,
-                       cred,
-                       &cred_blob_out,
-                       &encrypted_secret_out)) {
-    printf("make_credential failed\n");
-  } else {
-    printf("make_credential succeeded\n");
-  }
 
   // Activate
   string nonce;
@@ -2779,6 +2750,71 @@ bool credential_test(local_tpm          &tpm,
   print_bytes(recovered_credential.size, recovered_credential.buffer);
   printf("\n");
 #endif
+
+  // Standalone makecredential
+  string endorsement_cert;
+  if (!get_endorsement_cert(tpm, &endorsement_cert)) {
+    printf("%s() error, line %d, create_endorsement _session failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+#ifdef DEBUG
+  printf("get_endorsement_cert succeeded\n");
+#endif
+
+  // make_credential
+  string quote_key_name;
+  quote_key_name.assign((char *)quoting_pub_name.name, quoting_pub_name.size);
+  string cred;
+  string cred_blob_out;
+  string encrypted_secret_out;
+  cred.assign((char *)credential.buffer, credential.size);
+  if (!make_credential(quoting_pub_out,
+                       quote_key_name,
+                       endorsement_cert,
+                       cred,
+                       &cred_blob_out,
+                       &encrypted_secret_out)) {
+    printf("make_credential failed\n");
+    return false;
+  }
+
+#ifdef DEBUG
+  printf("\nStandalone MakeCredential succeeded\n");
+  printf("credBlob size: %d\n", (int)cred_blob_out.size());
+  print_bytes(cred_blob_out.size(), (byte_t*)cred_blob_out.data());
+  printf("\n");
+  printf("secret size: %d\n", (int)encrypted_secret_out.size());
+  print_bytes(encrypted_secret_out.size(), (byte_t*)encrypted_secret_out.data());
+  printf("\n");
+#endif
+
+#if 0
+  if (!Tpm2_ActivateCredential(tpm,
+                               quote_handle,
+                               ek_handle,
+                               quoteAuth,
+                               endorsementAuth,
+                               credentialBlob,
+                               secret,
+                               &recovered_credential)) {
+    printf("%s() error, line %d, Tpm2_ActivateCredential failed\n",
+           __func__,
+           __LINE__);
+    Tpm2_FlushContext(tpm, ek_handle);
+    Tpm2_FlushContext(tpm, endorsement_session_handle);
+    return false;
+  }
+
+#ifdef DEBUG
+  printf("ActivateCredential succeeded\n");
+  printf("Recovered credential (%d): ", recovered_credential.size);
+  print_bytes(recovered_credential.size, recovered_credential.buffer);
+  printf("\n");
+#endif
+#endif
+
 
   Tpm2_FlushContext(tpm, ek_handle);
   Tpm2_FlushContext(tpm, endorsement_session_handle);
