@@ -2452,19 +2452,6 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   label = "STORAGE";
   salt.assign((const char *)seed, size_seed);
   contextV.clear();
-#if 0
-  if (!KDFa(hash_alg_id,
-            key,
-            label,
-            quote_key_name,
-            contextV,
-	    128,
-            32,
-            symKey)) {
-    printf("%s() error, line %d, Can't KDFa symKey\n", __func__, __LINE__);
-    return false;
-  }
-#else
   // KDFa(ekNameAlg, seed, "STORAGE", name, NULL, bits)
   contextU = "STORAGE";
   string   sym_key;
@@ -2486,7 +2473,6 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   }
   int size_symKey = size_symKey_bits / 8;
   memcpy(symKey, (byte_t *)sym_key.data(), size_symKey);
-#endif
 #ifdef DEBUG
   printf("\nsymKey (%d)      : ", size_symKey);
   print_bytes(size_symKey, symKey);
@@ -2525,19 +2511,6 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   TPM2B_DIGEST unmarshaled_integrityHmac;
   TPM2B_DIGEST marshaled_integrityHmac;
   label = "INTEGRITY";
-#if 0
-  if (!KDFa(hash_alg_id,
-            key,
-            label,
-            contextV,
-            contextV,
-            8 * SizeHash(hash_alg_id),
-            32,
-            hmacKey)) {
-    printf("%s() error, line %d, Can't KDFa hmacKey\n", __func__, __LINE__);
-    return false;
-  }
-#else
   // KDFa(ekNameAlg, seed, "INTEGRITY", NULL, NULL, bits)
   contextU = "INTEGRITY";
   string   hmac_key;
@@ -2558,7 +2531,6 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
     return false;
   }
   memcpy(hmacKey, (byte_t *)hmac_key.data(), size_hmacKey);
-#endif
 #ifdef DEBUG
   printf("hmacKey (%d)     : ", size_hmacKey);
   print_bytes(size_hmacKey, hmacKey);

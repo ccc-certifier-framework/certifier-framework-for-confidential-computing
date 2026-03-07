@@ -4137,182 +4137,6 @@ bool Tpm2_EvictControl(local_tpm         &tpm,
 
 #define DEBUG
 
-//    1. Generate Seed
-//    2. encrypted_secret= E(protector_key, seed || "IDENTITY")
-//    3. symKey ≔ KDFa (ekNameAlg, seed, “STORAGE”, name, NULL , bits)
-//    4. encIdentity ≔ AesCFB(symKey, 0, credential)
-//    5. HMACkey ≔ KDFa (ekNameAlg, seed, “INTEGRITY”, NULL, NULL, bits)
-//    6. outerHMAC ≔ HMAC(HMACkey, encIdentity || Name)
-bool make_credential(int                     size_endorsement_blob,
-                     byte_t                 *endorsement_blob,
-                     TPM_ALG_ID              hash_alg_id,
-                     TPM2B_DIGEST           &unmarshaled_credential,
-                     TPM2B_DIGEST           &marshaled_credential,
-                     TPM2B_NAME             &unmarshaled_name,
-                     TPM2B_NAME             &marshaled_name,
-                     int                    *size_encIdentity,
-                     byte_t                 *encIdentity,
-                     TPM2B_ENCRYPTED_SECRET *unmarshaled_encrypted_secret,
-                     TPM2B_ENCRYPTED_SECRET *marshaled_encrypted_secret,
-                     TPM2B_DIGEST           *unmarshaled_integrityHmac,
-                     TPM2B_DIGEST           *marshaled_integrityHmac) {
-  X509  *endorsement_cert = nullptr;
-  int    size_seed = 16;
-  byte_t seed[32];
-  int    size_secret = 256;
-  byte_t secret_buf[256];
-  byte_t zero_iv[32];
-  byte_t symKey[MAX_SIZE_PARAMS];
-  string label;
-  string key;
-  string contextU;
-  string contextV;
-  string name;
-
-  memset(zero_iv, 0, 32);
-#ifdef DEBUG
-  printf("make_credential\n");
-#endif
-
-  // 1. Generate seed
-  RAND_bytes(seed, size_seed);
-
-  // Get endorsement public key, which is protector key
-  byte_t *p = endorsement_blob;
-  endorsement_cert =
-      d2i_X509(nullptr, (const byte_t **)&p, size_endorsement_blob);
-  EVP_PKEY *protector_evp_key = X509_get_pubkey(endorsement_cert);
-  RSA      *protector_key = EVP_PKEY_get1_RSA(protector_evp_key);
-  RSA_up_ref(protector_key);
-
-  // 2. Secret= E(protector_key, seed || "IDENTITY")
-  //   args: to, from, label, len
-  size_secret = 256;
-  RSA_padding_add_PKCS1_OAEP(secret_buf,
-                             256,
-                             seed,
-                             size_seed,
-                             (byte_t *)"IDENTITY",
-                             strlen("IDENTITY") + 1);
-#ifdef DEBUG
-  int    k = 0;
-  byte_t check[512];
-  memset(check, 0, 512);
-  while (k < 256 && secret_buf[k] == 0)
-    k++;
-  int check_len = RSA_padding_check_PKCS1_OAEP(check,
-                                               256,
-                                               &secret_buf[k],
-                                               256 - k,
-                                               256,
-                                               (byte_t *)"IDENTITY",
-                                               strlen("IDENTITY") + 1);
-  printf("Seed         : ");
-  print_bytes(size_seed, seed);
-  printf("\n");
-  printf("Funny padding: ");
-  print_bytes(256, secret_buf);
-  printf("\n");
-  printf("check %03d    : ", check_len);
-  print_bytes(check_len, check);
-  printf("\n");
-#endif
-  int n = RSA_public_encrypt(size_secret,
-                             secret_buf,
-                             unmarshaled_encrypted_secret->secret,
-                             protector_key,
-                             RSA_NO_PADDING);
-  if (n <= 0)
-    return false;
-  unmarshaled_encrypted_secret->size = n;
-  change_endian16((uint16_t *)&unmarshaled_encrypted_secret->size,
-                  &marshaled_encrypted_secret->size);
-  memcpy(marshaled_encrypted_secret->secret,
-         unmarshaled_encrypted_secret->secret,
-         unmarshaled_encrypted_secret->size);
-
-  // 3. Calculate symKey
-  label = "STORAGE";
-  key.assign((const char *)seed, size_seed);
-  contextV.clear();
-  name.assign((const char *)unmarshaled_name.name, unmarshaled_name.size);
-  if (!KDFa(hash_alg_id, key, label, name, contextV, 128, 32, symKey)) {
-    printf("%s() error, line %d, Can't KDFa symKey\n", __func__, __LINE__);
-    return false;
-  }
-
-  // 4. encIdentity
-  if (!AesCFBEncrypt(symKey,
-                     unmarshaled_credential.size + sizeof(uint16_t),
-                     (byte_t *)&marshaled_credential,
-                     16,
-                     zero_iv,
-                     size_encIdentity,
-                     encIdentity)) {
-    printf("%s() error, line %d, Can't AesCFBEncrypt\n", __func__, __LINE__);
-    return false;
-  }
-
-  int    size_hmacKey = SizeHash(hash_alg_id);
-  byte_t hmacKey[128];
-
-  // 5. HMACkey ≔ KDFa (ekNameAlg, seed, “INTEGRITY”, NULL, NULL, bits)
-  label = "INTEGRITY";
-  if (!KDFa(hash_alg_id,
-            key,
-            label,
-            contextV,
-            contextV,
-            8 * SizeHash(hash_alg_id),
-            32,
-            hmacKey)) {
-    printf("%s() error, line %d, Can't KDFa hmacKey\n", __func__, __LINE__);
-    return false;
-  }
-
-  // 6. Calculate outerMac = HMAC(hmacKey, encIdentity || name);
-  HMAC_CTX *hctx = nullptr;
-  hctx = HMAC_CTX_new();
-  if (hctx == nullptr) {
-    printf("%s() error, line %d, Can't get hmac context\n", __func__, __LINE__);
-    return false;
-  }
-
-  if (hash_alg_id == TPM_ALG_SHA1) {
-    HMAC_Init_ex(hctx, hmacKey, size_hmacKey, EVP_sha1(), nullptr);
-  } else {
-    HMAC_Init_ex(hctx, hmacKey, size_hmacKey, EVP_sha256(), nullptr);
-  }
-  HMAC_Update(hctx, (const byte_t *)encIdentity, (size_t)*size_encIdentity);
-  HMAC_Update(hctx, (const byte_t *)name.data(), name.size());
-  // HMAC_Update(&hctx, (const byte_t*)&marshaled_name.name, name.size());
-  unmarshaled_integrityHmac->size = size_hmacKey;
-  HMAC_Final(hctx,
-             unmarshaled_integrityHmac->buffer,
-             (uint32_t *)&size_hmacKey);
-  HMAC_CTX_free(hctx);
-
-  // integrityHMAC
-  change_endian16((uint16_t *)&size_hmacKey, &marshaled_integrityHmac->size);
-  memcpy(marshaled_integrityHmac->buffer,
-         unmarshaled_integrityHmac->buffer,
-         size_hmacKey);
-#ifdef DEBUG
-  printf("encIdentity: ");
-  print_bytes(*size_encIdentity, (byte_t *)encIdentity);
-  printf("\n");
-  printf("name       : ");
-  print_bytes(name.size(), (byte_t *)name.data());
-  printf("\n");
-  printf("hmac       : ");
-  print_bytes(size_hmacKey, (byte_t *)unmarshaled_integrityHmac->buffer);
-  printf("\n");
-  printf("marsh-hmac : ");
-  print_bytes(size_hmacKey + 2, (byte_t *)&marshaled_integrityHmac);
-  printf("\n");
-#endif
-  return true;
-}
 
 /*
  *  The following code is for an encrypted session. Later we should fix the
@@ -4615,17 +4439,22 @@ bool CalculateSessionKey(ProtectedSessionAuthInfo &in, TPM2B_DIGEST &rawSalt) {
   printf("\n");
 #endif
 
-  if (!KDFa(in.hash_alg_,
-            key,
-            label,
-            contextU,
-            contextV,
-            sizeKey * NBITSINBYTE,
-            sizeKey,
-            in.sessionKey_)) {
+  string key_out;
+  uint32_t size_bits = sizeKey * NBITSINBYTE;
+  uint32_t endian_size_bits;
+  string info = contextU + contextV;
+  change_endian32(&size_bits, &endian_size_bits);
+  info.append((char*)&endian_size_bits, sizeof(uint32_t));
+  if (!kdf_hkdf(in.hash_alg_,
+              key,
+              label,
+              info,
+              sizeKey,
+              &key_out)) {
     printf("%s() error, line %d, Can't KDFa symKey\n", __func__, __LINE__);
     return false;
   }
+  memcpy(in.sessionKey_, (byte_t*)key_out.data(), sizeKey);
 
 #ifdef DEBUG
   printf("CalculateSessionKey, key: ");
