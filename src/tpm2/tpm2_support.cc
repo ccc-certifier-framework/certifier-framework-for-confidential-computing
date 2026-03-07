@@ -2511,9 +2511,6 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   printf("\nencIdentity: ");
   print_bytes(size_encIdentity, (byte_t *)encIdentity);
   printf("\n");
-  printf("quote name : ");
-  print_bytes(quote_key_name.size(), (byte_t *)quote_key_name.data());
-  printf("\n");
   printf("hmac       : ");
   print_bytes(size_hmacKey, (byte_t *)unmarshaled_integrityHmac.buffer);
   printf("\n");
