@@ -2508,12 +2508,12 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   HMAC_CTX_free(hctx);
 
   // credBlob: (20 bytes) || hmac || encrypted
-  uint16_t bsize= size_hmacKey;
+  uint16_t bsize = size_hmacKey;
   uint16_t csize = 0;
   change_endian16(&bsize, &csize);
-  cred_blob->assign((char*)&csize, 2);
-  cred_blob->append((char*)unmarshaled_integrityHmac.buffer, size_hmacKey);
-  cred_blob->append((char*)encIdentity, size_encIdentity);
+  cred_blob->assign((char *)&csize, 2);
+  cred_blob->append((char *)unmarshaled_integrityHmac.buffer, size_hmacKey);
+  cred_blob->append((char *)encIdentity, size_encIdentity);
 
 #ifdef DEBUG2
   printf("\nencIdentity: ");
@@ -2783,13 +2783,25 @@ bool credential_test(local_tpm          &tpm,
 #ifdef DEBUG
   printf("\nStandalone MakeCredential succeeded\n");
   printf("credBlob size: %d\n", (int)cred_blob_out.size());
-  print_bytes(cred_blob_out.size(), (byte_t*)cred_blob_out.data());
+  print_bytes(cred_blob_out.size(), (byte_t *)cred_blob_out.data());
   printf("\n");
   printf("secret size: %d\n", (int)encrypted_secret_out.size());
-  print_bytes(encrypted_secret_out.size(), (byte_t*)encrypted_secret_out.data());
+  print_bytes(encrypted_secret_out.size(),
+              (byte_t *)encrypted_secret_out.data());
   printf("\n");
 #endif
 
+  memset((byte_t *)&recovered_credential, 0, sizeof(recovered_credential));
+  memset((byte_t *)&credentialBlob, 0, sizeof(credentialBlob));
+  memset((byte_t *)&secret, 0, sizeof(secret));
+  credentialBlob.size = cred_blob_out.size();
+  memcpy(credentialBlob.credential,
+         (byte_t *)cred_blob_out.data(),
+         cred_blob_out.size());
+  secret.size = encrypted_secret_out.size();
+  memcpy(secret.secret,
+         (byte_t *)encrypted_secret_out.data(),
+         encrypted_secret_out.size());
 #if 0
   if (!Tpm2_ActivateCredential(tpm,
                                quote_handle,
@@ -2807,12 +2819,12 @@ bool credential_test(local_tpm          &tpm,
     return false;
   }
 
-#ifdef DEBUG
+#  ifdef DEBUG
   printf("ActivateCredential succeeded\n");
   printf("Recovered credential (%d): ", recovered_credential.size);
   print_bytes(recovered_credential.size, recovered_credential.buffer);
   printf("\n");
-#endif
+#  endif
 #endif
 
 
