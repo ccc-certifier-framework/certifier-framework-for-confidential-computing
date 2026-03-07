@@ -2349,8 +2349,6 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
                      string             *cred_blob,
                      string             *encrypted_secret) {
 
-  //  create secret
-  TPM_ALG_ID hash_alg_id = quoting_key.publicArea.nameAlg;
 
   //
   // Performs the following steps:
@@ -2372,19 +2370,27 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   // secret = encrypted_seed (with pubEK) // use oaep
   //  (EVP_PKEY_encrypt(ctx, encrypted_protection_seed->secret, &outlen,
   //        protection_seed->buffer, protection_seed->size)
+  
+  TPM_ALG_ID hash_alg_id = quoting_key.publicArea.nameAlg;
 
   byte_t zero_iv[32];
   memset(zero_iv, 0, 32);
 
   // 1. Generate seed
-  int    size_seed = 16;
-  byte_t seed[32];
+  int    size_seed = 32;
+  byte_t seed[size_seed];
   RAND_bytes(seed, size_seed);
 
   // Get endorsement public key, which is protector key
   X509   *endorsement_cert = nullptr;
   byte_t *p = (byte_t *)cert_in.data();
   endorsement_cert = d2i_X509(nullptr, (const byte_t **)&p, cert_in.size());
+  if (endorsement_cert == nullptr) {
+    printf("%s() error, line %d, Can't translate endorsement cert\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
   EVP_PKEY *protector_evp_key = X509_get_pubkey(endorsement_cert);
   RSA      *protector_key = EVP_PKEY_get1_RSA(protector_evp_key);
   RSA_up_ref(protector_key);
@@ -2411,6 +2417,16 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
            __LINE__);
     return false;
   }
+#ifdef DEBUG
+  X509_print_fp(stdout, endorsement_cert);
+  printf("\n");
+  printf("seed (%d): ", size_seed);
+  print_bytes(size_seed, seed);
+  printf("\n");
+  printf("padded (%d):\n", m);
+  print_bytes(size_secret_buf, secret_buf);
+  printf("\n");
+#endif
 
   int n = RSA_public_encrypt(size_secret_buf,
                              secret_buf,
@@ -2440,12 +2456,18 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
             label,
             quote_key_name,
             contextV,
-            128,
+            // 128,
+	    8 * SizeHash(hash_alg_id),
             32,
             symKey)) {
     printf("%s() error, line %d, Can't KDFa symKey\n", __func__, __LINE__);
     return false;
   }
+#ifdef DEBUG
+  printf("symKey : ");
+  print_bytes(32, symKey);
+  printf("\n");
+#endif
 
   // 4. encIdentity
   TPM2B_DIGEST marshaled_credential;
@@ -2465,6 +2487,11 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
     printf("%s() error, line %d, Can't AesCFBEncrypt\n", __func__, __LINE__);
     return false;
   }
+#ifdef DEBUG
+  printf("encIdentity (%d) : ", size_encIdentity);
+  print_bytes(size_encIdentity, encIdentity);
+  printf("\n");
+#endif
 
   int    size_hmacKey = SizeHash(hash_alg_id);
   byte_t hmacKey[128];
@@ -2485,6 +2512,11 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
     printf("%s() error, line %d, Can't KDFa hmacKey\n", __func__, __LINE__);
     return false;
   }
+#ifdef DEBUG
+  printf("hmacKey: ");
+  print_bytes(32, hmacKey);
+  printf("\n");
+#endif
 
   // 6. Calculate outerMac = HMAC(hmacKey, encIdentity || name);
   HMAC_CTX *hctx = HMAC_CTX_new();
@@ -2506,6 +2538,11 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   unmarshaled_integrityHmac.size = size_hmacKey;
   HMAC_Final(hctx, unmarshaled_integrityHmac.buffer, (uint32_t *)&size_hmacKey);
   HMAC_CTX_free(hctx);
+#ifdef DEBUG
+  printf("Outer Mac (%d) : ", size_hmacKey);
+  print_bytes(size_hmacKey, unmarshaled_integrityHmac.buffer);
+  printf("\n");
+#endif
 
   // credBlob: (20 bytes) || hmac || encrypted
   uint16_t bsize = size_hmacKey;
