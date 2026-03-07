@@ -2508,12 +2508,12 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   HMAC_CTX_free(hctx);
 
   // credBlob: (20 bytes) || hmac || encrypted
-  uint16_t bsize= size_hmac;
+  uint16_t bsize= size_hmacKey;
   uint16_t csize = 0;
   change_endian16(&bsize, &csize);
   cred_blob->assign((char*)&csize, 2);
-  cred_blob->append(size_hmacKey, ((char*)unmarshaled_integrityHmac.buffer);
-  cred_blob->append(size_encIdentity, ((char*)encIdentity);
+  cred_blob->append((char*)unmarshaled_integrityHmac.buffer, size_hmacKey);
+  cred_blob->append((char*)encIdentity, size_encIdentity);
 
 #ifdef DEBUG
   printf("\nencIdentity: ");
@@ -2525,7 +2525,7 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   printf("encrypted secret:\n");
   print_bytes(encrypted_secret->size(), (byte_t *)encrypted_secret->data());
   printf("\n");
-  printf("credBlob (%d): ", cred_blob->size());
+  printf("credBlob (%d): ", (int)cred_blob->size());
   print_bytes(cred_blob->size(), (byte_t *)cred_blob->data());
   printf("\n");
 #endif
