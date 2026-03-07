@@ -305,21 +305,13 @@ tpm2_nvread -T swtpm:port=2321 -C o 0x01c00002 -o tool_ek_rsa_cert.bin
 
 --------------------------------------------------------------------------------
 
-./tpm2_util.exe --tpm_device="/dev/tpm1" --command=GetRandom --numbytes=32
-./tpm2_util.exe --tpm_device="/dev/tpm1" --pcr_num=7 --command=EndorsementTest
-./tpm2_util.exe --tpm_device="/dev/tpm1" --command=ContextTest
-./tpm2_util.exe --tpm_device="/dev/tpm1" --pcr_num=7 --command=SealTest
-.d/tpm2_util.exe --tpm_device="/dev/tpm1" --command=KeyTest
-./tpm2_util.exe --tpm_device="/dev/tpm1" --command=NvTest
-./tpm2_util.exe --tpm_device="/dev/tpm1" --pcr_num=7 --command=QuoteTest
-
 ./tpm2_test.exe --operation=GetCert --tpm_device=/dev/tpm1
 ./tpm2_test.exe --operation=EndorsementTest --tpm_device=/dev/tpm1
 ./tpm2_test.exe --operation=SealTest --tpm_device=/dev/tpm1
 ./tpm2_test.exe --operation=QuoteTest --tpm_device=/dev/tpm1
 
+--------------------------------------------------------------------------------
 
-./tpm2_test.exe --operation=NvTest --tpm_device=/dev/tpm1
 
 To decode error messages:
   tpm2_rc_decode 0x921
@@ -352,4 +344,14 @@ To decode error messages:
     tpm:session(1):value is out of range or is not correct for the context
 
 ----------------------------
+Old tests
 
+
+./tpm2_util.exe --tpm_device="/dev/tpm1" --command=GetRandom --numbytes=32
+./tpm2_util.exe --tpm_device="/dev/tpm1" --pcr_num=7 --command=EndorsementTest
+./tpm2_util.exe --tpm_device="/dev/tpm1" --command=ContextTest
+./tpm2_util.exe --tpm_device="/dev/tpm1" --pcr_num=7 --command=SealTest
+.d/tpm2_util.exe --tpm_device="/dev/tpm1" --command=KeyTest
+./tpm2_util.exe --tpm_device="/dev/tpm1" --command=NvTest
+./tpm2_util.exe --tpm_device="/dev/tpm1" --pcr_num=7 --command=QuoteTest
+./tpm2_test.exe --operation=NvTest --tpm_device=/dev/tpm1

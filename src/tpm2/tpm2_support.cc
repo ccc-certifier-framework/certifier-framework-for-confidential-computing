@@ -2418,6 +2418,7 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
     return false;
   }
 #ifdef DEBUG
+  printf("\n");
   X509_print_fp(stdout, endorsement_cert);
   printf("\n");
   printf("seed (%d): ", size_seed);
@@ -2425,7 +2426,7 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   printf("\n");
   printf("padded (%d):\n", m);
   print_bytes(size_secret_buf, secret_buf);
-  printf("\n");
+  printf("\n\n");
 #endif
 
   int n = RSA_public_encrypt(size_secret_buf,
@@ -2464,7 +2465,7 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
     return false;
   }
 #ifdef DEBUG
-  printf("symKey : ");
+  printf("\nsymKey           : ");
   print_bytes(32, symKey);
   printf("\n");
 #endif
@@ -2513,8 +2514,8 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
     return false;
   }
 #ifdef DEBUG
-  printf("hmacKey: ");
-  print_bytes(32, hmacKey);
+  printf("hmacKey (%d)     : ", size_hmacKey);
+  print_bytes(size_hmacKey, hmacKey);
   printf("\n");
 #endif
 
@@ -2539,7 +2540,7 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   HMAC_Final(hctx, unmarshaled_integrityHmac.buffer, (uint32_t *)&size_hmacKey);
   HMAC_CTX_free(hctx);
 #ifdef DEBUG
-  printf("Outer Mac (%d) : ", size_hmacKey);
+  printf("Outer Mac (%d)   : ", size_hmacKey);
   print_bytes(size_hmacKey, unmarshaled_integrityHmac.buffer);
   printf("\n");
 #endif
@@ -2765,6 +2766,8 @@ bool credential_test(local_tpm          &tpm,
   printf("\n");
 #endif
 
+#define TPMMAKECRED
+#ifdef TPMMAKECRED
   if (!Tpm2_ActivateCredential(tpm,
                                quote_handle,
                                ek_handle,
@@ -2786,6 +2789,7 @@ bool credential_test(local_tpm          &tpm,
   printf("Recovered credential (%d): ", recovered_credential.size);
   print_bytes(recovered_credential.size, recovered_credential.buffer);
   printf("\n");
+#endif
 #endif
 
   // Standalone makecredential
@@ -2839,7 +2843,7 @@ bool credential_test(local_tpm          &tpm,
   memcpy(secret.secret,
          (byte_t *)encrypted_secret_out.data(),
          encrypted_secret_out.size());
-#if 0
+#ifndef TPMMAKECRED
   if (!Tpm2_ActivateCredential(tpm,
                                quote_handle,
                                ek_handle,
