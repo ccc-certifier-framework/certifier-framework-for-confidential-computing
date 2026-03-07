@@ -183,26 +183,34 @@ bool KDFa(uint16_t hashAlg,
   int       size_buf = 0;
   byte_t    buf[MAX_SIZE_PARAMS];
   int       n;
-  HMAC_CTX *ctx = nullptr;
+  HMAC_CTX *ctx = HMAC_CTX_new();
+
+  if (ctx == nullptr) {
+    printf("%s() error, line %d, Can't get hmac context\n", __func__, __LINE__);
+  }
 
   memset(buf, 0, 128);
   change_endian32(&counter, (uint32_t *)&buf[size_buf]);
   size_buf += sizeof(uint32_t);
   n = strlen(label.c_str()) + 1;
-  if ((size_buf + n) > MAX_SIZE_PARAMS)
+  if ((size_buf + n) > MAX_SIZE_PARAMS) {
     return false;
+  }
   memcpy(&buf[size_buf], label.data(), n);
   size_buf += n;
-  if ((size_buf + contextU.size()) > MAX_SIZE_PARAMS)
+  if ((size_buf + contextU.size()) > MAX_SIZE_PARAMS) {
     return false;
+  }
   memcpy(&buf[size_buf], contextU.data(), contextU.size());
   size_buf += contextU.size();
-  if ((size_buf + contextV.size()) > MAX_SIZE_PARAMS)
+  if ((size_buf + contextV.size()) > MAX_SIZE_PARAMS) {
     return false;
+  }
   memcpy(&buf[size_buf], contextV.data(), contextV.size());
   size_buf += contextV.size();
-  if ((size_buf + sizeof(uint32_t)) > MAX_SIZE_PARAMS)
+  if ((size_buf + sizeof(uint32_t)) > MAX_SIZE_PARAMS) {
     return false;
+  }
   change_endian32((uint32_t *)&bits, (uint32_t *)&buf[size_buf]);
   size_buf += sizeof(uint32_t);
 
