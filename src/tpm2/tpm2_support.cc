@@ -2448,28 +2448,26 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   string contextV;
 
   // 3. Calculate symKey
+  // KDFa(ekNameAlg, seed, "STORAGE", name, NULL, bits)
   label = "STORAGE";
   salt.assign((const char *)seed, size_seed);
+  contextU.assign((char *)quote_key_name.data(), quote_key_name.size());
   contextV.clear();
-  // KDFa(ekNameAlg, seed, "STORAGE", name, NULL, bits)
-  contextU = "STORAGE";
+
   string   sym_key;
   uint32_t size_symKey_bits = 128;
-  uint16_t name_size = quote_key_name.size();
-  uint32_t endian_size_symKey_bits;
-  uint16_t endian_name_size;
-  change_endian32(&size_symKey_bits, &endian_size_symKey_bits);
-  change_endian16(&name_size, &endian_name_size);
 
-  // ContextV is name || 128
-  contextV.clear();
-  contextV.append((char *)&endian_name_size, 2);
-  contextV.append((char *)quote_key_name.data(), name_size);
-  contextV.append((char *)&endian_size_symKey_bits, sizeof(uint32_t));
-  if (!kdf_hkdf(hash_alg_id, salt, contextU, contextV, 16, &sym_key)) {
+  if (!kdfa(hash_alg_id,
+            salt,
+            label,
+            contextU,
+            contextV,
+            size_symKey_bits,
+            &sym_key)) {
     printf("%s() error, line %d, Can't KDFa symKey\n", __func__, __LINE__);
     return false;
   }
+
   int size_symKey = size_symKey_bits / 8;
   memcpy(symKey, (byte_t *)sym_key.data(), size_symKey);
 #ifdef DEBUG
@@ -2508,23 +2506,22 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   TPM_ALG_ID   ekNameAlg = hash_alg_id;
   TPM2B_DIGEST unmarshaled_integrityHmac;
   TPM2B_DIGEST marshaled_integrityHmac;
-  label = "INTEGRITY";
+
   // KDFa(ekNameAlg, seed, "INTEGRITY", NULL, NULL, bits)
-  contextU = "INTEGRITY";
-  string   hmac_key;
-  uint32_t hmac_size_bits = size_hmacKey * 8;
-  uint32_t endian_size_hmacKey_bits;
-  change_endian32(&hmac_size_bits, &endian_size_hmacKey_bits);
+  label = "INTEGRITY";
+  string hmac_key;
+  contextU.clear();
+  contextV.clear();
 
   // ContextV is endian_size_hmacKey_bits
   contextV.clear();
-  contextV.append((char *)&endian_name_size, sizeof(uint32_t));
-  if (!kdf_hkdf(hash_alg_id,
-                salt,
-                contextU,
-                contextV,
-                size_hmacKey,
-                &hmac_key)) {
+  if (!kdfa(hash_alg_id,
+            salt,
+            label,
+            contextU,
+            contextV,
+            8 * size_hmacKey,
+            &hmac_key)) {
     printf("%s() error, line %d, Can't KDFa symKey\n", __func__, __LINE__);
     return false;
   }
