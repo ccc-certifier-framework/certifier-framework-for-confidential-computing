@@ -229,7 +229,7 @@ bool kdfa(uint16_t      alg,
   int size_hmac = 0;
   if (alg == TPM_ALG_SHA1) {
     size_hmac = 20;
-  } else if (alg == TPM_ALG_SHA1) {
+  } else if (alg == TPM_ALG_SHA256) {
     size_hmac = 32;
   } else {
     printf("%s() error, line %d,, unsupported alg\n", __func__, __LINE__);
