@@ -294,7 +294,9 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
     Tpm2_FlushContext(tpm, srk_handle);
     return false;
   }
+#ifdef DEBUG
   printf("\ndo_quote succeeded\n");
+#endif
 
   TPM2B_PUBLIC pub_out;
   TPM2B_NAME   pub_name;
@@ -417,7 +419,6 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
 #endif
 
   // Make/Activate Credential test
-#if 1
   TPML_PCR_SELECTION pcrSelect;
   memset((void *)&pcrSelect, 0, sizeof(TPML_PCR_SELECTION));
   string policyString;
@@ -431,16 +432,16 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
     add_pcr_selection(pcrs[i], TPM_ALG_SHA256, &pcrSelect);
   }
 
-#  ifdef DEBUG
+#ifdef DEBUG
   printf("PCRs: \n");
   print_pcrs(tpm, num_pcrs, pcrs);
-#  endif
+#endif
 
   if (!credential_test(tpm, pcrSelect, srk_handle, quote_handle)) {
     printf("%s() error, line %d, credential_test failed\n", __func__, __LINE__);
     return false;
   }
-#endif
+
   Tpm2_FlushContext(tpm, quote_handle);
   Tpm2_FlushContext(tpm, srk_handle);
 
