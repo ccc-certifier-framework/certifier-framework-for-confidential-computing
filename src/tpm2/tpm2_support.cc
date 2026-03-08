@@ -2513,7 +2513,6 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   contextU.clear();
   contextV.clear();
 
-  // ContextV is endian_size_hmacKey_bits
   contextV.clear();
   if (!kdfa(hash_alg_id,
             salt,
