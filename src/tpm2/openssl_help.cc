@@ -239,6 +239,12 @@ bool kdfa(uint16_t      alg,
   while (bytes_produced < bytes_requested) {
     change_endian32(&count, (uint32_t *)in);
 
+ #ifdef DEBUG
+    printf("kdfa buf (%d): ", size_in);
+    print_bytes(size_in, in);
+    printf("\n");
+ #endif
+
     if ((bytes_produced + size_hmac) > max_size_out) {
       printf("%s() error, line %d, buffer overflow\n", __func__, __LINE__);
       return false;
