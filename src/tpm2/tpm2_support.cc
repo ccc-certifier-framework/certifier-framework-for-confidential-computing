@@ -2375,8 +2375,8 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   byte_t zero_iv[32];
   memset(zero_iv, 0, 32);
 
-  // 1. Generate seed
-  int    size_seed = 32;
+  // 1. Generate seed (This shout be the size of the hash)
+  int    size_seed = SizeHash(hash_alg_id);
   byte_t seed[size_seed];
   RAND_bytes(seed, size_seed);
 
