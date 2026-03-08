@@ -172,19 +172,24 @@ void XorBlocks(int size, byte_t *in1, byte_t *in2, byte_t *out) {
     out[i] = in1[i] ^ in2[i];
 }
 
-bool kdfa(uint16_t alg, const string& key, const string& label, const string& inA,
-          const string& inB, int num_bits, string* key_out) {
+bool kdfa(uint16_t      alg,
+          const string &key,
+          const string &label,
+          const string &inA,
+          const string &inB,
+          int           num_bits,
+          string       *key_out) {
   int max_size_in = 128;
   int max_size_out = 128;
   int size_in = 0;
-  int bytes_requested = (num_bits + NBIITSINBYTE - 1) / NBIITSINBYTE;
+  int bytes_requested = (num_bits + NBITSINBYTE - 1) / NBITSINBYTE;
   int bytes_produced = 0;
 
   byte_t in[max_size_in];
   byte_t out[max_size_out];
 
-  byte_t* current_in = in;
-  byte_t* current_out = out;
+  byte_t *current_in = in;
+  byte_t *current_out = out;
 
   uint32_t count = 1;
 
@@ -193,36 +198,30 @@ bool kdfa(uint16_t alg, const string& key, const string& label, const string& in
   size_in += sizeof(uint32_t);
 
   // label is string, include terminating null char
-  if ((size_in + label.size() + 1) > max_size_in) {
-    printf("%s() error, buffer overflow\n",
-            __func__,
-          __LINE__);
+  if ((size_in + (int)label.size() + 1) > max_size_in) {
+    printf("%s(), line %d, error, buffer overflow\n", __func__, __LINE__);
     return false;
   }
-  memcpy(current_in, (byte_t*) label.data(), label.size() + 1);
+  memcpy(current_in, (byte_t *)label.data(), label.size() + 1);
   current_in += label.size() + 1;
   size_in += label.size() + 1;
 
-  if ((size_in + inA.size()) > max_size_in) {
-    printf("%s() error, buffer overflow\n",
-            __func__,
-          __LINE__);
+  if ((size_in + (int)inA.size()) > max_size_in) {
+    printf("%s(), line %d, error, buffer overflow\n", __func__, __LINE__);
     return false;
   }
   if (inA.size() > 0) {
-    memcpy(current_in, (byte_t*) inA.data(), inA.size());
+    memcpy(current_in, (byte_t *)inA.data(), inA.size());
     current_in += inA.size();
     size_in += inA.size();
   }
 
-  if ((size_in + inB.size()) > max_size_in) {
-    printf("%s() error, buffer overflow\n",
-            __func__,
-          __LINE__);
+  if ((size_in + (int)inB.size()) > max_size_in) {
+    printf("%s(), line %d, error, buffer overflow\n", __func__, __LINE__);
     return false;
   }
   if (inB.size() > 0) {
-    memcpy(current_in, (byte_t*) inB.data(), inB.size());
+    memcpy(current_in, (byte_t *)inB.data(), inB.size());
     current_in += inB.size();
     size_in += inB.size();
   }
@@ -233,52 +232,51 @@ bool kdfa(uint16_t alg, const string& key, const string& label, const string& in
   } else if (alg == TPM_ALG_SHA1) {
     size_hmac = 32;
   } else {
-    printf("%s() error, unsupported alg\n",
-            __func__,
-          __LINE__);
+    printf("%s() error, line %d,, unsupported alg\n", __func__, __LINE__);
     return false;
   }
 
   while (bytes_produced < bytes_requested) {
-    change_endian32(&count, (uint32_t*) in);
+    change_endian32(&count, (uint32_t *)in);
 
     if ((bytes_produced + size_hmac) > max_size_out) {
-      printf("%s() error, buffer overflow\n",
-              __func__,
-            __LINE__);
+      printf("%s() error, line %d, buffer overflow\n", __func__, __LINE__);
       return false;
     }
 
     HMAC_CTX *hctx = HMAC_CTX_new();
     if (hctx == nullptr) {
       printf("%s() error, line %d, Can't allocate hmac contaxt\n",
-              __func__,
-            __LINE__);
+             __func__,
+             __LINE__);
       return false;
     }
     if (alg == TPM_ALG_SHA1) {
-      HMAC_Init_ex(hctx, (byte_t*)key.data(), key.size(), EVP_sha1(), nullptr);
+      HMAC_Init_ex(hctx, (byte_t *)key.data(), key.size(), EVP_sha1(), nullptr);
       HMAC_Update(hctx, (const byte_t *)in, (size_t)size_in);
-      HMAC_Final(hctx, current_out, (unsigned *)size_hmac);
+      HMAC_Final(hctx, current_out, (unsigned *)&size_hmac);
     } else if (alg == TPM_ALG_SHA256) {
-      HMAC_Init_ex(hctx, (byte_t*)key.data(), key.size(), EVP_sha256(), nullptr);
+      HMAC_Init_ex(hctx,
+                   (byte_t *)key.data(),
+                   key.size(),
+                   EVP_sha256(),
+                   nullptr);
       HMAC_Update(hctx, (const byte_t *)key.data(), (size_t)size_in);
-      HMAC_Final(hctx, current_out, (unsigned *)size_hmac);
+      HMAC_Final(hctx, current_out, (unsigned *)&size_hmac);
     } else {
-      printf("%s() error, unsupported alg\n",
-              __func__,
-            __LINE__);
+      printf("%s(), line %d, error, unsupported alg\n", __func__, __LINE__);
       return false;
     }
-      current_out += size_hmac;
-      bytes_produced += size_hmac;
+    current_out += size_hmac;
+    bytes_produced += size_hmac;
     HMAC_CTX_free(hctx);
 
     count++;
   }
 
-  key_out->assign((char*)out, bytes_requested);
-  return true;;
+  key_out->assign((char *)out, bytes_requested);
+  return true;
+  ;
 }
 
 

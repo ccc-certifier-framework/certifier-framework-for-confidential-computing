@@ -55,8 +55,13 @@ bool kdf_hkdf(uint16_t hashAlg,
               string  &info,
               int      out_len,
               string  *key_out);
-bool kdfa(uint16_t alg, const string& key, const string& label, const string& inA,
-          const string& inB, int num_bits, string* key_out);
+bool kdfa(uint16_t      alg,
+          const string &key,
+          const string &label,
+          const string &inA,
+          const string &inB,
+          int           num_bits,
+          string       *key_out);
 bool AesCFBEncrypt(byte_t *key,
                    int     in_size,
                    byte_t *in,

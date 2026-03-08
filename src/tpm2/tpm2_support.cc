@@ -2482,7 +2482,7 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   TPM2B_DIGEST marshaled_credential;
   int          size_encIdentity = 256;
   byte_t       encIdentity[size_encIdentity];
-  uint16_t c_size = credential.size();
+  uint16_t     c_size = credential.size();
   change_endian16((uint16_t *)&c_size, (uint16_t *)&marshaled_credential.size);
   memcpy(marshaled_credential.buffer, (byte_t *)credential.data(), c_size);
   if (!AesCFBEncrypt(symKey,
