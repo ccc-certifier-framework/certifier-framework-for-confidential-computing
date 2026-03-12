@@ -2857,7 +2857,7 @@ bool credential_test(local_tpm          &tpm,
          (byte_t *)encrypted_secret_out.data(),
          encrypted_secret_out.size());
 #ifdef DEBUG
-  printf("\ninternal cred size: %d\n", cred_blob_out.size());
+  printf("\ninternal cred size: %d\n", (int)cred_blob_out.size());
 #endif
 
 #ifndef TPMMAKECRED
