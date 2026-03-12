@@ -353,7 +353,8 @@ bool AesCtrCrypt(int     key_size_bits,
 
 #define AESBLKSIZE 16
 
-bool AesCFBEncrypt(byte_t *key,
+bool AesCFBEncrypt(int bits_key_size,
+                   byte_t *key,
                    int     in_size,
                    byte_t *in,
                    int     iv_size,
@@ -366,7 +367,7 @@ bool AesCFBEncrypt(byte_t *key,
   int    current_size;
 
   AES_KEY ectx;
-  AES_set_encrypt_key(key, 128, &ectx);
+  AES_set_encrypt_key(key, bits_key_size, &ectx);
 
   // Don't write iv, called already knows it
   if (iv_size != AESBLKSIZE)
@@ -393,7 +394,8 @@ bool AesCFBEncrypt(byte_t *key,
   return true;
 }
 
-bool AesCFBDecrypt(byte_t *key,
+bool AesCFBDecrypt(int bits_key_size,
+                   byte_t *key,
                    int     in_size,
                    byte_t *in,
                    int     iv_size,
@@ -406,7 +408,7 @@ bool AesCFBDecrypt(byte_t *key,
   int    current_size;
 
   AES_KEY ectx;
-  AES_set_encrypt_key(key, 128, &ectx);
+  AES_set_encrypt_key(key, bits_key_size, &ectx);
 
   // Don't write iv, called already knows it
   if (iv_size != AESBLKSIZE)

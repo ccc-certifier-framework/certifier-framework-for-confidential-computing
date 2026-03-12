@@ -2483,7 +2483,8 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   uint16_t     c_size = credential.size();
   change_endian16((uint16_t *)&c_size, (uint16_t *)&marshaled_credential.size);
   memcpy(marshaled_credential.buffer, (byte_t *)credential.data(), c_size);
-  if (!AesCFBEncrypt(symKey,
+  if (!AesCFBEncrypt(128,
+                     symKey,
                      credential.size() + sizeof(uint16_t),
                      (byte_t *)&marshaled_credential,
                      16,
@@ -2560,8 +2561,8 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   // credBlob: (20 bytes) || hmac || encrypted
   uint16_t bsize = size_hmacKey;
   uint16_t csize = 0;
-  change_endian16(&bsize, &csize);
-  cred_blob->assign((char *)&csize, 2);
+  // change_endian16(&bsize, &csize);
+  cred_blob->assign((char *)&bsize, 2);
   cred_blob->append((char *)unmarshaled_integrityHmac.buffer, size_hmacKey);
   cred_blob->append((char *)encIdentity, size_encIdentity);
 
@@ -2855,6 +2856,10 @@ bool credential_test(local_tpm          &tpm,
   memcpy(secret.secret,
          (byte_t *)encrypted_secret_out.data(),
          encrypted_secret_out.size());
+#ifdef DEBUG
+  printf("\ninternal cred size: %d\n", cred_blob_out.size());
+#endif
+
 #ifndef TPMMAKECRED
   if (!Tpm2_ActivateCredential(tpm,
                                quote_handle,

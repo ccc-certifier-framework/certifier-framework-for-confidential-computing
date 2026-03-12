@@ -2059,14 +2059,17 @@ bool Tpm2_ActivateCredential(local_tpm              &tpm,
   memset(params, 0, MAX_SIZE_PARAMS);
   memset(resp_buf, 0, MAX_SIZE_PARAMS);
 
+  // quote handle
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint32_t))
   change_endian32((uint32_t *)&activeHandle, (uint32_t *)in);
   Update(sizeof(uint32_t), &in, &total_size, &space_left);
 
+  // ek handle
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint32_t))
   change_endian32((uint32_t *)&keyHandle, (uint32_t *)in);
   Update(sizeof(uint32_t), &in, &total_size, &space_left);
 
+  // auth space
   IF_LESS_THAN_RETURN_FALSE(space_left, sizeof(uint16_t))
   memset(in, 0, sizeof(uint16_t));
   Update(sizeof(uint16_t), &in, &total_size, &space_left);
