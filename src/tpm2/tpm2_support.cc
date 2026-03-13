@@ -2604,6 +2604,8 @@ bool recover_quote_key_certificate(const string &serialized_cred_response,
 
 // ------------------------------------------------------------------------
 
+//#define INTERNALTPMMAKECRED
+
 bool credential_test(local_tpm          &tpm,
                      TPML_PCR_SELECTION &pcrSelect,
                      TPM_HANDLE         &srk_handle,
@@ -2778,6 +2780,8 @@ bool credential_test(local_tpm          &tpm,
   printf("\n");
 #endif
 
+#ifndef INTERNALTPMMAKECRED
+
   if (!Tpm2_ActivateCredential(tpm,
                                quote_handle,
                                ek_handle,
@@ -2800,6 +2804,7 @@ bool credential_test(local_tpm          &tpm,
   print_bytes(recovered_credential.size, recovered_credential.buffer);
   printf("\n");
 #  endif
+#endif
 
   // Standalone makecredential
   string endorsement_cert;
@@ -2837,6 +2842,10 @@ bool credential_test(local_tpm          &tpm,
   TPM2B_ID_OBJECT        cred_blob;
   TPM2B_ENCRYPTED_SECRET cred_secret;
   TPM2B_DIGEST           recovered_cred;
+
+  memset((void *)&cred_secret, 0, sizeof(TPM2B_ENCRYPTED_SECRET));
+  memset((void *)&cred_blob, 0, sizeof(TPM2B_ID_OBJECT));
+  memset((void *)&recovered_cred, 0, sizeof(TPM2B_DIGEST));
 
   cred_blob.size = cred_blob_out.size();
   memcpy(cred_blob.credential, (byte_t *)cred_blob_out.data(), cred_blob.size);

@@ -1998,7 +1998,7 @@ bool Tpm2_MakeCredential(local_tpm              &tpm,
                                 commandBuf,
                                 total_size,
                                 params);
-#ifdef DEBUG1
+#ifdef DEBUG
   print_command("MakeCredential", in_size, commandBuf);
 #endif
   if (!tpm.send_command(in_size, commandBuf)) {
@@ -2017,7 +2017,7 @@ bool Tpm2_MakeCredential(local_tpm              &tpm,
                          &cap,
                          &responseSize,
                          &responseCode);
-#ifdef DEBUG1
+#ifdef DEBUG
   print_response("MakeCredential", cap, responseSize, responseCode, resp_buf);
 #else
   if (responseCode != 0)
