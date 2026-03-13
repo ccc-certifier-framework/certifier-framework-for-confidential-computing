@@ -2778,8 +2778,6 @@ bool credential_test(local_tpm          &tpm,
   printf("\n");
 #endif
 
-// #define TPMMAKECRED
-#ifdef TPMMAKECRED
   if (!Tpm2_ActivateCredential(tpm,
                                quote_handle,
                                ek_handle,
@@ -2802,7 +2800,6 @@ bool credential_test(local_tpm          &tpm,
   print_bytes(recovered_credential.size, recovered_credential.buffer);
   printf("\n");
 #  endif
-#endif
 
   // Standalone makecredential
   string endorsement_cert;
@@ -2835,20 +2832,11 @@ bool credential_test(local_tpm          &tpm,
 
 #ifdef DEBUG
   printf("\nStandalone MakeCredential succeeded\n");
-  printf("credBlob size: %d\n", (int)cred_blob_out.size());
-  print_bytes(cred_blob_out.size(), (byte_t *)cred_blob_out.data());
-  printf("\n");
-  printf("secret size: %d\n", (int)encrypted_secret_out.size());
-  print_bytes(encrypted_secret_out.size(),
-              (byte_t *)encrypted_secret_out.data());
-  printf("\n");
 #endif
 
-  memset((byte_t *)&recovered_credential, 0, sizeof(recovered_credential));
-
-#ifndef TPMMAKECRED
   TPM2B_ID_OBJECT        cred_blob;
   TPM2B_ENCRYPTED_SECRET cred_secret;
+  TPM2B_DIGEST           recovered_cred;
 
   cred_blob.size = cred_blob_out.size();
   memcpy(cred_blob.credential, (byte_t *)cred_blob_out.data(), cred_blob.size);
@@ -2859,10 +2847,15 @@ bool credential_test(local_tpm          &tpm,
 
 #  ifdef DEBUG
   printf("\ncred_secret size: %d\n", cred_secret.size);
-  printf("cred_secret\n");
   print_bytes(cred_secret.size, cred_secret.secret);
   printf("\n");
+  printf("\ncredBlob size: %d\n", (int)cred_blob.size);
+  print_bytes(cred_blob.size, (byte_t *)cred_blob.credential);
+  printf("\n");
+  printf("\n");
 #  endif
+
+#ifdef INTERNALTPMMAKECRED
   if (!Tpm2_ActivateCredential(tpm,
                                quote_handle,
                                ek_handle,
@@ -2870,7 +2863,7 @@ bool credential_test(local_tpm          &tpm,
                                endorsementAuth,
                                cred_blob,
                                cred_secret,
-                               &recovered_credential)) {
+                               &recovered_cred)) {
     printf("%s() error, line %d, Tpm2_ActivateCredential failed\n",
            __func__,
            __LINE__);
@@ -2881,8 +2874,8 @@ bool credential_test(local_tpm          &tpm,
 
 #  ifdef DEBUG
   printf("ActivateCredential succeeded\n");
-  printf("Recovered credential (%d): ", recovered_credential.size);
-  print_bytes(recovered_credential.size, recovered_credential.buffer);
+  printf("Recovered credential (%d): ", recovered_cred.size);
+  print_bytes(recovered_cred.size, recovered_cred.buffer);
   printf("\n");
 #  endif
 #endif
