@@ -353,7 +353,7 @@ bool AesCtrCrypt(int     key_size_bits,
 
 #define AESBLKSIZE 16
 
-bool AesCFBEncrypt(int bits_key_size,
+bool AesCFBEncrypt(int     bits_key_size,
                    byte_t *key,
                    int     in_size,
                    byte_t *in,
@@ -394,7 +394,7 @@ bool AesCFBEncrypt(int bits_key_size,
   return true;
 }
 
-bool AesCFBDecrypt(int bits_key_size,
+bool AesCFBDecrypt(int     bits_key_size,
                    byte_t *key,
                    int     in_size,
                    byte_t *in,

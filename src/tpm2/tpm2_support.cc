@@ -2416,7 +2416,7 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
            __LINE__);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\n");
   X509_print_fp(stdout, endorsement_cert);
   printf("\n");
@@ -2561,13 +2561,14 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   // credBlob: (20 bytes) || hmac || encrypted
   uint16_t bsize = size_hmacKey;
   uint16_t csize = 0;
-  // change_endian16(&bsize, &csize);
-  cred_blob->assign((char *)&bsize, 2);
+  change_endian16(&bsize, &csize);
+  cred_blob->assign((char *)&csize, 2);
   cred_blob->append((char *)unmarshaled_integrityHmac.buffer, size_hmacKey);
   cred_blob->append((char *)encIdentity, size_encIdentity);
 
-#ifdef DEBUG2
-  printf("\nencIdentity: ");
+#ifdef DEBUG
+  printf("\nmake_credential\n");
+  printf("encIdentity: ");
   print_bytes(size_encIdentity, (byte_t *)encIdentity);
   printf("\n");
   printf("hmac       : ");
@@ -2698,12 +2699,10 @@ bool credential_test(local_tpm          &tpm,
   printf("secret size: %d\n", secret.size);
   print_bytes(secret.size, secret.secret);
   printf("\n");
-  printf("Policy: ");
-  print_bytes(quoting_pub_out.publicArea.authPolicy.size,
-              quoting_pub_out.publicArea.authPolicy.buffer);
+  printf("\ncredentialBlob: ");
+  print_bytes(sizeof(credentialBlob), (byte_t *)&credentialBlob);
   printf("\n");
 #endif
-
 
   // Activate
   string nonce;
@@ -2779,7 +2778,7 @@ bool credential_test(local_tpm          &tpm,
   printf("\n");
 #endif
 
-#define TPMMAKECRED
+// #define TPMMAKECRED
 #ifdef TPMMAKECRED
   if (!Tpm2_ActivateCredential(tpm,
                                quote_handle,
@@ -2846,28 +2845,31 @@ bool credential_test(local_tpm          &tpm,
 #endif
 
   memset((byte_t *)&recovered_credential, 0, sizeof(recovered_credential));
-  memset((byte_t *)&credentialBlob, 0, sizeof(credentialBlob));
-  memset((byte_t *)&secret, 0, sizeof(secret));
-  credentialBlob.size = cred_blob_out.size();
-  memcpy(credentialBlob.credential,
-         (byte_t *)cred_blob_out.data(),
-         cred_blob_out.size());
-  secret.size = encrypted_secret_out.size();
-  memcpy(secret.secret,
-         (byte_t *)encrypted_secret_out.data(),
-         encrypted_secret_out.size());
-#ifdef DEBUG
-  printf("\ninternal cred size: %d\n", (int)cred_blob_out.size());
-#endif
 
 #ifndef TPMMAKECRED
+  TPM2B_ID_OBJECT        cred_blob;
+  TPM2B_ENCRYPTED_SECRET cred_secret;
+
+  cred_blob.size = cred_blob_out.size();
+  memcpy(cred_blob.credential, (byte_t *)cred_blob_out.data(), cred_blob.size);
+  cred_secret.size = encrypted_secret_out.size();
+  memcpy(cred_secret.secret,
+         (byte_t *)encrypted_secret_out.data(),
+         encrypted_secret_out.size());
+
+#  ifdef DEBUG
+  printf("\ncred_secret size: %d\n", cred_secret.size);
+  printf("cred_secret\n");
+  print_bytes(cred_secret.size, cred_secret.secret);
+  printf("\n");
+#  endif
   if (!Tpm2_ActivateCredential(tpm,
                                quote_handle,
                                ek_handle,
                                quoteAuth,
                                endorsementAuth,
-                               credentialBlob,
-                               secret,
+                               cred_blob,
+                               cred_secret,
                                &recovered_credential)) {
     printf("%s() error, line %d, Tpm2_ActivateCredential failed\n",
            __func__,
