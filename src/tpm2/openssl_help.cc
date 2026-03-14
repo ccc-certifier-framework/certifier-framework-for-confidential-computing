@@ -225,6 +225,9 @@ bool kdfa(uint16_t      alg,
     current_in += inB.size();
     size_in += inB.size();
   }
+  change_endian32((uint32_t*)&num_bits, (uint32_t*)current_in);
+  current_in += sizeof(uint32_t);
+  size_in += sizeof(uint32_t);
 
   int size_hmac = 0;
   if (alg == TPM_ALG_SHA1) {
@@ -239,7 +242,7 @@ bool kdfa(uint16_t      alg,
   while (bytes_produced < bytes_requested) {
     change_endian32(&count, (uint32_t *)in);
 
-#ifdef DEBUG
+#ifdef DEBUG7
     printf("kdfa buf (%d): ", size_in);
     print_bytes(size_in, in);
     printf("\n");
@@ -282,7 +285,6 @@ bool kdfa(uint16_t      alg,
 
   key_out->assign((char *)out, bytes_requested);
   return true;
-  ;
 }
 
 

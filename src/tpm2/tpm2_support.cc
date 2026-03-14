@@ -2604,7 +2604,7 @@ bool recover_quote_key_certificate(const string &serialized_cred_response,
 
 // ------------------------------------------------------------------------
 
-//#define INTERNALTPMMAKECRED
+#define INTERNALTPMMAKECRED
 
 bool credential_test(local_tpm          &tpm,
                      TPML_PCR_SELECTION &pcrSelect,
