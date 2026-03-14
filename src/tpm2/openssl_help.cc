@@ -243,6 +243,9 @@ bool kdfa(uint16_t      alg,
     change_endian32(&count, (uint32_t *)in);
 
 #ifdef DEBUG7
+    printf("seed     (%d): ", (int)key.size());
+    print_bytes(key.size(), (byte_t*)key.data());
+    printf("\n");
     printf("kdfa buf (%d): ", size_in);
     print_bytes(size_in, in);
     printf("\n");
