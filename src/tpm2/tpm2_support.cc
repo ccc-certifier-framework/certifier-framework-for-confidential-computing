@@ -2396,7 +2396,7 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   byte_t encrypted_secret_buf[size_encrypted_secret];
   memset(encrypted_secret_buf, 0, size_encrypted_secret);
 
-#ifdef DEBUG2
+#ifdef DEBUG
   printf("\n");
   X509_print_fp(stdout, endorsement_cert);
   printf("\n");
@@ -2405,7 +2405,7 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   printf("\n");
 #endif
 
-#if 0
+#if 1
   int    size_secret_buf = 256;
   byte_t secret_buf[size_secret_buf];
   memset(secret_buf, 0, size_secret_buf);
@@ -2434,12 +2434,12 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   //  int pl                // Length of parameter p
   //);
   byte_t pad_out[256];
-  const char* p = "IDENTITY";
+  const char* pp = "IDENTITY";
   int k = RSA_padding_check_PKCS1_OAEP(pad_out, 32,
                                  secret_buf, 256, 256,
-                                 (const unsigned char *)p, strlen(p) + 1);
+                                 (const unsigned char *)pp, strlen(pp) + 1);
   printf("OAEP test: %d\n", k);
-  printf("oad_out:\n");
+  printf("pad_out  :\n");
   print_bytes(32, pad_out);
   printf("\n");
 #  endif
