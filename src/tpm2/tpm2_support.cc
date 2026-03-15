@@ -2088,13 +2088,9 @@ bool decode_quoted(int                 size_buf,
       printf("%s() error, line %d, buffer too short\n", __func__, __LINE__);
       return false;
     }
-#if 0
-    memcpy(pcrSelect->pcrSelections[i].pcrSelect, buf, size_selection);
-#else
     reverse_byte_copy(size_selection,
                       buf,
                       pcrSelect->pcrSelections[i].pcrSelect);
-#endif
     buf += size_selection;
     size_buf -= size_selection;
   }
@@ -2618,7 +2614,7 @@ bool recover_quote_key_certificate(const string &serialized_cred_response,
 
 // ------------------------------------------------------------------------
 
-#define INTERNALTPMMAKECRED
+// #define INTERNALTPMMAKECRED
 
 bool credential_test(local_tpm          &tpm,
                      TPML_PCR_SELECTION &pcrSelect,
