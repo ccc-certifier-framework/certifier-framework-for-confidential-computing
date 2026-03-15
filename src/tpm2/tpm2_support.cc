@@ -2424,10 +2424,24 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   }
 
 #  ifdef DEBUG3
+  // int RSA_padding_check_PKCS1_OAEP(
+  //  unsigned char *to,    // Output buffer for plaintext
+  //  int tlen,             // Size of output buffer
+  //  const unsigned char *f, // Input buffer (decrypted RSA data)
+  //  int fl,               // Length of input data
+  //  int rsa_len,          // Size of RSA key in bytes
+  //  const unsigned char *p, // Encoding parameter (p)
+  //  int pl                // Length of parameter p
+  //);
   byte_t pad_out[256];
-  int k = RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
-                                 const unsigned char *f, int fl, int rsa_len,
-                                 const unsigned char *p, int pl);
+  const char* p = "IDENTITY";
+  int k = RSA_padding_check_PKCS1_OAEP(pad_out, 32,
+                                 secret_buf, 256, 256,
+                                 (const unsigned char *)p, strlen(p) + 1);
+  printf("OAEP test: %d\n", k);
+  printf("oad_out:\n");
+  print_bytes(32, pad_out);
+  printf("\n");
 #  endif
 
   int n = RSA_public_encrypt(size_secret_buf,
