@@ -2423,12 +2423,12 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
     return false;
   }
 
-#ifdef DEBUG3
+#  ifdef DEBUG3
   byte_t pad_out[256];
   int k = RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
                                  const unsigned char *f, int fl, int rsa_len,
                                  const unsigned char *p, int pl);
-#endif
+#  endif
 
   int n = RSA_public_encrypt(size_secret_buf,
                              secret_buf,
@@ -2870,7 +2870,7 @@ bool credential_test(local_tpm          &tpm,
          (byte_t *)encrypted_secret_out.data(),
          encrypted_secret_out.size());
 
-#  ifdef DEBUG
+#ifdef DEBUG
   printf("\ncred_secret size: %d\n", cred_secret.size);
   print_bytes(cred_secret.size, cred_secret.secret);
   printf("\n");
@@ -2878,7 +2878,7 @@ bool credential_test(local_tpm          &tpm,
   print_bytes(cred_blob.size, (byte_t *)cred_blob.credential);
   printf("\n");
   printf("\n");
-#  endif
+#endif
 
 #ifdef INTERNALTPMMAKECRED
   if (!Tpm2_ActivateCredential(tpm,
