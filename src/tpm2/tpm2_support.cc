@@ -2396,14 +2396,24 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
 
   // 2. Secret= E(protector_key, seed || "IDENTITY")
   //   args: to, from, label, len
-  int    size_secret_buf = 256;
-  byte_t secret_buf[size_secret_buf];
   int    size_encrypted_secret = 512;
   byte_t encrypted_secret_buf[size_encrypted_secret];
 
   memset(secret_buf, 0, size_secret_buf);
   memset(encrypted_secret_buf, 0, size_encrypted_secret);
 
+#ifdef DEBUG2
+  printf("\n");
+  X509_print_fp(stdout, endorsement_cert);
+  printf("\n");
+  printf("seed (%d): ", size_seed);
+  print_bytes(size_seed, seed);
+  printf("\n");
+#endif
+
+#if 0
+  int    size_secret_buf = 256;
+  byte_t secret_buf[size_secret_buf];
   int m = RSA_padding_add_PKCS1_OAEP(secret_buf,
                                      256,
                                      seed,
@@ -2416,17 +2426,6 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
            __LINE__);
     return false;
   }
-#ifdef DEBUG2
-  printf("\n");
-  X509_print_fp(stdout, endorsement_cert);
-  printf("\n");
-  printf("seed (%d): ", size_seed);
-  print_bytes(size_seed, seed);
-  printf("\n");
-  printf("padded (%d):\n", m);
-  print_bytes(size_secret_buf, secret_buf);
-  printf("\n\n");
-#endif
 
   int n = RSA_public_encrypt(size_secret_buf,
                              secret_buf,
@@ -2439,6 +2438,20 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
            __LINE__);
     return false;
   }
+#else
+  // RSA_PKCS1_OAEP_PADDING
+  int n = RSA_public_encrypt(size_seed,
+                             seed,
+                             encrypted_secret_buf,
+                             protector_key,
+                             RSA_PKCS1_OAEP_PADDING);
+  if (n <= 0) {
+    printf("%s() error, line %d, RSA_public_encrypt fails\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+#endif
   encrypted_secret->assign((char *)encrypted_secret_buf, n);
 
   byte_t symKey[MAX_SIZE_PARAMS];
