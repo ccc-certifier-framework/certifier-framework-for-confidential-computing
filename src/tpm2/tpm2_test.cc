@@ -448,6 +448,84 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
   return true;
 }
 
+bool misc_test() {
+
+  TPM_ALG_ID hash_alg_id = TPM_ALG_SHA256;
+  string label;
+  string key;
+  string contextU;
+  string contextV;
+  string name;
+  int num_key_bits = 256;
+  label = "INTEGRITY";
+  string   out_key;
+  string reverse_key;
+
+  /*
+   * Alg: Sha256
+   * Seed: 74f00e256647f2320c9d12738a5105461bd1fa1478f125380133adcb5d2b683b
+   * Label: 494e54454752495459
+   * ContextU: <EMPTY>
+   * ContextV: <EMPTY>
+   * NumBits: 256
+   * KDFa: 9ccdf13dae82d3f8ea435d89e1ea34ad33875be71016d21078579f9a6bf99507
+   */
+  int size_seed = 32;
+  byte_t seed[size_seed] = {
+    0x74, 0xf0, 0x0e, 0x25, 0x66, 0x47, 0xf2, 0x32,
+    0x0c, 0x9d, 0x12, 0x73, 0x8a, 0x51, 0x05, 0x46,
+    0x1b, 0xd1, 0xfa, 0x14, 0x78, 0xf1, 0x25, 0x38,
+    0x01, 0x33, 0xad, 0xcb, 0x5d, 0x2b, 0x68, 0x3b
+  };
+  key.assign((char*)seed, size_seed);
+  contextU.clear();
+  contextV.clear();
+  int size_real_kdfa = 32;
+  byte_t real_kdfa[size_real_kdfa] = {
+    0x9c, 0xcd, 0xf1, 0x3d, 0xae, 0x82, 0xd3, 0xf8,
+    0xea, 0x43, 0x5d, 0x89, 0xe1, 0xea, 0x34, 0xad,
+    0x33, 0x87, 0x5b, 0xe7, 0x10, 0x16, 0xd2, 0x10,
+    0x78, 0x57, 0x9f, 0x9a, 0x6b, 0xf9, 0x95, 0x07
+  };
+
+  int size_rev_key = 32;
+  byte_t rev_key[size_rev_key];
+  reverse_byte_copy(key.size(), (byte_t*)key.data(), rev_key);
+  reverse_key.assign((char*)rev_key, size_rev_key);
+
+  if (!kdfa(hash_alg_id,
+            key,
+            label,
+            contextU,
+            contextV,
+            num_key_bits,
+            &out_key)) {
+    printf("%s() error, line %d, Can't calculate kdfa\n", __func__, __LINE__);
+    return false;
+  }
+
+  printf("Alg          : %02x\n", hash_alg_id);
+  printf("Label        : %s\n", label.c_str());
+  printf("Num bits     : %08x\n", num_key_bits);
+  printf("key          : ");
+  print_bytes(key.size(), (byte_t*)key.data());
+  printf("\n");
+  printf("contextU     : ");
+  print_bytes(contextU.size(), (byte_t*)contextU.data());
+  printf("\n");
+  printf("contextV     : ");
+  print_bytes(contextV.size(), (byte_t*)contextV.data());
+  printf("\n");
+  printf("kdfa         : ");
+  print_bytes(out_key.size(), (byte_t*)out_key.data());
+  printf("\n");
+  printf("correct      : ");
+  print_bytes(size_real_kdfa, real_kdfa);
+  printf("\n");
+
+  return true;
+}
+
 bool context_test(local_tpm &tpm) {
   TPM_HANDLE handle;
   uint16_t   size = 4096;
@@ -716,6 +794,13 @@ int main(int an, char **av) {
       printf("get cert test succeeded\n");
     } else {
       printf("get cert test failed\n");
+    }
+  } else if (FLAGS_operation == "MiscTest") {
+    printf("\n");
+    if (misc_test()) {
+      printf("misc test succeeded\n");
+    } else {
+      printf("misc test failed\n");
     }
   } else {
     printf("\n");

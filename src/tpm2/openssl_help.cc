@@ -179,12 +179,12 @@ bool kdfa(uint16_t      alg,
           const string &inB,
           int           num_bits,
           string       *key_out) {
-  int max_size_in = 128;
-  int max_size_out = 128;
-  int size_in = 0;
   int bytes_requested = (num_bits + NBITSINBYTE - 1) / NBITSINBYTE;
   int bytes_produced = 0;
 
+  int max_size_in = 128;
+  int max_size_out = 128;
+  int size_in = 0;
   byte_t in[max_size_in];
   byte_t out[max_size_out];
 
@@ -225,6 +225,11 @@ bool kdfa(uint16_t      alg,
     current_in += inB.size();
     size_in += inB.size();
   }
+
+  if ((size_in + (int)sizeof(uint32_t)) > max_size_in) {
+    printf("%s(), line %d, error, buffer overflow\n", __func__, __LINE__);
+    return false;
+  }
   change_endian32((uint32_t*)&num_bits, (uint32_t*)current_in);
   current_in += sizeof(uint32_t);
   size_in += sizeof(uint32_t);
@@ -242,6 +247,7 @@ bool kdfa(uint16_t      alg,
   while (bytes_produced < bytes_requested) {
     change_endian32(&count, (uint32_t *)in);
 
+#define DEBUG7
 #ifdef DEBUG7
     printf("seed     (%d): ", (int)key.size());
     print_bytes(key.size(), (byte_t*)key.data());

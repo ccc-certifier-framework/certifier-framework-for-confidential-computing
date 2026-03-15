@@ -2394,7 +2394,6 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   //   args: to, from, label, len
   int    size_encrypted_secret = 512;
   byte_t encrypted_secret_buf[size_encrypted_secret];
-
   memset(encrypted_secret_buf, 0, size_encrypted_secret);
 
 #ifdef DEBUG2
@@ -2423,6 +2422,13 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
            __LINE__);
     return false;
   }
+
+#ifdef DEBUG3
+  byte_t pad_out[256];
+  int k = RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
+                                 const unsigned char *f, int fl, int rsa_len,
+                                 const unsigned char *p, int pl);
+#endif
 
   int n = RSA_public_encrypt(size_secret_buf,
                              secret_buf,
