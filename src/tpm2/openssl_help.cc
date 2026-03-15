@@ -240,7 +240,7 @@ bool kdfa(uint16_t      alg,
   } else if (alg == TPM_ALG_SHA256) {
     size_hmac = 32;
   } else {
-    printf("%s() error, line %d,, unsupported alg\n", __func__, __LINE__);
+    printf("%s() error, line %d, unsupported alg\n", __func__, __LINE__);
     return false;
   }
 
@@ -279,7 +279,7 @@ bool kdfa(uint16_t      alg,
                    key.size(),
                    EVP_sha256(),
                    nullptr);
-      HMAC_Update(hctx, (const byte_t *)key.data(), (size_t)size_in);
+      HMAC_Update(hctx, (const byte_t *)in, (size_t)size_in);
       HMAC_Final(hctx, current_out, (unsigned *)&size_hmac);
     } else {
       printf("%s(), line %d, error, unsupported alg\n", __func__, __LINE__);
