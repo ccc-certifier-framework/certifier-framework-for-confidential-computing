@@ -523,7 +523,7 @@ bool misc_test() {
   print_bytes(size_real_kdfa, real_kdfa);
   printf("\n");
 
-  return true;
+  return memcmp(real_kdfa, (byte_t*)out_key.data(), size_real_kdfa) == 0;
 }
 
 bool context_test(local_tpm &tpm) {
