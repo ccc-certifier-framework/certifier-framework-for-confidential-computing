@@ -2410,14 +2410,6 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   byte_t secret_buf[size_secret_buf];
   memset(secret_buf, 0, size_secret_buf);
 
-#if 0
-  int m = RSA_padding_add_PKCS1_OAEP(secret_buf,
-                                     256,
-                                     seed,
-                                     size_seed,
-                                     (byte_t *)"IDENTITY",
-                                     strlen("IDENTITY") + 1);
-#else
   const EVP_MD *md = EVP_sha256();
   int m = RSA_padding_add_PKCS1_OAEP_mgf1(secret_buf,
                                      256,
@@ -2427,7 +2419,6 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
                                      strlen("IDENTITY") + 1,
                                      md,
                                      nullptr);
-#endif
   if (m <= 0) {
     printf("%s() error, line %d, RSA_padding_add_PKCS1_OAEP fails\n",
            __func__,
@@ -2438,18 +2429,12 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
 #  ifdef DEBUG3
 
   byte_t pad_out[256];
-#if 0
-  int k = RSA_padding_check_PKCS1_OAEP(pad_out, 32,
-                                 secret_buf, 256, 256,
-                                 (const unsigned char *)pp, strlen(pp) + 1);
-#else
   const char* pp = "IDENTITY";
   const EVP_MD *md1 = EVP_sha256();
-  int k = RSA_padding_check_PKCS1_OAEP(pad_out, 32,
+  int k = RSA_padding_check_PKCS1_OAEP_mgf1(pad_out, 32,
                                  secret_buf, 256, 256,
                                  (const unsigned char *)pp, strlen(pp) + 1,
-                                 md1, nullptr););
-#endif
+                                 md1, nullptr);
 
   printf("OAEP test: %d\n", k);
   printf("pad_out  :\n");
@@ -2925,7 +2910,7 @@ bool credential_test(local_tpm          &tpm,
   }
 
 #  ifdef DEBUG
-  printf("ActivateCredential succeeded\n");
+  printf("ActivateCredential succeeded with internal MakeCredential\n");
   printf("Recovered credential (%d): ", recovered_cred.size);
   print_bytes(recovered_cred.size, recovered_cred.buffer);
   printf("\n");

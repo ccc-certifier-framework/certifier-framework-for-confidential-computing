@@ -46,8 +46,6 @@ using std::string;
 #define MAX_SIZE_PARAMS 4096
 
 
-#define DEBUG1
-
 // ------------------------------------------------------------
 
 void reverse_byte_copy(int size, byte_t *in, byte_t *out) {
@@ -2118,7 +2116,7 @@ bool Tpm2_ActivateCredential(local_tpm              &tpm,
                                 commandBuf,
                                 total_size,
                                 params);
-#ifdef DEBUG1
+#ifdef DEBUG
   print_command("ActivateCredential", in_size, commandBuf);
 #endif
   if (!tpm.send_command(in_size, commandBuf)) {
@@ -2137,7 +2135,7 @@ bool Tpm2_ActivateCredential(local_tpm              &tpm,
                          &cap,
                          &responseSize,
                          &responseCode);
-#ifdef DEBUG1
+#ifdef DEBUG
   print_response("ActivateCredential",
                  cap,
                  responseSize,
