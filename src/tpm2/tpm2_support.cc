@@ -2424,6 +2424,15 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   }
 
 #  ifdef DEBUG3
+  // int RSA_padding_add_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
+  //                                  const unsigned char *f, int fl,
+  //                                  const unsigned char *p, int pl,
+  //                                  const EVP_MD *md, const EVP_MD *mgf1md);
+  // int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
+  //                                   const unsigned char *f, int fl, int rsa_len,
+  //                                    const unsigned char *p, int pl,
+  //                                    const EVP_MD *md, const EVP_MD *mgf1md);
+  // mgf1md = NULL
   // int RSA_padding_check_PKCS1_OAEP(
   //  unsigned char *to,    // Output buffer for plaintext
   //  int tlen,             // Size of output buffer
