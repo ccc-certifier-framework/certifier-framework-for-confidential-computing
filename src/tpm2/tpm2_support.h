@@ -27,18 +27,38 @@ using namespace certifier::utilities;
 
 bool print_pcrs(local_tpm &tpm, int num_pcrs, byte *pcrs);
 bool extend_pcrs(local_tpm &tpm, int pcr_num);
+
 bool create_seal_session(local_tpm          &tpm,
                          TPML_PCR_SELECTION &pcrSelect,
                          TPM_HANDLE         *session_handle);
 bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
                                       int           num_pcrs,
                                       byte_t       *pcrs,
-                                      const string &file);
+                                      const string &seal_file);
 bool recover_sealing_secret(local_tpm    &tpm,
                             int           num_pcrs,
                             byte_t       *pcrs,
                             const string &file_name,
                             string       *seal_secret);
+bool recover_and_load_quote_hierarchy(local_tpm    &tpm,
+                                      int           num_pcrs,
+                                      byte_t       *pcrs,
+                                      const string &file_name,
+                                      TPM_HANDLE   *srk_handle,
+                                      TPM_HANDLE   *quote_handle);
+bool create_quote_session(local_tpm          &tpm,
+                          TPML_PCR_SELECTION &pcrSelect,
+                          string             *nonce,
+                          TPM_HANDLE         *session_handle);
+bool create_quote_hierarchy(local_tpm    &tpm,
+                            int           num_pcrs,
+                            byte_t       *pcrs,
+                            const string &file_name);
+bool create_endorsement_session(local_tpm  &tpm,
+                                string     &authString,
+                                string     *nonce,
+                                TPM_HANDLE *session_handle);
+
 bool get_endorsement_key(local_tpm  &tpm,
                          string     &authString,
                          string     &policyString,
@@ -122,11 +142,6 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
                      string             &credential,
                      string             *cred_blob,
                      string             *encrypted_secret);
-
-bool credential_test(local_tpm          &tpm,
-                     TPML_PCR_SELECTION &pcrSelect,
-                     TPM_HANDLE         &srk_handle,
-                     TPM_HANDLE         &quote_handle);
 
 // ---------------------------------------------------------------
 #endif

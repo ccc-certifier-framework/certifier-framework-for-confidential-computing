@@ -41,6 +41,9 @@
 
 #define DEBUG
 
+// ------------------------------------------------------------------------
+
+
 void print_mask(int n, byte_t *m) {
   while (n-- > 0)
     printf("%02x", *(m++));
@@ -132,9 +135,6 @@ bool create_pcr_policy(local_tpm    &tpm,
            __LINE__);
     return false;
   }
-#ifdef DEBUG2
-  printf("Tpm2_StartAuthSession succeeded\n");
-#endif
 
   TPM2B_DIGEST expected_digest;
   expected_digest.size = 0;
@@ -145,9 +145,6 @@ bool create_pcr_policy(local_tpm    &tpm,
     Tpm2_FlushContext(tpm, session_handle);
     return false;
   }
-#ifdef DEBUG2
-  printf("%s(), line %d, Tpm2_PolicyPcr succeeded\n", __func__, __LINE__);
-#endif
 
   TPM2B_DIGEST policy_digest;
   if (!Tpm2_PolicyGetDigest(tpm, session_handle, policy_out)) {
@@ -155,13 +152,6 @@ bool create_pcr_policy(local_tpm    &tpm,
     Tpm2_FlushContext(tpm, session_handle);
     return false;
   }
-#ifdef DEBUG2
-  printf("%s() line %d, PolicyGetDigest before Pcr succeeded: \n",
-         __func__,
-         __LINE__);
-  print_bytes(policy_out->size, policy_out->buffer);
-  printf("\n");
-#endif
 
   Tpm2_FlushContext(tpm, session_handle);
   return true;
@@ -209,9 +199,6 @@ bool create_seal_session(local_tpm          &tpm,
     Tpm2_FlushContext(tpm, *session_handle);
     return false;
   }
-#ifdef DEBUG2
-  printf("%s(), line %d, Tpm2_PolicyPcr succeeded\n", __func__, __LINE__);
-#endif
 
   return true;
 }
@@ -283,10 +270,6 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
                           &pub_out)) {
     printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);
   }
-#ifdef DEBUG2
-  printf("\n");
-  printf("%s() line %d, CreatePrimary succeeded\n", __func__, __LINE__);
-#endif
 
   TPM2B_DIGEST secret;
   secret.size = 32;
@@ -316,9 +299,6 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
            __LINE__);
     return false;
   }
-#ifdef DEBUG2
-  printf("\nSeal session succeeded\n");
-#endif
 
   // Get policy digest
   TPM2B_DIGEST policy_digest;
@@ -382,12 +362,6 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
     Tpm2_FlushContext(tpm, session_handle);
     return false;
   }
-#ifdef DEBUG2
-  printf("\n");
-  printf("Create with digest succeeded private size: %d, public size: %d\n",
-         size_private,
-         size_public);
-#endif
 
   // Save the stuff for load
   tpm_load_key_info key_info;
@@ -397,12 +371,6 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
   // See the note in create quote hierarchy
   key_info.set_pub_key((byte_t *)out_public, size_public + 2);
   key_info.set_priv_key((byte_t *)out_private, size_private + 2);
-
-#ifdef DEBUG2
-  printf("After creation private size: %d, public size: %d\n",
-         size_private,
-         size_public);
-#endif
 
   string serialized_key_info;
   if (!key_info.SerializeToString(&serialized_key_info)) {
@@ -502,9 +470,6 @@ bool recover_sealing_secret(local_tpm    &tpm,
     printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);
     return false;
   }
-#ifdef DEBUG2
-  printf("%s() line %d, CreatePrimary succeeded\n", __func__, __LINE__);
-#endif
 
   // Get info for load
   tpm_load_key_info key_info;
@@ -524,11 +489,6 @@ bool recover_sealing_secret(local_tpm    &tpm,
     return false;
   }
 
-#ifdef DEBUG2
-  printf("\nAfter recovery private size: %d, public size: %d\n",
-         (int)key_info.priv_key().size(),
-         (int)key_info.pub_key().size());
-#endif
   TPM2B_NAME name;
   if (!Tpm2_Load(tpm,
                  srk_handle,
@@ -544,9 +504,6 @@ bool recover_sealing_secret(local_tpm    &tpm,
     Tpm2_FlushContext(tpm, srk_handle);
     return false;
   }
-#ifdef DEBUG2
-  printf("\nLoad succeeded\n");
-#endif
 
   if (!create_seal_session(tpm, pcrSelect, &session_handle)) {
     printf("%s() error, line %d, create_seal_session failed\n",
@@ -577,28 +534,12 @@ bool recover_sealing_secret(local_tpm    &tpm,
     Tpm2_FlushContext(tpm, srk_handle);
     return false;
   }
-#ifdef DEBUG2
-  printf("\nUnseal succeeded, unsealed (%d): ", unsealed_size);
-  print_bytes(unsealed_size, unsealed);
-  printf("\n");
-#endif
 
   TPM2B_SENSITIVE_DATA *unsealed_return =
       (TPM2B_SENSITIVE_DATA *)(&unsealed[2]);
-#ifdef DEBUG2
-  uint16_t ss;
-  change_endian16(&unsealed_return->size, &ss);
-  printf("\nSensitive data size: %d\n", ss);
-#endif
   TPM2B_DATA *sym = (TPM2B_DATA *)unsealed_return->buffer;
   uint16_t    sb;
   change_endian16(&(sym->size), &sb);
-#ifdef DEBUG2
-  printf("\n");
-  printf("Secret (%d): ", sb);
-  print_bytes(sb, sym->buffer);
-  printf("\n");
-#endif
   seal_secret->assign((char *)sym->buffer, sb);
 
   Tpm2_FlushContext(tpm, session_handle);
@@ -630,15 +571,6 @@ bool get_endorsement_cert(local_tpm &tpm, string *out) {
     printf("%s() error, line %d, ReadNvPublic failed\n", __func__, __LINE__);
     return false;
   }
-#ifdef DEBUG1
-  printf("reported handle: %08x\n", slot_index);
-  printf("reported alg: %04x\n", slot_alg);
-  printf("reported slot size : %d\n", (int)slot_size);
-  printf("reported policy (%d):\n", (int)slot_policy.size());
-  print_bytes((int)slot_policy.size(), (byte_t *)slot_policy.data());
-  printf("\n");
-  printf("\n");
-#endif
 
   int    out_size = (int)slot_size;
   byte_t out_buf[out_size];
@@ -732,11 +664,6 @@ bool read_nv_handle(local_tpm &tpm,
            handle);
     return false;
   }
-#ifdef DEBUG1
-  printf("Tpm2_ReadNv %x succeeds: ", handle);
-  print_bytes(size_data, data_out);
-  printf("\n");
-#endif
 
   out->assign((char *)data_out, size_data);
   return true;
@@ -751,12 +678,6 @@ bool write_nv_handle(local_tpm &tpm,
     printf("%s() error, line %d, WriteNv failed\n", __func__, __LINE__);
     return false;
   }
-#ifdef DEBUG
-  printf("Tpm2_WriteNv %x succeeds, %d bytes written\n",
-         handle,
-         (int)in.size());
-#endif
-
   return true;
 }
 
@@ -772,11 +693,6 @@ bool read_nv_slot(local_tpm &tpm, int slot, string *out) {
     printf("%s() error, line %d, ReadNv failed\n", __func__, __LINE__);
     return false;
   }
-#ifdef DEBUG1
-  printf("Tpm2_ReadNv %d succeeds: ", nv_handle);
-  print_bytes(size_data, data_out);
-  printf("\n");
-#endif
 
   out->assign((char *)data_out, size_data);
   return true;
@@ -837,9 +753,6 @@ bool extend_pcrs(local_tpm &tpm, int pcr_num) {
     printf("%s() error, line %d, Tpm2_PCR_Event failed\n", __func__, __LINE__);
     return false;
   }
-#ifdef DEBUG2
-  printf("Tpm2_PCR_Event succeeded\n");
-#endif
   return true;
 }
 
@@ -884,12 +797,6 @@ bool create_endorsement_session(local_tpm  &tpm,
     Tpm2_FlushContext(tpm, *session_handle);
     return false;
   }
-#ifdef DEBUG2
-  printf("Endorsement auth session handle: %08x\n", *session_handle);
-  printf("starting digest: ");
-  print_bytes(policy_digest.size, policy_digest.buffer);
-  printf("\n");
-#endif
 
   TPM2B_TIMEOUT timeout;
   TPMT_TK_AUTH  ticket;
@@ -906,17 +813,6 @@ bool create_endorsement_session(local_tpm  &tpm,
     Tpm2_FlushContext(tpm, *session_handle);
     return false;
   }
-
-#ifdef DEBUG2
-  if (!Tpm2_PolicyGetDigest(tpm, *session_handle, &policy_digest)) {
-    printf("%s() error, line %d, PolicyGetDigest failed\n", __func__, __LINE__);
-    Tpm2_FlushContext(tpm, *session_handle);
-    return false;
-  }
-  printf("Endorsement returned digest: ");
-  print_bytes(policy_digest.size, policy_digest.buffer);
-  printf("\n");
-#endif
 
   return true;
 }
@@ -957,15 +853,6 @@ bool create_quote_session(local_tpm          &tpm,
   nonce->assign((char *)nonce_obj.buffer, nonce_obj.size);
 
 #ifdef DEBUG2
-  printf("\n");
-  printf("Tpm2_StartAuthSession succeeds handle: %08x\n", *session_handle);
-  printf("initial nonce (%d): ", initial_nonce.size);
-  print_bytes(initial_nonce.size, initial_nonce.buffer);
-  printf("\n");
-  printf("nonce (%d): ", nonce_obj.size);
-  print_bytes(nonce_obj.size, nonce_obj.buffer);
-  printf("\n");
-
   TPM2B_DIGEST policy_digest;
   if (!Tpm2_PolicyGetDigest(tpm, *session_handle, &policy_digest)) {
     printf("%s() error, line %d, PolicyGetDigest failed\n", __func__, __LINE__);
@@ -998,16 +885,13 @@ bool create_quote_session(local_tpm          &tpm,
     Tpm2_FlushContext(tpm, *session_handle);
     return false;
   }
+
 #ifdef DEBUG
   printf("pcrs at create_quote\n");
   int    num_pcrs = 1;
   byte_t pcrs[1] = {7};
   print_pcrs(tpm, num_pcrs, pcrs);
 #endif
-#ifdef DEBUG2
-  printf("%s(), line %d, Tpm2_PolicyPcr succeeded\n", __func__, __LINE__);
-#endif
-
   return true;
 }
 
@@ -1079,13 +963,6 @@ bool get_endorsement_key(local_tpm  &tpm,
   string nonce;
 
 #ifdef DEBUG2
-  printf("authstring: ");
-  print_bytes(authString.size(), (byte_t *)authString.data());
-  printf("\n");
-  printf("policyString: ");
-  print_bytes(policyString.size(), (byte_t *)policyString.data());
-  printf("\n");
-
   TPM_HANDLE endorsement_session_handle = 0;
   if (!create_endorsement_session(tpm,
                                   authString,
@@ -1121,49 +998,6 @@ bool get_endorsement_key(local_tpm  &tpm,
     printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);
     return false;
   }
-
-#ifdef DEBUG1
-  printf("\n");
-  printf("Modulus from CreatePrimary (%d):\n",
-         pub_out.publicArea.unique.rsa.size);
-  print_bytes(pub_out.publicArea.unique.rsa.size,
-              pub_out.publicArea.unique.rsa.buffer);
-  printf("\n");
-  printf("CreatePrimary succeeded primary: %08x\n", *ek_handle);
-  if (!Tpm2_ReadPublic(tpm,
-                       *ek_handle,
-                       &pub_blob_size,
-                       pub_blob,
-                       &pub_out,
-                       &pub_name,
-                       &qualified_pub_name)) {
-    printf("%s() error, line %d, ReadPublic failed\n", __func__, __LINE__);
-    return false;
-  }
-  printf("ReadPublic, Public blob: ");
-  print_bytes(pub_blob_size, pub_blob);
-  printf("\n");
-  printf("Name: ");
-  print_bytes(pub_name.size, pub_name.name);
-  printf("\n");
-  printf("Qualified name: ");
-  print_bytes(qualified_pub_name.size, qualified_pub_name.name);
-  printf("\n");
-  printf("Pubout size: %d\n", pub_out.size);
-  printf("Type: %d\n", pub_out.publicArea.type);
-  printf("Name: %d\n", pub_out.publicArea.nameAlg);
-  printf("Scheme: %d\n", pub_out.publicArea.parameters.rsaDetail.scheme.scheme);
-  printf("Bytes (%d):\n", (int)pub_out.publicArea.unique.rsa.size);
-  print_bytes((int)pub_out.publicArea.unique.rsa.size,
-              (byte_t *)pub_out.publicArea.unique.rsa.buffer);
-  printf("\n");
-  printf("Exponent: %d\n", pub_out.publicArea.parameters.rsaDetail.exponent);
-  printf("\n");
-  printf("Policy: ");
-  print_bytes(pub_out.publicArea.authPolicy.size,
-              pub_out.publicArea.authPolicy.buffer);
-  printf("\n");
-#endif
 
   return true;
 }
@@ -1239,8 +1073,6 @@ bool create_quote_hierarchy(local_tpm    &tpm,
   }
 
 #ifdef DEBUG2
-  printf("\nCreate hierarchy\n");
-  printf("CreatePrimary succeeded\n");
   print_pcrs(tpm, num_pcrs, pcrs);
   printf("\n");
   TPM2B_NAME pub_name;
@@ -1297,10 +1129,6 @@ bool create_quote_hierarchy(local_tpm    &tpm,
   }
   Tpm2_FlushContext(tpm, session_handle);
   policyString.assign((char *)policy_digest.buffer, policy_digest.size);
-#ifdef DEBUG
-  printf("policy for quote: ");
-  print_bytes(policyString.size(), (byte_t *)policyString.data());
-#endif
 
   TPM2B_CREATION_DATA creation_out;
   TPMT_TK_CREATION    creation_ticket;
@@ -1348,19 +1176,6 @@ bool create_quote_hierarchy(local_tpm    &tpm,
     Tpm2_FlushContext(tpm, srk_handle);
     return false;
   }
-#ifdef DEBUG2
-  printf("Quote CreateKey succeeded, private size: %d, public size: %d\n",
-         size_private,
-         size_public);
-  printf("Digest (%d): ", digest_out.size);
-  print_bytes(digest_out.size, digest_out.buffer);
-  printf("\n");
-  printf("Private: ");
-  print_bytes(size_private, out_private);
-  printf("\nPublic: ");
-  print_bytes(size_public, out_public);
-  printf("\n");
-#endif
 
   // Save the stuff for load
   tpm_load_key_info key_info;
@@ -1379,7 +1194,7 @@ bool create_quote_hierarchy(local_tpm    &tpm,
     return false;
   }
   if (!write_file_from_string(file_name, serialized_key_info)) {
-    printf("%s() error, line: %d, Can't writ key_inf file %s\n",
+    printf("%s() error, line: %d, Can't write key_inf file %s\n",
            __func__,
            __LINE__,
            file_name.c_str());
@@ -1461,48 +1276,6 @@ bool recover_and_load_quote_hierarchy(local_tpm    &tpm,
     return false;
   }
 
-#ifdef DEBUG2
-  printf("\nRecover hierarchy\n");
-  printf("CreatePrimary succeeded\n");
-  print_pcrs(tpm, num_pcrs, pcrs);
-  printf("\n");
-  TPM2B_NAME pub_name;
-  TPM2B_NAME qualified_pub_name;
-  uint16_t   pub_blob_size = 4096;
-  byte_t     pub_blob[pub_blob_size];
-  if (!Tpm2_ReadPublic(tpm,
-                       *srk_handle,
-                       &pub_blob_size,
-                       pub_blob,
-                       &pub_out,
-                       &pub_name,
-                       &qualified_pub_name)) {
-    printf("%s() error, line %d, ReadPublic failed\n", __func__, __LINE__);
-    Tpm2_FlushContext(tpm, *srk_handle);
-    return false;
-  }
-  printf("Public blob: ");
-  print_bytes(pub_blob_size, pub_blob);
-  printf("\n");
-  printf("Name: ");
-  print_bytes(pub_name.size, pub_name.name);
-  printf("\n");
-  printf("Qualified name: ");
-  print_bytes(qualified_pub_name.size, qualified_pub_name.name);
-  printf("\n");
-  printf("\n");
-  printf("Pubout size: %d\n", pub_out.size);
-  printf("Type: %d\n", pub_out.publicArea.type);
-  printf("Name: %d\n", pub_out.publicArea.nameAlg);
-  printf("Scheme: %d\n", pub_out.publicArea.parameters.rsaDetail.scheme.scheme);
-  printf("Bytes (%d):\n", (int)pub_out.publicArea.unique.rsa.size);
-  print_bytes((int)pub_out.publicArea.unique.rsa.size,
-              (byte_t *)pub_out.publicArea.unique.rsa.buffer);
-  printf("\n");
-  printf("Exponent: %d\n", pub_out.publicArea.parameters.rsaDetail.exponent);
-  printf("\n");
-#endif
-
   // Get info for load
   tpm_load_key_info key_info;
   string            serialized_key_info;
@@ -1522,17 +1295,6 @@ bool recover_and_load_quote_hierarchy(local_tpm    &tpm,
     Tpm2_FlushContext(tpm, *srk_handle);
     return false;
   }
-#ifdef DEBUG2
-  printf("\nRecoverKey\n");
-  printf("Private: ");
-  print_bytes((int)key_info.priv_key().size(),
-              (byte_t *)key_info.priv_key().data());
-  printf("\nPublic: ");
-  print_bytes((int)key_info.pub_key().size(),
-              (byte_t *)key_info.pub_key().data());
-  printf("\n");
-  printf("\n");
-#endif
 
   TPM2B_NAME name;
   memset((byte_t *)&name, 0, sizeof(name));
@@ -1551,9 +1313,6 @@ bool recover_and_load_quote_hierarchy(local_tpm    &tpm,
     return false;
   }
 
-#ifdef DEBUG2
-  printf("\nLoad succeeded\n");
-#endif
   return true;
 }
 
@@ -1636,10 +1395,6 @@ TPM2B_PUBLIC g_public_quote_key;
 
 bool tpm_close() {
 
-#ifdef DEBUG2
-  printf("\ntpm_close()\n");
-#endif
-
   if (!g_tpm_initialized) {
     return true;
   }
@@ -1663,9 +1418,6 @@ bool tpm_close() {
   }
   g_tpm_environment_initialized = false;
 
-#ifdef DEBUG2
-  printf("tpm_close() returning\n");
-#endif
   return true;
 }
 
@@ -1820,10 +1572,6 @@ bool tpm_init(const string &device_name,
   g_num_pcrs = num_pcrs;
   memcpy(g_pcrs, pcrs, num_pcrs);
   g_tpm_environment_initialized = true;
-
-#ifdef DEBUG2
-  printf("tpm_init, returns true\n");
-#endif
   return true;
 }
 
@@ -2644,291 +2392,3 @@ bool recover_quote_key_certificate(const string &serialized_cred_response,
 
 // ------------------------------------------------------------------------
 
-#define INTERNALTPMMAKECRED
-
-bool credential_test(local_tpm          &tpm,
-                     TPML_PCR_SELECTION &pcrSelect,
-                     TPM_HANDLE         &srk_handle,
-                     TPM_HANDLE         &quote_handle) {
-
-  TPM_HANDLE ek_handle = 0;
-  string     policyString;
-  string     authString;
-  string     emptyAuth;
-  int        size_buf = 128;
-  byte_t     buf[size_buf];
-
-  int m = CreatePasswordAuthArea(emptyAuth, size_buf, buf);
-  if (m < 0) {
-    printf("%s() error, line %d, CreatePasswordAuthArea failed\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-
-  extern byte_t g_policy_rsa_2048[32];
-  authString.assign((char *)(buf + 2), m - 2);
-  policyString.assign((char *)g_policy_rsa_2048, sizeof(g_policy_rsa_2048));
-
-  if (!get_endorsement_key(tpm, authString, policyString, &ek_handle)) {
-    printf("%s() error, line %d, get_endorsement_key failed\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-#ifdef DEBUG1
-  printf("\nGot endorsement key %08x\n", ek_handle);
-#endif
-
-  TPM2B_DIGEST           credential;
-  TPM2B_ID_OBJECT        credentialBlob;
-  TPM2B_ENCRYPTED_SECRET secret;
-  TPM2B_DIGEST           recovered_credential;
-
-  memset((void *)&credential, 0, sizeof(TPM2B_DIGEST));
-  memset((void *)&secret, 0, sizeof(TPM2B_ENCRYPTED_SECRET));
-  memset((void *)&credentialBlob, 0, sizeof(TPM2B_ID_OBJECT));
-
-  // TODO: Make a real secret here for MakeCredential with
-  // size 32 bits.
-  credential.size = 32;
-  for (int i = 0; i < credential.size; i++)
-    credential.buffer[i] = i + 1;
-
-  TPM2B_PUBLIC quoting_pub_out;
-  TPM2B_NAME   quoting_pub_name;
-  TPM2B_NAME   quoting_qualified_pub_name;
-  uint16_t     quoting_pub_blob_size = 1024;
-  byte_t       quoting_pub_blob[quoting_pub_blob_size];
-  memset((void *)&quoting_pub_out, 0, sizeof(TPM2B_PUBLIC));
-
-  if (!Tpm2_ReadPublic(tpm,
-                       quote_handle,
-                       &quoting_pub_blob_size,
-                       quoting_pub_blob,
-                       &quoting_pub_out,
-                       &quoting_pub_name,
-                       &quoting_qualified_pub_name)) {
-    printf("%s() error, line %d, ReadPublic failed\n", __func__, __LINE__);
-    Tpm2_FlushContext(tpm, ek_handle);
-    return false;
-  }
-#ifdef DEBUG1
-  printf("Credential tests, ReadPublic succeeded\n");
-  printf("Active Name (%d): ", quoting_pub_name.size);
-  print_bytes(quoting_pub_name.size, quoting_pub_name.name);
-  printf("\n");
-#endif
-
-  if (!Tpm2_MakeCredential(tpm,
-                           ek_handle,
-                           credential,
-                           quoting_pub_name,
-                           &credentialBlob,
-                           &secret)) {
-    printf("%s() error, line %d, Tpm2_MakeCredential failed\n",
-           __func__,
-           __LINE__);
-    Tpm2_FlushContext(tpm, ek_handle);
-    return false;
-  }
-
-#ifdef DEBUG2
-  printf("TPM MakeCredential succeeded\n");
-  printf("credBlob size: %d\n", credentialBlob.size);
-  print_bytes(credentialBlob.size, credentialBlob.credential);
-  printf("\n");
-  printf("secret size: %d\n", secret.size);
-  print_bytes(secret.size, secret.secret);
-  printf("\n");
-  printf("\ncredentialBlob: ");
-  print_bytes(sizeof(credentialBlob), (byte_t *)&credentialBlob);
-  printf("\n");
-#endif
-
-  // Activate
-  string nonce;
-  string policyDigest;
-  policyDigest.assign((char *)quoting_pub_out.publicArea.authPolicy.buffer,
-                      quoting_pub_out.publicArea.authPolicy.size);
-
-  byte_t auth_buf[256];
-  int    n = 0;
-
-  string quoteAuth = authString;
-
-#ifdef DEBUG1
-  print_bytes(quoteAuth.size(), (byte_t *)quoteAuth.data());
-  printf("\n");
-  printf("Nonce (%d): ", (int)nonce.size());
-  print_bytes(nonce.size(), (byte_t *)nonce.data());
-  printf("\n");
-#endif
-
-  // endorsement auth session
-  TPM_HANDLE endorsement_session_handle = 0;
-  string     endorsementAuth;
-#ifdef DEBUG1
-  printf("\nCalling create_endorsement_session\n");
-#endif
-  nonce.clear();
-  if (!create_endorsement_session(tpm,
-                                  authString,
-                                  &nonce,
-                                  &endorsement_session_handle)) {
-    printf("%s() error, line %d, create_endorsement _session failed\n",
-           __func__,
-           __LINE__);
-    Tpm2_FlushContext(tpm, ek_handle);
-    Tpm2_FlushContext(tpm, quote_handle);
-    return false;
-  }
-
-  // endorsement auth
-  n = 0;
-  byte_t *cur = auth_buf;
-  change_endian32((uint32_t *)&endorsement_session_handle, (uint32_t *)cur);
-  cur += sizeof(uint32_t);
-  n += sizeof(uint32_t);
-  n += 1;
-  uint16_t t = nonce.size();
-  change_endian16(&t, (uint16_t *)cur);
-  cur += sizeof(uint16_t);
-  n += sizeof(uint16_t);
-  memcpy(cur, (byte_t *)nonce.data(), t);
-  cur += t;
-  n += t;
-  *cur = 1;
-  cur += 1;
-  *((uint16_t *)cur) = 0;
-  cur += sizeof(uint16_t);
-  n += sizeof(uint16_t);
-  endorsementAuth.assign((char *)auth_buf, n);
-
-#ifdef DEBUG2
-  printf("Endorsement session handle: %08x\n", endorsement_session_handle);
-  printf("Endorsement auth: ");
-  print_bytes(endorsementAuth.size(), (byte_t *)endorsementAuth.data());
-  printf("\n");
-  printf("Nonce (%d): ", (int)nonce.size());
-  print_bytes(nonce.size(), (byte_t *)nonce.data());
-  printf("\n");
-  int    num_pcrs = 1;
-  byte_t pcrs[1] = {7};
-  printf("PCRs at activate:\n");
-  print_pcrs(tpm, num_pcrs, pcrs);
-  printf("\n");
-#endif
-
-#ifndef INTERNALTPMMAKECRED
-
-  if (!Tpm2_ActivateCredential(tpm,
-                               quote_handle,
-                               ek_handle,
-                               quoteAuth,
-                               endorsementAuth,
-                               credentialBlob,
-                               secret,
-                               &recovered_credential)) {
-    printf("%s() error, line %d, Tpm2_ActivateCredential failed\n",
-           __func__,
-           __LINE__);
-    Tpm2_FlushContext(tpm, ek_handle);
-    Tpm2_FlushContext(tpm, endorsement_session_handle);
-    return false;
-  }
-
-#  ifdef DEBUG
-  printf("ActivateCredential succeeded\n");
-  printf("Recovered credential (%d): ", recovered_credential.size);
-  print_bytes(recovered_credential.size, recovered_credential.buffer);
-  printf("\n");
-#  endif
-#endif  // INTERNALTPMMAKECRED
-
-  // Standalone makecredential
-  string endorsement_cert;
-  if (!get_endorsement_cert(tpm, &endorsement_cert)) {
-    printf("%s() error, line %d, create_endorsement _session failed\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-#ifdef DEBUG
-  printf("get_endorsement_cert succeeded\n");
-#endif
-
-  // make_credential
-  string quote_key_name;
-  quote_key_name.assign((char *)quoting_pub_name.name, quoting_pub_name.size);
-  string cred;
-  string cred_blob_out;
-  string encrypted_secret_out;
-  cred.assign((char *)credential.buffer, credential.size);
-  if (!make_credential(quoting_pub_out,
-                       quote_key_name,
-                       endorsement_cert,
-                       cred,
-                       &cred_blob_out,
-                       &encrypted_secret_out)) {
-    printf("make_credential failed\n");
-    return false;
-  }
-
-  TPM2B_ID_OBJECT        cred_blob;
-  TPM2B_ENCRYPTED_SECRET cred_secret;
-  TPM2B_DIGEST           recovered_cred;
-
-  memset((void *)&cred_secret, 0, sizeof(TPM2B_ENCRYPTED_SECRET));
-  memset((void *)&cred_blob, 0, sizeof(TPM2B_ID_OBJECT));
-  memset((void *)&recovered_cred, 0, sizeof(TPM2B_DIGEST));
-
-  cred_blob.size = cred_blob_out.size();
-  memcpy(cred_blob.credential, (byte_t *)cred_blob_out.data(), cred_blob.size);
-  cred_secret.size = encrypted_secret_out.size();
-  memcpy(cred_secret.secret,
-         (byte_t *)encrypted_secret_out.data(),
-         encrypted_secret_out.size());
-
-#ifdef DEBUG2
-  printf("\nStandalone MakeCredential succeeded\n");
-  printf("\ncred_secret size: %d\n", cred_secret.size);
-  print_bytes(cred_secret.size, cred_secret.secret);
-  printf("\n");
-  printf("\ncredBlob size: %d\n", (int)cred_blob.size);
-  print_bytes(cred_blob.size, (byte_t *)cred_blob.credential);
-  printf("\n");
-#endif
-
-#ifdef INTERNALTPMMAKECRED
-  if (!Tpm2_ActivateCredential(tpm,
-                               quote_handle,
-                               ek_handle,
-                               quoteAuth,
-                               endorsementAuth,
-                               cred_blob,
-                               cred_secret,
-                               &recovered_cred)) {
-    printf("%s() error, line %d, Tpm2_ActivateCredential failed\n",
-           __func__,
-           __LINE__);
-    Tpm2_FlushContext(tpm, ek_handle);
-    Tpm2_FlushContext(tpm, endorsement_session_handle);
-    return false;
-  }
-
-#  ifdef DEBUG
-  printf("\nActivateCredential succeeded with internal MakeCredential\n");
-  printf("Recovered credential (%d): ", recovered_cred.size);
-  print_bytes(recovered_cred.size, recovered_cred.buffer);
-  printf("\n");
-#  endif
-#endif
-
-
-  Tpm2_FlushContext(tpm, ek_handle);
-  Tpm2_FlushContext(tpm, endorsement_session_handle);
-  return true;
-}
-
-// ------------------------------------------------------------------------
