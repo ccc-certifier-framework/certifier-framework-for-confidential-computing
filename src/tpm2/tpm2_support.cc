@@ -1689,6 +1689,17 @@ int size_hash(uint16_t id) {
   }
 }
 
+/*
+ * typedef struct {
+ *   TPM_GENERATED   magic;
+ *   TPMI_ST_ATTEST  type;
+ *   TPM2B_NAME      qualifiedSigner;
+ *   TPM2B_DATA      extraData;
+ *   TPMS_CLOCK_INFO clockInfo;
+ *   uint64_t        firmwareVersion;
+ *   TPMU_ATTEST     attested;
+} TPMS_ATTEST;
+ */
 // These are the values we have to check
 bool decode_quoted(int                 size_buf,
                    byte_t             *buf,
@@ -1745,7 +1756,7 @@ bool decode_quoted(int                 size_buf,
   buf += sizeof(uint16_t);
   size_buf -= sizeof(uint16_t);
 
-  // skip name
+  // skip qualified signer name
   uint16_t size_name = 0;
   change_endian16((uint16_t *)buf, &size_name);
   buf += sizeof(uint16_t);
@@ -1770,9 +1781,13 @@ bool decode_quoted(int                 size_buf,
   buf += ed_size;
   size_buf -= ed_size;
 
-  // clock  (There must be a better way)
+  // clock  (There must be a better way) and firmware version
   buf += 27;
   size_buf -= 27;
+
+  // attest structure here
+  //   TPML_PCR_SELECTION pcrSelect;
+  //   TPM2B_DIGEST       pcrDigest;
 
   // pcr selection
   uint16_t count = 0;
