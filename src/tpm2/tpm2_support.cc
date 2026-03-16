@@ -593,7 +593,7 @@ bool save_context(local_tpm &tpm, TPM_HANDLE &handle, string *out) {
     printf("Tpm2_SaveContext failed\n");
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("Tpm2_SaveContext succeeds, save area %d\n", size);
 #endif
   out->assign((char *)saveArea, size);
@@ -605,7 +605,7 @@ bool load_context(local_tpm &tpm, TPM_HANDLE &handle, string &in) {
     printf("%s() error, line %d, LoadContext failed\n", __func__, __LINE__);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("Tpm2_LoadContext succeeds, handle: %08x, save area size: %d\n",
          handle,
          (int)in.size());
@@ -617,27 +617,19 @@ bool nv_increment_counter(local_tpm &tpm, int slot) {
   string     authString;
   TPM_HANDLE nv_handle = GetNvHandle(slot);
 
-  if (Tpm2_UndefineSpace(tpm, TPM_RH_OWNER, nv_handle)) {
-#ifdef DEBUG
-    printf("Tpm2_UndefineSpace %d succeeds\n", slot);
-#endif
-  } else {
-#ifdef DEBUG
+  if (!Tpm2_UndefineSpace(tpm, TPM_RH_OWNER, nv_handle)) {
     printf("Tpm2_UndefineSpace fails (but that's OK usually)\n");
-#endif
   }
 
   // Should be AuthRead, AuthWrite, Counter, Sha256
-  if (Tpm2_DefineSpace(tpm,
-                       TPM_RH_OWNER,
-                       nv_handle,
-                       authString,
-                       0,
-                       nullptr,
-                       NV_COUNTER | NV_AUTHWRITE | NV_AUTHREAD,
-                       8)) {
-    printf("Tpm2_DefineSpace %d succeeds\n", nv_handle);
-  } else {
+  if (!Tpm2_DefineSpace(tpm,
+                        TPM_RH_OWNER,
+                        nv_handle,
+                        authString,
+                        0,
+                        nullptr,
+                        NV_COUNTER | NV_AUTHWRITE | NV_AUTHREAD,
+                        8)) {
     printf("Tpm2_DefineSpace fails\n");
     return false;
   }
@@ -703,14 +695,8 @@ bool write_nv_slot(local_tpm &tpm, int slot, string &in) {
   TPM_HANDLE nv_handle = GetNvHandle(slot);
   string     authString;
 
-  if (Tpm2_UndefineSpace(tpm, TPM_RH_OWNER, nv_handle)) {
-#ifdef DEBUG
-    printf("Tpm2_UndefineSpace %d succeeds\n", slot);
-#endif
-  } else {
-#ifdef DEBUG
+  if (!Tpm2_UndefineSpace(tpm, TPM_RH_OWNER, nv_handle)) {
     printf("Tpm2_UndefineSpace fails (but that's OK usually)\n");
-#endif
   }
   if (!Tpm2_DefineSpace(tpm,
                         TPM_RH_OWNER,
@@ -723,11 +709,6 @@ bool write_nv_slot(local_tpm &tpm, int slot, string &in) {
     printf("%s() error, line %d, DefineSpace failed\n", __func__, __LINE__);
     return false;
   }
-#ifdef DEBUG
-  else {
-    printf("Tpm2_DefineSpace %d succeeds\n", nv_handle);
-  }
-#endif
 
   if (!Tpm2_WriteNv(tpm,
                     nv_handle,
@@ -737,11 +718,6 @@ bool write_nv_slot(local_tpm &tpm, int slot, string &in) {
     printf("%s() error, line %d, WriteNv failed\n", __func__, __LINE__);
     return false;
   }
-#ifdef DEBUG
-  printf("Tpm2_WriteNv %d succeeds, %d bytes written\n",
-         nv_handle,
-         (int)in.size());
-#endif
 
   return true;
 }
@@ -886,7 +862,7 @@ bool create_quote_session(local_tpm          &tpm,
     return false;
   }
 
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("pcrs at create_quote\n");
   int    num_pcrs = 1;
   byte_t pcrs[1] = {7};
@@ -1146,7 +1122,6 @@ bool create_quote_hierarchy(local_tpm    &tpm,
   create_flags.userWithAuth = 1;
   create_flags.sign = 1;
   create_flags.restricted = 1;
-  // create_flags.adminWithPolicy = 1;
 
   // Quote key
   if (!Tpm2_CreateKey(tpm,
@@ -1467,7 +1442,7 @@ bool tpm_init(const string &device_name,
            device_name.c_str());
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("tpm_init, opened tpm: %s %d\n", device_name.c_str(), g_tpm.tpm_fd_);
 #endif
   g_tpm_initialized = true;
@@ -1657,7 +1632,7 @@ bool local_tpm_attest(TPM_HANDLE &quote_handle,
     return false;
   }
 
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\nHashed to quote: ");
   print_bytes((int)d_len, digest);
   printf("\n");
@@ -1870,7 +1845,7 @@ bool tpm_verify_attest(key_message  &quote_key,
                        const string &hash_name,
                        const string &sig_scheme,
                        string       &signature) {
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\ntpm_verify_attest:\n");
   print_key(quote_key);
   printf("\n");
@@ -1908,7 +1883,7 @@ bool tpm_verify_attest(key_message  &quote_key,
     return false;
   }
 
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\nHashed to quote: ");
   print_bytes((int)d_len, digest);
   printf("\n");
@@ -1930,7 +1905,7 @@ bool tpm_verify_attest(key_message  &quote_key,
     return false;
   }
 
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\ntpm_verify_attest:\n\n");
   printf("  extra data: ");
   print_bytes((int)extra_data.size(), (byte_t *)extra_data.data());
@@ -1946,7 +1921,6 @@ bool tpm_verify_attest(key_message  &quote_key,
   }
   printf("  pcr digest (%d): ", (int)pcr_digest.size());
   print_bytes((int)pcr_digest.size(), (byte_t *)pcr_digest.data());
-  printf("\n");
   printf("\n");
 #endif
 
@@ -1975,12 +1949,6 @@ bool tpm_verify_attest(key_message  &quote_key,
     return false;
   }
 
-#ifdef DEBUG
-  printf("\nHashed quoted: ");
-  print_bytes((int)d_len2, digest2);
-  printf("\n");
-#endif
-
   // Get key for openssl
   EVP_PKEY   *key = pkey_from_key((const key_message &)quote_key);
   EVP_MD_CTX *md_ctx = EVP_MD_CTX_new();
@@ -2003,9 +1971,6 @@ bool tpm_verify_attest(key_message  &quote_key,
            __LINE__);
     return false;
   }
-#ifdef DEBUG2
-  printf("\nEVP_DigestVerifyInit succeeded\n");
-#endif
   if (1
       != EVP_DigestVerifyUpdate(md_ctx,
                                 (const byte_t *)quoted.data(),
@@ -2015,9 +1980,6 @@ bool tpm_verify_attest(key_message  &quote_key,
            __LINE__);
     return false;
   }
-#ifdef DEBUG2
-  printf("\nEVP_DigestVerifyUpdate succeeded\n");
-#endif
   if (1
       != EVP_DigestVerifyFinal(md_ctx,
                                (byte_t *)signature.data(),
@@ -2027,9 +1989,6 @@ bool tpm_verify_attest(key_message  &quote_key,
            __LINE__);
     return false;
   }
-#ifdef DEBUG2
-  printf("\nEVP_DigestVerifyFinal succeeded\n");
-#endif
 
   // free key and md_ctx
   EVP_MD_CTX_free(md_ctx);
@@ -2163,12 +2122,10 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   } else if (hash_alg_id == TPM_ALG_SHA256) {
     md = EVP_sha256();
   } else {
-    printf("%s() error, line %d, unsupported has alg\n",
-           __func__,
-           __LINE__);
+    printf("%s() error, line %d, unsupported has alg\n", __func__, __LINE__);
     return false;
   }
-  int           m = RSA_padding_add_PKCS1_OAEP_mgf1(secret_buf,
+  int m = RSA_padding_add_PKCS1_OAEP_mgf1(secret_buf,
                                           256,
                                           seed,
                                           size_seed,
@@ -2184,7 +2141,6 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   }
 
 #ifdef DEBUG3
-
   byte_t        pad_out[256];
   const char   *pp = "IDENTITY";
   const EVP_MD *md1 = nullptr;
@@ -2194,12 +2150,10 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   } else if (hash_alg_id == TPM_ALG_SHA256) {
     md1 = EVP_sha256();
   } else {
-    printf("%s() error, line %d, unsupported has alg\n",
-           __func__,
-           __LINE__);
+    printf("%s() error, line %d, unsupported has alg\n", __func__, __LINE__);
     return false;
   }
-  int           k = RSA_padding_check_PKCS1_OAEP_mgf1(pad_out,
+  int k = RSA_padding_check_PKCS1_OAEP_mgf1(pad_out,
                                             32,
                                             secret_buf,
                                             256,
@@ -2354,21 +2308,6 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   cred_blob->append((char *)unmarshaled_integrityHmac.buffer, size_hmacKey);
   cred_blob->append((char *)encIdentity, size_encIdentity);
 
-#ifdef DEBUG2
-  printf("\nmake_credential\n");
-  printf("encIdentity: ");
-  print_bytes(size_encIdentity, (byte_t *)encIdentity);
-  printf("\n");
-  printf("hmac       : ");
-  print_bytes(size_hmacKey, (byte_t *)unmarshaled_integrityHmac.buffer);
-  printf("\n");
-  printf("encrypted secret:\n");
-  print_bytes(encrypted_secret->size(), (byte_t *)encrypted_secret->data());
-  printf("\n");
-  printf("credBlob (%d): ", (int)cred_blob->size());
-  print_bytes(cred_blob->size(), (byte_t *)cred_blob->data());
-  printf("\n");
-#endif
   return true;
 }
 
@@ -2391,4 +2330,3 @@ bool recover_quote_key_certificate(const string &serialized_cred_response,
 }
 
 // ------------------------------------------------------------------------
-
