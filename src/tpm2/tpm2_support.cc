@@ -2410,14 +2410,14 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   memset(secret_buf, 0, size_secret_buf);
 
   const EVP_MD *md = EVP_sha256();
-  int m = RSA_padding_add_PKCS1_OAEP_mgf1(secret_buf,
-                                     256,
-                                     seed,
-                                     size_seed,
-                                     (byte_t *)"IDENTITY",
-                                     strlen("IDENTITY") + 1,
-                                     md,
-                                     nullptr);
+  int           m = RSA_padding_add_PKCS1_OAEP_mgf1(secret_buf,
+                                          256,
+                                          seed,
+                                          size_seed,
+                                          (byte_t *)"IDENTITY",
+                                          strlen("IDENTITY") + 1,
+                                          md,
+                                          nullptr);
   if (m <= 0) {
     printf("%s() error, line %d, RSA_padding_add_PKCS1_OAEP fails\n",
            __func__,
@@ -2425,21 +2425,26 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
     return false;
   }
 
-#  ifdef DEBUG3
+#ifdef DEBUG3
 
-  byte_t pad_out[256];
-  const char* pp = "IDENTITY";
+  byte_t        pad_out[256];
+  const char   *pp = "IDENTITY";
   const EVP_MD *md1 = EVP_sha256();
-  int k = RSA_padding_check_PKCS1_OAEP_mgf1(pad_out, 32,
-                                 secret_buf, 256, 256,
-                                 (const unsigned char *)pp, strlen(pp) + 1,
-                                 md1, nullptr);
+  int           k = RSA_padding_check_PKCS1_OAEP_mgf1(pad_out,
+                                            32,
+                                            secret_buf,
+                                            256,
+                                            256,
+                                            (const unsigned char *)pp,
+                                            strlen(pp) + 1,
+                                            md1,
+                                            nullptr);
 
   printf("OAEP test: %d\n", k);
   printf("pad_out  :\n");
   print_bytes(32, pad_out);
   printf("\n");
-#  endif  // DEBUG3
+#endif  // DEBUG3
 
   int n = RSA_public_encrypt(size_secret_buf,
                              secret_buf,
