@@ -2396,7 +2396,7 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   byte_t encrypted_secret_buf[size_encrypted_secret];
   memset(encrypted_secret_buf, 0, size_encrypted_secret);
 
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\n");
   X509_print_fp(stdout, endorsement_cert);
   printf("\n");
@@ -2405,7 +2405,6 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   printf("\n");
 #endif
 
-#if 1
   int    size_secret_buf = 256;
   byte_t secret_buf[size_secret_buf];
   memset(secret_buf, 0, size_secret_buf);
@@ -2453,20 +2452,6 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
            __LINE__);
     return false;
   }
-#else
-  // RSA_PKCS1_OAEP_PADDING
-  int n = RSA_public_encrypt(size_seed,
-                             seed,
-                             encrypted_secret_buf,
-                             protector_key,
-                             RSA_PKCS1_OAEP_PADDING);
-  if (n <= 0) {
-    printf("%s() error, line %d, RSA_public_encrypt fails\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-#endif
   encrypted_secret->assign((char *)encrypted_secret_buf, n);
 
   byte_t symKey[MAX_SIZE_PARAMS];
@@ -2498,7 +2483,8 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
 
   int size_symKey = size_symKey_bits / 8;
   memcpy(symKey, (byte_t *)sym_key.data(), size_symKey);
-#ifdef DEBUG
+
+#ifdef DEBUG2
   printf("\nsymKey (%d)      : ", size_symKey);
   print_bytes(size_symKey, symKey);
   printf("\n");
@@ -2522,7 +2508,7 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
     printf("%s() error, line %d, Can't AesCFBEncrypt\n", __func__, __LINE__);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("encIdentity (%d) : ", size_encIdentity);
   print_bytes(size_encIdentity, encIdentity);
   printf("\n");
@@ -2554,7 +2540,7 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
     return false;
   }
   memcpy(hmacKey, (byte_t *)hmac_key.data(), size_hmacKey);
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("hmacKey (%d)     : ", size_hmacKey);
   print_bytes(size_hmacKey, hmacKey);
   printf("\n");
@@ -2580,7 +2566,7 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   unmarshaled_integrityHmac.size = size_hmacKey;
   HMAC_Final(hctx, unmarshaled_integrityHmac.buffer, (uint32_t *)&size_hmacKey);
   HMAC_CTX_free(hctx);
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("Outer Mac (%d)   : ", size_hmacKey);
   print_bytes(size_hmacKey, unmarshaled_integrityHmac.buffer);
   printf("\n");
@@ -2594,7 +2580,7 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   cred_blob->append((char *)unmarshaled_integrityHmac.buffer, size_hmacKey);
   cred_blob->append((char *)encIdentity, size_encIdentity);
 
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\nmake_credential\n");
   printf("encIdentity: ");
   print_bytes(size_encIdentity, (byte_t *)encIdentity);
@@ -2721,7 +2707,7 @@ bool credential_test(local_tpm          &tpm,
     return false;
   }
 
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("TPM MakeCredential succeeded\n");
   printf("credBlob size: %d\n", credentialBlob.size);
   print_bytes(credentialBlob.size, credentialBlob.credential);
@@ -2832,7 +2818,7 @@ bool credential_test(local_tpm          &tpm,
   print_bytes(recovered_credential.size, recovered_credential.buffer);
   printf("\n");
 #  endif
-#endif
+#endif  // INTERNALTPMMAKECRED
 
   // Standalone makecredential
   string endorsement_cert;
@@ -2863,10 +2849,6 @@ bool credential_test(local_tpm          &tpm,
     return false;
   }
 
-#ifdef DEBUG
-  printf("\nStandalone MakeCredential succeeded\n");
-#endif
-
   TPM2B_ID_OBJECT        cred_blob;
   TPM2B_ENCRYPTED_SECRET cred_secret;
   TPM2B_DIGEST           recovered_cred;
@@ -2882,13 +2864,13 @@ bool credential_test(local_tpm          &tpm,
          (byte_t *)encrypted_secret_out.data(),
          encrypted_secret_out.size());
 
-#ifdef DEBUG
+#ifdef DEBUG2
+  printf("\nStandalone MakeCredential succeeded\n");
   printf("\ncred_secret size: %d\n", cred_secret.size);
   print_bytes(cred_secret.size, cred_secret.secret);
   printf("\n");
   printf("\ncredBlob size: %d\n", (int)cred_blob.size);
   print_bytes(cred_blob.size, (byte_t *)cred_blob.credential);
-  printf("\n");
   printf("\n");
 #endif
 
@@ -2910,7 +2892,7 @@ bool credential_test(local_tpm          &tpm,
   }
 
 #  ifdef DEBUG
-  printf("ActivateCredential succeeded with internal MakeCredential\n");
+  printf("\nActivateCredential succeeded with internal MakeCredential\n");
   printf("Recovered credential (%d): ", recovered_cred.size);
   print_bytes(recovered_cred.size, recovered_cred.buffer);
   printf("\n");
