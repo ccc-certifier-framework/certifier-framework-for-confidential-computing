@@ -2409,7 +2409,17 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   byte_t secret_buf[size_secret_buf];
   memset(secret_buf, 0, size_secret_buf);
 
-  const EVP_MD *md = EVP_sha256();
+  const EVP_MD *md = nullptr;
+  if (hash_alg_id == TPM_ALG_SHA1) {
+    md = EVP_sha1();
+  } else if (hash_alg_id == TPM_ALG_SHA256) {
+    md = EVP_sha256();
+  } else {
+    printf("%s() error, line %d, unsupported has alg\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
   int           m = RSA_padding_add_PKCS1_OAEP_mgf1(secret_buf,
                                           256,
                                           seed,
@@ -2429,7 +2439,18 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
 
   byte_t        pad_out[256];
   const char   *pp = "IDENTITY";
-  const EVP_MD *md1 = EVP_sha256();
+  const EVP_MD *md1 = nullptr;
+
+  if (hash_alg_id == TPM_ALG_SHA1) {
+    md1 = EVP_sha1();
+  } else if (hash_alg_id == TPM_ALG_SHA256) {
+    md1 = EVP_sha256();
+  } else {
+    printf("%s() error, line %d, unsupported has alg\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
   int           k = RSA_padding_check_PKCS1_OAEP_mgf1(pad_out,
                                             32,
                                             secret_buf,
