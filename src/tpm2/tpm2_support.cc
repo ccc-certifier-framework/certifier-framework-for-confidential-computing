@@ -1367,6 +1367,27 @@ int          g_num_pcrs;
 byte_t       g_pcrs[32];
 TPM2B_PUBLIC g_public_quote_key;
 
+bool close_tpm() {
+  if (g_tpm_initialized) {
+    g_tpm.close_tpm();
+    g_tpm_initialized = false;
+  }
+  return true;
+}
+
+bool init_tpm(const string &device_name) {
+  if (g_tpm_initialized)
+    return true;
+  if (!g_tpm.open_tpm(device_name.c_str())) {
+    printf("%s() error, line %d, can't open tpm: %s\n",
+           __func__,
+           __LINE__,
+           device_name.c_str());
+    return false;
+  }
+  g_tpm_initialized = true;
+  return true;
+}
 
 bool tpm_close() {
 
@@ -1388,8 +1409,7 @@ bool tpm_close() {
   }
 
   if (g_tpm_initialized) {
-    g_tpm.close_tpm();
-    g_tpm_initialized = false;
+    close_tpm();
   }
   g_tpm_environment_initialized = false;
 
@@ -1435,7 +1455,7 @@ bool tpm_init(const string &device_name,
     return false;
   }
 
-  if (!g_tpm.open_tpm(device_name.c_str())) {
+  if (!init_tpm(device_name)) {
     printf("%s() error, line %d, can't open tpm: %s\n",
            __func__,
            __LINE__,
@@ -1445,7 +1465,6 @@ bool tpm_init(const string &device_name,
 #ifdef DEBUG2
   printf("tpm_init, opened tpm: %s %d\n", device_name.c_str(), g_tpm.tpm_fd_);
 #endif
-  g_tpm_initialized = true;
 
 #if 0
   // seal hierarchy

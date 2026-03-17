@@ -80,6 +80,9 @@ bool write_nv_handle(local_tpm &tpm,
 
 // ---------------------------------------------------------------
 
+bool init_tpm(const string &device_name);
+bool close_tpm();
+
 bool create_pcr_policy(local_tpm    &tpm,
                        int           num_pcrs,
                        byte_t       *pcrs,

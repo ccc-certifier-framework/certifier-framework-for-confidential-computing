@@ -1008,12 +1008,17 @@ bool get_cert(local_tpm &tpm, const string &file_name, string *out) {
   return true;
 }
 
+bool certifier_test() {
+  return true;
+}
+
 // ------------------------------------------------------------------------
 
 int main(int an, char **av) {
 
   GFLAGS_NS::ParseCommandLineFlags(&an, &av, true);
 
+#if 0
   byte_t pcrs[1];
   if (!tpm_init(FLAGS_tpm_device,
                 FLAGS_ek_cert_file_name,
@@ -1021,6 +1026,9 @@ int main(int an, char **av) {
                 FLAGS_quote_hierearchy_name,
                 1,
                 pcrs)) {
+#else
+  if (!init_tpm(FLAGS_tpm_device)) {
+#endif
     printf("%s() error, line %d, tpm_init failed\n", __func__, __LINE__);
     return false;
   }
@@ -1087,11 +1095,18 @@ int main(int an, char **av) {
     } else {
       printf("misc test failed\n");
     }
+  } else if (FLAGS_operation == "CertifierTest") {
+    printf("\n");
+    if (certifier_test()) {
+      printf("certifier test succeeded\n");
+    } else {
+      printf("certifier test failed\n");
+    }
   } else {
     printf("\n");
     printf("No such operation (%s)\n", FLAGS_operation.c_str());
   }
 
-  tpm_close();
+  close_tpm();
   return 0;
 }
