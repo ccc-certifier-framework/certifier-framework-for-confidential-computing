@@ -1529,9 +1529,6 @@ bool init_seal_environment(int num_pcrs, byte_t *pcrs) {
 
   // seal hierarchy
   if (file_size(g_seal_hierarchy_file_name) == -1) {
-#ifdef DEBUG
-    printf("tpm_init, Creating Seal hierarchy\n");
-#endif
     if (!create_seal_hierarchy_and_secret(g_tpm,
                                           num_pcrs,
                                           pcrs,
@@ -1559,11 +1556,9 @@ bool init_seal_environment(int num_pcrs, byte_t *pcrs) {
 }
 
 bool init_quote_environment(int num_pcrs, byte_t *pcrs) {
+
   // quote hierarchy
   if (file_size(g_quote_hierarchy_file_name) == -1) {
-#ifdef DEBUG
-    printf("tpm_init, Creating Quote hierarchy\n");
-#endif
     if (!create_quote_hierarchy(g_tpm,
                                 num_pcrs,
                                 pcrs,
@@ -1604,7 +1599,7 @@ bool init_quote_environment(int num_pcrs, byte_t *pcrs) {
     printf("%s() error, line %d, ReadPublic failed\n", __func__, __LINE__);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\nQuote key\n");
   printf("Type: %d\n", g_public_quote_key.publicArea.type);
   printf("Name: %d\n", g_public_quote_key.publicArea.nameAlg);
@@ -1649,7 +1644,7 @@ bool tpm_init(const string &device_name,
            device_name.c_str());
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("tpm_init, opened tpm: %s %d\n", device_name.c_str(), g_tpm.tpm_fd_);
 #endif
 
@@ -1660,10 +1655,9 @@ bool tpm_init(const string &device_name,
            __LINE__);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\nGot endorsement information\n");
 #endif
-  return true;
 
   // init seal envrionment
   if (!init_seal_environment(num_pcrs, pcrs)) {
@@ -1672,7 +1666,7 @@ bool tpm_init(const string &device_name,
            __LINE__);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\nGot seal environment\n");
 #endif
 
@@ -1683,15 +1677,15 @@ bool tpm_init(const string &device_name,
            __LINE__);
     return false;
   }
-#ifdef DEBUG
-  printf("\nGot seal environment\n");
+#ifdef DEBUG2
+  printf("\nGot quote environment\n");
 #endif
 
   g_num_pcrs = num_pcrs;
   memcpy(g_pcrs, pcrs, num_pcrs);
 
   g_tpm_environment_initialized = true;
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\ntpm_init succeeded\n\n");
 #endif
   return true;
