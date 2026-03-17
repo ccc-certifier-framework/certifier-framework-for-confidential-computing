@@ -1047,6 +1047,72 @@ bool certifier_test() {
   X509_free(cert);
 #endif
 
+  int    to_seal_size = 16;
+  byte_t b_to_seal[to_seal_size] = {
+      0xff,
+      0xfe,
+      0xfd,
+      0xfc,
+      0xfb,
+      0xfa,
+      0xf0,
+      0xef,
+      0x00,
+      0x01,
+      0x02,
+      0x03,
+      0x13,
+      0x12,
+      0x11,
+      0x10,
+  };
+  string to_seal;
+  string sealed;
+  string unsealed;
+
+  to_seal.assign((char *)b_to_seal, to_seal_size);
+
+  if (!tpm_seal(to_seal, &sealed)) {
+    printf("%s() error, line %d, seal failed\n", __func__, __LINE__);
+    tpm_close();
+    return false;
+  }
+  if (!tpm_unseal(sealed, &unsealed)) {
+    printf("%s() error, line %d, unseal failed\n", __func__, __LINE__);
+    tpm_close();
+    return false;
+  }
+
+#ifdef DEBUG
+  printf("\n");
+  printf("to_seal  : ");
+  print_bytes(to_seal.size(), (byte_t *)to_seal.data());
+  printf("\n");
+  printf("sealed   : ");
+  print_bytes(sealed.size(), (byte_t *)sealed.data());
+  printf("\n");
+  printf("unsealed : ");
+  print_bytes(unsealed.size(), (byte_t *)unsealed.data());
+  printf("\n");
+  printf("\n");
+#endif
+
+  if (memcmp((byte_t *)to_seal.data(),
+             (byte_t *)unsealed.data(),
+             to_seal.size())
+      != 0) {
+    printf("%s() error, line %d, to_seal and unsealed not equal\n",
+           __func__,
+           __LINE__);
+    tpm_close();
+    return false;
+  }
+
+  // tpm_attest(string &to_quote, string *quoted, string *signature)
+  // tpm_verify_attest(key_message  &quote_key, string  &to_quote,
+  //       string &quoted, const string &hash_name,
+  //       const string &sig_scheme, string &signature)
+
   if (!tpm_close()) {
     printf("%s() error, line %d, tpm_close failed\n", __func__, __LINE__);
     return false;
