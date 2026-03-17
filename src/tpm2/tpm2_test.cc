@@ -1009,6 +1009,14 @@ bool get_cert(local_tpm &tpm, const string &file_name, string *out) {
 }
 
 bool certifier_test() {
+#if 0
+  if (!tpm_init(FLAGS_tpm_device,
+                FLAGS_ek_cert_file_name,
+                FLAGS_seal_hierearchy_name,
+                FLAGS_quote_hierearchy_name,
+                1,
+                pcrs)) {
+#endif
   return true;
 }
 
@@ -1018,17 +1026,7 @@ int main(int an, char **av) {
 
   GFLAGS_NS::ParseCommandLineFlags(&an, &av, true);
 
-#if 0
-  byte_t pcrs[1];
-  if (!tpm_init(FLAGS_tpm_device,
-                FLAGS_ek_cert_file_name,
-                FLAGS_seal_hierearchy_name,
-                FLAGS_quote_hierearchy_name,
-                1,
-                pcrs)) {
-#else
   if (!init_tpm(FLAGS_tpm_device)) {
-#endif
     printf("%s() error, line %d, tpm_init failed\n", __func__, __LINE__);
     return false;
   }
