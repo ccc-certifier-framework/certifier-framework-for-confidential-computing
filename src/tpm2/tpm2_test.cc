@@ -1108,10 +1108,79 @@ bool certifier_test() {
     return false;
   }
 
-  // tpm_attest(string &to_quote, string *quoted, string *signature)
-  // tpm_verify_attest(key_message  &quote_key, string  &to_quote,
-  //       string &quoted, const string &hash_name,
-  //       const string &sig_scheme, string &signature)
+  string to_quote("I am a quote");
+  string quoted;
+  string signature;
+
+  if (!tpm_attest(to_quote, &quoted, &signature)) {
+    printf("%s() error, line %d, tpm_attest failed\n", __func__, __LINE__);
+    tpm_close();
+    return false;
+  }
+
+  string              hash_alg_name(Digest_method_sha_256);
+  string              sig_scheme_name;
+  extern TPM2B_PUBLIC g_public_quote_key;
+  switch (g_public_quote_key.publicArea.parameters.rsaDetail.scheme.scheme) {
+    default:
+      printf("%s() error, line: %d, bad scheme\n", __func__, __LINE__);
+      tpm_close();
+      return false;
+    case TPM_ALG_RSASSA:
+      sig_scheme_name.assign("ssa");
+      break;
+    case TPM_ALG_RSAPSS:
+      sig_scheme_name.assign("pss");
+      break;
+    case TPM_ALG_OAEP:
+      sig_scheme_name.assign("oaep");
+      break;
+  }
+
+  key_message quote_key;
+
+  int n = (int)g_public_quote_key.publicArea.unique.rsa.size;
+  if (n == 256) {
+    quote_key.set_key_type(Enc_method_rsa_2048_public);
+  } else if (n == 128) {
+    quote_key.set_key_type(Enc_method_rsa_1024_public);
+  } else if (n == 512) {
+    quote_key.set_key_type(Enc_method_rsa_4096_public);
+  } else if (n == 384) {
+    quote_key.set_key_type(Enc_method_rsa_3072_public);
+  } else {
+    printf("%s() error, line: %d, bad modulus size failed\n",
+           __func__,
+           __LINE__);
+    tpm_close();
+    return false;
+  }
+  rsa_message *rsa = new (rsa_message);
+  quote_key.set_allocated_rsa_key(rsa);
+  uint32_t le_exp;
+
+  change_endian32(
+      (uint32_t *)&g_public_quote_key.publicArea.parameters.rsaDetail.exponent,
+      (uint32_t *)&le_exp);
+
+  quote_key.set_key_name("quote-key-tpm");
+  quote_key.set_key_format("vse-key");
+  rsa->set_public_modulus(g_public_quote_key.publicArea.unique.rsa.buffer, n);
+  rsa->set_public_exponent((byte_t *)&le_exp, sizeof(uint32_t));
+
+  if (!tpm_verify_attest(quote_key,
+                         to_quote,
+                         quoted,
+                         hash_alg_name,
+                         sig_scheme_name,
+                         signature)) {
+    printf("%s() error, line: %d, Cant verify quote\n", __func__, __LINE__);
+    tpm_close();
+    return false;
+  }
+#ifdef DEBUG
+  printf("Quote verified\n");
+#endif
 
   if (!tpm_close()) {
     printf("%s() error, line %d, tpm_close failed\n", __func__, __LINE__);
