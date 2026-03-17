@@ -364,15 +364,8 @@ bool credential_test(local_tpm          &tpm,
 
 // ------------------------------------------------------------------------
 
-byte_t g_policy_rsa_2048[32] = {0x83, 0x71, 0x97, 0x67, 0x44, 0x84, 0xb3, 0xf8,
-                                0x1a, 0x90, 0xcc, 0x8d, 0x46, 0xa5, 0xd7, 0x24,
-                                0xfd, 0x52, 0xd7, 0x6e, 0x06, 0x52, 0x0b, 0x64,
-                                0xf2, 0xa1, 0xda, 0x1b, 0x33, 0x14, 0x69, 0xaa};
-byte_t g_policy_rsa_3072[48] = {
-    0xB2, 0x6E, 0x7D, 0x28, 0xD1, 0x1A, 0x50, 0xBC, 0x53, 0xD8, 0x82, 0xBC,
-    0xF5, 0xFD, 0x3A, 0x1A, 0x07, 0x41, 0x48, 0xBB, 0x35, 0xD3, 0xB4, 0xE4,
-    0xCB, 0x1C, 0x0A, 0xD9, 0xBD, 0xE4, 0x19, 0xCA, 0xCB, 0x47, 0xBA, 0x09,
-    0x69, 0x96, 0x46, 0x15, 0x0F, 0x9F, 0xC0, 0x00, 0xF3, 0xF8, 0x0E, 0x12};
+extern byte_t g_policy_rsa_2048[32];
+extern byte_t g_policy_rsa_3072[48];
 
 /*
  * Flags (L-1)
@@ -1009,14 +1002,23 @@ bool get_cert(local_tpm &tpm, const string &file_name, string *out) {
 }
 
 bool certifier_test() {
-#if 0
+  int    num_pcrs = 1;
+  byte_t pcrs[1] = {7};
+
   if (!tpm_init(FLAGS_tpm_device,
                 FLAGS_ek_cert_file_name,
                 FLAGS_seal_hierearchy_name,
                 FLAGS_quote_hierearchy_name,
-                1,
+                num_pcrs,
                 pcrs)) {
-#endif
+    printf("%s() error, line %d, tpm_init failed\n", __func__, __LINE__);
+    tpm_close();
+    return false;
+  }
+  if (!tpm_close()) {
+    printf("%s() error, line %d, tpm_close failed\n", __func__, __LINE__);
+    return false;
+  }
   return true;
 }
 

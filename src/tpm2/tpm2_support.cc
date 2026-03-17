@@ -1347,6 +1347,16 @@ bool do_quote(local_tpm  &tpm,
 
 //----------------------------------------------------------------------
 
+byte_t g_policy_rsa_2048[32] = {0x83, 0x71, 0x97, 0x67, 0x44, 0x84, 0xb3, 0xf8,
+                                0x1a, 0x90, 0xcc, 0x8d, 0x46, 0xa5, 0xd7, 0x24,
+                                0xfd, 0x52, 0xd7, 0x6e, 0x06, 0x52, 0x0b, 0x64,
+                                0xf2, 0xa1, 0xda, 0x1b, 0x33, 0x14, 0x69, 0xaa};
+byte_t g_policy_rsa_3072[48] = {
+    0xB2, 0x6E, 0x7D, 0x28, 0xD1, 0x1A, 0x50, 0xBC, 0x53, 0xD8, 0x82, 0xBC,
+    0xF5, 0xFD, 0x3A, 0x1A, 0x07, 0x41, 0x48, 0xBB, 0x35, 0xD3, 0xB4, 0xE4,
+    0xCB, 0x1C, 0x0A, 0xD9, 0xBD, 0xE4, 0x19, 0xCA, 0xCB, 0x47, 0xBA, 0x09,
+    0x69, 0x96, 0x46, 0x15, 0x0F, 0x9F, 0xC0, 0x00, 0xF3, 0xF8, 0x0E, 0x12};
+
 local_tpm g_tpm;
 
 bool g_tpm_initialized = false;
@@ -1366,6 +1376,7 @@ string       g_seal_thing;
 int          g_num_pcrs;
 byte_t       g_pcrs[32];
 TPM2B_PUBLIC g_public_quote_key;
+TPM2B_PUBLIC g_public_endorsement_key;
 
 bool close_tpm() {
   if (g_tpm_initialized) {
@@ -1416,31 +1427,112 @@ bool tpm_close() {
   return true;
 }
 
+/*
+ * local_tpm g_tpm;
+ * bool g_tpm_initialized = false;
+ * bool g_tpm_environment_initialized = false;
+ * TPM_HANDLE g_ek_handle = 0;
+ * TPM_HANDLE g_srk_handle = 0;
+ * TPM_HANDLE g_quote_handle = 0;
+ * int          g_seal_key_type;
+ * string       g_seal_key;
+ * string       g_endorsement_cert;
+ * string       g_endorsement_cert_file_name;
+ * string       g_seal_hierarchy_file_name;
+ * string       g_quote_hierarchy_file_name;
+ * string       g_seal_thing;
+ * int          g_num_pcrs;
+ * byte_t       g_pcrs[32];
+ * TPM2B_PUBLIC g_public_quote_key;
+ */
 bool init_endorsement_environment() {
-  if (file_size(g_endorsement_cert_file_name) == -1) {
-    printf("%s() error, line %d, no endorsement cert\n", __func__, __LINE__);
-    return false;
-  }
-  if (!read_file_into_string(g_endorsement_cert_file_name,
-                             &g_endorsement_cert)) {
-    printf("%s() error, line %d, can't read endorsement cert: %s\n",
+
+  string policyString;
+  string authString;
+  string emptyAuth;
+  int    size_buf = 128;
+  byte_t buf[size_buf];
+
+  int m = CreatePasswordAuthArea(emptyAuth, size_buf, buf);
+  if (m < 0) {
+    printf("%s() error, line %d, CreatePasswordAuthArea failed\n",
            __func__,
-           __LINE__,
-           g_endorsement_cert_file_name.c_str());
+           __LINE__);
     return false;
   }
+
+  authString.assign((char *)(buf + 2), m - 2);
+  policyString.assign((char *)g_policy_rsa_2048, sizeof(g_policy_rsa_2048));
+
+  if (!get_endorsement_key(g_tpm, authString, policyString, &g_ek_handle)) {
+    printf("%s() error, line %d, get_endorsement_key failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  TPM2B_PUBLIC pub_out;
+  TPM2B_NAME   pub_name;
+  TPM2B_NAME   qualified_pub_name;
+  uint16_t     pub_blob_size = 4096;
+  byte_t       pub_blob[pub_blob_size];
+  if (!Tpm2_ReadPublic(g_tpm,
+                       g_ek_handle,
+                       &pub_blob_size,
+                       pub_blob,
+                       &g_public_endorsement_key,
+                       &pub_name,
+                       &qualified_pub_name)) {
+    printf("%s() error, line %d, ReadPublic failed\n", __func__, __LINE__);
+    return false;
+  }
+#ifdef DEBUG3
+  printf("\n");
+  printf("Endorsement Key\n");
+  printf("Public blob: ");
+  print_bytes(pub_blob_size, pub_blob);
+  printf("\n");
+  printf("Name: ");
+  print_bytes(pub_name.size, pub_name.name);
+  printf("\n");
+  printf("Qualified name: ");
+  print_bytes(qualified_pub_name.size, qualified_pub_name.name);
+  printf("\n");
+  printf("Pubout size: %d\n", pub_out.size);
+  printf("Type: %d\n", pub_out.publicArea.type);
+  printf("Name: %d\n", pub_out.publicArea.nameAlg);
+  printf("Scheme: %d\n", pub_out.publicArea.parameters.rsaDetail.scheme.scheme);
+  printf("Bytes (%d):\n", (int)pub_out.publicArea.unique.rsa.size);
+  print_bytes((int)pub_out.publicArea.unique.rsa.size,
+              (byte_t *)pub_out.publicArea.unique.rsa.buffer);
+  printf("\n");
+  printf("Exponent: %d\n", pub_out.publicArea.parameters.rsaDetail.exponent);
+  printf("\n");
+#endif
+
+  if (!get_endorsement_cert(g_tpm, &g_endorsement_cert)) {
+    printf("%s() error, line %d, can't get endorsement cert\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+#ifdef DEBUG3
+  printf("Cert:\n");
+  print_bytes(g_endorsement_cert.size(), (byte_t *)g_endorsement_cert.data());
+  printf("\n");
+#endif
 
   return true;
 }
 
-bool init_seal_environment(int num_pcrs, byte_t* pcrs) {
+bool init_seal_environment(int num_pcrs, byte_t *pcrs) {
 
   // seal hierarchy
   if (file_size(g_seal_hierarchy_file_name) == -1) {
-#  ifdef DEBUG
+#ifdef DEBUG
     printf("tpm_init, Creating Seal hierarchy\n");
-#  endif
-  if (!create_seal_hierarchy_and_secret(g_tpm,
+#endif
+    if (!create_seal_hierarchy_and_secret(g_tpm,
                                           num_pcrs,
                                           pcrs,
                                           g_seal_hierarchy_file_name)) {
@@ -1466,13 +1558,13 @@ bool init_seal_environment(int num_pcrs, byte_t* pcrs) {
   return true;
 }
 
-bool init_quote_environment(int num_pcrs, byte_t* pcrs) {
-    // quote hierarchy
+bool init_quote_environment(int num_pcrs, byte_t *pcrs) {
+  // quote hierarchy
   if (file_size(g_quote_hierarchy_file_name) == -1) {
-#  ifdef DEBUG
+#ifdef DEBUG
     printf("tpm_init, Creating Quote hierarchy\n");
-#  endif
-  if (!create_quote_hierarchy(g_tpm,
+#endif
+    if (!create_quote_hierarchy(g_tpm,
                                 num_pcrs,
                                 pcrs,
                                 g_quote_hierarchy_file_name)) {
@@ -1497,10 +1589,10 @@ bool init_quote_environment(int num_pcrs, byte_t* pcrs) {
     return false;
   }
 
-  TPM2B_NAME   q_pub_name;
-  TPM2B_NAME   q_qualified_pub_name;
-  uint16_t     q_pub_blob_size = 4096;
-  byte_t       q_pub_blob[q_pub_blob_size];
+  TPM2B_NAME q_pub_name;
+  TPM2B_NAME q_qualified_pub_name;
+  uint16_t   q_pub_blob_size = 4096;
+  byte_t     q_pub_blob[q_pub_blob_size];
 
   if (!Tpm2_ReadPublic(g_tpm,
                        g_quote_handle,
@@ -1512,18 +1604,20 @@ bool init_quote_environment(int num_pcrs, byte_t* pcrs) {
     printf("%s() error, line %d, ReadPublic failed\n", __func__, __LINE__);
     return false;
   }
-#  ifdef DEBUG
+#ifdef DEBUG
   printf("\nQuote key\n");
   printf("Type: %d\n", g_public_quote_key.publicArea.type);
   printf("Name: %d\n", g_public_quote_key.publicArea.nameAlg);
-  printf("Scheme: %d\n", g_public_quote_key.publicArea.parameters.rsaDetail.scheme.scheme);
+  printf("Scheme: %d\n",
+         g_public_quote_key.publicArea.parameters.rsaDetail.scheme.scheme);
   printf("Modulus (%d):\n", (int)g_public_quote_key.publicArea.unique.rsa.size);
   print_bytes((int)g_public_quote_key.publicArea.unique.rsa.size,
               (byte_t *)g_public_quote_key.publicArea.unique.rsa.buffer);
   printf("\n");
-  printf("Exponent: %d\n", g_public_quote_key.publicArea.parameters.rsaDetail.exponent);
+  printf("Exponent: %d\n",
+         g_public_quote_key.publicArea.parameters.rsaDetail.exponent);
   printf("\n");
-#  endif
+#endif
 
   return true;
 }
@@ -1566,6 +1660,10 @@ bool tpm_init(const string &device_name,
            __LINE__);
     return false;
   }
+#ifdef DEBUG
+  printf("\nGot endorsement information\n");
+#endif
+  return true;
 
   // init seal envrionment
   if (!init_seal_environment(num_pcrs, pcrs)) {
@@ -1574,6 +1672,9 @@ bool tpm_init(const string &device_name,
            __LINE__);
     return false;
   }
+#ifdef DEBUG
+  printf("\nGot seal environment\n");
+#endif
 
   // init quote envrionment
   if (!init_quote_environment(num_pcrs, pcrs)) {
@@ -1582,11 +1683,17 @@ bool tpm_init(const string &device_name,
            __LINE__);
     return false;
   }
+#ifdef DEBUG
+  printf("\nGot seal environment\n");
+#endif
 
   g_num_pcrs = num_pcrs;
   memcpy(g_pcrs, pcrs, num_pcrs);
 
   g_tpm_environment_initialized = true;
+#ifdef DEBUG
+  printf("\ntpm_init succeeded\n\n");
+#endif
   return true;
 }
 
