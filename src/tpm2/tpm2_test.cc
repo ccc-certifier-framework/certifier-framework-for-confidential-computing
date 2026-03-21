@@ -685,12 +685,12 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
       break;
   }
 
-  if (!tpm_verify_attest(quote_key,
-                         to_quote,
-                         quoted,
-                         hash_alg_name,
-                         sig_scheme_name,
-                         signature)) {
+  if (!tpm_Verify(quote_key,
+                  to_quote,
+                  quoted,
+                  hash_alg_name,
+                  sig_scheme_name,
+                  signature)) {
     printf("%s() error, line: %d, Cant verify quote\n", __func__, __LINE__);
     Tpm2_FlushContext(tpm, quote_handle);
     Tpm2_FlushContext(tpm, srk_handle);
@@ -1023,7 +1023,7 @@ bool certifier_test() {
   extern string g_seal_thing;
   extern string g_endorsement_cert;
 
-  if (!tpm_init(FLAGS_tpm_device,
+  if (!tpm_Init(FLAGS_tpm_device,
                 FLAGS_ek_cert_file_name,
                 FLAGS_seal_hierearchy_name,
                 FLAGS_quote_hierearchy_name,
@@ -1072,12 +1072,12 @@ bool certifier_test() {
 
   to_seal.assign((char *)b_to_seal, to_seal_size);
 
-  if (!tpm_seal(to_seal, &sealed)) {
+  if (!tpm_Seal(to_seal, &sealed)) {
     printf("%s() error, line %d, seal failed\n", __func__, __LINE__);
     tpm_close();
     return false;
   }
-  if (!tpm_unseal(sealed, &unsealed)) {
+  if (!tpm_Unseal(sealed, &unsealed)) {
     printf("%s() error, line %d, unseal failed\n", __func__, __LINE__);
     tpm_close();
     return false;
@@ -1112,7 +1112,7 @@ bool certifier_test() {
   string quoted;
   string signature;
 
-  if (!tpm_attest(to_quote, &quoted, &signature)) {
+  if (!tpm_Attest(to_quote, &quoted, &signature)) {
     printf("%s() error, line %d, tpm_attest failed\n", __func__, __LINE__);
     tpm_close();
     return false;
@@ -1168,12 +1168,12 @@ bool certifier_test() {
   rsa->set_public_modulus(g_public_quote_key.publicArea.unique.rsa.buffer, n);
   rsa->set_public_exponent((byte_t *)&le_exp, sizeof(uint32_t));
 
-  if (!tpm_verify_attest(quote_key,
-                         to_quote,
-                         quoted,
-                         hash_alg_name,
-                         sig_scheme_name,
-                         signature)) {
+  if (!tpm_Verify(quote_key,
+                  to_quote,
+                  quoted,
+                  hash_alg_name,
+                  sig_scheme_name,
+                  signature)) {
     printf("%s() error, line: %d, Cant verify quote\n", __func__, __LINE__);
     tpm_close();
     return false;

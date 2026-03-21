@@ -1617,7 +1617,7 @@ bool init_quote_environment(int num_pcrs, byte_t *pcrs) {
   return true;
 }
 
-bool tpm_init(const string &device_name,
+bool tpm_Init(const string &device_name,
               const string &endorsement_cert_file_name,
               const string &seal_hierarchy_file_name,
               const string &quote_hierarchy_file_name,
@@ -1691,7 +1691,7 @@ bool tpm_init(const string &device_name,
   return true;
 }
 
-bool tpm_seal(string &unsealed, string *sealed) {
+bool tpm_Seal(string &unsealed, string *sealed) {
   // Initialized?
   if (!g_tpm_environment_initialized) {
     printf("%s() error, line %d, environment not initialized\n",
@@ -1722,7 +1722,7 @@ bool tpm_seal(string &unsealed, string *sealed) {
   return true;
 }
 
-bool tpm_unseal(string &sealed, string *unsealed) {
+bool tpm_Unseal(string &sealed, string *unsealed) {
   // Initialized?
   if (!g_tpm_environment_initialized) {
     printf("%s() error, line %d, environment not initialized\n",
@@ -1796,7 +1796,7 @@ bool local_tpm_attest(TPM_HANDLE &quote_handle,
   return true;
 }
 
-bool tpm_attest(string &to_quote, string *quoted, string *signature) {
+bool tpm_Attest(string &to_quote, string *quoted, string *signature) {
 
   if (!g_tpm_environment_initialized) {
     printf("%s() error, line %d, environment not initialized\n",
@@ -1995,12 +1995,12 @@ bool decode_quoted(int                 size_buf,
   return true;
 }
 
-bool tpm_verify_attest(key_message  &quote_key,
-                       string       &to_quote,
-                       string       &quoted,
-                       const string &hash_name,
-                       const string &sig_scheme,
-                       string       &signature) {
+bool tpm_Verify(key_message  &quote_key,
+                string       &to_quote,
+                string       &quoted,
+                const string &hash_name,
+                const string &sig_scheme,
+                string       &signature) {
 #ifdef DEBUG2
   printf("\ntpm_verify_attest:\n");
   print_key(quote_key);

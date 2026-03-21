@@ -109,7 +109,7 @@ bool do_quote(local_tpm  &tpm,
               string     &to_quote,
               string     *quoted,
               string     *signature);
-bool tpm_init(const string &device_name,
+bool tpm_Init(const string &device_name,
               const string &endorsement_cert_file_name,
               const string &seal_hierarchy_file_name,
               const string &quote_hierarchy_file_name,
@@ -117,8 +117,8 @@ bool tpm_init(const string &device_name,
               byte_t       *pcrs);
 bool tpm_close();
 
-bool tpm_seal(string &unsealed, string *sealed);
-bool tpm_unseal(string &sealed, string *unsealed);
+bool tpm_Seal(string &unsealed, string *sealed);
+bool tpm_Unseal(string &sealed, string *unsealed);
 bool local_tpm_attest(TPM_HANDLE &quote_handle,
                       TPM_ALG_ID  hash_alg,
                       TPM_HANDLE &srk_handle,
@@ -127,17 +127,17 @@ bool local_tpm_attest(TPM_HANDLE &quote_handle,
                       string     &to_quote,
                       string     *quoted,
                       string     *signature);
-bool tpm_attest(string &to_quote, string *quoted, string *signature);
-bool tpm_verify_attest(string &cert,
-                       string &to_quote,
-                       string &quoted,
-                       string &signature);
-bool tpm_verify_attest(key_message  &quote_key,
-                       string       &to_quote,
-                       string       &quoted,
-                       const string &hash_name,
-                       const string &sig_scheme,
-                       string       &signature);
+bool tpm_Attest(string &to_quote, string *quoted, string *signature);
+bool tpm_Verify(string &cert,
+                string &to_quote,
+                string &quoted,
+                string &signature);
+bool tpm_Verify(key_message  &quote_key,
+                string       &to_quote,
+                string       &quoted,
+                const string &hash_name,
+                const string &sig_scheme,
+                string       &signature);
 
 bool make_credential(const TPM2B_PUBLIC &quoting_key,
                      string             &quote_key_name,

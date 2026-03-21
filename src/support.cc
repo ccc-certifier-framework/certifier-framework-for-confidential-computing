@@ -1113,7 +1113,7 @@ bool certifier::utilities::authenticated_encrypt(const char *alg_name,
   if (in_len <= 0)
     return true;
 
-  if (strcmp(alg_name, "aes-256-cbc-hmac-sha256") == 0) {
+  if (strcmp(alg_name, Enc_method_aes_256_cbc_hmac_sha256) == 0) {
     return aes_256_cbc_sha256_encrypt(in, in_len, key, iv, out, out_size);
   } else if (strcmp(alg_name, Enc_method_aes_256_cbc_hmac_sha384) == 0) {
     return aes_256_cbc_sha384_encrypt(in, in_len, key, iv, out, out_size);
