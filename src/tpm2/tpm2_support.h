@@ -144,6 +144,9 @@ bool tpm_Verify(key_message  &quote_key,
                 const string &hash_name,
                 const string &sig_scheme,
                 string       &signature);
+bool tpm_verify_attest(string            &cert,
+                       const key_message &policy_public_key,
+                       const string      &serialized_sev_msg);
 
 bool make_credential(const TPM2B_PUBLIC &quoting_key,
                      string             &quote_key_name,

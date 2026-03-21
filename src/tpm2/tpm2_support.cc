@@ -1836,7 +1836,36 @@ bool tpm_Attest(int   what_to_say_size,
                 byte *what_to_say,
                 int  *size_out,
                 byte *out) {
-  return false;
+
+  string to_quote;
+  string quoted;
+  string signature;
+  to_quote.assign((char *)what_to_say, what_to_say_size);
+  if (!tpm_Attest(to_quote, &quoted, &signature)) {
+    printf("%s() error, line %d, quote failed\n", __func__, __LINE__);
+    return false;
+  }
+  tpm_attestation_message att;
+  att.set_what_was_said(to_quote);
+  att.set_the_quote(quoted);
+  // att.set_signature_algorithm();  // TODO
+  att.set_signature(signature);
+
+  string serialized_att;
+  if (!att.SerializeToString(&serialized_att)) {
+    printf("%s() error, line %d, serialize attestation failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if ((int)serialized_att.size() > *size_out) {
+    printf("%s() error, line %d, buffer too small\n", __func__, __LINE__);
+    return false;
+  }
+  *size_out = serialized_att.size();
+  memcpy(out, (byte_t *)serialized_att.data(), *size_out);
+
+  return true;
 }
 
 bool tpm_Attest(string &to_quote, string *quoted, string *signature) {
@@ -2196,21 +2225,23 @@ bool tpm_Verify(key_message  &quote_key,
   return true;
 }
 
-bool tpm_verify_attest(string            &cert,
+bool tpm_verify_attest(string            &quote_cert,
                        const key_message &policy_public_key,
-                       string            &to_quote,
-                       string            &quoted,
-                       string            &signature) {
+                       const string      &serialized_sev_msg) {
 
+  // TODO
   // recover quote key form its cert
   key_message quote_key;
+
+  // check cert is signed by policy key
+  // extract to_quote and quoted
+  // construct signature scheme
 
 #if 0
   return tpm_verify_attest(quote_key,
                            to_quote,
                            quoted,
-                           hash_alg,
-                           scheme,
+			   sig_scheme,
                            signature);
 #else
   return false;

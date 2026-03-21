@@ -2303,6 +2303,10 @@ bool certifier::framework::certifiers::certify_domain(const string &purpose) {
     ev->set_evidence_type("cert");
     ev->set_serialized_evidence(serialized_vcek_cert);
 #endif
+#ifdef TPM
+  } else if (owner_->enclave_type_ == "tpm-enclave") {
+    // Todo: Add quote cert chain: TODO
+#endif
 #ifdef OE_CERTIFIER
   } else if (owner_->enclave_type_ == "oe-enclave") {
     if (!owner_->cc_provider_provisioned_) {
