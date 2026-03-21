@@ -4,6 +4,7 @@
 ifndef NO_ENABLE_SEV
     ENABLE_SEV=1
 endif
+TPM=1
 
 # CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
 ifndef CERTIFIER_ROOT
@@ -47,8 +48,10 @@ O= $(OBJ_DIR)
 I= $(INC_DIR)
 SE= $(SRC_DIR)/simulated-enclave
 AE= $(SRC_DIR)/application-enclave
+T= $(SRC_DIR)/tpm2
 CL=..
-INCLUDE=-I$(INC_DIR) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp -I/usr/include
+INCLUDE=-I$(INC_DIR) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp -I/usr/include \
+	-I$(S)/tpm2
 
 ifndef NEWPROTOBUF
 CFLAGS_COMMON = $(INCLUDE) -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
@@ -122,6 +125,11 @@ dobj = $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o        \
 
 ifdef ENABLE_SEV
 dobj += $(O)/sev_support.o $(O)/sev_report.o $(O)/sev_cert_table.o
+endif
+
+ifdef TPM
+dobj += $(O)/tpm2_lib.o $(O)/tpm2.pb.o $(O)/convert.o $(O)/openssl_help.o \
+        $(O)/tpm2_support.o
 endif
 
 # Objs needed to build Certifer Framework shared lib for use by Python module
@@ -234,6 +242,32 @@ $(O)/cc_useful.o: $(S)/cc_useful.cc $(I)/cc_useful.h
 $(O)/keystone_shim.o: $(S)/keystone/keystone_shim.cc $(S)/keystone/keystone_api.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+ifdef TPM
+$(T)/tpm2.pb.cc $(T)/tpm2.pb.h: $(T)/tpm2.proto
+	@echo "creating protobuf files"
+	$(PROTO) -I=$(T) --cpp_out=$(T) $(T)/tpm2.proto
+
+$(O)/tpm2.pb.o: $(T)/tpm2.pb.cc
+	@echo "compiling tpm2.pb.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/tpm2.pb.o $(T)/tpm2.pb.cc
+
+$(O)/convert.o: $(T)/convert.cc
+	@echo "compiling convert.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/convert.o $(T)/convert.cc
+
+$(O)/tpm2_lib.o: $(T)/tpm2_lib.cc
+	@echo "compiling tpm2_lib.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/tpm2_lib.o $(T)/tpm2_lib.cc
+
+$(O)/openssl_help.o: $(T)/openssl_help.cc
+	@echo "compiling openssl_help.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/openssl_help.o $(T)/openssl_help.cc
+
+$(O)/tpm2_support.o: $(T)/tpm2_support.cc $(T)/tpm2.pb.cc
+	@echo "compiling tpm2_support.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/tpm2_support.o $(T)/tpm2_support.cc
+endif
 
 ifdef ENABLE_SEV
 SEV_S=$(S)/sev-snp

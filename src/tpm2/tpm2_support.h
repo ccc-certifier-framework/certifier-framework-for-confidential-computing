@@ -118,7 +118,9 @@ bool tpm_Init(const string &device_name,
 bool tpm_close();
 
 bool tpm_Seal(string &unsealed, string *sealed);
+bool tpm_Seal(int in_size, byte_t *in, int *size_out, byte_t *out);
 bool tpm_Unseal(string &sealed, string *unsealed);
+bool tpm_Unseal(int in_size, byte_t *in, int *size_out, byte_t *out);
 bool local_tpm_attest(TPM_HANDLE &quote_handle,
                       TPM_ALG_ID  hash_alg,
                       TPM_HANDLE &srk_handle,
@@ -128,6 +130,10 @@ bool local_tpm_attest(TPM_HANDLE &quote_handle,
                       string     *quoted,
                       string     *signature);
 bool tpm_Attest(string &to_quote, string *quoted, string *signature);
+bool tpm_Attest(int   what_to_say_size,
+                byte *what_to_say,
+                int  *size_out,
+                byte *out);
 bool tpm_Verify(string &cert,
                 string &to_quote,
                 string &quoted,

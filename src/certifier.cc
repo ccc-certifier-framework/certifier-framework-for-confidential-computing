@@ -438,6 +438,10 @@ done:
   return res;
 }
 
+#ifdef TPM
+#  include <tpm2_support.h>
+#endif
+
 #ifdef SEV_SNP
 extern bool sev_Init(const string &platform_certs_file);
 extern bool sev_GetParentEvidence(string *out);
@@ -540,6 +544,11 @@ bool certifier::framework::Seal(const string &enclave_type,
     return islet_Seal(in_size, in, size_out, out);
   }
 #endif
+#ifdef TPM
+  if (enclave_type == "tpm-enclave") {
+    return tpm_Seal(in_size, in, size_out, out);
+  }
+#endif
   if (enclave_type == "application-enclave") {
     return application_Seal(in_size, in, size_out, out);
   }
@@ -594,6 +603,11 @@ bool certifier::framework::Unseal(const string &enclave_type,
     return islet_Unseal(in_size, in, size_out, out);
   }
 #endif  // ISLET_CERTIFIER
+#ifdef TPM
+  if (enclave_type == "tpm-enclave") {
+    return tpm_Unseal(in_size, in, size_out, out);
+  }
+#endif
   if (enclave_type == "application-enclave") {
     return application_Unseal(in_size, in, size_out, out);
   }
@@ -730,6 +744,11 @@ bool certifier::framework::Attest(const string &enclave_type,
     return true;
   }
 #endif  // ISLET_CERTIFIER
+#ifdef TPM
+  if (enclave_type == "tpm-enclave") {
+    return tpm_Attest(what_to_say_size, what_to_say, size_out, out);
+  }
+#endif
   if (enclave_type == "application-enclave") {
     return application_Attest(what_to_say_size, what_to_say, size_out, out);
   }
@@ -767,6 +786,14 @@ bool GetParentEvidence(const string &enclave_type,
 #endif
 #ifdef ISLET_CERTIFIER
   if (enclave_type == "islet-enclave") {
+    return false;
+  }
+#endif
+#ifdef TPM
+  if (enclave_type == "tpm-enclave") {
+    printf("%s() error, line %d, tpm_GetParentEvidence unimplemented\n",
+           __func__,
+           __LINE__);
     return false;
   }
 #endif

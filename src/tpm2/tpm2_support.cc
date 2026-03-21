@@ -1722,6 +1722,24 @@ bool tpm_Seal(string &unsealed, string *sealed) {
   return true;
 }
 
+bool tpm_Seal(int in_size, byte_t *in, int *size_out, byte_t *out) {
+  string unsealed;
+  string sealed;
+
+  unsealed.assign((char *)in, in_size);
+  if (!tpm_Seal(unsealed, &sealed)) {
+    printf("%s() error, line %d, seal failure\n", __func__, __LINE__);
+    return false;
+  }
+  if ((int)sealed.size() > *size_out) {
+    printf("%s() error, line %d, buffer too small\n", __func__, __LINE__);
+    return false;
+  }
+  *size_out = (int)sealed.size();
+  memcpy(out, (byte_t *)sealed.data(), *size_out);
+  return true;
+}
+
 bool tpm_Unseal(string &sealed, string *unsealed) {
   // Initialized?
   if (!g_tpm_environment_initialized) {
@@ -1743,6 +1761,24 @@ bool tpm_Unseal(string &sealed, string *unsealed) {
     return false;
   }
   unsealed->assign((char *)out, out_size);
+  return true;
+}
+
+bool tpm_Unseal(int in_size, byte_t *in, int *size_out, byte_t *out) {
+  string sealed;
+  string unsealed;
+
+  sealed.assign((char *)in, in_size);
+  if (!tpm_Unseal(sealed, &unsealed)) {
+    printf("%s() error, line %d, unseal failure\n", __func__, __LINE__);
+    return false;
+  }
+  if ((int)unsealed.size() > *size_out) {
+    printf("%s() error, line %d, buffer too small\n", __func__, __LINE__);
+    return false;
+  }
+  *size_out = (int)unsealed.size();
+  memcpy(out, (byte_t *)unsealed.data(), *size_out);
   return true;
 }
 
@@ -1794,6 +1830,13 @@ bool local_tpm_attest(TPM_HANDLE &quote_handle,
     return false;
   }
   return true;
+}
+
+bool tpm_Attest(int   what_to_say_size,
+                byte *what_to_say,
+                int  *size_out,
+                byte *out) {
+  return false;
 }
 
 bool tpm_Attest(string &to_quote, string *quoted, string *signature) {

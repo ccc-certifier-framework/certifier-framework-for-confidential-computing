@@ -308,6 +308,12 @@ class cc_trust_manager {
                                       int           out_fd);
   bool initialize_keystone_enclave();
   bool initialize_islet_enclave();
+  bool initialize_tpm_enclave(const string &device_name,
+                              const string &endorsement_cert_file_name,
+                              const string &seal_hierarchy_file_name,
+                              const string &quote_hierarchy_file_name,
+                              int           num_pcrs,
+                              byte         *pcrs);
 
   // If n == 0, systems should be able to find parameters
   // by default, for example, sev and sgx.

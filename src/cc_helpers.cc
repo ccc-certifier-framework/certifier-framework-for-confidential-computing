@@ -47,6 +47,10 @@
 #  include "sev_support.h"
 #endif  // SEV_SNP
 
+#ifdef TPM
+#  include "tpm2_support.h"
+#endif
+
 using namespace certifier::framework;
 using namespace certifier::utilities;
 
@@ -927,6 +931,33 @@ bool certifier::framework::cc_trust_manager::initialize_sev_enclave(
 #ifdef SEV_SNP
   if (!sev_Init(ark_der, ask_der, vcek_der)) {
     printf("%s() error, line %d, sev_Init failed\n", __func__, __LINE__);
+    return false;
+  }
+
+  cc_provider_provisioned_ = true;
+  return true;
+#else
+  return false;
+#endif
+}
+
+bool certifier::framework::cc_trust_manager::initialize_tpm_enclave(
+    const string &device_name,
+    const string &endorsement_cert_file_name,
+    const string &seal_hierarchy_file_name,
+    const string &quote_hierarchy_file_name,
+    int           num_pcrs,
+    byte         *pcrs) {
+
+#ifdef TPM
+  if (!tpm_Init(device_name,
+                endorsement_cert_file_name,
+                seal_hierarchy_file_name,
+                quote_hierarchy_file_name,
+                num_pcrs,
+                pcrs)) {
+
+    printf("%s() error, line %d, tpm_Init failed\n", __func__, __LINE__);
     return false;
   }
 

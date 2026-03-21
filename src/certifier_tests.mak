@@ -3,6 +3,7 @@
 
 #ENABLE_SEV=1
 #RUN_SEV_TESTS=1
+TPM=1
 
 # CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
 ifndef CERTIFIER_ROOT
@@ -50,8 +51,9 @@ O= $(OBJ_DIR)
 I= $(INC_DIR)
 SE= $(SRC_DIR)/simulated-enclave
 AE= $(SRC_DIR)/application-enclave
+T= $(SRC_DIR)/tpm2
 CL=..
-INCLUDE = -I$(INC_DIR) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp -I $(S)/gramine -I/usr/include
+INCLUDE = -I$(INC_DIR) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp -I $(S)/gramine -I/usr/include -I$(S)/tpm2
 
 ifndef NEWPROTOBUF
 CFLAGS_COMMON = $(INCLUDE) -g -std=c++11 -D X64 -Wall -Wno-unused-variable -Wno-deprecated-declarations
@@ -66,12 +68,14 @@ CFLAGS += -DNEW_API
 endif
 
 ifdef ENABLE_SEV
-
 CFLAGS  += -D SEV_SNP -D SEV_DUMMY_GUEST
-
 ifdef RUN_SEV_TESTS
 CFLAGS  += -D RUN_SEV_TESTS
 endif
+endif
+
+ifdef TPM
+CFLAGS  += -D TPM
 endif
 
 CFLAGS_PIC =
@@ -131,14 +135,19 @@ nvidia_tests_dobj = $(O)/nvidia_tests.o $(O)/nvidia_impl.o $(O)/nvidia_mock.o $(
 
 ifdef ENABLE_SEV
 sev_common_objs = $(O)/sev_support.o $(O)/sev_report.o $(O)/sev_cert_table.o
-
 dobj +=	$(O)/sev_tests.o $(sev_common_objs)
-
 channel_dobj += $(sev_common_objs)
-
 pipe_read_dobj += $(sev_common_objs)
-
 nvidia_tests_dobj += $(sev_common_objs)
+endif
+
+ifdef TPM
+tpm_common_objs = $(O)/tpm2_lib.o $(O)/tpm2.pb.o $(O)/convert.o $(O)/openssl_help.o \
+	$(O)/tpm2_support.o
+dobj +=	$(O)/tpm_tests.o $(tpm_common_objs)
+channel_dobj += $(tpm_common_objs)
+pipe_read_dobj += $(tpm_common_objs)
+nvidia_tests_dobj += $(tpm_common_objs)
 endif
 
 all:	certifier_tests.exe test_channel.exe pipe_read_test.exe nvidia_tests.exe
@@ -197,6 +206,38 @@ $(O)/certificate_tests.o: $(S)/certificate_tests.cc $(I)/certifier.pb.h $(I)/cer
 $(O)/claims_tests.o: $(S)/claims_tests.cc $(I)/certifier.pb.h $(I)/certifier.h $(S)/test_support.cc
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+#ifdef TPM
+
+$(T)/tpm2.pb.cc $(T)/tpm2.pb.h: $(T)/tpm2.proto
+	@echo "creating protobuf files"
+	$(PROTO) -I=$(T) --cpp_out=$(T) $(T)/tpm2.proto
+
+$(O)/tpm2.pb.o: $(T)/tpm2.pb.cc
+	@echo "compiling tpm2.pb.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/tpm2.pb.o $(T)/tpm2.pb.cc
+
+$(O)/convert.o: $(T)/convert.cc
+	@echo "compiling convert.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/convert.o $(T)/convert.cc
+
+$(O)/tpm2_lib.o: $(T)/tpm2_lib.cc
+	@echo "compiling tpm2_lib.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/tpm2_lib.o $(T)/tpm2_lib.cc
+
+$(O)/openssl_help.o: $(T)/openssl_help.cc
+	@echo "compiling openssl_help.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/openssl_help.o $(T)/openssl_help.cc
+
+$(O)/tpm2_support.o: $(T)/tpm2_support.cc $(T)/tpm2.pb.cc
+	@echo "compiling tpm2_support.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/tpm2_support.o $(T)/tpm2_support.cc
+
+$(O)/tpm_tests.o: $(S)/tpm_tests.cc $(T)/tpm2.pb.cc
+	@echo "compiling tpm_tests.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/tpm_tests.o $(S)/tpm_tests.cc
+
+#endif
 
 ifdef ENABLE_SEV
 $(O)/sev_tests.o: $(S)/sev_tests.cc $(I)/certifier.pb.h $(I)/certifier.h

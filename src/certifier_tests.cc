@@ -170,6 +170,13 @@ TEST(test_x_509_sign, test_x_509_sign) {
   EXPECT_TRUE(test_x_509_sign(FLAGS_print_all));
 }
 
+#ifdef TPM
+extern bool test_tpm(bool);
+TEST(tpm_tests, tpm_tests) {
+  EXPECT_TRUE(test_tpm(FLAGS_print_all));
+}
+#endif
+
 // sev tests
 #ifdef RUN_SEV_TESTS
 
