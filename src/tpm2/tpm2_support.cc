@@ -2246,20 +2246,12 @@ bool tpm_verify_attest(string            &quote_cert,
                        const key_message &policy_public_key,
                        const string      &serialized_tpm_msg) {
 
-  // TODO
   // recover quote key form its cert
   key_message quote_key;
 
-  // check cert is signed by policy key
-  // extract to_quote and quoted
-  // scheme is in tpm_msg
-  // alg should be "RSA-2048-SSA-SHA-256"
-
-#if 0
   X509   *quote_cert_x509 = nullptr;
   byte_t *p = (byte_t *)quote_cert.data();
-  quote_cert = d2i_X509(nullptr, (const byte_t **)&p, quote_cert.size());
-  if (quote_cert_x509 == nullptr) {
+  if (d2i_X509(&quote_cert_x509, (const byte_t **)&p, quote_cert.size()) == nullptr) {
     printf("%s() error, line %d, Can't translate quote cert\n",
            __func__,
            __LINE__);
@@ -2268,14 +2260,48 @@ bool tpm_verify_attest(string            &quote_cert,
   EVP_PKEY *public_evp_key = X509_get_pubkey(quote_cert_x509);
   RSA      *public_key = EVP_PKEY_get1_RSA(public_evp_key);
   RSA_up_ref(public_key);
+
+  if (!RSA_to_key(public_key, &quote_key)) {
+    printf("%s() error, line %d, Can't translate RSA key in cert\n",
+           __func__,
+           __LINE__);
+    X509_free(quote_cert_x509);
+    EVP_PKEY_free(public_evp_key);
+    return false;
+  }
+  X509_free(quote_cert_x509);
   EVP_PKEY_free(public_evp_key);
 
+  tpm_attestation_message att_msg;
+  if (!att_msg.ParseFromString(serialized_tpm_msg)) {
+    printf("%s() error, line %d, Can't parse attestation\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  // what_was_said, the_quote, signing_algorithm, signature
+  // check quote key cert is signed by policy key
 
+  // extract to_quote and quoted
+  string to_quote;
+  string quoted;
+  to_quote = att_msg.what_was_said();
+  quoted = att_msg.the_quote();
+  if (att_msg.signing_algorithm() != "RSA-2048-SSA-SHA-256") {
+    printf("%s() error, line %d, unsupported signing algorithm\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+#if 0
+  // scheme is in tpm_msg
+  // alg should be "RSA-2048-SSA-SHA-256"
   return tpm_Verify(quote_key,
-                           to_quote,
-                           quoted,
-			   sig_scheme,
-                           signature);
+                    to_quote,
+                    quoted,
+		    hash_name,
+                    sig_scheme_name,
+                    signature);
 #else
   return false;
 #endif
