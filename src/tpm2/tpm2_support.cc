@@ -1839,16 +1839,17 @@ bool tpm_Attest(int   what_to_say_size,
 
   string to_quote;
   string quoted;
+  string alg;
   string signature;
   to_quote.assign((char *)what_to_say, what_to_say_size);
-  if (!tpm_Attest(to_quote, &quoted, &signature)) {
+  if (!tpm_Attest(to_quote, &quoted, &alg, &signature)) {
     printf("%s() error, line %d, quote failed\n", __func__, __LINE__);
     return false;
   }
   tpm_attestation_message att;
   att.set_what_was_said(to_quote);
   att.set_the_quote(quoted);
-  // att.set_signature_algorithm();  // TODO
+  att.set_signing_algorithm(alg);
   att.set_signature(signature);
 
   string serialized_att;
@@ -1868,10 +1869,27 @@ bool tpm_Attest(int   what_to_say_size,
   return true;
 }
 
-bool tpm_Attest(string &to_quote, string *quoted, string *signature) {
+bool tpm_Attest(string &to_quote,
+                string *quoted,
+                string *alg,
+                string *signature) {
 
   if (!g_tpm_environment_initialized) {
     printf("%s() error, line %d, environment not initialized\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  if (g_public_quote_key.publicArea.type == TPM_ALG_RSA
+      && g_public_quote_key.publicArea.nameAlg == TPM_ALG_SHA256
+      && g_public_quote_key.publicArea.parameters.rsaDetail.scheme.scheme
+             == TPM_ALG_RSASSA
+      && g_public_quote_key.publicArea.unique.rsa.size == 256) {
+    // This is the only one we do now.
+    *alg = "RSA-2048-SSA-SHA-256";
+  } else {
+    printf("%s() error, line %d, unsupported tpm signature alg\n",
            __func__,
            __LINE__);
     return false;
@@ -1911,9 +1929,8 @@ int size_hash(uint16_t id) {
  *   TPMS_CLOCK_INFO clockInfo;
  *   uint64_t        firmwareVersion;
  *   TPMU_ATTEST     attested;
-} TPMS_ATTEST;
+ * } TPMS_ATTEST;
  */
-// These are the values we have to check
 bool decode_quoted(int                 size_buf,
                    byte_t             *buf,
                    string             *extra_data,
@@ -2074,7 +2091,7 @@ bool tpm_Verify(key_message  &quote_key,
                 const string &sig_scheme,
                 string       &signature) {
 #ifdef DEBUG2
-  printf("\ntpm_verify_attest:\n");
+  printf("\ntpm_Verify:\n");
   print_key(quote_key);
   printf("\n");
 
@@ -2134,7 +2151,7 @@ bool tpm_Verify(key_message  &quote_key,
   }
 
 #ifdef DEBUG2
-  printf("\ntpm_verify_attest:\n\n");
+  printf("\ntpm_Verify:\n\n");
   printf("  extra data: ");
   print_bytes((int)extra_data.size(), (byte_t *)extra_data.data());
   printf("\n");
@@ -2227,7 +2244,7 @@ bool tpm_Verify(key_message  &quote_key,
 
 bool tpm_verify_attest(string            &quote_cert,
                        const key_message &policy_public_key,
-                       const string      &serialized_sev_msg) {
+                       const string      &serialized_tpm_msg) {
 
   // TODO
   // recover quote key form its cert
@@ -2235,10 +2252,26 @@ bool tpm_verify_attest(string            &quote_cert,
 
   // check cert is signed by policy key
   // extract to_quote and quoted
-  // construct signature scheme
+  // scheme is in tpm_msg
+  // alg should be "RSA-2048-SSA-SHA-256"
 
 #if 0
-  return tpm_verify_attest(quote_key,
+  X509   *quote_cert_x509 = nullptr;
+  byte_t *p = (byte_t *)quote_cert.data();
+  quote_cert = d2i_X509(nullptr, (const byte_t **)&p, quote_cert.size());
+  if (quote_cert_x509 == nullptr) {
+    printf("%s() error, line %d, Can't translate quote cert\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  EVP_PKEY *public_evp_key = X509_get_pubkey(quote_cert_x509);
+  RSA      *public_key = EVP_PKEY_get1_RSA(public_evp_key);
+  RSA_up_ref(public_key);
+  EVP_PKEY_free(public_evp_key);
+
+
+  return tpm_Verify(quote_key,
                            to_quote,
                            quoted,
 			   sig_scheme,
@@ -2353,6 +2386,7 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
     md = EVP_sha256();
   } else {
     printf("%s() error, line %d, unsupported has alg\n", __func__, __LINE__);
+    EVP_PKEY_free(protector_evp_key);
     return false;
   }
   int m = RSA_padding_add_PKCS1_OAEP_mgf1(secret_buf,
@@ -2380,6 +2414,7 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   } else if (hash_alg_id == TPM_ALG_SHA256) {
     md1 = EVP_sha256();
   } else {
+    EVP_PKEY_free(protector_evp_key);
     printf("%s() error, line %d, unsupported has alg\n", __func__, __LINE__);
     return false;
   }
@@ -2408,6 +2443,7 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
     printf("%s() error, line %d, RSA_public_encrypt fails\n",
            __func__,
            __LINE__);
+    EVP_PKEY_free(protector_evp_key);
     return false;
   }
   encrypted_secret->assign((char *)encrypted_secret_buf, n);
@@ -2436,6 +2472,7 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
             size_symKey_bits,
             &sym_key)) {
     printf("%s() error, line %d, Can't KDFa symKey\n", __func__, __LINE__);
+    EVP_PKEY_free(protector_evp_key);
     return false;
   }
 
@@ -2464,6 +2501,7 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
                      &size_encIdentity,
                      encIdentity)) {
     printf("%s() error, line %d, Can't AesCFBEncrypt\n", __func__, __LINE__);
+    EVP_PKEY_free(protector_evp_key);
     return false;
   }
 #ifdef DEBUG2
@@ -2495,6 +2533,7 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
             8 * size_hmacKey,
             &hmac_key)) {
     printf("%s() error, line %d, Can't KDFa symKey\n", __func__, __LINE__);
+    EVP_PKEY_free(protector_evp_key);
     return false;
   }
   memcpy(hmacKey, (byte_t *)hmac_key.data(), size_hmacKey);
@@ -2508,11 +2547,13 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   HMAC_CTX *hctx = HMAC_CTX_new();
   if (hctx == nullptr) {
     printf("%s() error, line %d, Can't get hmac context\n", __func__, __LINE__);
+    EVP_PKEY_free(protector_evp_key);
     return false;
   }
 
   if (hash_alg_id != TPM_ALG_SHA256) {
     printf("%s() error, line %d, unsupported hmac\n", __func__, __LINE__);
+    EVP_PKEY_free(protector_evp_key);
     return false;
   }
 
@@ -2538,6 +2579,7 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   cred_blob->append((char *)unmarshaled_integrityHmac.buffer, size_hmacKey);
   cred_blob->append((char *)encIdentity, size_encIdentity);
 
+  EVP_PKEY_free(protector_evp_key);
   return true;
 }
 

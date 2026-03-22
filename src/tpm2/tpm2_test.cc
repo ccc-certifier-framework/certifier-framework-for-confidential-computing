@@ -1110,9 +1110,10 @@ bool certifier_test() {
 
   string to_quote("I am a quote");
   string quoted;
+  string alg;
   string signature;
 
-  if (!tpm_Attest(to_quote, &quoted, &signature)) {
+  if (!tpm_Attest(to_quote, &quoted, &alg, &signature)) {
     printf("%s() error, line %d, tpm_attest failed\n", __func__, __LINE__);
     tpm_close();
     return false;

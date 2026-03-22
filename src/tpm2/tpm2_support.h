@@ -129,7 +129,10 @@ bool local_tpm_attest(TPM_HANDLE &quote_handle,
                       string     &to_quote,
                       string     *quoted,
                       string     *signature);
-bool tpm_Attest(string &to_quote, string *quoted, string *signature);
+bool tpm_Attest(string &to_quote,
+                string *quoted,
+                string *alg,
+                string *signature);
 bool tpm_Attest(int   what_to_say_size,
                 byte *what_to_say,
                 int  *size_out,
