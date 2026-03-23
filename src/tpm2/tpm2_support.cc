@@ -2254,7 +2254,7 @@ bool get_pcr_from_attest(TPMS_ATTEST *p,
                          byte_t      *pcrs,
                          string      *digest) {
 
-  if (p->attested.quote.pcrSelect.count < *num_pcrs) {
+  if ((int)p->attested.quote.pcrSelect.count < *num_pcrs) {
     return false;
   }
   *num_pcrs = p->attested.quote.pcrSelect.count;
@@ -2724,12 +2724,16 @@ bool tpm_public_key_to_key(const TPM2B_PUBLIC &in_public,
     return false;
   }
 
-  out_key = new key_message;
   out_key->set_key_name(name);
   out_key->set_key_format("vse-key");
 
   rsa_message *rk = new rsa_message;
   out_key->set_allocated_rsa_key(rk);
+
+  uint32_t le_exp;
+  change_endian32(
+      (uint32_t *)&in_public.publicArea.parameters.rsaDetail.exponent,
+      &le_exp);
 
   switch (in_public.publicArea.unique.rsa.size) {
     default:
@@ -2740,36 +2744,32 @@ bool tpm_public_key_to_key(const TPM2B_PUBLIC &in_public,
       out_key->mutable_rsa_key()->set_public_modulus(
           in_public.publicArea.unique.rsa.buffer,
           128);
-      out_key->mutable_rsa_key()->set_public_exponent(
-          (byte_t *)&in_public.publicArea.parameters.rsaDetail.exponent,
-          sizeof(uint32_t));
+      out_key->mutable_rsa_key()->set_public_exponent((byte_t *)&le_exp,
+                                                      sizeof(uint32_t));
       break;
     case 256:
       out_key->set_key_type(Enc_method_rsa_2048_public);
       out_key->mutable_rsa_key()->set_public_modulus(
           in_public.publicArea.unique.rsa.buffer,
           256);
-      out_key->mutable_rsa_key()->set_public_exponent(
-          (byte_t *)&in_public.publicArea.parameters.rsaDetail.exponent,
-          sizeof(uint32_t));
+      out_key->mutable_rsa_key()->set_public_exponent((byte_t *)&le_exp,
+                                                      sizeof(uint32_t));
       break;
     case 384:
       out_key->set_key_type(Enc_method_rsa_3072_public);
       out_key->mutable_rsa_key()->set_public_modulus(
           in_public.publicArea.unique.rsa.buffer,
           384);
-      out_key->mutable_rsa_key()->set_public_exponent(
-          (byte_t *)&in_public.publicArea.parameters.rsaDetail.exponent,
-          sizeof(uint32_t));
+      out_key->mutable_rsa_key()->set_public_exponent((byte_t *)&le_exp,
+                                                      sizeof(uint32_t));
       break;
     case 512:
       out_key->set_key_type(Enc_method_rsa_4096_public);
       out_key->mutable_rsa_key()->set_public_modulus(
           in_public.publicArea.unique.rsa.buffer,
           512);
-      out_key->mutable_rsa_key()->set_public_exponent(
-          (byte_t *)&in_public.publicArea.parameters.rsaDetail.exponent,
-          sizeof(uint32_t));
+      out_key->mutable_rsa_key()->set_public_exponent((byte_t *)&le_exp,
+                                                      sizeof(uint32_t));
       break;
   }
 

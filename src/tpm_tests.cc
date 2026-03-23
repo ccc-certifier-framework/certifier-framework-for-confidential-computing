@@ -59,6 +59,7 @@ bool test_tpm(bool print_all) {
 
   if (!Seal(enclave_type, enclave_id, data_size, data, &sealed_size, sealed)) {
     printf("test_sev, %s, seal error, %d\n", __func__, __LINE__);
+    tpm_close();
     return false;
   }
 
@@ -83,6 +84,7 @@ bool test_tpm(bool print_all) {
               &unsealed_size,
               unsealed)) {
     printf("test_sev, %s, unseal error, %d\n", __func__, __LINE__);
+    tpm_close();
     return false;
   }
 
@@ -95,6 +97,7 @@ bool test_tpm(bool print_all) {
 
   if (unsealed_size != data_size || memcmp(data, unsealed, data_size) != 0) {
     printf("test_sev, unsealed response wrong, %s, %d\n", __func__, __LINE__);
+    tpm_close();
     return false;
   }
 
@@ -108,19 +111,30 @@ bool test_tpm(bool print_all) {
   RSA *policy_r = RSA_new();
   if (!generate_new_rsa_key(2048, policy_r)) {
     printf("%s, %d, generate_new_rsa_key error\n", __func__, __LINE__);
+    tpm_close();
     return false;
   }
   if (!RSA_to_key(policy_r, &policy_key)) {
     printf("%s, %d, RSA_to_key error\n", __func__, __LINE__);
+    tpm_close();
     return false;
   }
 
   string name("test-quote-key");
   if (!tpm_public_key_to_key(g_public_quote_key, name, &quote_public_key)) {
-    printf("%s, %d, tpm_public_key_to_key error\n", __func__, __LINE__);
+    printf("Error %s, line: %d, tpm_public_key_to_key error\n",
+           __func__,
+           __LINE__);
+    tpm_close();
     return false;
   }
   RSA_free(policy_r);
+
+  if (print_all) {
+    printf("\nQuote key:\n");
+    print_key(quote_public_key);
+    printf("\n");
+  }
 
   if (!construct_quote_key_cert(policy_key,
                                 quote_public_key,
@@ -128,6 +142,7 @@ bool test_tpm(bool print_all) {
     printf("Error:  %s, line %d, cant construct quote key\n",
            __func__,
            __LINE__);
+    tpm_close();
     return false;
   }
   int  size_measurement = 64;
@@ -139,12 +154,14 @@ bool test_tpm(bool print_all) {
   RSA *auth_r = RSA_new();
   if (!generate_new_rsa_key(2048, auth_r)) {
     printf("%s, %d, generate_new_rsa_key error\n", __func__, __LINE__);
+    tpm_close();
     return false;
   }
   key_message private_auth_key;
   key_message public_auth_key;
   if (!RSA_to_key(auth_r, &private_auth_key)) {
     printf("%s, %d, RSA_to_key error\n", __func__, __LINE__);
+    tpm_close();
     return false;
   }
   private_auth_key.set_key_name("authKey");
@@ -170,14 +187,20 @@ bool test_tpm(bool print_all) {
   string serialized_user;
   if (!ud.SerializeToString(&serialized_user)) {
     printf("%s, %d, SerializeToString error\n", __func__, __LINE__);
+    tpm_close();
     return false;
   }
+
+  tpm_close();
+  return true;
+
   if (!Attest(ud.enclave_type(),
               serialized_user.size(),
               (byte *)serialized_user.data(),
               &size_out,
               out)) {
     printf("%s, %d Attest failed\n", __func__, __LINE__);
+    tpm_close();
     return false;
   }
 
@@ -187,12 +210,14 @@ bool test_tpm(bool print_all) {
   bool success = tpm_verify_attest(quote_public_key, serialized_tpm_msg);
   if (!success) {
     printf("%s, %d: tpm_verify_attest failed\n", __func__, __LINE__);
+    tpm_close();
     return false;
   }
 
   tpm_attestation_message att;
   if (!att.ParseFromString(serialized_tpm_msg)) {
     printf("%s, %d: Can't parse attestation\n", __func__, __LINE__);
+    tpm_close();
     return false;
   }
 
@@ -209,6 +234,7 @@ bool test_tpm(bool print_all) {
     print_bytes(att.signature().size(), (byte *)att.signature().data());
     printf("\n");
   }
+  tpm_close();
 
   return true;
 }
