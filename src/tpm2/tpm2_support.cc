@@ -2090,6 +2090,7 @@ bool tpm_Verify(const key_message &quote_key,
                 const string      &hash_name,
                 const string      &sig_scheme,
                 const string      &signature) {
+
 #ifdef DEBUG2
   printf("\ntpm_Verify:\n");
   print_key(quote_key);
@@ -2111,6 +2112,12 @@ bool tpm_Verify(const key_message &quote_key,
 
   if (hash_name != Digest_method_sha_256) {
     printf("%s() error, line %d, unsupported hashing algorithm\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if (sig_scheme != "ssa") {
+    printf("%s() error, line %d, unsupported signature scheme\n",
            __func__,
            __LINE__);
     return false;
@@ -2269,8 +2276,14 @@ bool tpm_verify_attest(const key_message &quote_key,
   signature = att_msg.signature();
 
   // alg should be "RSA-2048-SSA-SHA-256"
-  string hash_name;
-  string sig_scheme_name;
+  if (att_msg.signing_algorithm() != "RSA-2048-SSA-SHA-256") {
+    printf("%s() error, line %d, unsupported signing algorithm\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  string hash_name = Digest_method_sha_256;
+  string sig_scheme_name = "ssa";
 
   return tpm_Verify(quote_key,
                     to_quote,
