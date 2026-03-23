@@ -1291,14 +1291,14 @@ bool recover_and_load_quote_hierarchy(local_tpm    &tpm,
   return true;
 }
 
-bool do_quote(local_tpm  &tpm,
-              TPM_HANDLE &srk_handle,
-              int         num_pcrs,
-              byte_t     *pcrs,
-              TPM_HANDLE &quote_handle,
-              string     &to_quote,
-              string     *quoted,
-              string     *signature) {
+bool do_quote(local_tpm    &tpm,
+              TPM_HANDLE   &srk_handle,
+              int           num_pcrs,
+              byte_t       *pcrs,
+              TPM_HANDLE   &quote_handle,
+              const string &to_quote,
+              string       *quoted,
+              string       *signature) {
 
   TPML_PCR_SELECTION pcrSelect;
   TPMT_SIG_SCHEME    scheme;
@@ -1869,10 +1869,10 @@ bool tpm_Attest(int   what_to_say_size,
   return true;
 }
 
-bool tpm_Attest(string &to_quote,
-                string *quoted,
-                string *alg,
-                string *signature) {
+bool tpm_Attest(const string &to_quote,
+                string       *quoted,
+                string       *alg,
+                string       *signature) {
 
   if (!g_tpm_environment_initialized) {
     printf("%s() error, line %d, environment not initialized\n",
@@ -2084,12 +2084,12 @@ bool decode_quoted(int                 size_buf,
   return true;
 }
 
-bool tpm_Verify(key_message  &quote_key,
-                string       &to_quote,
-                string       &quoted,
-                const string &hash_name,
-                const string &sig_scheme,
-                string       &signature) {
+bool tpm_Verify(const key_message &quote_key,
+                const string      &to_quote,
+                const string      &quoted,
+                const string      &hash_name,
+                const string      &sig_scheme,
+                const string      &signature) {
 #ifdef DEBUG2
   printf("\ntpm_Verify:\n");
   print_key(quote_key);
@@ -2242,16 +2242,54 @@ bool tpm_Verify(key_message  &quote_key,
   return true;
 }
 
-bool tpm_verify_attest(string            &quote_cert,
-                       const key_message &policy_public_key,
+bool tpm_verify_attest(const key_message &quote_key,
                        const string      &serialized_tpm_msg) {
+
+  tpm_attestation_message att_msg;
+  if (!att_msg.ParseFromString(serialized_tpm_msg)) {
+    printf("%s() error, line %d, Can't parse attestation\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  // what_was_said, the_quote, signing_algorithm, signature
+  string to_quote;
+  string quoted;
+  string signature;
+
+  to_quote = att_msg.what_was_said();
+  quoted = att_msg.the_quote();
+  if (att_msg.signing_algorithm() != "RSA-2048-SSA-SHA-256") {
+    printf("%s() error, line %d, unsupported signing algorithm\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  signature = att_msg.signature();
+
+  // alg should be "RSA-2048-SSA-SHA-256"
+  string hash_name;
+  string sig_scheme_name;
+
+  return tpm_Verify(quote_key,
+                    to_quote,
+                    quoted,
+                    hash_name,
+                    sig_scheme_name,
+                    signature);
+}
+
+bool tpm_verify_attest(const string &quote_cert,
+                       const string &serialized_tpm_msg) {
 
   // recover quote key form its cert
   key_message quote_key;
 
   X509   *quote_cert_x509 = nullptr;
   byte_t *p = (byte_t *)quote_cert.data();
-  if (d2i_X509(&quote_cert_x509, (const byte_t **)&p, quote_cert.size()) == nullptr) {
+  if (d2i_X509(&quote_cert_x509, (const byte_t **)&p, quote_cert.size())
+      == nullptr) {
     printf("%s() error, line %d, Can't translate quote cert\n",
            __func__,
            __LINE__);
@@ -2272,39 +2310,7 @@ bool tpm_verify_attest(string            &quote_cert,
   X509_free(quote_cert_x509);
   EVP_PKEY_free(public_evp_key);
 
-  tpm_attestation_message att_msg;
-  if (!att_msg.ParseFromString(serialized_tpm_msg)) {
-    printf("%s() error, line %d, Can't parse attestation\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-  // what_was_said, the_quote, signing_algorithm, signature
-  // check quote key cert is signed by policy key
-
-  // extract to_quote and quoted
-  string to_quote;
-  string quoted;
-  to_quote = att_msg.what_was_said();
-  quoted = att_msg.the_quote();
-  if (att_msg.signing_algorithm() != "RSA-2048-SSA-SHA-256") {
-    printf("%s() error, line %d, unsupported signing algorithm\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-#if 0
-  // scheme is in tpm_msg
-  // alg should be "RSA-2048-SSA-SHA-256"
-  return tpm_Verify(quote_key,
-                    to_quote,
-                    quoted,
-		    hash_name,
-                    sig_scheme_name,
-                    signature);
-#else
-  return false;
-#endif
+  return tpm_verify_attest(quote_key, serialized_tpm_msg);
 }
 
 // ------------------------------------------------------------------------

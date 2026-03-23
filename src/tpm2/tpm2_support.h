@@ -101,14 +101,14 @@ bool recover_and_load_quote_hierarchy(local_tpm    &tpm,
                                       const string &file_name,
                                       TPM_HANDLE   *srk_handle,
                                       TPM_HANDLE   *quote_handle);
-bool do_quote(local_tpm  &tpm,
-              TPM_HANDLE &srk_handle,
-              int         num_pcrs,
-              byte_t     *pcrs,
-              TPM_HANDLE &quote_handle,
-              string     &to_quote,
-              string     *quoted,
-              string     *signature);
+bool do_quote(local_tpm    &tpm,
+              TPM_HANDLE   &srk_handle,
+              int           num_pcrs,
+              byte_t       *pcrs,
+              TPM_HANDLE   &quote_handle,
+              const string &to_quote,
+              string       *quoted,
+              string       *signature);
 bool tpm_Init(const string &device_name,
               const string &endorsement_cert_file_name,
               const string &seal_hierarchy_file_name,
@@ -129,27 +129,28 @@ bool local_tpm_attest(TPM_HANDLE &quote_handle,
                       string     &to_quote,
                       string     *quoted,
                       string     *signature);
-bool tpm_Attest(string &to_quote,
-                string *quoted,
-                string *alg,
-                string *signature);
+bool tpm_Attest(const string &to_quote,
+                string       *quoted,
+                string       *alg,
+                string       *signature);
 bool tpm_Attest(int   what_to_say_size,
                 byte *what_to_say,
                 int  *size_out,
                 byte *out);
-bool tpm_Verify(string &cert,
-                string &to_quote,
-                string &quoted,
-                string &signature);
-bool tpm_Verify(key_message  &quote_key,
-                string       &to_quote,
-                string       &quoted,
-                const string &hash_name,
-                const string &sig_scheme,
-                string       &signature);
-bool tpm_verify_attest(string            &cert,
-                       const key_message &policy_public_key,
-                       const string      &serialized_sev_msg);
+bool tpm_Verify(const string &cert,
+                const string &to_quote,
+                const string &quoted,
+                const string &signature);
+bool tpm_Verify(const key_message &quote_key,
+                const string      &to_quote,
+                const string      &quoted,
+                const string      &hash_name,
+                const string      &sig_scheme,
+                const string      &signature);
+bool tpm_verify_attest(const key_message &quote_key,
+                       const string      &serialized_tpm_msg);
+bool tpm_verify_attest(const string &quote_cert,
+                       const string &serialized_tpm_msg);
 
 bool make_credential(const TPM2B_PUBLIC &quoting_key,
                      string             &quote_key_name,
