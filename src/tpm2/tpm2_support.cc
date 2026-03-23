@@ -2348,9 +2348,47 @@ bool tpm_verify_attest(const string &quote_cert,
 // and proposed subject auth key
 bool construct_quote_key_cert(const key_message &signing_key,
                               const key_message &quote_public_key,
-                              const string      &measurement,
                               string            *cert_out) {
-  return false;
+
+  X509* x509 = X509_new();
+  double duration = 366 * 24.0 * 60.0 * 60.0;
+  string issuer_name_str("John");
+  string issuer_organization_str;
+  string subject_name_str("Quoter");
+  string subject_organization_str;
+
+  if (x509 == nullptr) {
+    printf("%s() error, line %d, Can't produce artifact\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if (!produce_artifact((key_message&)signing_key,
+                        issuer_name_str,
+                        issuer_organization_str,
+                        (key_message&)quote_public_key,
+                        subject_name_str,
+                        subject_organization_str,
+                        1,
+                        duration,
+                        x509,
+                        true,
+                        false)) {
+    printf("%s() error, line %d, Can't produce artifact\n",
+           __func__,
+           __LINE__);
+    X509_free(x509);
+    return false;
+  }
+  if (!x509_to_asn1(x509, cert_out)) {
+    printf("%s() error, line %d, Can't translate translate to der\n",
+           __func__,
+           __LINE__);
+    X509_free(x509);
+    return false;
+  }
+  X509_free(x509);
+  return true;
 }
 
 bool make_credential(const TPM2B_PUBLIC &quoting_key,

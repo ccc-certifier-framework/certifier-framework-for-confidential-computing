@@ -158,6 +158,9 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
                      string             &credential,
                      string             *cred_blob,
                      string             *encrypted_secret);
+bool construct_quote_key_cert(const key_message &signing_key,
+                              const key_message &quote_public_key,
+                              string            *cert_out);
 
 // ---------------------------------------------------------------
 #endif

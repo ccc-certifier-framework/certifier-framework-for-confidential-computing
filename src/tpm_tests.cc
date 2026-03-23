@@ -15,7 +15,8 @@
 
 #include "certifier.h"
 #include "support.h"
-
+#include "tpm2_support.h"
+#include "tpm2_lib.h"
 #include "attestation.h"
 
 using namespace certifier::framework;
@@ -30,10 +31,30 @@ bool test_tpm(bool print_all) {
   string    enclave_type("tpm-enclave");
   string    enclave_id("test-enclave");
   byte      data[data_size];
+
   for (int i = 0; i < data_size; i++)
     data[i] = i;
 
-#  if 0
+  string device_name("/dev/tpm1");
+  string endorsement_cert_file_name("jlm_cert.crt");
+  string seal_hierarchy_file_name("seal_hierarchy.bin");
+  string quote_hierarchy_file_name("quote_hierarchy.bin");
+  int    num_pcrs = 1;
+  byte   pcrs[1];
+
+  // Init
+  if (!tpm_Init(device_name,
+              endorsement_cert_file_name,
+              seal_hierarchy_file_name,
+              quote_hierarchy_file_name,
+              num_pcrs,
+              pcrs)) {
+        printf("%s() error, line %d, Can't init TPM\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
   byte sealed[512];
   int  sealed_size = 512;
   memset(sealed, 0, sealed_size);
@@ -79,9 +100,14 @@ bool test_tpm(bool print_all) {
     return false;
   }
 
+#  if 0
   int  size_measurement = 64;
   byte measurement[size_measurement];
   memset(measurement, 0, size_measurement);
+
+  bool construct_quote_key_cert(const key_message &signing_key,
+                              const key_message &quote_public_key,
+                              string            *cert_out);
 
   attestation_user_data ud;
   ud.set_enclave_type("sev-enclave");
