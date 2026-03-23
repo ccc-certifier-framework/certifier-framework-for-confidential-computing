@@ -44,14 +44,12 @@ bool test_tpm(bool print_all) {
 
   // Init
   if (!tpm_Init(device_name,
-              endorsement_cert_file_name,
-              seal_hierarchy_file_name,
-              quote_hierarchy_file_name,
-              num_pcrs,
-              pcrs)) {
-        printf("%s() error, line %d, Can't init TPM\n",
-           __func__,
-           __LINE__);
+                endorsement_cert_file_name,
+                seal_hierarchy_file_name,
+                quote_hierarchy_file_name,
+                num_pcrs,
+                pcrs)) {
+    printf("%s() error, line %d, Can't init TPM\n", __func__, __LINE__);
     return false;
   }
 
@@ -100,25 +98,52 @@ bool test_tpm(bool print_all) {
     return false;
   }
 
-#  if 0
+  extern TPM2B_PUBLIC g_public_quote_key;
+  extern TPM2B_PUBLIC g_public_endorsement_key;
+
+  string      fake_quote_cert;
+  key_message policy_key;
+  key_message quote_public_key;
+
+  RSA *policy_r = RSA_new();
+  if (!generate_new_rsa_key(2048, policy_r)) {
+    printf("%s, %d, generate_new_rsa_key error\n", __func__, __LINE__);
+    return false;
+  }
+  if (!RSA_to_key(policy_r, &policy_key)) {
+    printf("%s, %d, RSA_to_key error\n", __func__, __LINE__);
+    return false;
+  }
+
+  string name("test-quote-key");
+  if (!tpm_public_key_to_key(g_public_quote_key, name, &quote_public_key)) {
+    printf("%s, %d, tpm_public_key_to_key error\n", __func__, __LINE__);
+    return false;
+  }
+  RSA_free(policy_r);
+
+  if (!construct_quote_key_cert(policy_key,
+                                quote_public_key,
+                                &fake_quote_cert)) {
+    printf("Error:  %s, line %d, cant construct quote key\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
   int  size_measurement = 64;
   byte measurement[size_measurement];
   memset(measurement, 0, size_measurement);
 
-  bool construct_quote_key_cert(const key_message &signing_key,
-                              const key_message &quote_public_key,
-                              string            *cert_out);
-
   attestation_user_data ud;
-  ud.set_enclave_type("sev-enclave");
-  RSA *r = RSA_new();
-  if (!generate_new_rsa_key(2048, r)) {
+  ud.set_enclave_type("tpm-enclave");
+  RSA *auth_r = RSA_new();
+  if (!generate_new_rsa_key(2048, auth_r)) {
     printf("%s, %d, generate_new_rsa_key error\n", __func__, __LINE__);
     return false;
   }
   key_message private_auth_key;
   key_message public_auth_key;
-  if (!RSA_to_key(r, &private_auth_key)) {
+  if (!RSA_to_key(auth_r, &private_auth_key)) {
     printf("%s, %d, RSA_to_key error\n", __func__, __LINE__);
     return false;
   }
@@ -127,13 +152,18 @@ bool test_tpm(bool print_all) {
     printf("%s, %d, private_key_to_public_key error\n", __func__, __LINE__);
     return false;
   }
+  RSA_free(auth_r);
+
   // time
   time_point t;
   time_now(&t);
   string str_now;
   time_to_string(t, &str_now);
   ud.set_time(str_now);
+
+  // key
   ud.mutable_enclave_key()->CopyFrom(public_auth_key);
+  ud.mutable_policy_key()->CopyFrom(policy_key);
 
   int    size_out = 2048;
   byte   out[size_out];
@@ -151,71 +181,34 @@ bool test_tpm(bool print_all) {
     return false;
   }
 
-#    ifdef SEV_DUMMY_GUEST
-  extern EVP_PKEY *get_simulated_vcek_key();
-  EVP_PKEY        *verify_pkey = get_simulated_vcek_key();
-#    else
-  extern int sev_read_pem_into_x509(const char *file_name, X509 **x509_cert);
-  extern EVP_PKEY *sev_get_vcek_pubkey(X509 * x509_vcek);
-  X509            *x509_vcek;
-  if (sev_read_pem_into_x509("test_data/vcek.pem", &x509_vcek)
-      != EXIT_SUCCESS) {
-    printf("%s, %d, Failed to load VCEK Cert!\n", __func__, __LINE__);
-    return false;
-  }
-  EVP_PKEY *verify_pkey = sev_get_vcek_pubkey(x509_vcek);
-#    endif /* SEV_DUMMY_GUEST */
+  string serialized_tpm_msg;
+  serialized_tpm_msg.assign((char *)out, size_out);
 
-  if (verify_pkey == nullptr)
-    return false;
-  bool success = verify_sev_Attest(verify_pkey,
-                                   size_out,
-                                   out,
-                                   &size_measurement,
-                                   measurement);
-  EVP_PKEY_free(verify_pkey);
-  verify_pkey = nullptr;
-
+  bool success = tpm_verify_attest(quote_public_key, serialized_tpm_msg);
   if (!success) {
-    printf("%s, %d: verify_sev_Attest failed\n", __func__, __LINE__);
+    printf("%s, %d: tpm_verify_attest failed\n", __func__, __LINE__);
     return false;
   }
 
-  sev_attestation_message sev_att;
-  string                  at_str;
-  at_str.assign((char *)out, size_out);
-  if (!sev_att.ParseFromString(at_str)) {
+  tpm_attestation_message att;
+  if (!att.ParseFromString(serialized_tpm_msg)) {
     printf("%s, %d: Can't parse attestation\n", __func__, __LINE__);
     return false;
   }
 
-  attestation_user_data ud_new;
-  string                ud_str;
-  ud_str.assign((char *)sev_att.what_was_said().data(),
-                sev_att.what_was_said().size());
-  if (!ud_new.ParseFromString(ud_str)) {
-    printf("Can't parse user data\n");
-    return false;
-  }
-
-  if (!same_key(ud_new.enclave_key(), ud.enclave_key())) {
-    printf("not same key\n");
-    return false;
-  }
-
   if (print_all) {
-    attestation_report r;
-    printf("attestation struct size is %lx, reported attestation size is %lx\n",
-           sizeof(attestation_report),
-           sev_att.reported_attestation().size());
-    printf("report starts at: %lx, signature starts at %lx\n",
-           (long unsigned int)&r,
-           (long unsigned int)&r.signature);
-    printf("\nMeasurement size: %d, measurement: ", size_measurement);
-    print_bytes(size_measurement, measurement);
+    printf("tmp attestation:\n");
+    printf("    what was said: ");
+    print_bytes(att.what_was_said().size(), (byte *)att.what_was_said().data());
+    printf("\n");
+    printf("    The quote    : ");
+    print_bytes(att.the_quote().size(), (byte *)att.the_quote().data());
+    printf("\n");
+    printf("    Signing alg  : %s\n", att.signing_algorithm().c_str());
+    printf("    Signature    : ");
+    print_bytes(att.signature().size(), (byte *)att.signature().data());
     printf("\n");
   }
-#  endif
 
   return true;
 }

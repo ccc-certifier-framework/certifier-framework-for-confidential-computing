@@ -101,6 +101,15 @@ bool recover_and_load_quote_hierarchy(local_tpm    &tpm,
                                       const string &file_name,
                                       TPM_HANDLE   *srk_handle,
                                       TPM_HANDLE   *quote_handle);
+
+bool get_pcr_from_attest(TPMS_ATTEST *p,
+                         int         *num_pcrs,
+                         byte_t      *pcrs,
+                         string      *digest);
+bool get_extra_data_from_attest(TPMS_ATTEST *p, string *extra_data);
+bool get_magic_from_attest(TPMS_ATTEST *p, uint32_t *mag);
+bool get_signer_name_from_attest(TPMS_ATTEST *p, string *n);
+
 bool do_quote(local_tpm    &tpm,
               TPM_HANDLE   &srk_handle,
               int           num_pcrs,
@@ -161,6 +170,9 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
 bool construct_quote_key_cert(const key_message &signing_key,
                               const key_message &quote_public_key,
                               string            *cert_out);
+bool tpm_public_key_to_key(const TPM2B_PUBLIC &in_public,
+                           const string       &name,
+                           key_message        *out_key);
 
 // ---------------------------------------------------------------
 #endif

@@ -1920,17 +1920,6 @@ int size_hash(uint16_t id) {
   }
 }
 
-/*
- * typedef struct {
- *   TPM_GENERATED   magic;
- *   TPMI_ST_ATTEST  type;
- *   TPM2B_NAME      qualifiedSigner;
- *   TPM2B_DATA      extraData;
- *   TPMS_CLOCK_INFO clockInfo;
- *   uint64_t        firmwareVersion;
- *   TPMU_ATTEST     attested;
- * } TPMS_ATTEST;
- */
 bool decode_quoted(int                 size_buf,
                    byte_t             *buf,
                    string             *extra_data,
@@ -2249,6 +2238,52 @@ bool tpm_Verify(const key_message &quote_key,
   return true;
 }
 
+void pcrs_from_select(int size, byte_t *buf, byte_t *pcrs) {
+  int j = 0;
+  for (int i = 0; i < size; i++) {
+    byte_t s = buf[size - i - 1];
+    int    k = (i % 8);
+    if (s & (1 << k)) {
+      pcrs[j++] = i;
+    }
+  }
+}
+
+bool get_pcr_from_attest(TPMS_ATTEST *p,
+                         int         *num_pcrs,
+                         byte_t      *pcrs,
+                         string      *digest) {
+
+  if (p->attested.quote.pcrSelect.count < *num_pcrs) {
+    return false;
+  }
+  *num_pcrs = p->attested.quote.pcrSelect.count;
+  for (int i = 0; i < *num_pcrs; i++) {
+    int sz = size_hash(p->attested.quote.pcrSelect.pcrSelections[i].hash);
+    pcrs_from_select(p->attested.quote.pcrSelect.pcrSelections[i].sizeofSelect,
+                     p->attested.quote.pcrSelect.pcrSelections[i].pcrSelect,
+                     pcrs);
+  }
+  digest->assign((char *)p->attested.quote.pcrDigest.buffer,
+                 p->attested.quote.pcrDigest.size);
+  return true;
+}
+
+bool get_extra_data_from_attest(TPMS_ATTEST *p, string *extra_data) {
+  extra_data->assign((char *)p->extraData.buffer, p->extraData.size);
+  return true;
+}
+
+bool get_magic_from_attest(TPMS_ATTEST *p, uint32_t *mag) {
+  *mag = (uint32_t)p->magic;
+  return true;
+}
+
+bool get_signer_name_from_attest(TPMS_ATTEST *p, string *n) {
+  n->assign((char *)p->qualifiedSigner.name, p->qualifiedSigner.size);
+  return true;
+}
+
 bool tpm_verify_attest(const key_message &quote_key,
                        const string      &serialized_tpm_msg) {
 
@@ -2350,7 +2385,7 @@ bool construct_quote_key_cert(const key_message &signing_key,
                               const key_message &quote_public_key,
                               string            *cert_out) {
 
-  X509* x509 = X509_new();
+  X509  *x509 = X509_new();
   double duration = 366 * 24.0 * 60.0 * 60.0;
   string issuer_name_str("John");
   string issuer_organization_str;
@@ -2358,15 +2393,13 @@ bool construct_quote_key_cert(const key_message &signing_key,
   string subject_organization_str;
 
   if (x509 == nullptr) {
-    printf("%s() error, line %d, Can't produce artifact\n",
-           __func__,
-           __LINE__);
+    printf("%s() error, line %d, Can't produce artifact\n", __func__, __LINE__);
     return false;
   }
-  if (!produce_artifact((key_message&)signing_key,
+  if (!produce_artifact((key_message &)signing_key,
                         issuer_name_str,
                         issuer_organization_str,
-                        (key_message&)quote_public_key,
+                        (key_message &)quote_public_key,
                         subject_name_str,
                         subject_organization_str,
                         1,
@@ -2374,9 +2407,7 @@ bool construct_quote_key_cert(const key_message &signing_key,
                         x509,
                         true,
                         false)) {
-    printf("%s() error, line %d, Can't produce artifact\n",
-           __func__,
-           __LINE__);
+    printf("%s() error, line %d, Can't produce artifact\n", __func__, __LINE__);
     X509_free(x509);
     return false;
   }
@@ -2684,4 +2715,80 @@ bool recover_quote_key_certificate(const string &serialized_cred_response,
   return false;
 }
 
+bool tpm_public_key_to_key(const TPM2B_PUBLIC &in_public,
+                           const string       &name,
+                           key_message        *out_key) {
+
+  if (in_public.publicArea.type != TPM_ALG_RSA) {
+    printf("%s() error, line %d, unsupported key type\n", __func__, __LINE__);
+    return false;
+  }
+
+  out_key = new key_message;
+  out_key->set_key_name(name);
+  out_key->set_key_format("vse-key");
+
+  rsa_message *rk = new rsa_message;
+  out_key->set_allocated_rsa_key(rk);
+
+  switch (in_public.publicArea.unique.rsa.size) {
+    default:
+      printf("%s() error, line %d, unsupported key size\n", __func__, __LINE__);
+      return false;
+    case 128:
+      out_key->set_key_type(Enc_method_rsa_1024_public);
+      out_key->mutable_rsa_key()->set_public_modulus(
+          in_public.publicArea.unique.rsa.buffer,
+          128);
+      out_key->mutable_rsa_key()->set_public_exponent(
+          (byte_t *)&in_public.publicArea.parameters.rsaDetail.exponent,
+          sizeof(uint32_t));
+      break;
+    case 256:
+      out_key->set_key_type(Enc_method_rsa_2048_public);
+      out_key->mutable_rsa_key()->set_public_modulus(
+          in_public.publicArea.unique.rsa.buffer,
+          256);
+      out_key->mutable_rsa_key()->set_public_exponent(
+          (byte_t *)&in_public.publicArea.parameters.rsaDetail.exponent,
+          sizeof(uint32_t));
+      break;
+    case 384:
+      out_key->set_key_type(Enc_method_rsa_3072_public);
+      out_key->mutable_rsa_key()->set_public_modulus(
+          in_public.publicArea.unique.rsa.buffer,
+          384);
+      out_key->mutable_rsa_key()->set_public_exponent(
+          (byte_t *)&in_public.publicArea.parameters.rsaDetail.exponent,
+          sizeof(uint32_t));
+      break;
+    case 512:
+      out_key->set_key_type(Enc_method_rsa_4096_public);
+      out_key->mutable_rsa_key()->set_public_modulus(
+          in_public.publicArea.unique.rsa.buffer,
+          512);
+      out_key->mutable_rsa_key()->set_public_exponent(
+          (byte_t *)&in_public.publicArea.parameters.rsaDetail.exponent,
+          sizeof(uint32_t));
+      break;
+  }
+
+  time_point t;
+  time_now(&t);
+  string str_now;
+  time_to_string(t, &str_now);
+  time_point a;
+  double     hours = 366.0 * 24.0;
+  if (!add_interval_to_time_point(t, hours, &a)) {
+    printf("%s() error, line %d, can't produce end time\n", __func__, __LINE__);
+    return false;
+  }
+  string str_later;
+  time_to_string(t, &str_later);
+
+  out_key->set_not_before(str_now);
+  out_key->set_not_after(str_later);
+
+  return true;
+}
 // ------------------------------------------------------------------------
