@@ -2210,6 +2210,26 @@ bool tpm_Verify(const key_message &quote_key,
     return false;
   }
 
+  // check magic and type
+  //  and that extradata corresponds to hashed_to_quote
+  if (memcmp((byte_t *)hashed_to_quote.data(),
+             (byte_t *)extra_data.data(),
+             extra_data.size())
+      != 0) {
+    printf("%s() error, line %d, hashed to quote and extra data dont match\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if (magic != 0xff544347) {
+    printf("%s() error, line %d, bad magic\n", __func__, __LINE__);
+    return false;
+  }
+  if (type != 0x8018) {
+    printf("%s() error, line %d, bad type\n", __func__, __LINE__);
+    return false;
+  }
+
 #ifdef DEBUG
   printf("\ntpm_Verify:\n\n");
   int    num_test_pcrs = 10;
