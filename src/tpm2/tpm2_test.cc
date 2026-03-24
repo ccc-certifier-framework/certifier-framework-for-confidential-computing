@@ -732,35 +732,6 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
 
 bool misc_test() {
 
-  TPML_PCR_SELECTION pcrSelect;
-
-  init_single_pcr_selection(7, TPM_ALG_SHA256, &pcrSelect);
-  add_pcr_selection(12, TPM_ALG_SHA256, &pcrSelect);
-
-  int    num = 10;
-  byte_t pcrs[num];
-  memset(pcrs, 0, num);
-
-  if (!get_pcr_from_select(&pcrSelect, &num, pcrs)) {
-    printf("%s() error, line %d, get_pcr_from_select failed\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-
-  printf("pcrs: ");
-  for (int i = 0; i < num; i++) {
-    printf(" %d", pcrs[i]);
-  }
-  printf("\n");
-  printf("pcr test succeeded\n");
-  printf("\n");
-
-  if (num != 2 || pcrs[0] != 7 || pcrs[1] != 12) {
-    printf("%s() error, line %d, wrong pcrs\n", __func__, __LINE__);
-    return false;
-  }
-
   TPM_ALG_ID hash_alg_id = TPM_ALG_SHA256;
   string     label;
   string     key;

@@ -39,8 +39,9 @@ bool test_tpm(bool print_all) {
   string endorsement_cert_file_name("jlm_cert.crt");
   string seal_hierarchy_file_name("seal_hierarchy.bin");
   string quote_hierarchy_file_name("quote_hierarchy.bin");
-  int    num_pcrs = 1;
-  byte   pcrs[1];
+
+  int  num_pcrs = 1;
+  byte pcrs[1] = {7};
 
   // Init
   if (!tpm_Init(device_name,

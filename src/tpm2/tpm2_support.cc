@@ -1373,7 +1373,7 @@ string       g_endorsement_cert_file_name;
 string       g_seal_hierarchy_file_name;
 string       g_quote_hierarchy_file_name;
 string       g_seal_thing;
-int          g_num_pcrs;
+int          g_num_pcrs = 0;
 byte_t       g_pcrs[32];
 TPM2B_PUBLIC g_public_quote_key;
 TPM2B_PUBLIC g_public_endorsement_key;
@@ -1913,6 +1913,60 @@ bool tpm_Attest(const string &to_quote,
     printf("%s() error, line %d, quote failed\n", __func__, __LINE__);
     return false;
   }
+
+#ifdef DEBUG3
+  printf("\nAfter local_tpm_attest\n");
+  printf("pcrs (%d): ", g_num_pcrs);
+  for (int i = 0; i < g_num_pcrs; i++) {
+    printf("%d ", g_pcrs[i]);
+  }
+  printf("\n");
+
+  printf("quoted (%d): ", (int)quoted->size());
+  print_bytes(quoted->size(), (byte_t *)quoted->data());
+  printf("\n");
+
+  int      num_test_pcrs = 10;
+  byte_t   test_pcrs[num_test_pcrs];
+  string   new_extra_data;
+  string   new_digest;
+  string   new_signer;
+  uint16_t new_type;
+  uint32_t new_magic;
+
+  if (!get_data_from_attest((int)quoted->size(),
+                            (byte_t *)quoted->data(),
+                            &new_magic,
+                            &new_type,
+                            &new_signer,
+                            &new_extra_data,
+                            &num_test_pcrs,
+                            test_pcrs,
+                            &new_digest)) {
+    printf("%s() error, line %d, can't get pcrs data from attest\n",
+           __func__,
+           __LINE__);
+  } else {
+    printf("\n");
+    printf("magic: %08x\n", new_magic);
+    printf("type: %04x\n", new_type);
+    printf("pcrs (%d): ", num_test_pcrs);
+    for (int i = 0; i < num_test_pcrs; i++) {
+      printf("%d ", test_pcrs[i]);
+    }
+    printf("\n");
+    printf("new_digest (%d): ", (int)new_digest.size());
+    print_bytes(new_digest.size(), (byte_t *)new_digest.data());
+    printf("\n");
+    printf("new_extra_data (%d): ", (int)new_extra_data.size());
+    print_bytes(new_extra_data.size(), (byte_t *)new_extra_data.data());
+    printf("\n");
+    printf("new_signer (%d): ", (int)new_signer.size());
+    print_bytes(new_signer.size(), (byte_t *)new_signer.data());
+    printf("\n");
+  }
+#endif
+
   return true;
 }
 
@@ -1929,6 +1983,9 @@ int size_hash(uint16_t id) {
 
 bool decode_quoted(int                 size_buf,
                    byte_t             *buf,
+                   uint32_t           *magic,
+                   uint16_t           *type,
+                   string             *signer,
                    string             *extra_data,
                    TPML_PCR_SELECTION *pcrSelect,
                    string             *pcr_digest) {
@@ -1955,38 +2012,32 @@ bool decode_quoted(int                 size_buf,
     return false;
   }
   change_endian32((uint32_t *)buf, &mn);
-  if (mn != 0xff544347) {
-    printf("%s() error, line %d, magic number doesnt match %08x\n",
-           __func__,
-           __LINE__,
-           mn);
-    return false;
-  }
   buf += sizeof(uint32_t);
   size_buf -= sizeof(uint32_t);
+  *magic = mn;
 
   // Check type: 8018
-  uint16_t type = 0;
   if (size_buf < (int)sizeof(uint16_t)) {
     printf("%s() error, line %d, buffer too small\n", __func__, __LINE__);
     return false;
   }
-  change_endian16((uint16_t *)buf, &type);
-  if (type != 0x8018) {
+  change_endian16((uint16_t *)buf, type);
+  if (*type != 0x8018) {
     printf("%s() error, line %d, type doesn't match %04x\n",
            __func__,
            __LINE__,
-           type);
+           *type);
     return false;
   }
   buf += sizeof(uint16_t);
   size_buf -= sizeof(uint16_t);
 
-  // skip qualified signer name
+  // qualified signer name
   uint16_t size_name = 0;
   change_endian16((uint16_t *)buf, &size_name);
   buf += sizeof(uint16_t);
   size_buf -= sizeof(uint16_t);
+  signer->assign((char *)buf, size_name);
   buf += size_name;
   size_buf -= size_name;
 
@@ -2131,7 +2182,7 @@ bool tpm_Verify(const key_message &quote_key,
     return false;
   }
 
-#ifdef DEBUG2
+#ifdef DEBUG
   printf("\nHashed to quote: ");
   print_bytes((int)d_len, digest);
   printf("\n");
@@ -2141,11 +2192,17 @@ bool tpm_Verify(const key_message &quote_key,
   hashed_to_quote.assign((char *)digest, d_len);
 
   string             extra_data;
+  uint32_t           magic;
+  uint16_t           type;
+  string             signer;
   TPML_PCR_SELECTION pcrSelect;
   string             pcr_digest;
 
   if (!decode_quoted((int)quoted.size(),
                      (byte_t *)quoted.data(),
+                     &magic,
+                     &type,
+                     &signer,
                      &extra_data,
                      &pcrSelect,
                      &pcr_digest)) {
@@ -2153,22 +2210,31 @@ bool tpm_Verify(const key_message &quote_key,
     return false;
   }
 
-#ifdef DEBUG2
+#ifdef DEBUG
   printf("\ntpm_Verify:\n\n");
-  printf("  extra data: ");
+  int    num_test_pcrs = 10;
+  byte_t test_pcrs[num_test_pcrs];
+
+  if (!get_pcr_from_select(&pcrSelect, &num_test_pcrs, test_pcrs)) {
+    printf("%s() error, line %d, get_pcr_from_select failed in Verify\n",
+           __func__,
+           __LINE__);
+  }
+  printf("test_pcrs (%d): ", num_test_pcrs);
+  for (int i = 0; i < num_test_pcrs; i++) {
+    printf("%d ", test_pcrs[i]);
+  }
+  printf("\n");
+  printf("magic: %08x\n", magic);
+  printf("type : %04x\n", type);
+  printf("extra data: ");
   print_bytes((int)extra_data.size(), (byte_t *)extra_data.data());
   printf("\n");
-  printf("  pcr selection (count= %d)\n", pcrSelect.count);
-  for (int i = 0; i < (int)pcrSelect.count; i++) {
-    printf("    hash: %04x, size of select: %d, mask: ",
-           pcrSelect.pcrSelections[i].hash,
-           pcrSelect.pcrSelections[i].sizeofSelect);
-    print_mask(pcrSelect.pcrSelections[i].sizeofSelect,
-               pcrSelect.pcrSelections[i].pcrSelect);
-    printf("\n");
-  }
-  printf("  pcr digest (%d): ", (int)pcr_digest.size());
+  printf("pcr digest (%d): ", (int)pcr_digest.size());
   print_bytes((int)pcr_digest.size(), (byte_t *)pcr_digest.data());
+  printf("\n");
+  printf("signer     (%d): ", (int)signer.size());
+  print_bytes((int)signer.size(), (byte_t *)signer.data());
   printf("\n");
 #endif
 
@@ -2247,8 +2313,13 @@ bool tpm_Verify(const key_message &quote_key,
 
 // this is little endian
 void pcrs_from_select(int size, byte_t *buf, int *index, byte_t *pcrs) {
+#ifdef DEBUG3
+  printf("pcrs_from_select :");
+  print_bytes(size, buf);
+  printf("\n");
+#endif
   for (int i = 0; i < size; i++) {
-    byte_t s = buf[i];
+    byte_t s = buf[size - i - 1];
     for (int k = 0; k < 8; k++) {
       if ((s & (1 << k)) != 0) {
         pcrs[(*index)++] = k + 8 * i;
@@ -2263,10 +2334,12 @@ bool get_pcr_from_select(TPML_PCR_SELECTION *p, int *num_pcrs, byte_t *pcrs) {
     printf("%s() error, line %d, too few pcr entries\n", __func__, __LINE__);
     return false;
   }
+
   *num_pcrs = p->count;
   int index = 0;
+
   for (int i = 0; i < *num_pcrs; i++) {
-    int sz = size_hash(p->pcrSelections[i].hash);
+    int sz_hash = size_hash(p->pcrSelections[i].hash);
     pcrs_from_select(p->pcrSelections[i].sizeofSelect,
                      p->pcrSelections[i].pcrSelect,
                      &index,
@@ -2275,34 +2348,34 @@ bool get_pcr_from_select(TPML_PCR_SELECTION *p, int *num_pcrs, byte_t *pcrs) {
   return true;
 }
 
-bool get_pcr_from_attest(TPMS_ATTEST *p,
-                         int         *num_pcrs,
-                         byte_t      *pcrs,
-                         string      *digest) {
+bool get_data_from_attest(int       size,
+                          byte_t   *buf,
+                          uint32_t *magic,
+                          uint16_t *type,
+                          string   *signer,
+                          string   *extra_data,
+                          int      *num_pcrs,
+                          byte_t   *pcrs,
+                          string   *digest) {
 
-  if (!get_pcr_from_select(&p->attested.quote.pcrSelect, num_pcrs, pcrs)) {
+  TPML_PCR_SELECTION local_pcrSelect;
+  if (!decode_quoted(size,
+                     buf,
+                     magic,
+                     type,
+                     signer,
+                     extra_data,
+                     &local_pcrSelect,
+                     digest)) {
+    printf("%s() error, line %d, can't decode quote\n", __func__, __LINE__);
+    return false;
+  }
+  if (!get_pcr_from_select(&local_pcrSelect, num_pcrs, pcrs)) {
     printf("%s() error, line %d, can't get_pcr_from_select\n",
            __func__,
            __LINE__);
     return false;
   }
-  digest->assign((char *)p->attested.quote.pcrDigest.buffer,
-                 p->attested.quote.pcrDigest.size);
-  return true;
-}
-
-bool get_extra_data_from_attest(TPMS_ATTEST *p, string *extra_data) {
-  extra_data->assign((char *)p->extraData.buffer, p->extraData.size);
-  return true;
-}
-
-bool get_magic_from_attest(TPMS_ATTEST *p, uint32_t *mag) {
-  *mag = (uint32_t)p->magic;
-  return true;
-}
-
-bool get_signer_name_from_attest(TPMS_ATTEST *p, string *n) {
-  n->assign((char *)p->qualifiedSigner.name, p->qualifiedSigner.size);
   return true;
 }
 

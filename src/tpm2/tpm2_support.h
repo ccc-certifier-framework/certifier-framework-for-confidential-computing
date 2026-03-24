@@ -103,16 +103,25 @@ bool recover_and_load_quote_hierarchy(local_tpm    &tpm,
                                       TPM_HANDLE   *quote_handle);
 
 void print_mask(int n, byte_t *m);
+bool decode_quoted(int                 size_buf,
+                   byte_t             *buf,
+                   uint32_t           *magic,
+                   uint16_t           *type,
+                   string             *signer,
+                   string             *extra_data,
+                   TPML_PCR_SELECTION *pcrSelect,
+                   string             *pcr_digest);
 void pcrs_from_select(int size, byte_t *buf, int *index, byte_t *pcrs);
 bool get_pcr_from_select(TPML_PCR_SELECTION *p, int *num_pcrs, byte_t *pcrs);
-bool get_pcr_from_select(TPML_PCR_SELECTION *p, int *num_pcrs, byte_t *pcrs);
-bool get_pcr_from_attest(TPMS_ATTEST *p,
-                         int         *num_pcrs,
-                         byte_t      *pcrs,
-                         string      *digest);
-bool get_extra_data_from_attest(TPMS_ATTEST *p, string *extra_data);
-bool get_magic_from_attest(TPMS_ATTEST *p, uint32_t *mag);
-bool get_signer_name_from_attest(TPMS_ATTEST *p, string *n);
+bool get_data_from_attest(int       size,
+                          byte_t   *buf,
+                          uint32_t *magic,
+                          uint16_t *type,
+                          string   *signer,
+                          string   *extra_data,
+                          int      *num_pcrs,
+                          byte_t   *pcrs,
+                          string   *digest);
 
 bool do_quote(local_tpm    &tpm,
               TPM_HANDLE   &srk_handle,
