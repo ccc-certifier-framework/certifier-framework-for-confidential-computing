@@ -1886,7 +1886,7 @@ bool tpm_Attest(const string &to_quote,
     return false;
   }
 
-  TPM_ALG_ID    hash_alg;
+  TPM_ALG_ID hash_alg;
   if (g_public_quote_key.publicArea.type == TPM_ALG_RSA
       && g_public_quote_key.publicArea.nameAlg == TPM_ALG_SHA256
       && g_public_quote_key.publicArea.parameters.rsaDetail.scheme.scheme
@@ -2245,15 +2245,34 @@ bool tpm_Verify(const key_message &quote_key,
   return true;
 }
 
-void pcrs_from_select(int size, byte_t *buf, byte_t *pcrs) {
-  int j = 0;
+// this is little endian
+void pcrs_from_select(int size, byte_t *buf, int *index, byte_t *pcrs) {
   for (int i = 0; i < size; i++) {
-    byte_t s = buf[size - i - 1];
-    int    k = (i % 8);
-    if (s & (1 << k)) {
-      pcrs[j++] = i;
+    byte_t s = buf[i];
+    for (int k = 0; k < 8; k++) {
+      if ((s & (1 << k)) != 0) {
+        pcrs[(*index)++] = k + 8 * i;
+      }
     }
   }
+}
+
+bool get_pcr_from_select(TPML_PCR_SELECTION *p, int *num_pcrs, byte_t *pcrs) {
+
+  if ((int)p->count > *num_pcrs) {
+    printf("%s() error, line %d, too few pcr entries\n", __func__, __LINE__);
+    return false;
+  }
+  *num_pcrs = p->count;
+  int index = 0;
+  for (int i = 0; i < *num_pcrs; i++) {
+    int sz = size_hash(p->pcrSelections[i].hash);
+    pcrs_from_select(p->pcrSelections[i].sizeofSelect,
+                     p->pcrSelections[i].pcrSelect,
+                     &index,
+                     pcrs);
+  }
+  return true;
 }
 
 bool get_pcr_from_attest(TPMS_ATTEST *p,
@@ -2261,15 +2280,11 @@ bool get_pcr_from_attest(TPMS_ATTEST *p,
                          byte_t      *pcrs,
                          string      *digest) {
 
-  if ((int)p->attested.quote.pcrSelect.count < *num_pcrs) {
+  if (!get_pcr_from_select(&p->attested.quote.pcrSelect, num_pcrs, pcrs)) {
+    printf("%s() error, line %d, can't get_pcr_from_select\n",
+           __func__,
+           __LINE__);
     return false;
-  }
-  *num_pcrs = p->attested.quote.pcrSelect.count;
-  for (int i = 0; i < *num_pcrs; i++) {
-    int sz = size_hash(p->attested.quote.pcrSelect.pcrSelections[i].hash);
-    pcrs_from_select(p->attested.quote.pcrSelect.pcrSelections[i].sizeofSelect,
-                     p->attested.quote.pcrSelect.pcrSelections[i].pcrSelect,
-                     pcrs);
   }
   digest->assign((char *)p->attested.quote.pcrDigest.buffer,
                  p->attested.quote.pcrDigest.size);

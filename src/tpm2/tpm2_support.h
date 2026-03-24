@@ -102,6 +102,10 @@ bool recover_and_load_quote_hierarchy(local_tpm    &tpm,
                                       TPM_HANDLE   *srk_handle,
                                       TPM_HANDLE   *quote_handle);
 
+void print_mask(int n, byte_t *m);
+void pcrs_from_select(int size, byte_t *buf, int *index, byte_t *pcrs);
+bool get_pcr_from_select(TPML_PCR_SELECTION *p, int *num_pcrs, byte_t *pcrs);
+bool get_pcr_from_select(TPML_PCR_SELECTION *p, int *num_pcrs, byte_t *pcrs);
 bool get_pcr_from_attest(TPMS_ATTEST *p,
                          int         *num_pcrs,
                          byte_t      *pcrs,
