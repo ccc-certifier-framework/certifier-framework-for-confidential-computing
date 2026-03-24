@@ -59,7 +59,7 @@ bool test_tpm(bool print_all) {
   memset(sealed, 0, sealed_size);
 
   if (!Seal(enclave_type, enclave_id, data_size, data, &sealed_size, sealed)) {
-    printf("test_sev, %s, seal error, %d\n", __func__, __LINE__);
+    printf("test_tpm, %s, seal error, %d\n", __func__, __LINE__);
     tpm_close();
     return false;
   }
@@ -84,7 +84,7 @@ bool test_tpm(bool print_all) {
               sealed,
               &unsealed_size,
               unsealed)) {
-    printf("test_sev, %s, unseal error, %d\n", __func__, __LINE__);
+    printf("test_tpm, %s, unseal error, %d\n", __func__, __LINE__);
     tpm_close();
     return false;
   }
@@ -97,7 +97,7 @@ bool test_tpm(bool print_all) {
   }
 
   if (unsealed_size != data_size || memcmp(data, unsealed, data_size) != 0) {
-    printf("test_sev, unsealed response wrong, %s, %d\n", __func__, __LINE__);
+    printf("test_tpm, unsealed response wrong, %s, %d\n", __func__, __LINE__);
     tpm_close();
     return false;
   }
@@ -250,10 +250,7 @@ bool test_tpm(bool print_all) {
 
 #  if 0
 bool construct_tpm_platform_evidence(const string      &purpose,
-                                     const string      &serialized_ark_cert,
-                                     const string      &serialized_ask_cert,
-                                     const string      &serialized_vcek_cert,
-                                     const key_message &vcek,
+                                     const string      &serialized_quote_cert,
                                      evidence_package  *evp) {
 
   evp->set_prover_type("vse-verifier");
@@ -262,23 +259,21 @@ bool construct_tpm_platform_evidence(const string      &purpose,
   // certs
   evidence *ev = evp->add_fact_assertion();
   if (ev == nullptr) {
-    printf("construct_sev_platform_evidence: Can't add to ark platform "
-           "evidence\n");
+    printf("construct_tpm_platform_evidence: Can't add evidence\n");
     return false;
   }
   ev->set_evidence_type("cert");
-  ev->set_serialized_evidence(serialized_ark_cert);
+  ev->set_serialized_evidence(serialized_quote_cert);
   ev = evp->add_fact_assertion();
   if (ev == nullptr) {
-    printf("construct_sev_platform_evidence: Can't add to ask platform "
-           "evidence\n");
+    printf("construct_tpm_platform_evidence: Can't add evidence\n");
     return false;
   }
   ev->set_evidence_type("cert");
   ev->set_serialized_evidence(serialized_ask_cert);
   ev = evp->add_fact_assertion();
   if (ev == nullptr) {
-    printf("construct_sev_platform_evidence: Can't add to vcek platform "
+    printf("construct_tpm_platform_evidence: Can't add to vcek platform "
            "evidence\n");
     return false;
   }
@@ -288,36 +283,36 @@ bool construct_tpm_platform_evidence(const string      &purpose,
   key_message auth_key;
   RSA        *r = RSA_new();
   if (!generate_new_rsa_key(2048, r)) {
-    printf("construct_sev_platform_evidence: Can't generate rsa key\n");
+    printf("construct_tpm_platform_evidence: Can't generate rsa key\n");
     return false;
   }
   if (!RSA_to_key(r, &auth_key)) {
-    printf("construct_sev_platform_evidence: Can't convert rsa key to key\n");
+    printf("construct_tpm_platform_evidence: Can't convert rsa key to key\n");
     RSA_free(r);
     return false;
   }
   RSA_free(r);
 
-  // replace this with real sev certs and attestation
+  // replace this with real tpm certs and attestation
   attestation_user_data ud;
   if (purpose == "authentication") {
     if (!make_attestation_user_data(enclave_type, auth_key, &ud)) {
-      printf("construct_sev_platform_evidence: Can't make user data (1)\n");
+      printf("construct_tpm_platform_evidence: Can't make user data (1)\n");
       return false;
     }
   } else if (purpose == "attestation") {
     if (!make_attestation_user_data(enclave_type, auth_key, &ud)) {
-      printf("construct_sev_platform_evidence: Can't make user data (1)\n");
+      printf("construct_tpm_platform_evidence: Can't make user data (1)\n");
       return false;
     }
   } else {
-    printf("construct_sev_platform_evidence: neither attestation or "
+    printf("construct_tpm_platform_evidence: neither attestation or "
            "authorization\n");
     return false;
   }
   string serialized_ud;
   if (!ud.SerializeToString(&serialized_ud)) {
-    printf("construct_sev_platform_evidence: Can't serialize user data\n");
+    printf("construct_tpm_platform_evidence: Can't serialize user data\n");
     return false;
   }
 
@@ -331,7 +326,7 @@ bool construct_tpm_platform_evidence(const string      &purpose,
               out)) {
 #    endif /* 1 */
 
-    printf("construct_sev_platform_evidence: Attest failed\n");
+    printf("construct_tpm_platform_evidence: Attest failed\n");
     return false;
   }
   string the_attestation_str;
@@ -339,11 +334,11 @@ bool construct_tpm_platform_evidence(const string      &purpose,
 
   ev = evp->add_fact_assertion();
   if (ev == nullptr) {
-    printf("construct_sev_platform_evidence: Can't add to attest platform "
+    printf("construct_tpm_platform_evidence: Can't add to attest platform "
            "evidence\n");
     return false;
   }
-  ev->set_evidence_type("sev-attestation");
+  ev->set_evidence_type("tpm-attestation");
   ev->set_serialized_evidence(the_attestation_str);
 
   return true;
@@ -352,25 +347,22 @@ bool construct_tpm_platform_evidence(const string      &purpose,
 bool test_tpm_platform_certify(const bool    debug_print,
                                const string &policy_file_name,
                                const string &policy_key_file,
-                               const string &ark_key_file_name,
-                               const string &ask_key_file_name,
-                               const string &vcek_key_file_name,
-                               const string &ark_cert_file_name,
-                               const string &ask_cert_file_name,
-                               const string &vcek_cert_file_name) {
+                               const string &device_name,
+                               const string &endorsement_cert_file_name,
+                               const string &seal_hierarchy_file_name,
+                               const string &quote_hierarchy_file_name,
+                               int           num_pcrs,
+                               byte_t       *pcrs
+                               const string &quote_cert_file_name) {
 
 
-  string           enclave_type("sev-enclave");
-  string           evidence_descriptor("sev-full-platform");
+  string           enclave_type("tpm-enclave");
+  string           evidence_descriptor("tpm-full-platform");
   string           enclave_id("test-enclave");
   evidence_package evp;
 
   // This has no effect for now
-  extern bool sev_Init(const string &, const string &, const string &);
-  string      ark_cert;
-  string      ask_cert;
-  string      vcek_cert;
-
+  extern bool tpm_Init(const string &, const string &, const string &);
   if (!read_file_into_string(ark_cert_file_name, &ark_cert)) {
     printf("%s() error, line: %d, Can't read ark cert %s\n",
            __func__,
@@ -378,23 +370,14 @@ bool test_tpm_platform_certify(const bool    debug_print,
            ark_cert_file_name.c_str());
     return false;
   }
-  if (!read_file_into_string(ask_cert_file_name, &ask_cert)) {
-    printf("%s() error, line: %d, Can't read ask cert %s\n",
-           __func__,
-           __LINE__,
-           ask_cert_file_name.c_str());
-    return false;
-  }
-  if (!read_file_into_string(vcek_cert_file_name, &vcek_cert)) {
-    printf("%s() error, line: %d, Can't read vcek cert %s\n",
-           __func__,
-           __LINE__,
-           vcek_cert_file_name.c_str());
-    return false;
-  }
 
-  if (!sev_Init(ark_cert, ask_cert, vcek_cert)) {
-    printf("%s() error, line: %d, can't sev_Init\n", __func__, __LINE__);
+  if (!tpm_Init(device_name,
+                endorsement_cert_file_name,
+                seal_hierarchy_file_name,
+                quote_hierarchy_file_name,
+                num_pcrs,
+                pcrs)) {
+    printf("%s() error, line: %d, can't tpm_Init\n", __func__, __LINE__);
     return false;
   }
 
@@ -432,155 +415,62 @@ bool test_tpm_platform_certify(const bool    debug_print,
   }
 
 #    if 1
-  //  For simulated SNP, we don't have real certs so we make some up.
+  //  For make quote cert
 
-  // Make ark, ask, vcek certs
-  key_message ark_key;
-  key_message ark_pk;
-  string      ark_key_str;
-  if (!read_file_into_string(ark_key_file_name, &ark_key_str)) {
-    printf("%s(), error, line: %d, can't read ark key\n", __func__, __LINE__);
+  // Make quote cert
+  key_message quote_key;
+  key_message quote_pk;
+  string      quote_key_str;
+  if (!read_file_into_string(quote_key_file_name, &quote_key_str)) {
+    printf("%s(), error, line: %d, can't read quote key\n", __func__, __LINE__);
     return false;
   }
-  if (!ark_key.ParseFromString(ark_key_str)) {
-    printf("%s(), error, line: %d, can't parse ark key\n", __func__, __LINE__);
+  if (!quote_key.ParseFromString(quote_key_str)) {
+    printf("%s(), error, line: %d, can't parse quote key\n", __func__, __LINE__);
     return false;
   }
-  ark_key.set_key_name("ARKKey");
-  ark_key.set_key_type(Enc_method_rsa_2048_private);
-  ark_key.set_key_format("vse-key");
-  if (!private_key_to_public_key(ark_key, &ark_pk)) {
-    printf("%s(), error, line: %d, can't convert ark key\n",
+  quote_key.set_key_name("ARKKey");
+  quote_key.set_key_type(Enc_method_rsa_2048_private);
+  quote_key.set_key_format("vse-key");
+  if (!private_key_to_public_key(quote_key, &quote_pk)) {
+    printf("%s(), error, line: %d, can't convert quote key\n",
            __func__,
            __LINE__);
     return false;
   }
 
-  key_message ask_key;
-  key_message ask_pk;
-  string      ask_key_str;
-  if (!read_file_into_string(ask_key_file_name, &ask_key_str)) {
-    printf("%s(), error, line: %d, can't read ask  key\n", __func__, __LINE__);
-    return false;
-  }
-  if (!ask_key.ParseFromString(ask_key_str)) {
-    printf("%s(), error, line: %d, can't parse ask key\n", __func__, __LINE__);
-    return false;
-  }
-  ask_key.set_key_name("ASKKey");
-  ask_key.set_key_type(Enc_method_rsa_2048_private);
-  ask_key.set_key_format("vse-key");
-  if (!private_key_to_public_key(ask_key, &ask_pk)) {
-    printf("%s(), error, line: %d, can't convert ask key\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-
-  key_message vcek_key;
-  key_message vcek_pk;
-  string      vcek_key_str;
-  if (!read_file_into_string(vcek_key_file_name, &vcek_key_str)) {
-    printf("%s(), error, line: %d, can't read vcek key\n", __func__, __LINE__);
-    return false;
-  }
-  if (!vcek_key.ParseFromString(vcek_key_str)) {
-    printf("%s(), error, line: %d, can't parse vcek key\n", __func__, __LINE__);
-    return false;
-  }
-  vcek_key.set_key_name("VCEKKey");
-  vcek_key.set_key_type(Enc_method_ecc_384_private);
-  vcek_key.set_key_format("vse-key");
-  if (!private_key_to_public_key(vcek_key, &vcek_pk)) {
-    printf("%s(), error, line: %d, can't convert vcek key\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-
-  string ark_issuer_desc("platform-provider");
-  string ark_issuer_name(ark_key.key_name());
-  string ark_subject_desc("platform-provider");
-  string ark_subject_name(ark_key.key_name());
-  X509  *x_ark = X509_new();
-  if (!produce_artifact(ark_key,
-                        ark_issuer_name,
-                        ark_issuer_desc,
-                        ark_pk,
-                        ark_subject_name,
-                        ark_subject_desc,
+  string quote_issuer_desc("platform-provider");
+  string quote_issuer_name(quote_key.key_name());
+  string quote_subject_desc("platform-provider");
+  string quote_subject_name(quote_key.key_name());
+  X509  *x_quote = X509_new();
+  if (!produce_artifact(quote_key,
+                        quote_issuer_name,
+                        quote_issuer_desc,
+                        quote_pk,
+                        quote_subject_name,
+                        quote_subject_desc,
                         1ULL,
                         365.26 * 86400,
-                        x_ark,
+                        x_quote,
                         true)) {
-    printf("%s(), error, line: %d, can't produce ark artifact\n",
+    printf("%s(), error, line: %d, can't produce quote artifact\n",
            __func__,
            __LINE__);
     return false;
   }
-  string serialized_ark_cert;
-  if (!x509_to_asn1(x_ark, &serialized_ark_cert)) {
-    return false;
-  }
-
-  string ask_subject_desc("platform-provider");
-  string ask_subject_name(ask_key.key_name());
-  X509  *x_ask = X509_new();
-  if (!produce_artifact(ark_key,
-                        ark_issuer_name,
-                        ark_issuer_desc,
-                        ask_pk,
-                        ask_subject_name,
-                        ask_subject_desc,
-                        2ULL,
-                        365.26 * 86400,
-                        x_ask,
-                        false)) {
-    printf("%s(), error, line: %d, can't produce ask artifact\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-  string serialized_ask_cert;
-  if (!x509_to_asn1(x_ask, &serialized_ask_cert)) {
-    return false;
-  }
-
-  string vcek_issuer_desc("platform-provider");
-  string vcek_issuer_name(ask_key.key_name());
-  string vcek_subject_desc("platform-provider");
-  string vcek_subject_name(vcek_key.key_name());
-  X509  *x_vcek = X509_new();
-  if (!produce_artifact(ask_key,
-                        vcek_issuer_name,
-                        vcek_issuer_desc,
-                        vcek_pk,
-                        vcek_subject_name,
-                        vcek_subject_desc,
-                        3ULL,
-                        365.26 * 86400,
-                        x_vcek,
-                        false)) {
-    printf("%s(), error, line: %d, can't produce vcek artifact\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-  string serialized_vcek_cert;
-  if (!x509_to_asn1(x_vcek, &serialized_vcek_cert)) {
+  string serialized_quote_cert;
+  if (!x509_to_asn1(x_quote, &serialized_quote_cert)) {
     return false;
   }
 #    endif /* 1 */
 
   // construct evidence package
   string purpose("authentication");
-  if (!construct_sev_platform_evidence(purpose,
-                                       serialized_ark_cert,
-                                       serialized_ask_cert,
-                                       serialized_vcek_cert,
-                                       vcek_key,
+  if (!construct_tpm_platform_evidence(purpose,
+                                       serialized_quote_cert,
                                        &evp)) {
-    printf("%s(), error, line: %d, construct_sev_platform_evidence failed\n",
+    printf("%s(), error, line: %d, construct_tpm_platform_evidence failed\n",
            __func__,
            __LINE__);
     return false;
