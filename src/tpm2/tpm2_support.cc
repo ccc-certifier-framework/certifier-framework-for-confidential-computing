@@ -1838,10 +1838,6 @@ bool tpm_Attest(int   what_to_say_size,
                 int  *size_out,
                 byte *out) {
 
-#ifdef DEBUG3
-  printf("tpm_Attest(%d, %d)\n", what_to_say_size, *size_out);
-#endif
-
   string to_quote;
   string quoted;
   string alg;
@@ -2182,7 +2178,7 @@ bool tpm_Verify(const key_message &quote_key,
     return false;
   }
 
-#ifdef DEBUG
+#ifdef DEBUG3
   printf("\nHashed to quote: ");
   print_bytes((int)d_len, digest);
   printf("\n");
@@ -2230,7 +2226,7 @@ bool tpm_Verify(const key_message &quote_key,
     return false;
   }
 
-#ifdef DEBUG
+#ifdef DEBUG3
   printf("\ntpm_Verify:\n\n");
   int    num_test_pcrs = 10;
   byte_t test_pcrs[num_test_pcrs];
