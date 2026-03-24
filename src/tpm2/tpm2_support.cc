@@ -1782,6 +1782,7 @@ bool tpm_Unseal(int in_size, byte_t *in, int *size_out, byte_t *out) {
   return true;
 }
 
+// Converts to-quote to digested test
 bool local_tpm_attest(TPM_HANDLE   &quote_handle,
                       TPM_ALG_ID    hash_alg,
                       TPM_HANDLE   &srk_handle,
@@ -1885,6 +1886,7 @@ bool tpm_Attest(const string &to_quote,
     return false;
   }
 
+  TPM_ALG_ID    hash_alg;
   if (g_public_quote_key.publicArea.type == TPM_ALG_RSA
       && g_public_quote_key.publicArea.nameAlg == TPM_ALG_SHA256
       && g_public_quote_key.publicArea.parameters.rsaDetail.scheme.scheme
@@ -1892,6 +1894,7 @@ bool tpm_Attest(const string &to_quote,
       && g_public_quote_key.publicArea.unique.rsa.size == 256) {
     // This is the only one we do now.
     *alg = "RSA-2048-SSA-SHA-256";
+    hash_alg = TPM_ALG_SHA256;
   } else {
     printf("%s() error, line %d, unsupported tpm signature alg\n",
            __func__,
@@ -1900,7 +1903,7 @@ bool tpm_Attest(const string &to_quote,
   }
 
   if (!local_tpm_attest(g_quote_handle,
-                        TPM_ALG_SHA256,
+                        hash_alg,
                         g_srk_handle,
                         g_num_pcrs,
                         g_pcrs,
