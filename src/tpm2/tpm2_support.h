@@ -130,14 +130,14 @@ bool tpm_Seal(string &unsealed, string *sealed);
 bool tpm_Seal(int in_size, byte_t *in, int *size_out, byte_t *out);
 bool tpm_Unseal(string &sealed, string *unsealed);
 bool tpm_Unseal(int in_size, byte_t *in, int *size_out, byte_t *out);
-bool local_tpm_attest(TPM_HANDLE &quote_handle,
-                      TPM_ALG_ID  hash_alg,
-                      TPM_HANDLE &srk_handle,
-                      int         num_pcrs,
-                      byte_t     *pcrs,
-                      string     &to_quote,
-                      string     *quoted,
-                      string     *signature);
+bool local_tpm_attest(TPM_HANDLE   &quote_handle,
+                      TPM_ALG_ID    hash_alg,
+                      TPM_HANDLE   &srk_handle,
+                      int           num_pcrs,
+                      byte_t       *pcrs,
+                      const string &to_quote,
+                      string       *quoted,
+                      string       *signature);
 bool tpm_Attest(const string &to_quote,
                 string       *quoted,
                 string       *alg,

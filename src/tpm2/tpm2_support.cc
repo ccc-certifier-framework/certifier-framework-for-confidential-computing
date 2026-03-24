@@ -1782,14 +1782,14 @@ bool tpm_Unseal(int in_size, byte_t *in, int *size_out, byte_t *out) {
   return true;
 }
 
-bool local_tpm_attest(TPM_HANDLE &quote_handle,
-                      TPM_ALG_ID  hash_alg,
-                      TPM_HANDLE &srk_handle,
-                      int         num_pcrs,
-                      byte_t     *pcrs,
-                      string     &to_quote,
-                      string     *quoted,
-                      string     *signature) {
+bool local_tpm_attest(TPM_HANDLE   &quote_handle,
+                      TPM_ALG_ID    hash_alg,
+                      TPM_HANDLE   &srk_handle,
+                      int           num_pcrs,
+                      byte_t       *pcrs,
+                      const string &to_quote,
+                      string       *quoted,
+                      string       *signature) {
 
   if (hash_alg != TPM_ALG_SHA256) {
     printf("%s() error, line %d, unsupported hashing algorithm\n",
@@ -1836,6 +1836,10 @@ bool tpm_Attest(int   what_to_say_size,
                 byte *what_to_say,
                 int  *size_out,
                 byte *out) {
+
+#ifdef DEBUG3
+  printf("tpm_Attest(%d, %d)\n", what_to_say_size, *size_out);
+#endif
 
   string to_quote;
   string quoted;
@@ -1895,14 +1899,14 @@ bool tpm_Attest(const string &to_quote,
     return false;
   }
 
-  if (!do_quote(g_tpm,
-                g_srk_handle,
-                g_num_pcrs,
-                g_pcrs,
-                g_quote_handle,
-                to_quote,
-                quoted,
-                signature)) {
+  if (!local_tpm_attest(g_quote_handle,
+                        TPM_ALG_SHA256,
+                        g_srk_handle,
+                        g_num_pcrs,
+                        g_pcrs,
+                        to_quote,
+                        quoted,
+                        signature)) {
     printf("%s() error, line %d, quote failed\n", __func__, __LINE__);
     return false;
   }

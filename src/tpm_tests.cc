@@ -191,8 +191,11 @@ bool test_tpm(bool print_all) {
     return false;
   }
 
-  tpm_close();
-  return true;
+#  ifdef DEBUG3
+  printf("Serialized to attest (%d): ", (int)serialized_user.size());
+  print_bytes((int)serialized_user.size(), (byte_t *)serialized_user.data());
+  printf("\n");
+#  endif
 
   if (!Attest(ud.enclave_type(),
               serialized_user.size(),
@@ -203,6 +206,11 @@ bool test_tpm(bool print_all) {
     tpm_close();
     return false;
   }
+
+#  ifdef DEBUG3
+  tpm_close();
+  return true;
+#  endif
 
   string serialized_tpm_msg;
   serialized_tpm_msg.assign((char *)out, size_out);
@@ -222,7 +230,7 @@ bool test_tpm(bool print_all) {
   }
 
   if (print_all) {
-    printf("tmp attestation:\n");
+    printf("\ntmp attestation:\n");
     printf("    what was said: ");
     print_bytes(att.what_was_said().size(), (byte *)att.what_was_said().data());
     printf("\n");
