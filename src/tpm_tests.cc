@@ -248,10 +248,9 @@ bool test_tpm(bool print_all) {
   return true;
 }
 
-#  if 0
-bool construct_tpm_platform_evidence(const string      &purpose,
-                                     const string      &serialized_quote_cert,
-                                     evidence_package  *evp) {
+bool construct_tpm_platform_evidence(const string     &purpose,
+                                     const string     &serialized_quote_cert,
+                                     evidence_package *evp) {
 
   evp->set_prover_type("vse-verifier");
   string enclave_type("tpm-enclave");
@@ -270,6 +269,7 @@ bool construct_tpm_platform_evidence(const string      &purpose,
     return false;
   }
 
+  // Auth key
   key_message auth_key;
   RSA        *r = RSA_new();
   if (!generate_new_rsa_key(2048, r)) {
@@ -283,7 +283,6 @@ bool construct_tpm_platform_evidence(const string      &purpose,
   }
   RSA_free(r);
 
-  // replace this with real tpm certs and attestation
   attestation_user_data ud;
   if (purpose == "authentication") {
     if (!make_attestation_user_data(enclave_type, auth_key, &ud)) {
@@ -306,15 +305,14 @@ bool construct_tpm_platform_evidence(const string      &purpose,
     return false;
   }
 
+  // attest evidence
   int  size_out = 16000;
   byte out[size_out];
-#    if 1
   if (!Attest(enclave_type,
               serialized_ud.size(),
               (byte *)serialized_ud.data(),
               &size_out,
               out)) {
-#    endif /* 1 */
 
     printf("construct_tpm_platform_evidence: Attest failed\n");
     return false;
@@ -342,24 +340,13 @@ bool test_tpm_platform_certify(const bool    debug_print,
                                const string &seal_hierarchy_file_name,
                                const string &quote_hierarchy_file_name,
                                int           num_pcrs,
-                               byte_t       *pcrs
-                               const string &quote_cert_file_name) {
+                               byte_t       *pcrs) {
 
 
   string           enclave_type("tpm-enclave");
   string           evidence_descriptor("tpm-evidence");
   string           enclave_id("test-enclave");
   evidence_package evp;
-
-  // This has no effect for now
-  extern bool tpm_Init(const string &, const string &, const string &);
-  if (!read_file_into_string(ark_cert_file_name, &ark_cert)) {
-    printf("%s() error, line: %d, Can't read ark cert %s\n",
-           __func__,
-           __LINE__,
-           ark_cert_file_name.c_str());
-    return false;
-  }
 
   if (!tpm_Init(device_name,
                 endorsement_cert_file_name,
@@ -404,37 +391,26 @@ bool test_tpm_platform_certify(const bool    debug_print,
     return false;
   }
 
-#    if 1
-  //  For make quote cert
-
   // Make quote cert
   key_message quote_key;
   key_message quote_pk;
   string      quote_key_str;
-  if (!read_file_into_string(quote_key_file_name, &quote_key_str)) {
-    printf("%s(), error, line: %d, can't read quote key\n", __func__, __LINE__);
-    return false;
-  }
-  if (!quote_key.ParseFromString(quote_key_str)) {
-    printf("%s(), error, line: %d, can't parse quote key\n", __func__, __LINE__);
-    return false;
-  }
-  quote_key.set_key_name("ARKKey");
-  quote_key.set_key_type(Enc_method_rsa_2048_private);
-  quote_key.set_key_format("vse-key");
-  if (!private_key_to_public_key(quote_key, &quote_pk)) {
-    printf("%s(), error, line: %d, can't convert quote key\n",
+
+  // make quote key message
+  extern TPM2B_PUBLIC g_public_quote_key;
+  string              name("quote-key");
+  if (!tpm_public_key_to_key(g_public_quote_key, name, &quote_key)) {
+    printf("%s(), error, line: %d, can't translate quote key\n",
            __func__,
            __LINE__);
     return false;
   }
-
-  string quote_issuer_desc("platform-provider");
-  string quote_issuer_name(quote_key.key_name());
-  string quote_subject_desc("platform-provider");
+  string quote_issuer_desc("policy_key");
+  string quote_issuer_name(policy_key.key_name());
+  string quote_subject_desc("quote-key");
   string quote_subject_name(quote_key.key_name());
   X509  *x_quote = X509_new();
-  if (!produce_artifact(quote_key,
+  if (!produce_artifact(policy_key,
                         quote_issuer_name,
                         quote_issuer_desc,
                         quote_pk,
@@ -451,15 +427,15 @@ bool test_tpm_platform_certify(const bool    debug_print,
   }
   string serialized_quote_cert;
   if (!x509_to_asn1(x_quote, &serialized_quote_cert)) {
+    printf("%s(), error, line: %d, can't translate quote cert\n",
+           __func__,
+           __LINE__);
     return false;
   }
-#    endif /* 1 */
 
   // construct evidence package
   string purpose("authentication");
-  if (!construct_tpm_platform_evidence(purpose,
-                                       serialized_quote_cert,
-                                       &evp)) {
+  if (!construct_tpm_platform_evidence(purpose, serialized_quote_cert, &evp)) {
     printf("%s(), error, line: %d, construct_tpm_platform_evidence failed\n",
            __func__,
            __LINE__);
@@ -477,10 +453,8 @@ bool test_tpm_platform_certify(const bool    debug_print,
   }
 
   if (debug_print) {
-    printf("%s(), line: %d, , evidence descriptor: %s, enclave type: %s, "
+    printf("tpm evidence package, evidence descriptor: %s, enclave type: %s, "
            "evidence:\n",
-           __func__,
-           __LINE__,
            evidence_descriptor.c_str(),
            enclave_type.c_str());
     for (int i = 0; i < evp.fact_assertion_size(); i++) {
@@ -490,7 +464,9 @@ bool test_tpm_platform_certify(const bool    debug_print,
   }
 
   // FIX!
+  tpm_close();
   return true;
+
   if (!validate_evidence_from_policy(evidence_descriptor,
                                      signed_statements,
                                      purpose,
@@ -505,8 +481,10 @@ bool test_tpm_platform_certify(const bool    debug_print,
   tpm_close();
   return true;
 }
-#  endif
-
+#else
+bool test_tpm(bool print_all) {
+  return true;
+}
 #endif  // TPM
 
 // -----------------------------------------------------------------------------

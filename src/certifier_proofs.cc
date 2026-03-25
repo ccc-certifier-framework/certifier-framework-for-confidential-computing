@@ -2587,10 +2587,10 @@ bool construct_proof_from_full_vse_evidence(key_message       &policy_pk,
 }
 
 bool construct_proof_from_tpm_evidence(key_message       &policy_pk,
-                                            const string      &purpose,
-                                            proved_statements *already_proved,
-                                            vse_clause        *to_prove,
-                                            proof             *pf) {
+                                       const string      &purpose,
+                                       proved_statements *already_proved,
+                                       vse_clause        *to_prove,
+                                       proof             *pf) {
 
   // At this point, the already_proved should be
   //      "policyKey is-trusted"

@@ -148,7 +148,8 @@ message claim_message {
 //  The claims are in "vse-clause.  Time is
 //  the time the attestation was signed.
 //  Enclave types are "simulated-enclave", "oe-enclave",
-//  "asylo-enclave", "application-enclave" and "sev-enclave"
+//  "asylo-enclave", "application-enclave"
+//  "tpm-enclave"  and "sev-enclave"
 message attestation_user_data {
   optional string enclave_type              = 1;
   optional string time                      = 2;
@@ -191,7 +192,8 @@ message cert_chain {
 // Current evidence types: "signed-claim",
 //   "signed-vse-attestation"
 //   "oe-attestation-report", "gramine-attestation"
-//   "sev-attestation", "cert", cert-chain
+//   "sev-attestation", tpm-attestation,
+//   "cert", cert-chain
 message evidence {
   optional string evidence_type             = 1;
   optional bytes serialized_evidence        = 2;
@@ -267,6 +269,7 @@ message accelerator_group {
 
 // submitted_evidence_type is "full-vse-support"
 //  "platform-attestation-only" or "oe-evidence"
+//  "tpm-evidence"
 message trust_request_message {
   optional string requesting_enclave_tag    = 1;
   optional string providing_enclave_tag     = 2;
