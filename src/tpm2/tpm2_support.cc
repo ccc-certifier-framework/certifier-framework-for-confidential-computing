@@ -2327,7 +2327,7 @@ bool tpm_Verify(const key_message &quote_key,
   return true;
 }
 
-// this is little endian
+// this is big endian
 void pcrs_from_select(int size, byte_t *buf, int *index, byte_t *pcrs) {
 #ifdef DEBUG3
   printf("pcrs_from_select :");

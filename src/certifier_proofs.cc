@@ -146,7 +146,7 @@ bool dominates(predicate_dominance &root,
   return pn->is_child(descendant);
 }
 
-//  -------------------------------------------------------------------------------------------
+//  ----------------------------------------------------------------------------
 
 bool statement_already_proved(const vse_clause  &cl,
                               proved_statements *are_proved) {
@@ -722,7 +722,7 @@ bool verify_report(string            &type,
   return success;
 }
 
-//  -------------------------------------------------------------------------------------------
+//  ----------------------------------------------------------------------------
 
 /*
   Certifier proofs
@@ -2586,6 +2586,133 @@ bool construct_proof_from_full_vse_evidence(key_message       &policy_pk,
   return true;
 }
 
+bool construct_proof_from_tpm_evidence(key_message       &policy_pk,
+                                            const string      &purpose,
+                                            proved_statements *already_proved,
+                                            vse_clause        *to_prove,
+                                            proof             *pf) {
+
+  // At this point, the already_proved should be
+  //      "policyKey is-trusted"
+  //      "policyKey says quote-key is-trusted-for-attestation"
+  //      "policyKey says measurement is-trusted"
+
+#if 0
+  if (already_proved->proved_size() != 5) {
+    printf(
+        "%s() error, line %d, construct_proof_from_full_vse_evidence error\n",
+        __func__,
+        __LINE__);
+    return false;
+  }
+
+  if (!already_proved->proved(2).has_clause()
+      || !already_proved->proved(2).clause().has_subject()) {
+    printf(
+        "%s() error, line %d, construct_proof_from_full_vse_evidence error\n",
+        __func__,
+        __LINE__);
+    return false;
+  }
+  const entity_message &enclave_key =
+      already_proved->proved(2).clause().subject();
+  string it("is-trusted-for-authentication");
+  if (!make_unary_vse_clause(enclave_key, it, to_prove)) {
+    printf(
+        "%s() error, line %d, construct_proof_from_full_vse_evidence error\n",
+        __func__,
+        __LINE__);
+    return false;
+  }
+
+  proof_step *ps = nullptr;
+
+  // Step 1
+  //   "policyKey is-trusted" AND "policyKey says platformKey
+  //   is-trusted-for-attestation"
+  //       --> "platformKey is-trusted-for-attestation"
+  if (!already_proved->proved(4).has_clause()) {
+    printf(
+        "%s() error, line %d, construct_proof_from_full_vse_evidence error\n",
+        __func__,
+        __LINE__);
+    return false;
+  }
+  ps = pf->add_steps();
+  ps->mutable_s1()->CopyFrom(already_proved->proved(0));
+  ps->mutable_s2()->CopyFrom(already_proved->proved(4));
+  ps->mutable_conclusion()->CopyFrom(already_proved->proved(4).clause());
+  ps->set_rule_applied(3);
+  const vse_clause &platformkey_is_trusted = ps->conclusion();
+
+  // Step 2
+  //   "policyKey is-trusted" AND "policyKey says measurement is-trusted" -->
+  //   "measurement is-trusted"
+  if (!already_proved->proved(3).has_clause()) {
+    printf(
+        "%s() error, line %d, construct_proof_from_full_vse_evidence error\n",
+        __func__,
+        __LINE__);
+    return false;
+  }
+  ps = pf->add_steps();
+  ps->mutable_s1()->CopyFrom(already_proved->proved(0));
+  ps->mutable_s2()->CopyFrom(already_proved->proved(3));
+  ps->mutable_conclusion()->CopyFrom(already_proved->proved(3).clause());
+  ps->set_rule_applied(3);
+  const vse_clause &measurement_is_trusted = ps->conclusion();
+
+  // Step 3
+  // "platformKey is-trusted-for-attestation" AND "platformKey says attestKey
+  // is-trusted-for-attestation"
+  //      --> "attestKey is-trusted-for-attestation"
+  if (!already_proved->proved(1).has_clause()) {
+    printf(
+        "%s() error, line %d, construct_proof_from_full_vse_evidence error\n",
+        __func__,
+        __LINE__);
+    return false;
+  }
+  ps = pf->add_steps();
+  ps->mutable_s1()->CopyFrom(platformkey_is_trusted);
+  ps->mutable_s2()->CopyFrom(already_proved->proved(1));
+  ps->mutable_conclusion()->CopyFrom(already_proved->proved(1).clause());
+  ps->set_rule_applied(5);
+  const vse_clause &attestkey_is_trusted = ps->conclusion();
+
+  // Step 4
+  //   "attestKey is-trusted-for-attestation" AND  "attestKey says enclaveKey
+  //     speaks-for measurement"
+  //    --> "enclaveKey speaks-for measurement"
+  if (!already_proved->proved(2).has_clause()) {
+    printf(
+        "%s() error, line %d, construct_proof_from_full_vse_evidence error\n",
+        __func__,
+        __LINE__);
+    return false;
+  }
+  ps = pf->add_steps();
+  ps->mutable_s1()->CopyFrom(attestkey_is_trusted);
+  ps->mutable_s2()->CopyFrom(already_proved->proved(2));
+  ps->mutable_conclusion()->CopyFrom(already_proved->proved(2).clause());
+  ps->set_rule_applied(6);
+  const vse_clause &enclave_speaksfor_measurement = ps->conclusion();
+
+  // Step 4
+  //   "measurement is-trusted" AND "enclaveKey speaks-for measurement"
+  //      --> "enclaveKey is-trusted-for-authentication"
+  ps = pf->add_steps();
+  ps->mutable_s1()->CopyFrom(measurement_is_trusted);
+  ps->mutable_s2()->CopyFrom(enclave_speaksfor_measurement);
+  ps->mutable_conclusion()->CopyFrom(*to_prove);
+  ps->set_rule_applied(1);
+
+  return true;
+#else
+  return false;
+#endif
+}
+
 bool construct_proof_from_request(const string          &evidence_descriptor,
                                   key_message           &policy_pk,
                                   const string          &purpose,
@@ -2620,6 +2747,11 @@ bool construct_proof_from_request(const string          &evidence_descriptor,
                                                 pf)) {
       return false;
     }
+  } else if (evidence_descriptor == "tpm-evidence") {
+    printf("%s() error, line %d, tpm-evidence construction not implemented\n",
+             __func__,
+             __LINE__);
+      return false;
   } else if (evidence_descriptor == "platform-attestation-only") {
     if (!add_new_facts_for_abbreviatedplatformattestation(policy_pk,
                                                           trusted_platforms,
@@ -3423,4 +3555,4 @@ bool validate_evidence_from_policy(const string          &evidence_descriptor,
 }
 #endif
 
-// -------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
