@@ -269,16 +269,6 @@ bool construct_tpm_platform_evidence(const string      &purpose,
     printf("construct_tpm_platform_evidence: Can't add evidence\n");
     return false;
   }
-  ev->set_evidence_type("cert");
-  ev->set_serialized_evidence(serialized_ask_cert);
-  ev = evp->add_fact_assertion();
-  if (ev == nullptr) {
-    printf("construct_tpm_platform_evidence: Can't add to vcek platform "
-           "evidence\n");
-    return false;
-  }
-  ev->set_evidence_type("cert");
-  ev->set_serialized_evidence(serialized_vcek_cert);
 
   key_message auth_key;
   RSA        *r = RSA_new();
@@ -357,7 +347,7 @@ bool test_tpm_platform_certify(const bool    debug_print,
 
 
   string           enclave_type("tpm-enclave");
-  string           evidence_descriptor("tpm-full-platform");
+  string           evidence_descriptor("tpm-evidence");
   string           enclave_id("test-enclave");
   evidence_package evp;
 
@@ -512,6 +502,7 @@ bool test_tpm_platform_certify(const bool    debug_print,
     return false;
   }
 
+  tpm_close();
   return true;
 }
 #  endif

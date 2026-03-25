@@ -2748,10 +2748,17 @@ bool construct_proof_from_request(const string          &evidence_descriptor,
       return false;
     }
   } else if (evidence_descriptor == "tpm-evidence") {
-    printf("%s() error, line %d, tpm-evidence construction not implemented\n",
+    if (!construct_proof_from_tpm_evidence(policy_pk,
+                                           purpose,
+                                           already_proved,
+                                           to_prove,
+                                           pf)) {
+
+      printf("%s() error, line %d, construct_proof_from_tpm_evidence failed\n",
              __func__,
              __LINE__);
       return false;
+    }
   } else if (evidence_descriptor == "platform-attestation-only") {
     if (!add_new_facts_for_abbreviatedplatformattestation(policy_pk,
                                                           trusted_platforms,
