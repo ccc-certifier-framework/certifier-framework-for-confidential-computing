@@ -1141,6 +1141,11 @@ void print_evidence(const evidence &ev) {
                   (byte *)ev.serialized_evidence().data());
       printf("\n");
     }
+    if (ev.evidence_type() == "tpm-attestation") {
+      print_bytes(ev.serialized_evidence().size(),
+                  (byte *)ev.serialized_evidence().data());
+      printf("\n");
+    }
   }
 }
 

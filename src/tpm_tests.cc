@@ -146,9 +146,6 @@ bool test_tpm(bool print_all) {
     tpm_close();
     return false;
   }
-  int  size_measurement = 64;
-  byte measurement[size_measurement];
-  memset(measurement, 0, size_measurement);
 
   attestation_user_data ud;
   ud.set_enclave_type("tpm-enclave");
@@ -248,14 +245,20 @@ bool test_tpm(bool print_all) {
   return true;
 }
 
-bool construct_tpm_platform_evidence(const string     &purpose,
-                                     const string     &serialized_quote_cert,
-                                     evidence_package *evp) {
+// Final evidence should be:
+//    policy_key says quote-key is-trusted-for-attestation
+//    policy_key says measurement is-trusted
+//    quote-key says authKey speaks-for measurement
+bool construct_tpm_platform_evidence(const string      &purpose,
+                                     const key_message &policy_key,
+                                     const string      &measurement_str,
+                                     const string      &serialized_quote_cert,
+                                     evidence_package  *evp) {
 
   evp->set_prover_type("vse-verifier");
   string enclave_type("tpm-enclave");
 
-  // certs
+  // policy-key says quote-key is-trusted-for-atteststion
   evidence *ev = evp->add_fact_assertion();
   if (ev == nullptr) {
     printf("construct_tpm_platform_evidence: Can't add evidence\n");
@@ -305,7 +308,7 @@ bool construct_tpm_platform_evidence(const string     &purpose,
     return false;
   }
 
-  // attest evidence
+  // quote-key says auth-key speaks-for measurement
   int  size_out = 16000;
   byte out[size_out];
   if (!Attest(enclave_type,
@@ -433,9 +436,23 @@ bool test_tpm_platform_certify(const bool    debug_print,
     return false;
   }
 
+  // make measurement statement
+  int  size_measurement = 32;
+  byte measurement[size_measurement] = {
+      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
+      0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15,
+      0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
+  };
+  string measurement_str;
+  measurement_str.assign((char *)measurement, size_measurement);
+
   // construct evidence package
   string purpose("authentication");
-  if (!construct_tpm_platform_evidence(purpose, serialized_quote_cert, &evp)) {
+  if (!construct_tpm_platform_evidence(purpose,
+                                       policy_pk,
+                                       measurement_str,
+                                       serialized_quote_cert,
+                                       &evp)) {
     printf("%s(), error, line: %d, construct_tpm_platform_evidence failed\n",
            __func__,
            __LINE__);
@@ -462,6 +479,79 @@ bool test_tpm_platform_certify(const bool    debug_print,
       printf("\n");
     }
   }
+
+  proved_statements are_proved;
+#  if 0
+  init_axiom(key_message &pk, proved_statements *are_proved)
+
+  // construct policy-key says measurement is trusted
+  init_proved_statements(key_message       &pk,
+                            evidence_package  &evp,
+                            proved_statements *already_proved)
+  if (!make_measurement_entity(m_str, &m_ent)) {
+     printf("init_proved_statements: Can't make measurement entity\n");
+     return false;
+   }
+
+   entity_message auth_ent;
+   if (!make_key_entity(ud.enclave_key(), &auth_ent)) {
+     printf("init_proved_statements: Can't make key entity\n");
+      return false;
+   }
+         entity_message auth_ent;
+      if (!make_key_entity(ud.enclave_key(), &auth_ent)) {
+        printf("init_proved_statements: Can't make key entity\n");
+        return false;
+      }
+
+      vse_clause c1;
+      if (!make_simple_vse_clause(auth_ent, speaks_verb, m_ent, &c1)) {
+        printf("init_proved_statements: Can't make simple vse clause\n");
+        return false;
+      }
+
+      // vcekKey says authKey speaks-for measurement
+      entity_message vcek_ent;
+      if (!make_key_entity(vcek_key, &vcek_ent)) {
+        printf("init_proved_statements: Can't make key entity\n");
+        return false;
+      }
+      vse_clause *cl = already_proved->add_proved();
+      if (!make_indirect_vse_clause(vcek_ent, says_verb, c1, cl)) {
+        printf("init_proved_statements: Can't make indirect vse clause\n");
+        return false;
+      }
+#  endif
+
+#  if 0
+  if (debug_print) {
+  printf("Proved:");
+  print_vse_clause(to_prove);
+  printf("\n");
+  printf("final proved statements:\n");
+  for (int i = 0; i < already_proved.proved_size(); i++) {
+    print_vse_clause(already_proved.proved(i));
+    printf("\n");
+  }
+  printf("\n");
+#  endif
+
+  // construct proof
+#  if 0
+  bool construct_proof_from_tpm_evidence(key_message       &policy_pk,
+                                       const string      &purpose,
+                                       proved_statements *already_proved,
+                                       vse_clause        *to_prove,
+                                       proof             *pf)
+
+  if (debug_print) {
+  printf("to prove : ");
+  print_vse_clause(to_prove);
+  printf("\n\n");
+  printf("proposed proof:\n");
+  print_proof(pf);
+  printf("\n");
+#  endif
 
   // FIX!
   tpm_close();

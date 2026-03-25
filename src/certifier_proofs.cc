@@ -1600,6 +1600,7 @@ bool init_proved_statements(key_message       &pk,
         return false;
       }
 #endif
+    } else if (evp.fact_assertion(i).evidence_type() == "tpm-attestation") {
     } else if (evp.fact_assertion(i).evidence_type()
                == "signed-vse-attestation-report") {
       string t_str;
@@ -2594,8 +2595,8 @@ bool construct_proof_from_tpm_evidence(key_message       &policy_pk,
 
   // At this point, the already_proved should be
   //      "policyKey is-trusted"
-  //      "policyKey says quote-key is-trusted-for-attestation"
   //      "policyKey says measurement is-trusted"
+  //      "policyKey says quote-key is-trusted-for-attestation"
 
 #if 0
   if (already_proved->proved_size() != 5) {
