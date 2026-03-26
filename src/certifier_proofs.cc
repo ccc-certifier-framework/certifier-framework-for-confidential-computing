@@ -1108,9 +1108,12 @@ bool init_proved_statements(key_message       &pk,
                             proved_statements *already_proved) {
 
   cert_keys_seen_list seen_keys_list(max_key_depth);
+  seen_keys_list.add_key_seen(&pk);  // new
+
   // verify already signed assertions, converting to vse_clause
   int nsa = evp.fact_assertion_size();
   for (int i = 0; i < nsa; i++) {
+
     if (evp.fact_assertion(i).evidence_type() == "signed-claim") {
       signed_claim_message sc;
       string               t_str;
@@ -1385,7 +1388,9 @@ bool init_proved_statements(key_message       &pk,
 
       const key_message *signer_key = get_issuer_key(x, seen_keys_list);
       if (signer_key == nullptr) {
-        printf("init_proved_statements: Can't find issuer key\n");
+        printf("%s(), error, line: %d, Can't find issuer key\n",
+               __func__,
+               __LINE__);
         return false;
       }
       EVP_PKEY *signer_pkey = pkey_from_key(*signer_key);
@@ -1687,13 +1692,13 @@ bool init_proved_statements(key_message       &pk,
         return false;
       }
     } else {
-      printf("Unknown evidence type: %i\n", i);
-      print_evidence(evp.fact_assertion(i));
-      printf("\n");
-      printf("%s(), error, line: %d, Unknown evidence type: %s\n",
+      printf("%s(), error, line: %d, statement %d, unknown evidence type: %s\n",
              __func__,
              __LINE__,
+             i,
              evp.fact_assertion(i).evidence_type().c_str());
+      print_evidence(evp.fact_assertion(i));
+      printf("\n");
       return false;
     }
   }

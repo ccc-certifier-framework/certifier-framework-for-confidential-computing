@@ -258,17 +258,19 @@ bool construct_tpm_platform_evidence(const string      &purpose,
   evp->set_prover_type("vse-verifier");
   string enclave_type("tpm-enclave");
 
-  // policy-key says quote-key is-trusted-for-atteststion
+  // add cert
   evidence *ev = evp->add_fact_assertion();
   if (ev == nullptr) {
-    printf("construct_tpm_platform_evidence: Can't add evidence\n");
+    printf("%s, %d, Can't add evidence\n", __func__, __LINE__);
     return false;
   }
   ev->set_evidence_type("cert");
   ev->set_serialized_evidence(serialized_quote_cert);
+
+  // add attestation
   ev = evp->add_fact_assertion();
   if (ev == nullptr) {
-    printf("construct_tpm_platform_evidence: Can't add evidence\n");
+    printf("%s, %d, Can't add evidence\n", __func__, __LINE__);
     return false;
   }
 
@@ -276,11 +278,11 @@ bool construct_tpm_platform_evidence(const string      &purpose,
   key_message auth_key;
   RSA        *r = RSA_new();
   if (!generate_new_rsa_key(2048, r)) {
-    printf("construct_tpm_platform_evidence: Can't generate rsa key\n");
+    printf("%s, %d, Can't generate rsa key\n", __func__, __LINE__);
     return false;
   }
   if (!RSA_to_key(r, &auth_key)) {
-    printf("construct_tpm_platform_evidence: Can't convert rsa key to key\n");
+    printf("%s, %d, Can't convert rsa key to key\n", __func__, __LINE__);
     RSA_free(r);
     return false;
   }
@@ -289,22 +291,23 @@ bool construct_tpm_platform_evidence(const string      &purpose,
   attestation_user_data ud;
   if (purpose == "authentication") {
     if (!make_attestation_user_data(enclave_type, auth_key, &ud)) {
-      printf("construct_tpm_platform_evidence: Can't make user data (1)\n");
+      printf("%s, %d, Can't make user data (1)\n", __func__, __LINE__);
       return false;
     }
   } else if (purpose == "attestation") {
     if (!make_attestation_user_data(enclave_type, auth_key, &ud)) {
-      printf("construct_tpm_platform_evidence: Can't make user data (1)\n");
+      printf("%s, %d, Can't make user data (1)\n", __func__, __LINE__);
       return false;
     }
   } else {
-    printf("construct_tpm_platform_evidence: neither attestation or "
-           "authorization\n");
+    printf("%s, %d, neither attestation or authorization\n",
+           __func__,
+           __LINE__);
     return false;
   }
   string serialized_ud;
   if (!ud.SerializeToString(&serialized_ud)) {
-    printf("construct_tpm_platform_evidence: Can't serialize user data\n");
+    printf("%s, %d, Can't serialize user data\n", __func__, __LINE__);
     return false;
   }
 
@@ -317,16 +320,16 @@ bool construct_tpm_platform_evidence(const string      &purpose,
               &size_out,
               out)) {
 
-    printf("construct_tpm_platform_evidence: Attest failed\n");
+    printf("%s, %d, Attest failed\n", __func__, __LINE__);
     return false;
   }
   string the_attestation_str;
   the_attestation_str.assign((char *)out, size_out);
 
-  ev = evp->add_fact_assertion();
   if (ev == nullptr) {
-    printf("construct_tpm_platform_evidence: Can't add to attest platform "
-           "evidence\n");
+    printf("%s, %d, Can't add to attest platform evidence\n",
+           __func__,
+           __LINE__);
     return false;
   }
   ev->set_evidence_type("tpm-attestation");
@@ -488,19 +491,22 @@ bool test_tpm_platform_certify(const bool    debug_print,
     return false;
   }
 
+#  if 0
   if (debug_print) {
-    printf("\nPolicy and evidence:\n");
+    printf("\nPolicy:\n");
     for (int i = 0; i < signed_statements.claims_size(); i++) {
       print_signed_claim(signed_statements.claims(i));
       printf("\n");
     }
   }
+#  endif
 
   if (debug_print) {
     printf("tpm evidence package, evidence descriptor: %s, enclave type: %s, "
-           "evidence:\n\n",
+           "evidence, %d statements:\n\n",
            evidence_descriptor.c_str(),
-           enclave_type.c_str());
+           enclave_type.c_str(),
+           evp.fact_assertion_size());
     for (int i = 0; i < evp.fact_assertion_size(); i++) {
       print_evidence(evp.fact_assertion(i));
       printf("\n");
@@ -510,58 +516,52 @@ bool test_tpm_platform_certify(const bool    debug_print,
   proved_statements are_proved;
   if (!init_axiom(policy_pk, &are_proved)) {
     printf("%s(), error, line: %d,  init_axiom failed\n", __func__, __LINE__);
+    tpm_close();
+    return false;
   }
 
   // measurement is trusted
   entity_message m_ent;
   if (!make_measurement_entity(measurement_str, &m_ent)) {
-    printf("init_proved_statements: Can't make measurement entity\n");
+    printf("%s(), error, line: %d, Can't make measurement entity\n",
+           __func__,
+           __LINE__);
+    tpm_close();
     return false;
   }
 
-#  if 0
   vse_clause c1;
-  if (!make_simple_vse_clause(auth_ent, speaks_verb, m_ent, &c1)) {
-    printf("init_proved_statements: Can't make simple vse clause\n");
+  string     ist_verb("is-trusted");
+  string     ista_verb("is-trusted-for-attestation");
+
+  if (!make_unary_vse_clause(m_ent, ist_verb, &c1)) {
+    printf("%s(), error, line: %d,  Can't make simple vse clause\n",
+           __func__,
+           __LINE__);
+    tpm_close();
     return false;
   }
 
-   entity_message auth_ent;
-   if (!make_key_entity(ud.enclave_key(), &auth_ent)) {
-     printf("init_proved_statements: Can't make key entity\n");
-      return false;
-   }
-         entity_message auth_ent;
-      if (!make_key_entity(ud.enclave_key(), &auth_ent)) {
-        printf("init_proved_statements: Can't make key entity\n");
-        return false;
-      }
+  vse_clause *pc1 = are_proved.add_proved();
+  pc1->CopyFrom(c1);
 
-      // vcekKey says authKey speaks-for measurement
-      entity_message vcek_ent;
-      if (!make_key_entity(vcek_key, &vcek_ent)) {
-        printf("init_proved_statements: Can't make key entity\n");
-        return false;
-      }
-      vse_clause *cl = already_proved->add_proved();
-      if (!make_indirect_vse_clause(vcek_ent, says_verb, c1, cl)) {
-        printf("init_proved_statements: Can't make indirect vse clause\n");
-        return false;
-      }
-#  endif
-
-#  if 0
   if (debug_print) {
-  printf("Proved:");
-  print_vse_clause(to_prove);
-  printf("\n");
-  printf("final proved statements:\n");
-  for (int i = 0; i < already_proved.proved_size(); i++) {
-    print_vse_clause(already_proved.proved(i));
+    printf("proved statements before construct:\n");
+    for (int i = 0; i < are_proved.proved_size(); i++) {
+      printf("  ");
+      print_vse_clause(are_proved.proved(i));
+      printf("\n");
+    }
     printf("\n");
   }
-  printf("\n");
-#  endif
+
+  if (!init_proved_statements(policy_pk, evp, &are_proved)) {
+    printf("%s(), error, line: %d, init_proved_statements\n",
+           __func__,
+           __LINE__);
+    tpm_close();
+    return false;
+  }
 
   // construct proof
 #  if 0
@@ -592,6 +592,7 @@ bool test_tpm_platform_certify(const bool    debug_print,
     printf("%s(), error, line: %d, validate_evidence failed\n",
            __func__,
            __LINE__);
+    tpm_close();
     return false;
   }
 
