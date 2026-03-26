@@ -508,17 +508,23 @@ bool test_tpm_platform_certify(const bool    debug_print,
   }
 
   proved_statements are_proved;
-#  if 0
-  init_axiom(key_message &pk, proved_statements *are_proved)
+  if (!init_axiom(policy_pk, &are_proved)) {
+    printf("%s(), error, line: %d,  init_axiom failed\n", __func__, __LINE__);
+  }
 
-  // construct policy-key says measurement is trusted
-  init_proved_statements(key_message       &pk,
-                            evidence_package  &evp,
-                            proved_statements *already_proved)
-  if (!make_measurement_entity(m_str, &m_ent)) {
-     printf("init_proved_statements: Can't make measurement entity\n");
-     return false;
-   }
+  // measurement is trusted
+  entity_message m_ent;
+  if (!make_measurement_entity(measurement_str, &m_ent)) {
+    printf("init_proved_statements: Can't make measurement entity\n");
+    return false;
+  }
+
+#  if 0
+  vse_clause c1;
+  if (!make_simple_vse_clause(auth_ent, speaks_verb, m_ent, &c1)) {
+    printf("init_proved_statements: Can't make simple vse clause\n");
+    return false;
+  }
 
    entity_message auth_ent;
    if (!make_key_entity(ud.enclave_key(), &auth_ent)) {
@@ -528,12 +534,6 @@ bool test_tpm_platform_certify(const bool    debug_print,
          entity_message auth_ent;
       if (!make_key_entity(ud.enclave_key(), &auth_ent)) {
         printf("init_proved_statements: Can't make key entity\n");
-        return false;
-      }
-
-      vse_clause c1;
-      if (!make_simple_vse_clause(auth_ent, speaks_verb, m_ent, &c1)) {
-        printf("init_proved_statements: Can't make simple vse clause\n");
         return false;
       }
 
@@ -608,9 +608,7 @@ bool test_tpm_proof(bool print_all) {
   string seal_hierarchy_file_name("seal_hierarchy.bin");
   string quote_hierarchy_file_name("quote_hierarchy.bin");
   int    num_pcrs = 1;
-  byte_t pcrs[num_pcrs] = {
-    7
-  };
+  byte_t pcrs[num_pcrs] = {7};
 
   if (!test_tpm_platform_certify(true,
                                  policy_file_name,
@@ -631,13 +629,13 @@ bool test_tpm_proof(bool print_all) {
 
 #else
 
-  bool test_tpm(bool print_all) {
-    return true;
-  }
+bool test_tpm(bool print_all) {
+  return true;
+}
 
-  bool test_tpm_proof(bool print_all) {
-    return true;
-  }
+bool test_tpm_proof(bool print_all) {
+  return true;
+}
 
 #endif  // TPM
 
