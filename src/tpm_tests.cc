@@ -491,16 +491,6 @@ bool test_tpm_platform_certify(const bool    debug_print,
     return false;
   }
 
-#  if 0
-  if (debug_print) {
-    printf("\nPolicy:\n");
-    for (int i = 0; i < signed_statements.claims_size(); i++) {
-      print_signed_claim(signed_statements.claims(i));
-      printf("\n");
-    }
-  }
-#  endif
-
   if (debug_print) {
     printf("tpm evidence package, evidence descriptor: %s, enclave type: %s, "
            "evidence, %d statements:\n\n",
@@ -533,6 +523,7 @@ bool test_tpm_platform_certify(const bool    debug_print,
   vse_clause c1;
   string     ist_verb("is-trusted");
   string     ista_verb("is-trusted-for-attestation");
+  string     says_verb("says");
 
   if (!make_unary_vse_clause(m_ent, ist_verb, &c1)) {
     printf("%s(), error, line: %d,  Can't make simple vse clause\n",
@@ -542,8 +533,26 @@ bool test_tpm_platform_certify(const bool    debug_print,
     return false;
   }
 
+  // policy-key says measurement is-trusted
+  vse_clause     c2;
+  entity_message pk_ent;
+  if (!make_key_entity(policy_pk, &pk_ent)) {
+    printf("%s(), error, line: %d,  Can't make key entity\n",
+           __func__,
+           __LINE__);
+    tpm_close();
+    return false;
+  }
+  if (!make_indirect_vse_clause(pk_ent, says_verb, c1, &c2)) {
+    printf("%s(), error, line: %d,  Can't make indirect vse clause\n",
+           __func__,
+           __LINE__);
+    tpm_close();
+    return false;
+  }
+
   vse_clause *pc1 = are_proved.add_proved();
-  pc1->CopyFrom(c1);
+  pc1->CopyFrom(c2);
 
   if (debug_print) {
     printf("proved statements before construct:\n");
@@ -563,22 +572,39 @@ bool test_tpm_platform_certify(const bool    debug_print,
     return false;
   }
 
+  if (debug_print) {
+    printf("proved statements after construct:\n");
+    for (int i = 0; i < are_proved.proved_size(); i++) {
+      printf("  ");
+      print_vse_clause(are_proved.proved(i));
+      printf("\n");
+    }
+    printf("\n");
+  }
+
   // construct proof
-#  if 0
-  bool construct_proof_from_tpm_evidence(key_message       &policy_pk,
-                                       const string      &purpose,
-                                       proved_statements *already_proved,
-                                       vse_clause        *to_prove,
-                                       proof             *pf)
+  vse_clause to_prove;
+  proof      pf;
+  if (!construct_proof_from_tpm_evidence(policy_pk,
+                                         purpose,
+                                         &are_proved,
+                                         &to_prove,
+                                         &pf)) {
+    printf("%s(), error, line: %d, construct_proof_from_tpm_evidence failed\n",
+           __func__,
+           __LINE__);
+    tpm_close();
+    return false;
+  }
 
   if (debug_print) {
-  printf("to prove : ");
-  print_vse_clause(to_prove);
-  printf("\n\n");
-  printf("proposed proof:\n");
-  print_proof(pf);
-  printf("\n");
-#  endif
+    printf("to prove : ");
+    print_vse_clause(to_prove);
+    printf("\n\n");
+    printf("proposed proof:\n");
+    print_proof(pf);
+    printf("\n");
+  }
 
   // FIX!
   tpm_close();

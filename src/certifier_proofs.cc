@@ -25,6 +25,7 @@
 #ifdef GRAMINE_CERTIFIER
 #  include "gramine_api.h"
 #endif
+#include "tpm2_support.h"
 
 using namespace certifier::framework;
 using namespace certifier::utilities;
@@ -1423,6 +1424,7 @@ bool init_proved_statements(key_message       &pk,
         X509_free(x);
         x = nullptr;
       }
+
 #ifdef SEV_SNP
     } else if (evp.fact_assertion(i).evidence_type() == "sev-attestation") {
       string t_str;
@@ -1630,8 +1632,113 @@ bool init_proved_statements(key_message       &pk,
       }
 #endif
     } else if (evp.fact_assertion(i).evidence_type() == "tpm-attestation") {
-      printf("%s(), error, line: %d, not implemented\n", __func__, __LINE__);
-      return false;
+
+      // get quote-key from last statement:
+      //    policy-key says quote-key is-trusted-for-attestation
+      if (already_proved->proved().size() <= 0) {
+        printf("%s() error, line %d, too few statements\n", __func__, __LINE__);
+        return false;
+      }
+      const vse_clause &lv =
+          already_proved->proved(already_proved->proved().size() - 1);
+      const key_message &quote_key = lv.clause().subject().key();
+
+      string serialized_attestation;
+      serialized_attestation.assign(
+          (char *)evp.fact_assertion(i).serialized_evidence().data(),
+          evp.fact_assertion(i).serialized_evidence().size());
+      if (!tpm_verify_attest(quote_key, serialized_attestation)) {
+        printf("%s() error, line %d, Can't verify attestation\n",
+               __func__,
+               __LINE__);
+        return false;
+      }
+
+      // what_was_said, to_quote, quoted, alg, sig
+      tpm_attestation_message att_msg;
+      if (!att_msg.ParseFromString(serialized_attestation)) {
+        printf("%s() error, line %d, Can't parse attestation\n",
+               __func__,
+               __LINE__);
+        return false;
+      }
+
+      // get key and measurement from to_quote
+      uint32_t           magic;
+      uint16_t           type;
+      string             signer;
+      string             extra_data;
+      TPML_PCR_SELECTION pcrSelect;
+      string             pcr_digest;
+
+      if (!decode_quoted((int)att_msg.the_quote().size(),
+                         (byte_t *)att_msg.the_quote().data(),
+                         &magic,
+                         &type,
+                         &signer,
+                         &extra_data,
+                         &pcrSelect,
+                         &pcr_digest)) {
+        printf("%s() error, line %d, Can't decode quoted\n",
+               __func__,
+               __LINE__);
+        return false;
+      }
+
+      attestation_user_data ud;
+      if (!ud.ParseFromString(att_msg.what_was_said())) {
+        printf("%s(), error, line: %d, Can't parse user data\n",
+               __func__,
+               __LINE__);
+        return false;
+      }
+
+      string m_str;
+      m_str.assign((char *)pcr_digest.data(), (int)pcr_digest.size());
+
+      // construct "quote_key says auth-key speaks-for measurement
+      string says_verb("says");
+      string speaks_verb("speaks-for");
+
+      entity_message m_ent;
+      if (!make_measurement_entity(m_str, &m_ent)) {
+        printf("%s(), error, line: %d, Can't make measurement entity\n",
+               __func__,
+               __LINE__);
+        return false;
+      }
+
+      entity_message auth_ent;
+      if (!make_key_entity(ud.enclave_key(), &auth_ent)) {
+        printf("%s(), error, line: %d, Can't make key entity\n",
+               __func__,
+               __LINE__);
+        return false;
+      }
+
+      vse_clause c1;
+      if (!make_simple_vse_clause(auth_ent, speaks_verb, m_ent, &c1)) {
+        printf("%s(), error, line: %d, Can't make simple vse clause\n",
+               __func__,
+               __LINE__);
+        return false;
+      }
+
+      // quote_key says authKey speaks-for measurement
+      entity_message quote_key_ent;
+      if (!make_key_entity(quote_key, &quote_key_ent)) {
+        printf("%s(), error, line: %d, Can't make key entity\n",
+               __func__,
+               __LINE__);
+        return false;
+      }
+      vse_clause *cl = already_proved->add_proved();
+      if (!make_indirect_vse_clause(quote_key_ent, says_verb, c1, cl)) {
+        printf("%s(), error, line: %d, Can't make indirect vse clause\n",
+               __func__,
+               __LINE__);
+        return false;
+      }
     } else if (evp.fact_assertion(i).evidence_type()
                == "signed-vse-attestation-report") {
       string t_str;
@@ -2645,61 +2752,79 @@ bool construct_proof_from_tpm_evidence(key_message       &policy_pk,
                                        proof             *pf) {
 
   // At this point, the already_proved should be
-  //      "policyKey is-trusted"
-  //      "policyKey says measurement is-trusted"
-  //      "policyKey says quote-key is-trusted-for-attestation"
+  //  Key[rsa, policyKey, e57ec0c47ca211f5d9aa73356509ff8631a8a53f] is-trusted
+  //  policy-key says
+  //    Measurement[000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f]
+  //    is-trusted
+  //  Key[rsa, policyKey, e57ec0c47ca211f5d9aa73356509ff8631a8a53f] says
+  //   Key[rsa, quote-key, a5b18d344c05094a924066e5d564646dd0248fd2]
+  //   is-trusted-for-attestation
+  //  Key[rsa, quote-key, a5b18d344c05094a924066e5d564646dd0248fd2] says
+  //    Key[rsa, 8e4df585c4127476462b039d51a6d610782cca94] speaks-for
+  //      Measurement[66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925]
 
-#if 0
-  if (already_proved->proved_size() != 5) {
-    printf(
-        "%s() error, line %d, construct_proof_from_full_vse_evidence error\n",
-        __func__,
-        __LINE__);
+  if (already_proved->proved_size() != 4) {
+    printf("%s() error, line %d, construct_proof_from_tpm_evidence error\n",
+           __func__,
+           __LINE__);
     return false;
   }
 
-  if (!already_proved->proved(2).has_clause()
-      || !already_proved->proved(2).clause().has_subject()) {
-    printf(
-        "%s() error, line %d, construct_proof_from_full_vse_evidence error\n",
-        __func__,
-        __LINE__);
+  string it("is-trusted-for-authentication");
+  if (!already_proved->proved(3).has_clause()
+      || !already_proved->proved(3).clause().has_subject()) {
+    printf("%s() error, line %d, construct_proof_from_tpm_evidence error\n",
+           __func__,
+           __LINE__);
     return false;
   }
   const entity_message &enclave_key =
-      already_proved->proved(2).clause().subject();
-  string it("is-trusted-for-authentication");
+      already_proved->proved(3).clause().subject();
   if (!make_unary_vse_clause(enclave_key, it, to_prove)) {
-    printf(
-        "%s() error, line %d, construct_proof_from_full_vse_evidence error\n",
-        __func__,
-        __LINE__);
+    printf("%s() error, line %d, construct_proof_from_tpm_evidence error\n",
+           __func__,
+           __LINE__);
     return false;
   }
 
   proof_step *ps = nullptr;
 
   // Step 1
-  //   "policyKey is-trusted" AND "policyKey says platformKey
-  //   is-trusted-for-attestation"
-  //       --> "platformKey is-trusted-for-attestation"
-  if (!already_proved->proved(4).has_clause()) {
-    printf(
-        "%s() error, line %d, construct_proof_from_full_vse_evidence error\n",
-        __func__,
-        __LINE__);
+  //   "policyKey is-trusted" AND "policyKey says measurement is-trusted" -->
+  //   "measurement is-trusted"
+  if (!already_proved->proved(1).has_clause()) {
+    printf("%s() error, line %d, error\n", __func__, __LINE__);
+    return false;
+  }
+  const vse_clause &policy_key_is_trusted = already_proved->proved(0);
+  ps = pf->add_steps();
+  ps->mutable_s1()->CopyFrom(policy_key_is_trusted);
+  ps->mutable_s2()->CopyFrom(already_proved->proved(1));
+  ps->mutable_conclusion()->CopyFrom(already_proved->proved(1).clause());
+  ps->set_rule_applied(3);
+
+  const vse_clause &measurement_is_trusted = ps->conclusion();
+
+  // Step 2
+  //   "policy-key is-trusted" AND
+  //   "policy-key says quoteKey is-trusted-for-attestation"
+  //    --> "quote-key is-trusted-for-attestation"
+  if (!already_proved->proved(2).has_clause()) {
+    printf("%s() error, line %d, error\n", __func__, __LINE__);
     return false;
   }
   ps = pf->add_steps();
-  ps->mutable_s1()->CopyFrom(already_proved->proved(0));
-  ps->mutable_s2()->CopyFrom(already_proved->proved(4));
-  ps->mutable_conclusion()->CopyFrom(already_proved->proved(4).clause());
-  ps->set_rule_applied(3);
-  const vse_clause &platformkey_is_trusted = ps->conclusion();
+  ps->mutable_s1()->CopyFrom(policy_key_is_trusted);
+  ps->mutable_s2()->CopyFrom(already_proved->proved(2));
+  const vse_clause &quote_key_is_trusted_for_attestation =
+      already_proved->proved(2).clause();
+  ps->mutable_conclusion()->CopyFrom(quote_key_is_trusted_for_attestation);
+  ps->set_rule_applied(6);
 
-  // Step 2
-  //   "policyKey is-trusted" AND "policyKey says measurement is-trusted" -->
-  //   "measurement is-trusted"
+  // Step 3
+  //   "quoteKey is-trusted-for-attestation" AND  "quoteKey says enclaveKey
+  //     speaks-for measurement"
+  //    --> "enclaveKey speaks-for measurement"
   if (!already_proved->proved(3).has_clause()) {
     printf(
         "%s() error, line %d, construct_proof_from_full_vse_evidence error\n",
@@ -2707,62 +2832,27 @@ bool construct_proof_from_tpm_evidence(key_message       &policy_pk,
         __LINE__);
     return false;
   }
-  ps = pf->add_steps();
-  ps->mutable_s1()->CopyFrom(already_proved->proved(0));
-  ps->mutable_s2()->CopyFrom(already_proved->proved(3));
-  ps->mutable_conclusion()->CopyFrom(already_proved->proved(3).clause());
-  ps->set_rule_applied(3);
-  const vse_clause &measurement_is_trusted = ps->conclusion();
 
-  // Step 3
-  // "platformKey is-trusted-for-attestation" AND "platformKey says attestKey
-  // is-trusted-for-attestation"
-  //      --> "attestKey is-trusted-for-attestation"
-  if (!already_proved->proved(1).has_clause()) {
-    printf(
-        "%s() error, line %d, construct_proof_from_full_vse_evidence error\n",
-        __func__,
-        __LINE__);
-    return false;
-  }
+  const vse_clause &quote_key_says_enclave_key_speaks_for_measurement =
+      already_proved->proved(3);
+  const vse_clause &enclave_key_speaks_for_measurement =
+      already_proved->proved(3).clause();
   ps = pf->add_steps();
-  ps->mutable_s1()->CopyFrom(platformkey_is_trusted);
-  ps->mutable_s2()->CopyFrom(already_proved->proved(1));
-  ps->mutable_conclusion()->CopyFrom(already_proved->proved(1).clause());
-  ps->set_rule_applied(5);
-  const vse_clause &attestkey_is_trusted = ps->conclusion();
-
-  // Step 4
-  //   "attestKey is-trusted-for-attestation" AND  "attestKey says enclaveKey
-  //     speaks-for measurement"
-  //    --> "enclaveKey speaks-for measurement"
-  if (!already_proved->proved(2).has_clause()) {
-    printf(
-        "%s() error, line %d, construct_proof_from_full_vse_evidence error\n",
-        __func__,
-        __LINE__);
-    return false;
-  }
-  ps = pf->add_steps();
-  ps->mutable_s1()->CopyFrom(attestkey_is_trusted);
-  ps->mutable_s2()->CopyFrom(already_proved->proved(2));
-  ps->mutable_conclusion()->CopyFrom(already_proved->proved(2).clause());
+  ps->mutable_s1()->CopyFrom(quote_key_is_trusted_for_attestation);
+  ps->mutable_s2()->CopyFrom(quote_key_says_enclave_key_speaks_for_measurement);
+  ps->mutable_conclusion()->CopyFrom(enclave_key_speaks_for_measurement);
   ps->set_rule_applied(6);
-  const vse_clause &enclave_speaksfor_measurement = ps->conclusion();
 
   // Step 4
   //   "measurement is-trusted" AND "enclaveKey speaks-for measurement"
   //      --> "enclaveKey is-trusted-for-authentication"
   ps = pf->add_steps();
   ps->mutable_s1()->CopyFrom(measurement_is_trusted);
-  ps->mutable_s2()->CopyFrom(enclave_speaksfor_measurement);
+  ps->mutable_s2()->CopyFrom(enclave_key_speaks_for_measurement);
   ps->mutable_conclusion()->CopyFrom(*to_prove);
   ps->set_rule_applied(1);
 
   return true;
-#else
-  return false;
-#endif
 }
 
 bool construct_proof_from_request(const string          &evidence_descriptor,
