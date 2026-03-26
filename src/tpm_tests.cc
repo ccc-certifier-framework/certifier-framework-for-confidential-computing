@@ -368,6 +368,7 @@ bool test_tpm_platform_certify(const bool    debug_print,
            __func__,
            __LINE__,
            policy_file_name.c_str());
+    tpm_close();
     return false;
   }
 
@@ -379,24 +380,26 @@ bool test_tpm_platform_certify(const bool    debug_print,
            __func__,
            __LINE__,
            policy_key_file.c_str());
+    tpm_close();
     return false;
   }
   if (!policy_key.ParseFromString(policy_key_str)) {
     printf("%s(), error, line: %d, can't parse policy key\n",
            __func__,
            __LINE__);
+    tpm_close();
     return false;
   }
   if (!private_key_to_public_key(policy_key, &policy_pk)) {
     printf("%s(), error, line: %d, can't convert policy key\n",
            __func__,
            __LINE__);
+    tpm_close();
     return false;
   }
 
   // Make quote cert
   key_message quote_key;
-  key_message quote_pk;
   string      quote_key_str;
 
   // make quote key message
@@ -406,9 +409,23 @@ bool test_tpm_platform_certify(const bool    debug_print,
     printf("%s(), error, line: %d, can't translate quote key\n",
            __func__,
            __LINE__);
+    tpm_close();
     return false;
   }
-  string quote_issuer_desc("policy_key");
+
+  if (debug_print) {
+    printf("\nPolicy key:\n");
+    print_key(policy_key);
+    printf("\n");
+    printf("\nPolicy key:\n");
+    print_key(policy_pk);
+    printf("\n");
+    printf("\nQuote key :\n");
+    print_key(quote_key);
+    printf("\n");
+  }
+
+  string quote_issuer_desc("policy-key");
   string quote_issuer_name(policy_key.key_name());
   string quote_subject_desc("quote-key");
   string quote_subject_name(quote_key.key_name());
@@ -416,7 +433,7 @@ bool test_tpm_platform_certify(const bool    debug_print,
   if (!produce_artifact(policy_key,
                         quote_issuer_name,
                         quote_issuer_desc,
-                        quote_pk,
+                        quote_key,
                         quote_subject_name,
                         quote_subject_desc,
                         1ULL,
@@ -426,14 +443,23 @@ bool test_tpm_platform_certify(const bool    debug_print,
     printf("%s(), error, line: %d, can't produce quote artifact\n",
            __func__,
            __LINE__);
+    tpm_close();
     return false;
   }
+
   string serialized_quote_cert;
   if (!x509_to_asn1(x_quote, &serialized_quote_cert)) {
     printf("%s(), error, line: %d, can't translate quote cert\n",
            __func__,
            __LINE__);
+    tpm_close();
     return false;
+  }
+
+  if (debug_print) {
+    printf("\nQuote cert:\n");
+    X509_print_fp(stdout, x_quote);
+    printf("\n");
   }
 
   // make measurement statement
@@ -446,6 +472,8 @@ bool test_tpm_platform_certify(const bool    debug_print,
   string measurement_str;
   measurement_str.assign((char *)measurement, size_measurement);
 
+  X509_free(x_quote);
+
   // construct evidence package
   string purpose("authentication");
   if (!construct_tpm_platform_evidence(purpose,
@@ -456,12 +484,11 @@ bool test_tpm_platform_certify(const bool    debug_print,
     printf("%s(), error, line: %d, construct_tpm_platform_evidence failed\n",
            __func__,
            __LINE__);
+    tpm_close();
     return false;
   }
 
   if (debug_print) {
-    printf("\nPolicy key:\n");
-    print_key(policy_pk);
     printf("\nPolicy and evidence:\n");
     for (int i = 0; i < signed_statements.claims_size(); i++) {
       print_signed_claim(signed_statements.claims(i));
@@ -471,7 +498,7 @@ bool test_tpm_platform_certify(const bool    debug_print,
 
   if (debug_print) {
     printf("tpm evidence package, evidence descriptor: %s, enclave type: %s, "
-           "evidence:\n",
+           "evidence:\n\n",
            evidence_descriptor.c_str(),
            enclave_type.c_str());
     for (int i = 0; i < evp.fact_assertion_size(); i++) {
@@ -571,10 +598,47 @@ bool test_tpm_platform_certify(const bool    debug_print,
   tpm_close();
   return true;
 }
-#else
-bool test_tpm(bool print_all) {
+
+bool test_tpm_proof(bool print_all) {
+
+  string policy_file_name("policy.bin");
+  string policy_key_file("policy_key_file.dom0");
+  string device_name("/dev/tpm1");
+  string endorsement_cert_file_name("jlm_cert.crt");
+  string seal_hierarchy_file_name("seal_hierarchy.bin");
+  string quote_hierarchy_file_name("quote_hierarchy.bin");
+  int    num_pcrs = 1;
+  byte_t pcrs[num_pcrs] = {
+    7
+  };
+
+  if (!test_tpm_platform_certify(true,
+                                 policy_file_name,
+                                 policy_key_file,
+                                 device_name,
+                                 endorsement_cert_file_name,
+                                 seal_hierarchy_file_name,
+                                 quote_hierarchy_file_name,
+                                 num_pcrs,
+                                 pcrs)) {
+    printf("%s(), error, line: %d, test_tpm_platform_certify failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
   return true;
 }
+
+#else
+
+  bool test_tpm(bool print_all) {
+    return true;
+  }
+
+  bool test_tpm_proof(bool print_all) {
+    return true;
+  }
+
 #endif  // TPM
 
 // -----------------------------------------------------------------------------
