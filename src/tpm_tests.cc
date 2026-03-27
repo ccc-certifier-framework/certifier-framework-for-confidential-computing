@@ -234,11 +234,10 @@ bool test_tpm(bool print_all) {
 
 // Final evidence should be:
 //    policy_key says quote-key is-trusted-for-attestation
-//    policy_key says measurement is-trusted
 //    quote-key says authKey speaks-for measurement
+//    policy_key says measurement is-trusted
 bool construct_tpm_platform_evidence(const string      &purpose,
                                      const key_message &policy_key,
-                                     const string      &measurement_str,
                                      const string      &serialized_quote_cert,
                                      evidence_package  *evp) {
 
@@ -335,6 +334,60 @@ bool construct_tpm_platform_evidence(const string      &purpose,
 
   return true;
 }
+
+bool policy_key_measurement_statement(const key_message& pk,
+                                      vse_clause* vc) {
+
+  // make measurement statement
+  int  size_measurement = 32;
+  byte measurement[size_measurement] = {
+      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
+      0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15,
+      0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
+  };
+  string m_str;
+  m_str.assign((char *)measurement, size_measurement);
+
+  // measurement is trusted
+  entity_message m_ent;
+  if (!make_measurement_entity(m_str, &m_ent)) {
+    printf("%s(), error, line: %d, Can't make measurement entity\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  vse_clause c1;
+  string     ist_verb("is-trusted");
+  string     ista_verb("is-trusted-for-attestation");
+  string     says_verb("says");
+
+  if (!make_unary_vse_clause(m_ent, ist_verb, &c1)) {
+    printf("%s(), error, line: %d,  Can't make simple vse clause\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  // policy-key says measurement is-trusted
+  vse_clause     c2;
+  entity_message pk_ent;
+  if (!make_key_entity(pk, &pk_ent)) {
+    printf("%s(), error, line: %d,  Can't make key entity\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if (!make_indirect_vse_clause(pk_ent, says_verb, c1, vc)) {
+    printf("%s(), error, line: %d,  Can't make indirect vse clause\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  return true;
+}
+
 
 bool test_tpm_platform_certify(const bool    debug_print,
                                const string &policy_file_name,
@@ -463,23 +516,12 @@ bool test_tpm_platform_certify(const bool    debug_print,
     printf("\n");
   }
 
-  // make measurement statement
-  int  size_measurement = 32;
-  byte measurement[size_measurement] = {
-      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
-      0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15,
-      0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
-  };
-  string measurement_str;
-  measurement_str.assign((char *)measurement, size_measurement);
-
   X509_free(x_quote);
 
   // construct evidence package
   string purpose("authentication");
   if (!construct_tpm_platform_evidence(purpose,
                                        policy_pk,
-                                       measurement_str,
                                        serialized_quote_cert,
                                        &evp)) {
     printf("%s(), error, line: %d, construct_tpm_platform_evidence failed\n",
@@ -508,47 +550,14 @@ bool test_tpm_platform_certify(const bool    debug_print,
     return false;
   }
 
-  // measurement is trusted
-  entity_message m_ent;
-  if (!make_measurement_entity(measurement_str, &m_ent)) {
-    printf("%s(), error, line: %d, Can't make measurement entity\n",
+  vse_clause c2;
+  if (!policy_key_measurement_statement(policy_pk, &c2)) {
+    printf("%s(), error, line: %d, Can't make measurement statement\n",
            __func__,
            __LINE__);
     tpm_close();
     return false;
   }
-
-  vse_clause c1;
-  string     ist_verb("is-trusted");
-  string     ista_verb("is-trusted-for-attestation");
-  string     says_verb("says");
-
-  if (!make_unary_vse_clause(m_ent, ist_verb, &c1)) {
-    printf("%s(), error, line: %d,  Can't make simple vse clause\n",
-           __func__,
-           __LINE__);
-    tpm_close();
-    return false;
-  }
-
-  // policy-key says measurement is-trusted
-  vse_clause     c2;
-  entity_message pk_ent;
-  if (!make_key_entity(policy_pk, &pk_ent)) {
-    printf("%s(), error, line: %d,  Can't make key entity\n",
-           __func__,
-           __LINE__);
-    tpm_close();
-    return false;
-  }
-  if (!make_indirect_vse_clause(pk_ent, says_verb, c1, &c2)) {
-    printf("%s(), error, line: %d,  Can't make indirect vse clause\n",
-           __func__,
-           __LINE__);
-    tpm_close();
-    return false;
-  }
-
   vse_clause *pc1 = are_proved.add_proved();
   pc1->CopyFrom(c2);
 
