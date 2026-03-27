@@ -58,12 +58,12 @@ DEFINE_int32(index, -1, "nv index");
 DEFINE_int32(nv_slot, 1000, "nv slot");
 DEFINE_int32(nv_size, -1, "nv size");
 DEFINE_string(tpm_device, "/dev/tpm0", "tpm device");
-DEFINE_string(seal_hierearchy_name,
+DEFINE_string(seal_hierarchy_name,
               "seal_hierarchy.bin",
-              "seal hierarch save file name");
-DEFINE_string(quote_hierearchy_name,
+              "seal hierarchy save file name");
+DEFINE_string(quote_hierarchy_name,
               "quote_hierarchy.bin",
-              "quote hierarch save file name");
+              "quote hierarchy save file name");
 DEFINE_string(ek_cert_file_name, "ek-rsa2048.crt", "tpm cert file name");
 DEFINE_int32(num_pcrs, 1, "number of pcrs");
 
@@ -511,7 +511,7 @@ bool seal_test(local_tpm &tpm, int pcr_num, const string &seal_file) {
   if (!recover_sealing_secret(tpm,
                               num_pcrs,
                               pcrs,
-                              FLAGS_seal_hierearchy_name,
+                              FLAGS_seal_hierarchy_name,
                               &seal_secret)) {
     printf("%s() error, line %d, recover_sealing_secret failed\n",
            __func__,
@@ -1025,8 +1025,8 @@ bool certifier_test() {
 
   if (!tpm_Init(FLAGS_tpm_device,
                 FLAGS_ek_cert_file_name,
-                FLAGS_seal_hierearchy_name,
-                FLAGS_quote_hierearchy_name,
+                FLAGS_seal_hierarchy_name,
+                FLAGS_quote_hierarchy_name,
                 num_pcrs,
                 pcrs)) {
     printf("%s() error, line %d, tpm_init failed\n", __func__, __LINE__);
@@ -1223,14 +1223,14 @@ int main(int an, char **av) {
     }
   } else if (FLAGS_operation == "SealTest") {
     printf("\n");
-    if (seal_test(g_tpm, 7, FLAGS_seal_hierearchy_name)) {
+    if (seal_test(g_tpm, 7, FLAGS_seal_hierarchy_name)) {
       printf("seal test succeeded\n");
     } else {
       printf("seal test failed\n");
     }
   } else if (FLAGS_operation == "QuoteTest") {
     printf("\n");
-    if (quote_test(g_tpm, FLAGS_quote_hierearchy_name)) {
+    if (quote_test(g_tpm, FLAGS_quote_hierarchy_name)) {
       printf("quote test succeeded\n");
     } else {
       printf("quote test failed\n");

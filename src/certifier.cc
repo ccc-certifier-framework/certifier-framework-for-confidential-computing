@@ -438,7 +438,7 @@ done:
   return res;
 }
 
-#ifdef TPM
+#ifdef TPM_CERTIFIER
 #  include <tpm2_support.h>
 #endif
 
@@ -544,7 +544,7 @@ bool certifier::framework::Seal(const string &enclave_type,
     return islet_Seal(in_size, in, size_out, out);
   }
 #endif
-#ifdef TPM
+#ifdef TPM_CERTIFIER
   if (enclave_type == "tpm-enclave") {
     return tpm_Seal(in_size, in, size_out, out);
   }
@@ -603,7 +603,7 @@ bool certifier::framework::Unseal(const string &enclave_type,
     return islet_Unseal(in_size, in, size_out, out);
   }
 #endif  // ISLET_CERTIFIER
-#ifdef TPM
+#ifdef TPM_CERTIFIER
   if (enclave_type == "tpm-enclave") {
     return tpm_Unseal(in_size, in, size_out, out);
   }
@@ -744,7 +744,7 @@ bool certifier::framework::Attest(const string &enclave_type,
     return true;
   }
 #endif  // ISLET_CERTIFIER
-#ifdef TPM
+#ifdef TPM_CERTIFIER
   if (enclave_type == "tpm-enclave") {
     return tpm_Attest(what_to_say_size, what_to_say, size_out, out);
   }
@@ -789,11 +789,8 @@ bool GetParentEvidence(const string &enclave_type,
     return false;
   }
 #endif
-#ifdef TPM
+#ifdef TPM_CERTIFIER
   if (enclave_type == "tpm-enclave") {
-    printf("%s() error, line %d, tpm_GetParentEvidence unimplemented\n",
-           __func__,
-           __LINE__);
     return false;
   }
 #endif

@@ -24,7 +24,7 @@ using namespace certifier::utilities;
 
 // -----------------------------------------------------------------------------
 
-#ifdef TPM
+#ifdef TPM_CERTIFIER
 
 bool test_tpm(bool print_all) {
   const int data_size = 64;
@@ -672,6 +672,6 @@ bool test_tpm_proof(bool print_all) {
   return true;
 }
 
-#endif  // TPM
+#endif  // TPM_CERTIFIER
 
 // -----------------------------------------------------------------------------

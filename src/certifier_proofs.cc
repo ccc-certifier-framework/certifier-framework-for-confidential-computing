@@ -1631,6 +1631,7 @@ bool init_proved_statements(key_message       &pk,
         return false;
       }
 #endif
+#ifdef TPM_CERTIFIER
     } else if (evp.fact_assertion(i).evidence_type() == "tpm-attestation") {
 
       // get quote-key from last statement:
@@ -1739,6 +1740,7 @@ bool init_proved_statements(key_message       &pk,
                __LINE__);
         return false;
       }
+#endif
     } else if (evp.fact_assertion(i).evidence_type()
                == "signed-vse-attestation-report") {
       string t_str;
@@ -2333,6 +2335,80 @@ bool add_newfacts_for_sdk_platform_attestation(
   return true;
 }
 
+bool add_new_facts_for_tpm_attestation(
+    key_message           &policy_pk,
+    signed_claim_sequence &trusted_platforms,
+    signed_claim_sequence &trusted_measurements,
+    proved_statements     *already_proved) {
+
+  // At this point, the already_proved should be
+  //    "policyKey is-trusted"
+  //    "policyKey says quoteKey is-trusted
+  //    "quoteKey says enclaveKey speaks-for measurement
+  // Add
+  //    "policyKey says measurement is-trusted"
+
+  // "quoteKey says enclaveKey speaks-for measurement
+  string expected_measurement;
+  if (!already_proved->proved(2).has_clause()) {
+    printf("%s(), error, line: %d, Can't add fact from "
+           "signed claim\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if (!already_proved->proved(2).clause().has_object()) {
+    printf("%s(), error, line: %d, Can't add fact from "
+           "signed claim\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  const entity_message &m_ent = already_proved->proved(2).clause().object();
+  expected_measurement.assign((char *)m_ent.measurement().data(),
+                              m_ent.measurement().size());
+  signed_claim_message sc;
+  if (!get_signed_measurement_claim_from_trusted_list(expected_measurement,
+                                                      trusted_measurements,
+                                                      &sc)) {
+    printf("%s(), error, line: %d, Can't get signed measurement\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if (!add_fact_from_signed_claim(sc, already_proved)) {
+    printf("%s(), error, line: %d, Can't add_fact\n", __func__, __LINE__);
+    return false;
+  }
+
+  // "policyKey says quoteKey is-trusted-for-attestation
+  if (!already_proved->proved(1).has_subject()) {
+    printf("%s(), error, line: %d, Can't get quote key\n", __func__, __LINE__);
+    return false;
+  }
+  if (already_proved->proved(1).subject().entity_type() != "key") {
+    printf("%s(), error, line: %d, wrong entity type\n", __func__, __LINE__);
+    return false;
+  }
+  const key_message &expected_key = already_proved->proved(1).subject().key();
+  if (!get_signed_platform_claim_from_trusted_list(expected_key,
+                                                   trusted_platforms,
+                                                   &sc)) {
+    printf("%s(), error, line: %d, can't get platform key\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if (!add_fact_from_signed_claim(sc, already_proved)) {
+    printf("%s(), error, line: %d, can't add signed claim\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  return true;
+}
+
 bool add_new_facts_for_abbreviatedplatformattestation(
     key_message           &policy_pk,
     signed_claim_sequence &trusted_platforms,
@@ -2757,7 +2833,7 @@ bool construct_proof_from_tpm_evidence(key_message       &policy_pk,
   //       Key[rsa, quote-key, a5b18d344c05094a924066e5d564646dd0248fd2]
   //       is-trusted-for-attestation
   // 2. Key[rsa, quote-key, a5b18d344c05094a924066e5d564646dd0248fd2] says
-  //    Key[rsa, 8e4df585c4127476462b039d51a6d610782cca94] speaks-for
+  //      Key[rsa, 8e4df585c4127476462b039d51a6d610782cca94] speaks-for
   //      Measurement[66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925]
   // 3.  policy-key says
   //       Measurement[000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f]
@@ -2892,6 +2968,13 @@ bool construct_proof_from_request(const string          &evidence_descriptor,
       return false;
     }
   } else if (evidence_descriptor == "tpm-evidence") {
+    if (!add_new_facts_for_tpm_attestation(policy_pk,
+                                           trusted_platforms,
+                                           trusted_measurements,
+                                           already_proved)) {
+      printf("%s(), error, line: %d, failed\n", __func__, __LINE__);
+      return false;
+    }
     if (!construct_proof_from_tpm_evidence(policy_pk,
                                            purpose,
                                            already_proved,
@@ -2994,6 +3077,9 @@ bool construct_proof_from_request(const string          &evidence_descriptor,
                                              to_prove,
                                              pf);
   } else {
+    printf("%s(), error, line: %d, unknown evidence type\n",
+           __func__,
+           __LINE__);
     return false;
   }
 

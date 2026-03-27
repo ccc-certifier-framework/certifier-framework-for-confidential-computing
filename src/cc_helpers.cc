@@ -47,9 +47,7 @@
 #  include "sev_support.h"
 #endif  // SEV_SNP
 
-#ifdef TPM
-#  include "tpm2_support.h"
-#endif
+#include "tpm2_support.h"
 
 using namespace certifier::framework;
 using namespace certifier::utilities;
@@ -68,6 +66,17 @@ extern string serialized_vcek_cert;
 #if OE_CERTIFIER
 extern bool   oe_Init(const string &pem_cert_chain_file);
 extern string pem_cert_chain;
+#endif
+
+#if TPM_CERTIFIER
+bool          tpm_Init(const string &device_name,
+                       const string &endorsement_cert_file_name,
+                       const string &seal_hierarchy_file_name,
+                       const string &quote_hierarchy_file_name,
+                       int           num_pcrs,
+                       byte_t       *pcrs);
+bool   g_tpm_plat_certs_initialized;
+string g_serialized_quote_cert;
 #endif
 
 #ifdef GRAMINE_CERTIFIER
@@ -846,6 +855,44 @@ bool certifier::framework::cc_trust_manager::certify(
 }
 #endif  // NEW_API
 
+bool certifier::framework::cc_trust_manager::initialize_tpm_enclave(
+    const string &device_name,
+    const string &endorsement_cert_file_name,
+    const string &seal_hierarchy_file_name,
+    const string &quote_hierarchy_file_name,
+    int           num_pcrs,
+    byte         *pcrs) {
+
+#ifdef TPM_CERTIFIER
+#  ifdef OLD_API
+  if (!cc_policy_info_initialized_) {
+    printf("%s() error, line %d, Policy key must be initialized first\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+#  endif
+
+  if (enclave_type_ != "tpm-enclave") {
+    printf("%s() error, line %d, Not a tpm enclave\n", __func__, __LINE__);
+    return false;
+  }
+  if (!tpm_Init(device_name,
+                endorsement_cert_file_name,
+                seal_hierarchy_file_name,
+                quote_hierarchy_file_name,
+                num_pcrs,
+                pcrs)) {
+    printf("%s() error, line %d, Can't init tpm-enclave\n", __func__, __LINE__);
+    return false;
+  }
+  cc_provider_provisioned_ = true;
+  return true;
+#else
+  return false;
+#endif
+}
+
 bool certifier::framework::cc_trust_manager::initialize_application_enclave(
     const string &parent_enclave_type,
     int           in_fd,
@@ -931,33 +978,6 @@ bool certifier::framework::cc_trust_manager::initialize_sev_enclave(
 #ifdef SEV_SNP
   if (!sev_Init(ark_der, ask_der, vcek_der)) {
     printf("%s() error, line %d, sev_Init failed\n", __func__, __LINE__);
-    return false;
-  }
-
-  cc_provider_provisioned_ = true;
-  return true;
-#else
-  return false;
-#endif
-}
-
-bool certifier::framework::cc_trust_manager::initialize_tpm_enclave(
-    const string &device_name,
-    const string &endorsement_cert_file_name,
-    const string &seal_hierarchy_file_name,
-    const string &quote_hierarchy_file_name,
-    int           num_pcrs,
-    byte         *pcrs) {
-
-#ifdef TPM
-  if (!tpm_Init(device_name,
-                endorsement_cert_file_name,
-                seal_hierarchy_file_name,
-                quote_hierarchy_file_name,
-                num_pcrs,
-                pcrs)) {
-
-    printf("%s() error, line %d, tpm_Init failed\n", __func__, __LINE__);
     return false;
   }
 
@@ -2303,9 +2323,30 @@ bool certifier::framework::certifiers::certify_domain(const string &purpose) {
     ev->set_evidence_type("cert");
     ev->set_serialized_evidence(serialized_vcek_cert);
 #endif
-#ifdef TPM
+#ifdef TPM_CERTIFIER
   } else if (owner_->enclave_type_ == "tpm-enclave") {
-    // Todo: Add quote cert chain: TODO
+    if (!g_tpm_plat_certs_initialized) {
+      printf("%s() error, line: %d, sev certs not initialized\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+    evidence *ev = platform_evidence.add_assertion();
+    if (ev == nullptr) {
+      printf("%s() error, line: %d, Can't add to platform evidence\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+    ev->set_evidence_type("cert");
+    ev->set_serialized_evidence(g_serialized_quote_cert);
+    ev = platform_evidence.add_assertion();
+    if (ev == nullptr) {
+      printf("%s() error, line: %d, Can't add to platform evidence\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
 #endif
 #ifdef OE_CERTIFIER
   } else if (owner_->enclave_type_ == "oe-enclave") {

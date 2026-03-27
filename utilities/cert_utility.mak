@@ -83,9 +83,13 @@ dobj =	$(O)/cert_utility.o $(common_objs)
 key_dobj = $(O)/key_utility.o $(common_objs)
 combine_dobj = $(O)/combine_policy_certs.o $(common_objs)
 mobj = $(O)/measurement_init.o $(common_objs)
+
+ifdef TPM_CERTIFIER
 tpm_obj = $(O)/tpm2.pb.o $(O)/tpm2_lib.o $(O)/openssl_help.o \
         $(O)/convert.o $(O)/tpm2_support.o
-
+dobj += tpm_obj
+key_dobj += tpm_obj
+endif
 
 all:	cert_utility.exe measurement_init.exe key_utility.exe combine_policy_certs.exe
 clean:
@@ -94,21 +98,21 @@ clean:
 	@echo "removing executable file"
 	rm -rf $(EXE_DIR)/cert_utility.exe
 
-cert_utility.exe: $(dobj) $(tpm_obj)
+cert_utility.exe: $(dobj)
 	@echo "\nlinking executable $@"
-	$(LINK) $(dobj) $(tpm_obj) $(LDFLAGS) -o $(EXE_DIR)/$@
+	$(LINK) $(dobj) $(LDFLAGS) -o $(EXE_DIR)/$@
 
-key_utility.exe: $(key_dobj) $(tpm_obj)
+key_utility.exe: $(key_dobj)
 	@echo "\nlinking executable $@"
-	$(LINK) $(key_dobj) $(tpm_obj) $(LDFLAGS) -o $(EXE_DIR)/$@
+	$(LINK) $(key_dobj) $(LDFLAGS) -o $(EXE_DIR)/$@
 
-measurement_init.exe: $(mobj) $(tpm_obj)
+measurement_init.exe: $(mobj)
 	@echo "\nlinking executable $@"
-	$(LINK) $(mobj) $(tpm_obj) $(LDFLAGS) -o $(EXE_DIR)/$@
+	$(LINK) $(mobj) $(LDFLAGS) -o $(EXE_DIR)/$@
 
-combine_policy_certs.exe: $(combine_dobj) $(tpm_obj)
+combine_policy_certs.exe: $(combine_dobj)
 	@echo "\nlinking executable $@"
-	$(LINK) $(combine_dobj) $(tpm_obj) $(LDFLAGS) -o $(EXE_DIR)/$@
+	$(LINK) $(combine_dobj) $(LDFLAGS) -o $(EXE_DIR)/$@
 
 $(O)/combine_policy_certs.o: $(US)/combine_policy_certs.cc
 	@echo "\ncompiling $<"

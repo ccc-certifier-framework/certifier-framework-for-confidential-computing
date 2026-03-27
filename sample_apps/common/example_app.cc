@@ -73,6 +73,20 @@ DEFINE_string(vcek_cert_file, "vcek_cert.der", "vcek cert file name");
 // For Gramine enclave
 DEFINE_string(gramine_cert_file, "sgx.cert.der", "certificate file name");
 
+// For TPM enclave
+DEFINE_int32(pcr_num, -1, "integer parameter");
+DEFINE_string(tpm_device, "/dev/tpm0", "tpm device");
+DEFINE_string(seal_hierearchy_name,
+              "seal_hierarchy.bin",
+              "seal hierarch save file name");
+DEFINE_string(quote_hierearchy_name,
+              "quote_hierarchy.bin",
+              "quote hierarch save file name");
+DEFINE_string(ek_cert_file_name, "ek-rsa2048.crt", "tpm cert file name");
+DEFINE_int32(num_pcrs, 1, "number of pcrs");
+// for fake init
+DEFINE_string(policy_key_file, "policy_key_file.bin", "policy key file");
+
 // ----------------------------------------------------------------------
 // Fetch parameters for enclave initialization
 
@@ -556,6 +570,20 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
+#  ifdef FIRST_PASS_ON
+  } else if (FLAGS_operation == "first-pass") {
+#    ifdef DEBUG3
+    printf("\nfirst-pass\n");
+#    endif  // DEBUG3
+    // first pass is an optional initial pass procedure
+    extern bool first_pass(
+		    const string& policy_key_file_name,
+		    const string& tpm_device,
+		    const string& seal_hierearchy_name,
+		    const string& quote_hierearchy_name,
+		    int num_pcrs,
+		    byte* pcrs);
+#  endif
   } else {
     printf("%s() error, line %d, Unknown operation\n", __func__, __LINE__);
   }

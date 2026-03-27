@@ -75,7 +75,7 @@ endif
 endif
 
 ifdef TPM
-CFLAGS  += -D TPM
+CFLAGS  += -D TPM_CERTIFIER
 endif
 
 CFLAGS_PIC =
