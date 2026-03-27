@@ -42,7 +42,7 @@ CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
 S= $(SRC_DIR)
 O= $(OBJ_DIR)
 I= $(INC_DIR)
-INCLUDE= -I$(INC_DIR) -I/usr/local/opt/openssl@1.1/include/ -I$(CERT_SRC)/sev-snp/
+INCLUDE= -I$(INC_DIR) -I/usr/local/opt/openssl@1.1/include/ -I$(CERT_SRC)/sev-snp/ -I$(S)/tpm2
 SE = $(CERT_SRC)/simulated-enclave
 AE=$(CERT_SRC)/application-enclave
 

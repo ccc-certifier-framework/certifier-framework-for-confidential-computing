@@ -42,20 +42,21 @@ CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
 S= $(SRC_DIR)
 O= $(OBJ_DIR)
 I= $(INC_DIR)
+T=$(SRC_DIR)/tpm2
 US= .
 SE = $(S)/simulated-enclave
 AE=$(S)/application-enclave
-INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/
+INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/ -I$(S)/tpm2/
 
 # Compilation of protobuf files could run into some errors, so avoid using
 # -Werror for those targets
 #For MAC, -D MACOS should be included
 ifndef NEWPROTOBUF
-CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
-CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations -Wno-error=strict-aliasing
+CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations  -Wno-error=strict-aliasing
 else
-CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
-CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations  -Wno-error=strict-aliasing
+CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations  -Wno-error=strict-aliasing
 endif
 CFLAGS = $(CFLAGS_NOERROR) -Werror
 
@@ -82,6 +83,8 @@ dobj =	$(O)/cert_utility.o $(common_objs)
 key_dobj = $(O)/key_utility.o $(common_objs)
 combine_dobj = $(O)/combine_policy_certs.o $(common_objs)
 mobj = $(O)/measurement_init.o $(common_objs)
+tpm_obj = $(O)/tpm2.pb.o $(O)/tpm2_lib.o $(O)/openssl_help.o \
+        $(O)/convert.o $(O)/tpm2_support.o
 
 
 all:	cert_utility.exe measurement_init.exe key_utility.exe combine_policy_certs.exe
@@ -91,21 +94,21 @@ clean:
 	@echo "removing executable file"
 	rm -rf $(EXE_DIR)/cert_utility.exe
 
-cert_utility.exe: $(dobj) 
+cert_utility.exe: $(dobj) $(tpm_obj)
 	@echo "\nlinking executable $@"
-	$(LINK) $(dobj) $(LDFLAGS) -o $(EXE_DIR)/$@
+	$(LINK) $(dobj) $(tpm_obj) $(LDFLAGS) -o $(EXE_DIR)/$@
 
-key_utility.exe: $(key_dobj)
+key_utility.exe: $(key_dobj) $(tpm_obj)
 	@echo "\nlinking executable $@"
-	$(LINK) $(key_dobj) $(LDFLAGS) -o $(EXE_DIR)/$@
+	$(LINK) $(key_dobj) $(tpm_obj) $(LDFLAGS) -o $(EXE_DIR)/$@
 
-measurement_init.exe: $(mobj)
+measurement_init.exe: $(mobj) $(tpm_obj)
 	@echo "\nlinking executable $@"
-	$(LINK) $(mobj) $(LDFLAGS) -o $(EXE_DIR)/$@
+	$(LINK) $(mobj) $(tpm_obj) $(LDFLAGS) -o $(EXE_DIR)/$@
 
-combine_policy_certs.exe: $(combine_dobj) 
+combine_policy_certs.exe: $(combine_dobj) $(tpm_obj)
 	@echo "\nlinking executable $@"
-	$(LINK) $(combine_dobj) $(LDFLAGS) -o $(EXE_DIR)/$@
+	$(LINK) $(combine_dobj) $(tpm_obj) $(LDFLAGS) -o $(EXE_DIR)/$@
 
 $(O)/combine_policy_certs.o: $(US)/combine_policy_certs.cc
 	@echo "\ncompiling $<"
@@ -151,3 +154,28 @@ $(O)/simulated_enclave.o: $(SE)/simulated_enclave.cc $(I)/simulated_enclave.h
 $(O)/application_enclave.o: $(AE)/application_enclave.cc $(I)/application_enclave.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(T)/tpm2.pb.cc $(T)/tpm2.pb.h: $(T)/tpm2.proto
+	@echo "creating protobuf files"
+	$(PROTO) -I=$(T) --cpp_out=$(T) $(T)/tpm2.proto
+
+$(O)/tpm2_lib.o: $(T)/tpm2_lib.cc
+	@echo "compiling tpm2_lib.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/tpm2_lib.o $(T)/tpm2_lib.cc
+
+$(O)/convert.o: $(T)/convert.cc
+	@echo "compiling convert.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/convert.o $(T)/convert.cc
+
+$(O)/openssl_help.o: $(T)/openssl_help.cc
+	@echo "compiling openssl_help.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/openssl_help.o $(T)/openssl_help.cc
+
+$(O)/tpm2_support.o: $(T)/tpm2_support.cc $(T)/certifier.pb.cc $(T)/tpm2.pb.cc
+	@echo "compiling tpm2_support.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/tpm2_support.o $(T)/tpm2_support.cc
+
+$(O)/tpm2.pb.o: $(T)/tpm2.pb.cc $(T)/tpm2.pb.h
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+

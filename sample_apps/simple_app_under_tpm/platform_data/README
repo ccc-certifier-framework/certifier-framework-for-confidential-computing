@@ -1,0 +1,14 @@
+
+This dir is provided to place the following platform-specific files
+needed to build-and-test the simple_app_under_sev sample program:
+
+ - sev_policy.json : SEV-policy file along with platform's measurement
+ - Certificates:
+    - ask_cert.der
+    - ark_cert.der
+    - vcek_cert.der
+
+NOTE: The run_example.sh script expects that these 4 files will be
+      provided in this directory. It copies them over to the
+      appropriate location under simple_app_under_sev/ while testing
+      the program.

@@ -1,0 +1,156 @@
+#
+# Helpful script to run example
+#
+# export GOROOT=/usr/local/go
+# export PATH=$PATH:$GOROOT/bin
+# export GO111MODULE=off
+export GOPATH=$HOME
+export CERTIFIER_PROTOTYPE=~/src/github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing
+export SEV_EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_apps/simple_app_under_sev
+
+# Create keys
+mkdir -p $SEV_EXAMPLE_DIR/provisioning
+cd $SEV_EXAMPLE_DIR/provisioning
+
+$CERTIFIER_PROTOTYPE/utilities/cert_utility.exe --operation=generate-policy-key \
+    --policy_key_output_file=policy_key_file.bin --policy_cert_output_file=policy_cert_file.bin
+
+# embed policy key and compile app
+cd $SEV_EXAMPLE_DIR/provisioning
+$CERTIFIER_PROTOTYPE/utilities/embed_policy_key.exe --input=policy_cert_file.bin --output=../policy_key.cc
+
+# make app and compute app measurement
+cd $SEV_EXAMPLE_DIR
+make -f sev_example_app.mak
+
+# or if you're running with the SEV simulator
+CFLAGS="-DSEV_DUMMY_GUEST" make -f sev_example_app.mak
+# If you're running with the simulator and you have not initialized
+# the sev keys or installed the device driver
+cd $CERTIFIER_PROTOTYPE/sev-snp-simulator
+make clean
+make
+make keys
+make insmod
+cd test
+make
+sudo ./sev-test
+
+# copy the der files
+
+# build policy
+cd $SEV_EXAMPLE_DIR/provisioning
+
+# For real sev
+$CERTIFIER_PROTOTYPE/utilities/measurement_init.exe --mrenclave=5c19d5b4a50066c8c991bd920dfa2276e11d3531c91434a734f3b258ab279cd1b3bbe89ef930236af11dc3d28c70f406 --out_file=sev_example_app.measurement
+
+# For simulated sev
+$CERTIFIER_PROTOTYPE/utilities/measurement_init.exe --mrenclave=010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708 --out_file=sev_example_app.measurement
+$CERTIFIER_PROTOTYPE/utilities/simulated_sev_key_generation.exe --ark_der=sev_ark_cert.der \
+  --ask_der=sev_ask_cert.der --vcek_der=sev_vcek_cert.der \
+  --vcek_key_file=/etc/certifier-snp-sim/ec-secp384r1-pub-key.pem
+mv ark_cert.der ark_cert.der.old
+mv ask_cert.der ask_cert.der.old
+mv vcek_cert.der vcek_cert.der.old
+mv sev_ark_cert.der ark_cert.der
+mv sev_ask_cert.der ask_cert.der
+mv sev_vcek_cert.der vcek_cert.der
+
+
+#ark key is trusted
+$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --cert-subject=ark_cert.der \
+  --verb="is-trusted-for-attestation" --output=ts1.bin
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
+  --verb="says" --clause=ts1.bin --output=vse_policy1.bin
+$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe \
+  --vse_file=vse_policy1.bin --duration=9000 \
+  --private_key_file=policy_key_file.bin --output=signed_claim_1.bin
+
+#measurement is-trusted
+$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
+  --measurement_subject=sev_example_app.measurement --verb="is-trusted" \
+  --output=ts2.bin
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
+  --verb="says" --clause=ts2.bin --output=vse_policy2.bin
+$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy2.bin \
+  --duration=9000 --private_key_file=policy_key_file.bin --output=signed_claim_2.bin
+
+#trusted platform
+$CERTIFIER_PROTOTYPE/utilities/make_property.exe --property_name=debug --property_type='string' comparator="=" \
+--string_value=no --output=property1.bin
+$CERTIFIER_PROTOTYPE/utilities/make_property.exe --property_name=migrate --property_type='string' comparator="=" \
+--string_value=no --output=property2.bin
+$CERTIFIER_PROTOTYPE/utilities/make_property.exe --property_name=smt --property_type='string' comparator="=" \
+--string_value=no --output=property5.bin
+$CERTIFIER_PROTOTYPE/utilities/make_property.exe --property_name='api-major' --property_type=int --comparator=">=" \
+--int_value=0 --output=property3.bin
+$CERTIFIER_PROTOTYPE/utilities/make_property.exe --property_name='api-minor' --property_type=int --comparator=">=" \
+--int_value=0 --output=property4.bin
+$CERTIFIER_PROTOTYPE/utilities/make_property.exe --property_name='tcb-version' --property_type=int --comparator="=" \
+--int_value=0x03000000000008115 --output=property6.bin
+$CERTIFIER_PROTOTYPE/utilities/combine_properties.exe \
+--in=property1.bin,property2.bin,property3.bin,property4.bin,property5.bin,property6.bin \
+--output=properties.bin
+
+$CERTIFIER_PROTOTYPE/utilities/make_platform.exe --platform_type=amd-sev-snp \
+--properties_file=properties.bin --output=platform.bin
+
+$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --platform_subject=platform.bin \
+--verb="has-trusted-platform-property" --output=ts3.bin
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
+--verb="says" --clause=ts3.bin --output=vse_policy3.bin
+$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy3.bin \
+  --duration=9000 --private_key_file=policy_key_file.bin --output=signed_claim_3.bin
+
+$CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1.bin,signed_claim_2.bin,signed_claim_3.bin\
+  --output=policy.bin
+
+$CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=policy.bin
+
+
+# provision service and apps
+cd $SEV_EXAMPLE_DIR
+mkdir -p app1_data app2_data
+mkdir -p service
+
+# provision service and apps
+cd $SEV_EXAMPLE_DIR/provisioning
+
+cp ./* $SEV_EXAMPLE_DIR/service
+cp ./* $SEV_EXAMPLE_DIR/app1_data
+cp ./* $SEV_EXAMPLE_DIR/app2_data
+
+#compile the server
+cd $CERTIFIER_PROTOTYPE/certifier_service
+go build simpleserver.go
+
+# For simulated sev, you must run the programs below as root
+
+#run server
+cd $SEV_EXAMPLE_DIR/service
+$CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
+      --policyFile=policy.bin --readPolicy=true
+
+# initialize client app
+cd $SEV_EXAMPLE_DIR
+$SEV_EXAMPLE_DIR/sev_example_app.exe --print_all=true \
+      --operation=cold-init --data_dir=./app1_data/ --policy_store_file=policy_store
+# get client app certified
+$SEV_EXAMPLE_DIR/sev_example_app.exe --print_all=true \
+      --operation=get-certified --data_dir=./app1_data/ --policy_store_file=policy_store
+
+# initialize server app
+$SEV_EXAMPLE_DIR/sev_example_app.exe --print_all=true \
+      --operation=cold-init --data_dir=./app2_data/ --policy_store_file=policy_store
+# get server app certified
+$SEV_EXAMPLE_DIR/sev_example_app.exe --print_all=true \
+      --operation=get-certified --data_dir=./app2_data/ --policy_store_file=policy_store
+
+#run the app
+cd $SEV_EXAMPLE_DIR
+$SEV_EXAMPLE_DIR/sev_example_app.exe --print_all=true --operation=run-app-as-server --data_dir=./app2_data/ \
+      --policy_store_file=policy_store
+cd $SEV_EXAMPLE_DIR
+$SEV_EXAMPLE_DIR/sev_example_app.exe --print_all=true --operation=run-app-as-client --data_dir=./app1_data/ \
+      --policy_store_file=policy_store
+
