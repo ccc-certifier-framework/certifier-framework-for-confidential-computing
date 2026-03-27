@@ -131,12 +131,6 @@ bool test_tpm(bool print_all) {
   }
   RSA_free(policy_r);
 
-  if (print_all) {
-    printf("\nQuote key:\n");
-    print_key(quote_public_key);
-    printf("\n");
-  }
-
   if (!construct_quote_key_cert(policy_key,
                                 quote_public_key,
                                 &fake_quote_cert)) {
@@ -162,12 +156,16 @@ bool test_tpm(bool print_all) {
     tpm_close();
     return false;
   }
-  private_auth_key.set_key_name("authKey");
+  private_auth_key.set_key_name("enclave-key");
   if (!private_key_to_public_key(private_auth_key, &public_auth_key)) {
     printf("%s, %d, private_key_to_public_key error\n", __func__, __LINE__);
     return false;
   }
   RSA_free(auth_r);
+
+  printf("tpm_test: generated enclave key:\n");
+  print_key(public_auth_key);
+  printf("\n");
 
   // time
   time_point t;
@@ -189,12 +187,6 @@ bool test_tpm(bool print_all) {
     return false;
   }
 
-#  ifdef DEBUG3
-  printf("Serialized to attest (%d): ", (int)serialized_user.size());
-  print_bytes((int)serialized_user.size(), (byte_t *)serialized_user.data());
-  printf("\n");
-#  endif
-
   if (!Attest(ud.enclave_type(),
               serialized_user.size(),
               (byte *)serialized_user.data(),
@@ -204,11 +196,6 @@ bool test_tpm(bool print_all) {
     tpm_close();
     return false;
   }
-
-#  ifdef DEBUG3
-  tpm_close();
-  return true;
-#  endif
 
   string serialized_tpm_msg;
   serialized_tpm_msg.assign((char *)out, size_out);
@@ -276,6 +263,7 @@ bool construct_tpm_platform_evidence(const string      &purpose,
 
   // Auth key
   key_message auth_key;
+  key_message auth_key_pk;
   RSA        *r = RSA_new();
   if (!generate_new_rsa_key(2048, r)) {
     printf("%s, %d, Can't generate rsa key\n", __func__, __LINE__);
@@ -288,14 +276,24 @@ bool construct_tpm_platform_evidence(const string      &purpose,
   }
   RSA_free(r);
 
+  auth_key.set_key_name("enclave-key");
+  if (!private_key_to_public_key(auth_key, &auth_key_pk)) {
+    printf("%s, %d, Can't convert public to private\n", __func__, __LINE__);
+    return false;
+  }
+
+  printf("Enclave key:\n");
+  print_key(auth_key_pk);
+  printf("\n");
+
   attestation_user_data ud;
   if (purpose == "authentication") {
-    if (!make_attestation_user_data(enclave_type, auth_key, &ud)) {
+    if (!make_attestation_user_data(enclave_type, auth_key_pk, &ud)) {
       printf("%s, %d, Can't make user data (1)\n", __func__, __LINE__);
       return false;
     }
   } else if (purpose == "attestation") {
-    if (!make_attestation_user_data(enclave_type, auth_key, &ud)) {
+    if (!make_attestation_user_data(enclave_type, auth_key_pk, &ud)) {
       printf("%s, %d, Can't make user data (1)\n", __func__, __LINE__);
       return false;
     }
@@ -420,10 +418,10 @@ bool test_tpm_platform_certify(const bool    debug_print,
     printf("\nPolicy key:\n");
     print_key(policy_key);
     printf("\n");
-    printf("\nPolicy key:\n");
+    printf("\nPublic policy key:\n");
     print_key(policy_pk);
     printf("\n");
-    printf("\nQuote key :\n");
+    printf("Quote key :\n");
     print_key(quote_key);
     printf("\n");
   }
@@ -554,6 +552,7 @@ bool test_tpm_platform_certify(const bool    debug_print,
   vse_clause *pc1 = are_proved.add_proved();
   pc1->CopyFrom(c2);
 
+#  if 0
   if (debug_print) {
     printf("proved statements before construct:\n");
     for (int i = 0; i < are_proved.proved_size(); i++) {
@@ -563,6 +562,7 @@ bool test_tpm_platform_certify(const bool    debug_print,
     }
     printf("\n");
   }
+#  endif
 
   if (!init_proved_statements(policy_pk, evp, &are_proved)) {
     printf("%s(), error, line: %d, init_proved_statements\n",
