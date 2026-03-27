@@ -335,8 +335,7 @@ bool construct_tpm_platform_evidence(const string      &purpose,
   return true;
 }
 
-bool policy_key_measurement_statement(const key_message& pk,
-                                      vse_clause* vc) {
+bool policy_key_measurement_statement(const key_message &pk, vse_clause *vc) {
 
   // make measurement statement
   int  size_measurement = 32;
@@ -550,17 +549,6 @@ bool test_tpm_platform_certify(const bool    debug_print,
     return false;
   }
 
-  vse_clause c2;
-  if (!policy_key_measurement_statement(policy_pk, &c2)) {
-    printf("%s(), error, line: %d, Can't make measurement statement\n",
-           __func__,
-           __LINE__);
-    tpm_close();
-    return false;
-  }
-  vse_clause *pc1 = are_proved.add_proved();
-  pc1->CopyFrom(c2);
-
 #  if 0
   if (debug_print) {
     printf("proved statements before construct:\n");
@@ -580,6 +568,17 @@ bool test_tpm_platform_certify(const bool    debug_print,
     tpm_close();
     return false;
   }
+
+  vse_clause c2;
+  if (!policy_key_measurement_statement(policy_pk, &c2)) {
+    printf("%s(), error, line: %d, Can't make measurement statement\n",
+           __func__,
+           __LINE__);
+    tpm_close();
+    return false;
+  }
+  vse_clause *pc1 = are_proved.add_proved();
+  pc1->CopyFrom(c2);
 
   if (debug_print) {
     printf("proved statements after construct:\n");

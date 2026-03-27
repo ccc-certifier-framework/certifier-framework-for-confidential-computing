@@ -2752,16 +2752,16 @@ bool construct_proof_from_tpm_evidence(key_message       &policy_pk,
                                        proof             *pf) {
 
   // At this point, the already_proved should be
-  //  Key[rsa, policyKey, e57ec0c47ca211f5d9aa73356509ff8631a8a53f] is-trusted
-  //  policy-key says
-  //    Measurement[000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f]
-  //    is-trusted
-  //  Key[rsa, policyKey, e57ec0c47ca211f5d9aa73356509ff8631a8a53f] says
-  //   Key[rsa, quote-key, a5b18d344c05094a924066e5d564646dd0248fd2]
-  //   is-trusted-for-attestation
-  //  Key[rsa, quote-key, a5b18d344c05094a924066e5d564646dd0248fd2] says
+  // 0. Key[rsa, policyKey, e57ec0c47ca211f5d9aa73356509ff8631a8a53f] is-trusted
+  // 1. Key[rsa, policyKey, e57ec0c47ca211f5d9aa73356509ff8631a8a53f] says
+  //       Key[rsa, quote-key, a5b18d344c05094a924066e5d564646dd0248fd2]
+  //       is-trusted-for-attestation
+  // 2. Key[rsa, quote-key, a5b18d344c05094a924066e5d564646dd0248fd2] says
   //    Key[rsa, 8e4df585c4127476462b039d51a6d610782cca94] speaks-for
   //      Measurement[66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925]
+  // 3.  policy-key says
+  //       Measurement[000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f]
+  //        is-trusted
 
   if (already_proved->proved_size() != 4) {
     printf("%s() error, line %d, construct_proof_from_tpm_evidence error\n",
@@ -2771,19 +2771,17 @@ bool construct_proof_from_tpm_evidence(key_message       &policy_pk,
   }
 
   string it("is-trusted-for-authentication");
-  if (!already_proved->proved(3).has_clause()
-      || !already_proved->proved(3).clause().has_subject()) {
+  if (!already_proved->proved(1).has_clause()
+      || !already_proved->proved(1).clause().has_subject()) {
     printf("%s() error, line %d, construct_proof_from_tpm_evidence error\n",
            __func__,
            __LINE__);
     return false;
   }
   const entity_message &enclave_key =
-      already_proved->proved(3).clause().subject();
+      already_proved->proved(1).clause().subject();
   if (!make_unary_vse_clause(enclave_key, it, to_prove)) {
-    printf("%s() error, line %d, construct_proof_from_tpm_evidence error\n",
-           __func__,
-           __LINE__);
+    printf("%s() error, line %d, error\n", __func__, __LINE__);
     return false;
   }
 
@@ -2792,15 +2790,15 @@ bool construct_proof_from_tpm_evidence(key_message       &policy_pk,
   // Step 1
   //   "policyKey is-trusted" AND "policyKey says measurement is-trusted" -->
   //   "measurement is-trusted"
-  if (!already_proved->proved(1).has_clause()) {
+  if (!already_proved->proved(3).has_clause()) {
     printf("%s() error, line %d, error\n", __func__, __LINE__);
     return false;
   }
   const vse_clause &policy_key_is_trusted = already_proved->proved(0);
   ps = pf->add_steps();
   ps->mutable_s1()->CopyFrom(policy_key_is_trusted);
-  ps->mutable_s2()->CopyFrom(already_proved->proved(1));
-  ps->mutable_conclusion()->CopyFrom(already_proved->proved(1).clause());
+  ps->mutable_s2()->CopyFrom(already_proved->proved(3));
+  ps->mutable_conclusion()->CopyFrom(already_proved->proved(3).clause());
   ps->set_rule_applied(3);
 
   const vse_clause &measurement_is_trusted = ps->conclusion();
@@ -2809,15 +2807,15 @@ bool construct_proof_from_tpm_evidence(key_message       &policy_pk,
   //   "policy-key is-trusted" AND
   //   "policy-key says quoteKey is-trusted-for-attestation"
   //    --> "quote-key is-trusted-for-attestation"
-  if (!already_proved->proved(2).has_clause()) {
+  if (!already_proved->proved(1).has_clause()) {
     printf("%s() error, line %d, error\n", __func__, __LINE__);
     return false;
   }
   ps = pf->add_steps();
   ps->mutable_s1()->CopyFrom(policy_key_is_trusted);
-  ps->mutable_s2()->CopyFrom(already_proved->proved(2));
+  ps->mutable_s2()->CopyFrom(already_proved->proved(1));
   const vse_clause &quote_key_is_trusted_for_attestation =
-      already_proved->proved(2).clause();
+      already_proved->proved(1).clause();
   ps->mutable_conclusion()->CopyFrom(quote_key_is_trusted_for_attestation);
   ps->set_rule_applied(6);
 
@@ -2834,9 +2832,13 @@ bool construct_proof_from_tpm_evidence(key_message       &policy_pk,
   }
 
   const vse_clause &quote_key_says_enclave_key_speaks_for_measurement =
-      already_proved->proved(3);
+      already_proved->proved(2);
+  if (!already_proved->proved(2).has_clause()) {
+    printf("%s() error, line %d, error\n", __func__, __LINE__);
+    return false;
+  }
   const vse_clause &enclave_key_speaks_for_measurement =
-      already_proved->proved(3).clause();
+      already_proved->proved(2).clause();
   ps = pf->add_steps();
   ps->mutable_s1()->CopyFrom(quote_key_is_trusted_for_attestation);
   ps->mutable_s2()->CopyFrom(quote_key_says_enclave_key_speaks_for_measurement);
