@@ -154,13 +154,13 @@ $CERTIFIER_PROTOTYPE/utilities/embed_policy_key.exe     \
 ```shell
 cd $EXAMPLE_DIR
 
-make -f tpm_example_app.mak clean
-make -f tpm_example_app.mak
+make -f tpm_example_app_new_api.mak clean
+make -f tpm_example_app_new_api.mak
 ```
 
 NOTE: If you are running in a TPM-simulated environment, do:
 ```shell
-CFLAGS='-DTPM_DUMMY_GUEST' make -f tpm_example_app.mak
+CFLAGS='-DTPM' make -f tpm_example_app.mak
 ```
 ## Step 6: Obtain the measurement of the trusted application for this security domain
 
@@ -173,22 +173,6 @@ $CERTIFIER_PROTOTYPE/utilities/measurement_init.exe   \
 ```
 Replace <HASH> with your actual measurement from `tpm-snp-measure`.
 
-If you are using the [tpm-snp-simulator](./../../INSTALL.md), use:
-
-```
-010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708
-```
-
-We are switching tools to calculate the tpm measurements off-line to virtee. 
-You can download the tool from https://github.com/virtee/tpm-snp-measure.
-Future versions of the Framework will use virtee measurements as a default.
-Instructions for use are straightforward.  With virtee,important additional
-properties can also become part of the measurement (and hence verified during
-an attestation.  Among the most important are those that use the following flags:
-  --ovmf PATH           OVMF file to calculate hash from
-  --kernel PATH         Kernel file to calculate hash from
-  --initrd PATH         Initrd file to calculate hash from (use with --kernel)
-  --append CMDLINE      Kernel command line to calculate hash from (use with --kernel)
 
 ## Author the policy for the security domain and produce the signed claims the apps need
 

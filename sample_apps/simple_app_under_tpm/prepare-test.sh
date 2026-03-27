@@ -194,11 +194,6 @@ function do-make-keys() {
       --policy_authority_name=$authorityName   \
       --policy_key_output_file=$POLICY_KEY_FILE_NAME  \
       --policy_cert_output_file=$POLICY_CERT_FILE_NAME \
-
-    $CERTIFIER_ROOT/utilities/simulated_sev_key_generation.exe  \
-         --ark_der=ark_cert.der --ask_der=ask_cert.der \
-         --vcek_der=vcek_cert.der  \
-         --vcek_key_file=/etc/certifier-snp-sim/ec-secp384r1-pub-key.pem
   popd
 
   echo "do-make-keys done"
@@ -258,93 +253,41 @@ function do-make-policy() {
       popd
     fi
 
-    $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe    \
-        --cert-subject=ark_cert.der --verb="is-trusted-for-attestation"  \
-        --output=ts1.bin
-    $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
-      --key_subject=$POLICY_KEY_FILE_NAME --verb="says" \
-      --clause=ts1.bin --output=vse_policy1.bin
+    #$CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe    \
+        #--cert-subject=ark_cert.der --verb="is-trusted-for-attestation"  \
+        #--output=ts1.bin
+    #$CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
+      #--key_subject=$POLICY_KEY_FILE_NAME --verb="says" \
+      #--clause=ts1.bin --output=vse_policy1.bin
 
-    $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
-      --key_subject="" --measurement_subject="sev-example-app.measurement" \
-      --verb="is-trusted" --output=ts2.bin
-    $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
-      --key_subject=$POLICY_KEY_FILE_NAME --verb="says" \
-      --clause=ts2.bin --output=vse_policy2.bin
+    #$CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
+      #--key_subject="" --measurement_subject="sev-example-app.measurement" \
+      #--verb="is-trusted" --output=ts2.bin
+    #$CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
+      #--key_subject=$POLICY_KEY_FILE_NAME --verb="says" \
+      #--clause=ts2.bin --output=vse_policy2.bin
 
-    $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
-      --vse_file=vse_policy1.bin --duration=9000 --private_key_file=$POLICY_KEY_FILE_NAME \
-      --output=signed_claim_1.bin
-    $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
-      --vse_file=vse_policy2.bin  --duration=9000  \
-      --private_key_file=$POLICY_KEY_FILE_NAME --output=signed_claim_2.bin
+    #$CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
+      #--vse_file=vse_policy1.bin --duration=9000 --private_key_file=$POLICY_KEY_FILE_NAME \
+      #--output=signed_claim_1.bin
+    #$CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
+      #--vse_file=vse_policy2.bin  --duration=9000  \
+      #--private_key_file=$POLICY_KEY_FILE_NAME --output=signed_claim_2.bin
 
-    $CERTIFIER_ROOT/utilities/make_property.exe    \
-        --property_name=debug                       \
-        --property_type='string' comparator="="     \
-        --string_value=no                           \
-        --output=property1.bin
+    #$CERTIFIER_ROOT/utilities/combine_properties.exe   \
+      #--in=property1.bin,property2.bin,property3.bin,property4.bin,property5.bin,property6.bin \
+      #--output=properties.bin
 
-    $CERTIFIER_ROOT/utilities/make_property.exe    \
-        --property_name=migrate                     \
-        --property_type='string' comparator="="     \
-        --string_value=no                           \
-        --output=property2.bin
+    #$CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe    \
+        #--vse_file=vse_policy3.bin                                      \
+        #--duration=9000                                                 \
+        #--private_key_file=$POLICY_KEY_FILE_NAME \
+        #--output=signed_claim_3.bin
 
-    $CERTIFIER_ROOT/utilities/make_property.exe    \
-        --property_name=smt                         \
-        --property_type='string' comparator="="     \
-        --string_value=no                           \
-        --output=property5.bin
-    $CERTIFIER_ROOT/utilities/make_property.exe    \
-        --property_name='api-major'                 \
-        --property_type=int                         \
-        --comparator=">="                           \
-        --int_value=0                               \
-        --output=property3.bin
-
-    $CERTIFIER_ROOT/utilities/make_property.exe    \
-        --property_name='api-minor'                 \
-        --property_type=int                         \
-        --comparator=">="                           \
-        --int_value=0                               \
-        --output=property4.bin
-
-    $CERTIFIER_ROOT/utilities/make_property.exe    \
-        --property_name='tcb-version'               \
-        --property_type=int                         \
-        --comparator="="                            \
-        --int_value=0x03000000000008115             \
-        --output=property6.bin
-
-    $CERTIFIER_ROOT/utilities/combine_properties.exe   \
-      --in=property1.bin,property2.bin,property3.bin,property4.bin,property5.bin,property6.bin \
-      --output=properties.bin
-
-    $CERTIFIER_ROOT/utilities/make_platform.exe    \
-        --platform_type=amd-sev-snp                 \
-        --properties_file=properties.bin            \
-        --output=platform.bin
-
-    $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe    \
-        --platform_subject=platform.bin                     \
-        --verb="has-trusted-platform-property"              \
-        --output=ts3.bin
-    $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe     \
-        --key_subject=$POLICY_KEY_FILE_NAME \
-        --verb="says"                                           \
-        --clause=ts3.bin                                        \
-        --output=vse_policy3.bin
-    $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe    \
-        --vse_file=vse_policy3.bin                                      \
-        --duration=9000                                                 \
-        --private_key_file=$POLICY_KEY_FILE_NAME \
-        --output=signed_claim_3.bin
-
-    $CERTIFIER_ROOT/utilities/package_claims.exe                           \
-        --input=signed_claim_1.bin,signed_claim_2.bin,signed_claim_3.bin    \
-        --output=policy.bin
-    $CERTIFIER_ROOT/utilities/print_packaged_claims.exe --input=policy.bin
+    #$CERTIFIER_ROOT/utilities/package_claims.exe                           \
+        #--input=signed_claim_1.bin,signed_claim_2.bin,signed_claim_3.bin    \
+        #--output=policy.bin
+    #$CERTIFIER_ROOT/utilities/print_packaged_claims.exe --input=policy.bin
   popd
 
   echo " "
