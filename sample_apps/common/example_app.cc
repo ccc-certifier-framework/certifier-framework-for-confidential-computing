@@ -576,13 +576,12 @@ int main(int an, char **av) {
     printf("\nfirst-pass\n");
 #    endif  // DEBUG3
     // first pass is an optional initial pass procedure
-    extern bool first_pass(
-		    const string& policy_key_file_name,
-		    const string& tpm_device,
-		    const string& seal_hierearchy_name,
-		    const string& quote_hierearchy_name,
-		    int num_pcrs,
-		    byte* pcrs);
+    extern bool first_pass(const string &policy_key_file_name,
+                           const string &tpm_device,
+                           const string &seal_hierearchy_name,
+                           const string &quote_hierearchy_name,
+                           int           num_pcrs,
+                           byte         *pcrs);
 #  endif
   } else {
     printf("%s() error, line %d, Unknown operation\n", __func__, __LINE__);

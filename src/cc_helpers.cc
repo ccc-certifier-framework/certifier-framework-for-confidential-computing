@@ -69,12 +69,12 @@ extern string pem_cert_chain;
 #endif
 
 #if TPM_CERTIFIER
-bool          tpm_Init(const string &device_name,
-                       const string &endorsement_cert_file_name,
-                       const string &seal_hierarchy_file_name,
-                       const string &quote_hierarchy_file_name,
-                       int           num_pcrs,
-                       byte_t       *pcrs);
+bool   tpm_Init(const string &device_name,
+                const string &endorsement_cert_file_name,
+                const string &seal_hierarchy_file_name,
+                const string &quote_hierarchy_file_name,
+                int           num_pcrs,
+                byte_t       *pcrs);
 bool   g_tpm_plat_certs_initialized;
 string g_serialized_quote_cert;
 #endif
