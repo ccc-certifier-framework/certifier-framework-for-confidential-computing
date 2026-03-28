@@ -27,12 +27,13 @@ using namespace certifier::utilities;
 
 bool first_pass(const string &policy_key_file_name,
                 const string &tpm_device,
-                const string &seal_hierearchy_name,
-                const string &quote_hierearchy_name,
+                const string &seal_hierarchy_file_name,
+                const string &quote_hierarchy_file_name,
                 int           num_pcrs,
                 byte         *pcrs) {
 
-  if (!tpm_Init(device_name,
+  string endorsement_cert_file_name;
+  if (!tpm_Init(tpm_device,
                 endorsement_cert_file_name,
                 seal_hierarchy_file_name,
                 quote_hierarchy_file_name,
@@ -46,11 +47,11 @@ bool first_pass(const string &policy_key_file_name,
   key_message policy_key;
   key_message policy_pk;
   string      policy_key_str;
-  if (!read_file_into_string(policy_key_file, &policy_key_str)) {
+  if (!read_file_into_string(policy_key_file_name, &policy_key_str)) {
     printf("%s() error, line: %d, Can't read policy key %s\n",
            __func__,
            __LINE__,
-           policy_key_file.c_str());
+           policy_key_file_name.c_str());
     tpm_close();
     return false;
   }
@@ -70,8 +71,6 @@ bool first_pass(const string &policy_key_file_name,
   }
 
   // get quote key
-  // sign it and save it
-  string serialized_quote_cert;
   // Make quote cert
   key_message quote_key;
   string      quote_key_str;
@@ -210,30 +209,32 @@ bool first_pass(const string &policy_key_file_name,
   string             signer;
   TPML_PCR_SELECTION pcrSelect;
   string             pcr_digest;
-  int                num_pcrs = 10;
-  byte_t             pcrs[num_pcrs];
+  int                new_num_pcrs = 10;
+  byte_t             new_pcrs[num_pcrs];
 
   if (!decode_quoted((int)att.the_quote().size(),
                      (byte_t *)att.the_quote().data(),
-                     &magic,          
-                     &type,           
+                     &magic,
+                     &type,
                      &signer,
                      &extra_data,
                      &pcrSelect,
-                     &pcr_digest) {
+                     &pcr_digest)) {
     printf("%s, %d, decode_quoted failed\n", __func__, __LINE__);
     tpm_close();
     return false;
   }
 
-  if (!get_pcr_from_select(&pcrSelect, &num_pcrs, pcrs)) {
+  if (!get_pcr_from_select(&pcrSelect, &new_num_pcrs, new_pcrs)) {
     printf("%s, %d, get_pcr_from_select failed\n", __func__, __LINE__);
     tpm_close();
     return false;
   }
 
   measurement_value mv;
-  mv.registers(pcrs, num_pcrs);
+  string            conf;
+  conf.assign((char *)new_pcrs, new_num_pcrs);
+  mv.set_registers(conf);
   mv.set_the_measurement(pcr_digest);
   string mv_str;
   if (!mv.SerializeToString(&mv_str)) {
@@ -250,7 +251,8 @@ bool first_pass(const string &policy_key_file_name,
     printf("%d ", pcrs[i]);
   printf("\n");
   printf("Digest: ");
-  print_bytes(mv.the_measurement().size(), (byte_t*)mv.the_measurement().data());
+  print_bytes(mv.the_measurement().size(),
+              (byte_t *)mv.the_measurement().data());
   printf("\n");
 #endif
 

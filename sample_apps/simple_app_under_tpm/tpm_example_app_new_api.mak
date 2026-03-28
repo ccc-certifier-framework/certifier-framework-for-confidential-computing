@@ -80,7 +80,7 @@ dobj = $(O)/tpm_example_app.o $(O)/certifier.pb.o $(O)/certifier.o \
        $(O)/simulated_enclave.o  $(O)/cc_helpers.o $(O)/cc_useful.o
 tpm_obj = $(O)/tpm2.pb.o $(O)/tpm2_lib.o $(O)/openssl_help.o \
         $(O)/convert.o $(O)/tpm2_support.o $(O)/first_pass.o
-dobj += tpm_obj
+dobj += $(tpm_obj)
 
 all:	tpm_example_app.exe
 clean:
@@ -140,27 +140,27 @@ $(O)/first_pass.o: $(EXAMPLE_DIR)/first_pass.cc
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
-$(O)/tpm2_lib.o: $(S)/tpm2_lib.cc
+$(O)/tpm2_lib.o: $(T)/tpm2_lib.cc
 	@echo "compiling tpm2_lib.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/tpm2_lib.o $(S)/tpm2_lib.cc
+	$(CC) $(CFLAGS) -c -o $(O)/tpm2_lib.o $(T)/tpm2_lib.cc
 
-$(S)/tpm2.pb.cc $(S)/tpm2.pb.h: $(S)/tpm2.proto
+$(T)/tpm2.pb.cc $(T)/tpm2.pb.h: $(T)/tpm2.proto
 	@echo "creating protobuf files"
-	$(PROTO) -I=$(S) --cpp_out=$(S) $(S)/tpm2.proto
+	$(PROTO) -I=$(T) --cpp_out=$(T) $(T)/tpm2.proto
 
-$(O)/convert.o: $(S)/convert.cc
+$(O)/convert.o: $(T)/convert.cc
 	@echo "compiling convert.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/convert.o $(S)/convert.cc
+	$(CC) $(CFLAGS) -c -o $(O)/convert.o $(T)/convert.cc
 
-$(O)/openssl_help.o: $(S)/openssl_help.cc
+$(O)/openssl_help.o: $(T)/openssl_help.cc
 	@echo "compiling openssl_help.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/openssl_help.o $(S)/openssl_help.cc
+	$(CC) $(CFLAGS) -c -o $(O)/openssl_help.o $(T)/openssl_help.cc
 
-$(O)/tpm2_support.o: $(S)/tpm2_support.cc $(S)/certifier.pb.cc $(S)/tpm2.pb.cc
+$(O)/tpm2_support.o: $(T)/tpm2_support.cc $(T)/certifier.pb.cc $(T)/tpm2.pb.cc
 	@echo "compiling tpm2_support.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/tpm2_support.o $(S)/tpm2_support.cc
+	$(CC) $(CFLAGS) -c -o $(O)/tpm2_support.o $(T)/tpm2_support.cc
 
-$(O)/tpm2.pb.o: $(S)/tpm2.pb.cc $(S)/tpm2.pb.h
+$(O)/tpm2.pb.o: $(T)/tpm2.pb.cc $(T)/tpm2.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 

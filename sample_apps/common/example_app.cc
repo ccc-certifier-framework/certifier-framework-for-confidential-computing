@@ -205,6 +205,15 @@ err:
 }
 #endif  // SEV_SIMPLE_APP
 
+#ifdef TPM_SIMPLE_APP
+static string enclave_type("tpm-enclave");
+bool          get_enclave_parameters(string **s, int *n) {
+  *s = nullptr;
+  *n = 0;
+  return true;
+}
+#endif
+
 #ifdef ISLET_SIMPLE_APP
 static string enclave_type("islet-enclave");
 
