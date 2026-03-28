@@ -158,6 +158,9 @@ bool generate_new_rsa_key(int num_bits, RSA *r);
 
 bool make_key_entity(const key_message &key, entity_message *ent);
 bool make_measurement_entity(const string &measurement, entity_message *ent);
+bool make_measurement_entity(const string   &measurement,
+                             const string   &config,
+                             entity_message *ent);
 bool make_property(string   &name,
                    string   &type,
                    string   &cmp,

@@ -2650,6 +2650,17 @@ bool make_key_entity(const key_message &key, entity_message *ent) {
   return true;
 }
 
+bool make_measurement_entity(const string   &measurement,
+                             const string   &config,
+                             entity_message *ent) {
+  ent->set_entity_type("measurement");
+  string *m = new string(measurement);
+  ent->set_allocated_measurement(m);
+  string *r = new string(config);
+  ent->set_allocated_registers(r);
+  return true;
+}
+
 bool make_measurement_entity(const string &measurement, entity_message *ent) {
   ent->set_entity_type("measurement");
   string *m = new string(measurement);
@@ -2959,6 +2970,14 @@ void print_entity_descriptor(const entity_message &e) {
     printf("Measurement[");
     print_bytes((int)e.measurement().size(), (byte *)e.measurement().data());
     printf("] ");
+    if (e.has_registers() && e.registers().size() >= 1) {
+      byte *p = (byte *)e.registers().data();
+      printf("using (%d", p[0]);
+      for (int i = 1; i < (int)e.registers().size(); i++) {
+        printf(", %d", p[i]);
+      }
+      printf(")");
+    }
   } else if (e.entity_type() == "platform" && e.has_platform_ent()) {
     print_platform_descriptor(e.platform_ent());
   } else if (e.entity_type() == "environment" && e.has_environment_ent()) {
@@ -3058,6 +3077,14 @@ void certifier::utilities::print_entity(const entity_message &em) {
     printf("Measurement[");
     print_bytes((int)em.measurement().size(), (byte *)em.measurement().data());
     printf("] ");
+    if (em.has_registers() && em.registers().size() >= 1) {
+      byte *p = (byte *)em.registers().data();
+      printf("using (%d", p[0]);
+      for (int i = 1; i < (int)em.registers().size(); i++) {
+        printf(", %d", p[i]);
+      }
+      printf(")\n");
+    }
   } else {
     return;
   }
