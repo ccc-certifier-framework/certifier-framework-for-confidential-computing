@@ -1,6 +1,6 @@
 #!/bin/bash
 # ############################################################################
-# run-test.sh: Driver script to run tpm test
+# run-test.sh: Driver script to run tpm simple-example test
 # ############################################################################
 
 set -Eeuo pipefail
@@ -182,17 +182,36 @@ function do-run() {
     sleep 5
   popd
 
-    pushd $EXAMPLE_DIR
+  pushd $EXAMPLE_DIR
+    echo " "
+    echo "first pass"
+    $EXAMPLE_DIR/tpm_example_app.exe --data_dir=./app1_data/  \
+        --domain_name=$DOMAIN_NAME \
+        --operation=first-pass \
+        --tpm_device="/dev/tpm1", "tpm device" \
+        --seal_hierearchy_name="seal_hierarchy.bin" \
+        --quote_hierearchy_name= "quote_hierarchy.bin" \
+        --policy_store_file=$POLICY_STORE_NAME --print_all=true
+    echo "first pass"
+
+    sleep 5
+
     echo " "
     echo "initializing app1"
-    $EXAMPLE_DIR/example_app.exe --data_dir=./app1_data/  \
+    $EXAMPLE_DIR/tpm_example_app.exe --data_dir=./app1_data/  \
         --domain_name=$DOMAIN_NAME \
-        --operation=fresh-start  --measurement_file="example_app.measurement" \
+        --operation=fresh-start  \
+        --tpm_device="/dev/tpm1", "tpm device" \
+        --seal_hierearchy_name="seal_hierarchy.bin" \
+        --quote_hierearchy_name= "quote_hierarchy.bin" \
         --policy_store_file=$POLICY_STORE_NAME --print_all=true
     echo "certifying app1"
-    $EXAMPLE_DIR/example_app.exe --data_dir=./app1_data/  \
+    $EXAMPLE_DIR/tpm_example_app.exe --data_dir=./app1_data/  \
         --domain_name=$DOMAIN_NAME \
-        --operation=get-certified --measurement_file="example_app.measurement" \
+        --operation=get-certified \
+        --tpm_device="/dev/tpm1", "tpm device" \
+        --seal_hierearchy_name="seal_hierarchy.bin" \
+        --quote_hierearchy_name= "quote_hierarchy.bin" \
         --policy_store_file=$POLICY_STORE_NAME --print_all=true
 
     sleep 5
@@ -201,12 +220,18 @@ function do-run() {
     echo "initializing app2"
     $EXAMPLE_DIR/tpm_example_app.exe  --data_dir=./app2_data/ \
         --domain_name=$DOMAIN_NAME \
-        --operation=fresh-start  \
+        --operation=fresh-start \
+        --tpm_device="/dev/tpm1", "tpm device" \
+        --seal_hierearchy_name="seal_hierarchy.bin" \
+        --quote_hierearchy_name= "quote_hierarchy.bin" \
         --policy_store_file=$POLICY_STORE_NAME --print_all=true
     echo "certifying app2"
     $EXAMPLE_DIR/tpm_example_app.exe  --data_dir=./app2_data/ \
         --domain_name=$DOMAIN_NAME \
         --operation=get-certified  \
+        --tpm_device="/dev/tpm1", "tpm device" \
+        --seal_hierearchy_name="seal_hierarchy.bin" \
+        --quote_hierearchy_name= "quote_hierarchy.bin" \
         --policy_store_file=$POLICY_STORE_NAME --print_all=true
 
     sleep 5
@@ -216,6 +241,9 @@ function do-run() {
     $EXAMPLE_DIR/tpm_example_app.exe \
       --data_dir=./app2_data/ --operation="run-app-as-server" \
       --domain_name=$DOMAIN_NAME \
+      --tpm_device="/dev/tpm1", "tpm device" \
+      --seal_hierearchy_name="seal_hierarchy.bin" \
+      --quote_hierearchy_name= "quote_hierarchy.bin" \
       --policy_store_file=$POLICY_STORE_NAME  --print_all=true &
 
     sleep 5
@@ -225,6 +253,9 @@ function do-run() {
     $EXAMPLE_DIR/tpm_example_app.exe \
       --data_dir=./app1_data/ --operation="run-app-as-client"   \
       --domain_name=$DOMAIN_NAME \
+        --tpm_device="/dev/tpm1", "tpm device" \
+        --seal_hierearchy_name="seal_hierarchy.bin" \
+        --quote_hierearchy_name= "quote_hierarchy.bin" \
       --policy_store_file=$POLICY_STORE_NAME --print_all=true
   popd
 

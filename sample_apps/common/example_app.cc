@@ -84,6 +84,7 @@ DEFINE_string(quote_hierearchy_name,
               "quote hierarch save file name");
 DEFINE_string(ek_cert_file_name, "ek-rsa2048.crt", "tpm cert file name");
 DEFINE_int32(num_pcrs, 1, "number of pcrs");
+
 // for fake init
 DEFINE_string(policy_key_file, "policy_key_file.bin", "policy key file");
 
