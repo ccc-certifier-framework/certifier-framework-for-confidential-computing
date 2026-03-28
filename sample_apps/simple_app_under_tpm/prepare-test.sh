@@ -1,6 +1,6 @@
 #!/bin/bash
 # ############################################################################
-# prepare-test.sh: Script to run build simple_app test environment.
+# prepare-test.sh: Script to run build simple_app_under_tpm test environment.
 # ############################################################################
 
 set -Eeuo pipefail
@@ -50,8 +50,6 @@ echo "policy cert file name: $POLICY_CERT_FILE_NAME"
 POLICY_STORE_NAME="policy_store.$DOMAIN_NAME"
 echo "policy store name: $POLICY_STORE_NAME"
 
-SIMULATED_SEV=1
-
 function do-fresh() {
   echo " "
   echo "do-fresh"
@@ -64,7 +62,7 @@ function do-fresh() {
   fi
 
   pushd $EXAMPLE_DIR
-    make clean -f sev_example_app.mak
+    make clean -f tpm_example_app_new_api.mak
   popd
 
   if [[ ! -d "$EXAMPLE_DIR/provisioning" ]] ; then
@@ -139,32 +137,6 @@ function do-fresh() {
   exit
 }
 
-function do-initialize-sev-simulator() {
-  echo " "
-  echo "do-initialize-sev-simulator"
-
-  pushd $CERTIFIER_ROOT/sev-snp-simulator
-    if [[ -d "/etc/certifier-snp-sim" ]] ; then
-      if [[ -e "/etc/certifier-snp-sim/ec-secp384r1-priv-key.pem" && -e "/etc/certifier-snp-sim/ec-secp384r1-pub-key.pem" ]] ; then
-        echo "sev simultator keys already exist"
-        return
-      else
-        echo "building simulator"
-      fi
-    fi
-    make
-    make keys
-    if [[ ! -d /etc/certifier-snp-sim ]] ; then
-      sudo etc/certifier-snp-sim
-    fi
-    set +e
-    sudo make insmod
-    sudo cp ./keys/* /etc/certifier-snp-sim
-    set -e
-  popd
-  echo "do-initialize-sev-simulator done"
-}
-
 function do-compile-utilities() {
   echo " "
   echo "do-compile-utilities"
@@ -209,24 +181,11 @@ function do-compile-program() {
         --input=$POLICY_CERT_FILE_NAME --output=../policy_key.cc
     popd
 
-    if [[ -v SIMULATED_SEV ]] ; then
-      CFLAGS='-DSEV_DUMMY_GUEST' make -f sev_example_app_new_api.mak
-    else
-      make -f sev_example_app_new_api.mak
-    fi
+    make -f tpm_example_app_new_api.mak
   popd
 
   echo "do-compile-program done"
 }
-
-# usage: sev-snp-measure [-h] [--version] [-v] --mode {sev,seves,snp,snp:ovmf-hash,snp:svsm}
-#       [--vcpus N] [--vcpu-type CPUTYPE] [--vcpu-sig VALUE]
-#       [--vcpu-family FAMILY] [--vcpu-model MODEL] [--vcpu-stepping STEPPING]
-#       [--vmm-type VMMTYPE] --ovmf PATH [--kernel PATH] [--initrd PATH]
-#       [--append CMDLINE] [--guest-features VALUE]
-#       [--output-format {hex,base64}] [--snp-ovmf-hash HASH] [--dump-vmsa]
-#       [--svsm PATH] [--vars-size SIZE | --vars-file PATH]
-# The following arguments are required: --mode, --ovmf
 
 function do-make-policy() {
   echo " "
@@ -235,59 +194,21 @@ function do-make-policy() {
   pushd $EXAMPLE_DIR/provisioning
     echo " "
 
-    if [[ -v SIMULATED_SEV ]] ; then
-      $CERTIFIER_ROOT/utilities/measurement_init.exe \
-        --mrenclave=010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708 \
-        --out_file=sev-example-app.measurement
-    else
-      pushd $CERTIFIER_ROOT
-        if [[ ! -d "../sev-snp-measure" ]] ; then
-          echo "sev-snp-measure tool not found"
-          exit
-        else
-          snp-tool-dir=$(pwd)
-          snp-tool="$snp-tool-dir/sev-snp-measure.py"
-          echo "sev-snp-measure arguments not ready"
-          exit
-        fi
-      popd
-    fi
+    $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
+      --key_subject="" --measurement_subject="tpm-example-app.measurement" \
+      --verb="is-trusted" --output=ts2.bin --config="7"
+    $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
+      --key_subject=$POLICY_KEY_FILE_NAME --verb="says" \
+      --clause=ts2.bin --output=vse_policy1.bin
 
-    #$CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe    \
-        #--cert-subject=ark_cert.der --verb="is-trusted-for-attestation"  \
-        #--output=ts1.bin
-    #$CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
-      #--key_subject=$POLICY_KEY_FILE_NAME --verb="says" \
-      #--clause=ts1.bin --output=vse_policy1.bin
+    $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
+      --vse_file=vse_policy1.bin --duration=9000 --private_key_file=$POLICY_KEY_FILE_NAME \
+      --output=signed_claim_1.bin
 
-    #$CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
-      #--key_subject="" --measurement_subject="sev-example-app.measurement" \
-      #--verb="is-trusted" --output=ts2.bin
-    #$CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
-      #--key_subject=$POLICY_KEY_FILE_NAME --verb="says" \
-      #--clause=ts2.bin --output=vse_policy2.bin
-
-    #$CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
-      #--vse_file=vse_policy1.bin --duration=9000 --private_key_file=$POLICY_KEY_FILE_NAME \
-      #--output=signed_claim_1.bin
-    #$CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
-      #--vse_file=vse_policy2.bin  --duration=9000  \
-      #--private_key_file=$POLICY_KEY_FILE_NAME --output=signed_claim_2.bin
-
-    #$CERTIFIER_ROOT/utilities/combine_properties.exe   \
-      #--in=property1.bin,property2.bin,property3.bin,property4.bin,property5.bin,property6.bin \
-      #--output=properties.bin
-
-    #$CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe    \
-        #--vse_file=vse_policy3.bin                                      \
-        #--duration=9000                                                 \
-        #--private_key_file=$POLICY_KEY_FILE_NAME \
-        #--output=signed_claim_3.bin
-
-    #$CERTIFIER_ROOT/utilities/package_claims.exe                           \
-        #--input=signed_claim_1.bin,signed_claim_2.bin,signed_claim_3.bin    \
-        #--output=policy.bin
-    #$CERTIFIER_ROOT/utilities/print_packaged_claims.exe --input=policy.bin
+    $CERTIFIER_ROOT/utilities/packa
+        --input=signed_claim_1.bin,signed_claim_2.bin,signed_claim_3.bin    \
+        --output=policy.bin
+    $CERTIFIER_ROOT/utilities/print_packaged_claims.exe --input=policy.bin
   popd
 
   echo " "
@@ -351,9 +272,7 @@ function do-copy-files() {
     cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME policy.bin $EXAMPLE_DIR/service
     cp -p $POLICY_CERT_FILE_NAME policy.bin $EXAMPLE_DIR/app1_data
     cp -p $POLICY_CERT_FILE_NAME policy.bin $EXAMPLE_DIR/app2_data
-    cp -p ark_cert.der ask_cert.der vcek_cert.der $EXAMPLE_DIR/service
-    cp -p ark_cert.der ask_cert.der vcek_cert.der $EXAMPLE_DIR/app1_data
-    cp -p ark_cert.der ask_cert.der vcek_cert.der $EXAMPLE_DIR/app2_data
+    cp -p quote_cert.der $EXAMPLE_DIR/service
   popd
   echo "do-copy-files done"
 }
@@ -362,7 +281,6 @@ function do-all() {
   echo " "
   echo "do-all"
 
-  do-initialize-sev-simulator
   do-compile-utilities
   do-make-keys
   do-compile-program

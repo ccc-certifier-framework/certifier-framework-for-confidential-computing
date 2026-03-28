@@ -1,6 +1,6 @@
 #!/bin/bash
 # ############################################################################
-# run-test.sh: Driver script to run cf_utility test.
+# run-test.sh: Driver script to run tpm test
 # ############################################################################
 
 set -Eeuo pipefail
@@ -88,6 +88,14 @@ function do-fresh() {
   exit
 }
 
+function start-tpm-simulator() {
+  echo " "
+  echo "start-tpm-simulator"
+
+  echo "Done"
+  exit
+}
+
 function cleanup_stale_procs() {
   echo " "
   echo "cleanup_stale_procs"
@@ -122,12 +130,6 @@ function cleanup_stale_procs() {
   echo "cleanup_stale_procs done"
 }
 
-# In call to sev-client-call.sh
-#   --policy_domain_name=$1 \
-#   --policy_key_cert_file=$2 \
-#   --policy_store_filename=$3 \
-#   --certifier_service_URL=localhost \
-#   --service_port=8123
 function do-run() {
   echo " "
   echo "do-run"
@@ -149,10 +151,12 @@ function do-run() {
   pushd $EXAMPLE_DIR/service
     echo " "
     echo "$CERTIFIER_ROOT/certifier_service/simpleserver  \
-      --policy_key_file="$POLICY_KEY_FILE_NAME" --policy_cert_file="$POLICY_CERT_FILE_NAME" \
+      --policy_key_file="$POLICY_KEY_FILE_NAME" 
+      --policy_cert_file="$POLICY_CERT_FILE_NAME" \
       --policyFile=policy.bin --readPolicy=true"
     $CERTIFIER_ROOT/certifier_service/simpleserver  \
-      --policy_key_file="$POLICY_KEY_FILE_NAME" --policy_cert_file="$POLICY_CERT_FILE_NAME" \
+      --policy_key_file="$POLICY_KEY_FILE_NAME"
+      --policy_cert_file="$POLICY_CERT_FILE_NAME" \
       --policyFile=policy.bin --readPolicy=true &
     echo "simpleserver started"
     echo " "
@@ -160,10 +164,52 @@ function do-run() {
     sleep 5
   popd
 
-  pushd $EXAMPLE_DIR
+    pushd $EXAMPLE_DIR
     echo " "
-    sudo ./sev-client-call.sh "$DOMAIN_NAME" "$POLICY_CERT_FILE_NAME" "$POLICY_STORE_NAME"
+    echo "initializing app1"
+    $EXAMPLE_DIR/example_app.exe --data_dir=./app1_data/  \
+        --domain_name=$DOMAIN_NAME \
+        --operation=fresh-start  --measurement_file="example_app.measurement" \
+        --policy_store_file=$POLICY_STORE_NAME --print_all=true
+    echo "certifying app1"
+    $EXAMPLE_DIR/example_app.exe --data_dir=./app1_data/  \
+        --domain_name=$DOMAIN_NAME \
+        --operation=get-certified --measurement_file="example_app.measurement" \
+        --policy_store_file=$POLICY_STORE_NAME --print_all=true
+
+    sleep 5
+
     echo " "
+    echo "initializing app2"
+    $EXAMPLE_DIR/example_app.exe  --data_dir=./app2_data/ \
+        --domain_name=$DOMAIN_NAME \
+        --operation=fresh-start  --measurement_file="example_app.measurement" \
+        --policy_store_file=$POLICY_STORE_NAME --print_all=true
+    echo "certifying app2"
+    $EXAMPLE_DIR/example_app.exe  --data_dir=./app2_data/ \
+        --domain_name=$DOMAIN_NAME \
+        --operation=get-certified  --measurement_file="example_app.measurement" \
+        --policy_store_file=$POLICY_STORE_NAME --print_all=true
+
+    sleep 5
+
+    echo " "
+    echo "running app-as-server"
+    $EXAMPLE_DIR/example_app.exe \
+      --data_dir=./app2_data/ --operation="run-app-as-server" \
+      --domain_name=$DOMAIN_NAME \
+      --measurement_file="example_app.measurement" \
+      --policy_store_file=$POLICY_STORE_NAME  --print_all=true &
+
+    sleep 5
+
+    echo " "
+    echo "running app-as-client"
+    $EXAMPLE_DIR/example_app.exe \
+      --data_dir=./app1_data/ --operation="run-app-as-client"   \
+      --domain_name=$DOMAIN_NAME \
+      --measurement_file="example_app.measurement" \
+      --policy_store_file=$POLICY_STORE_NAME --print_all=true
   popd
 
   cleanup_stale_procs

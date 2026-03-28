@@ -231,19 +231,8 @@ bool first_pass(const string &policy_key_file_name,
     return false;
   }
 
-  measurement_value mv;
   string            conf;
   conf.assign((char *)new_pcrs, new_num_pcrs);
-  mv.set_registers(conf);
-  mv.set_the_measurement(pcr_digest);
-  string mv_str;
-  if (!mv.SerializeToString(&mv_str)) {
-    printf("%s(), error, line: %d, can't serialize measurement\n",
-           __func__,
-           __LINE__);
-    tpm_close();
-    return false;
-  }
 
 #ifdef DEBUG
   printf("PCR's: ");
@@ -251,13 +240,13 @@ bool first_pass(const string &policy_key_file_name,
     printf("%d ", pcrs[i]);
   printf("\n");
   printf("Digest: ");
-  print_bytes(mv.the_measurement().size(),
-              (byte_t *)mv.the_measurement().data());
+  print_bytes(pcr_digest.size(),
+              (byte_t *)pcr_digest.data());
   printf("\n");
 #endif
 
   string measurement_file_name("measurement");
-  if (!write_file_from_string(measurement_file_name, mv_str)) {
+  if (!write_file_from_string(measurement_file_name, pcr_digest)) {
     printf("%s(), error, line: %d, can't write measurement\n",
            __func__,
            __LINE__);

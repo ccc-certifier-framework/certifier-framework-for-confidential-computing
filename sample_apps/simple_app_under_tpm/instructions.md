@@ -16,7 +16,7 @@ on any Linux host.  Installation instructions are below.
 
 ## Overview
 
-The step by step instructions for building simple_app and running the tests
+The step by step instructions for building simple_app_under_tpm and running the tests
 are enumerated below.  However, to save time, we also supply two shell
 scripts to do this automatically. The shell script prepare-test.sh builds
 the program and support files.  The shell script run-test.sh runs the test.
