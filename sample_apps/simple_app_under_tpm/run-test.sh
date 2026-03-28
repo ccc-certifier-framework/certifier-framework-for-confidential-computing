@@ -92,6 +92,22 @@ function start-tpm-simulator() {
   echo " "
   echo "start-tpm-simulator"
 
+  export XDG_CONFIG_HOME="/home/jlm/.config"
+  echo $XDG_CONFIG_HOME
+
+  pushd $XDG_CONFIG_HOME/mytpm1
+    rm ./*
+    rm ./.lock
+  popd
+
+  modprobe tpm_vtpm_proxy
+
+  swtpm_setup --tpmstate ${XDG_CONFIG_HOME}/mytpm1 --create-ek-cert \
+    --create-platform-cert --tpm2 --write-ek-cert-files . --create-platform-cert .
+
+  swtpm chardev --vtpm-proxy --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 \
+    --tpm2 --ctrl type=tcp,port=2322 --flags not-need-init,startup-clear &
+
   echo "Done"
   exit
 }
@@ -138,6 +154,8 @@ function do-run() {
   echo " "
   echo " cleaned old  procs"
 
+  start-tpm-simulator
+
   export LD_LIBRARY_PATH=/usr/local/lib
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/teelib
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/graminelib
@@ -181,34 +199,32 @@ function do-run() {
 
     echo " "
     echo "initializing app2"
-    $EXAMPLE_DIR/example_app.exe  --data_dir=./app2_data/ \
+    $EXAMPLE_DIR/tpm_example_app.exe  --data_dir=./app2_data/ \
         --domain_name=$DOMAIN_NAME \
-        --operation=fresh-start  --measurement_file="example_app.measurement" \
+        --operation=fresh-start  \
         --policy_store_file=$POLICY_STORE_NAME --print_all=true
     echo "certifying app2"
-    $EXAMPLE_DIR/example_app.exe  --data_dir=./app2_data/ \
+    $EXAMPLE_DIR/tpm_example_app.exe  --data_dir=./app2_data/ \
         --domain_name=$DOMAIN_NAME \
-        --operation=get-certified  --measurement_file="example_app.measurement" \
+        --operation=get-certified  \
         --policy_store_file=$POLICY_STORE_NAME --print_all=true
 
     sleep 5
 
     echo " "
     echo "running app-as-server"
-    $EXAMPLE_DIR/example_app.exe \
+    $EXAMPLE_DIR/tpm_example_app.exe \
       --data_dir=./app2_data/ --operation="run-app-as-server" \
       --domain_name=$DOMAIN_NAME \
-      --measurement_file="example_app.measurement" \
       --policy_store_file=$POLICY_STORE_NAME  --print_all=true &
 
     sleep 5
 
     echo " "
     echo "running app-as-client"
-    $EXAMPLE_DIR/example_app.exe \
+    $EXAMPLE_DIR/tpm_example_app.exe \
       --data_dir=./app1_data/ --operation="run-app-as-client"   \
       --domain_name=$DOMAIN_NAME \
-      --measurement_file="example_app.measurement" \
       --policy_store_file=$POLICY_STORE_NAME --print_all=true
   popd
 
