@@ -31,6 +31,7 @@ endif
 # is done below.  Comment it out for older protobuf usage.
 NEWPROTOBUF=1
 CF_NEW_API=1
+TPM=1
 
 CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
 S= $(SRC_DIR)/src
@@ -42,6 +43,7 @@ COMMON_SRC = $(CERTIFIER_ROOT)/sample_apps/common
 SE = $(S)/simulated-enclave
 AE= $(S)/application-enclave
 T=$(SRC_DIR)/src/tpm2
+EXAMPLE_DIR= $(CERTIFIER_ROOT)/sample_apps//simple_app_under_tpm
 
 # Inherit -D<flags> provided externally
 CFLAGS := $(CFLAGS)
@@ -51,6 +53,7 @@ else
 CFLAGS += $(INCLUDE) -O3 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -D TPM -Wno-deprecated-declarations
 endif
 CFLAGS += -DTPM_SIMPLE_APP
+CFLAGS += -DTPM_CERTIFIER
 
 ifdef CF_NEW_API
 CFLAGS += -DNEW_API
@@ -76,7 +79,7 @@ dobj = $(O)/tpm_example_app.o $(O)/certifier.pb.o $(O)/certifier.o \
        $(O)/certifier_proofs.o $(O)/support.o $(O)/application_enclave.o \
        $(O)/simulated_enclave.o  $(O)/cc_helpers.o $(O)/cc_useful.o
 tpm_obj = $(O)/tpm2.pb.o $(O)/tpm2_lib.o $(O)/openssl_help.o \
-        $(O)/convert.o $(O)/tpm2_support.o
+        $(O)/convert.o $(O)/tpm2_support.o $(O)/first_pass.o
 dobj += tpm_obj
 
 all:	tpm_example_app.exe
@@ -130,6 +133,10 @@ $(O)/cc_helpers.o: $(S)/cc_helpers.cc $(I)/certifier.h $(US)/certifier.pb.cc
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(O)/cc_useful.o: $(S)/cc_useful.cc $(I)/cc_useful.h
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(O)/first_pass.o: $(EXAMPLE_DIR)/first_pass.cc
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 

@@ -114,6 +114,12 @@ message environment {
   optional bytes the_measurement            = 2;
 };
 
+// digest and registers
+message measurement_value {
+  optional bytes registers                  = 1;
+  optional bytes the_measurement            = 2;
+};
+
 // entity types: key, measurement, platform, environment
 message entity_message {
   optional string entity_type               = 1;
@@ -121,6 +127,7 @@ message entity_message {
   optional bytes measurement                = 3;
   optional platform platform_ent            = 4;
   optional environment environment_ent      = 5;
+  optional bytes registers                  = 6;
 };
 
 // Example 1:  PK "speaks-for" measurement
