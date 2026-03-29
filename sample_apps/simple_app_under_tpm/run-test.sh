@@ -88,30 +88,6 @@ function do-fresh() {
   exit
 }
 
-function start-tpm-simulator() {
-  echo " "
-  echo "start-tpm-simulator"
-
-  export XDG_CONFIG_HOME="/home/jlm/.config"
-  echo $XDG_CONFIG_HOME
-
-  pushd $XDG_CONFIG_HOME/mytpm1
-    rm ./*
-    rm ./.lock
-  popd
-
-  modprobe tpm_vtpm_proxy
-
-  swtpm_setup --tpmstate ${XDG_CONFIG_HOME}/mytpm1 --create-ek-cert \
-    --create-platform-cert --tpm2 --write-ek-cert-files . --create-platform-cert .
-
-  swtpm chardev --vtpm-proxy --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 \
-    --tpm2 --ctrl type=tcp,port=2322 --flags not-need-init,startup-clear &
-
-  echo "Done"
-  exit
-}
-
 function cleanup_stale_procs() {
   echo " "
   echo "cleanup_stale_procs"
@@ -153,8 +129,6 @@ function do-run() {
   cleanup_stale_procs
   echo " "
   echo " cleaned old  procs"
-
-  start-tpm-simulator
 
   export LD_LIBRARY_PATH=/usr/local/lib
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/teelib
