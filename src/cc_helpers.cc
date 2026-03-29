@@ -77,6 +77,7 @@ bool   tpm_Init(const string &device_name,
                 byte_t       *pcrs);
 bool   g_tpm_plat_certs_initialized;
 string g_serialized_quote_cert;
+string g_serialized_endorsement_cert;
 #endif
 
 #ifdef GRAMINE_CERTIFIER
@@ -2459,6 +2460,8 @@ bool certifier::framework::certifiers::certify_domain(const string &purpose) {
     request.set_submitted_evidence_type("vse-attestation-package");
   } else if (owner_->enclave_type_ == "sev-enclave") {
     request.set_submitted_evidence_type("sev-platform-package");
+  } else if (owner_->enclave_type_ == "tpm-enclave") {
+    request.set_submitted_evidence_type("tpm-platform-package");
   } else if (owner_->enclave_type_ == "gramine-enclave") {
     request.set_submitted_evidence_type("gramine-evidence");
   } else if (owner_->enclave_type_ == "keystone-enclave") {
