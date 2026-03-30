@@ -161,8 +161,8 @@ function do-run() {
     echo "first pass"
     $EXAMPLE_DIR/tpm_example_app.exe --data_dir=./app1_data/  \
         --domain_name=$DOMAIN_NAME \
-        --operation=first-pass \
-        --tpm_device="/dev/tpm1", "tpm device" \
+        --operation="first-pass" \
+        --tpm_device="/dev/tpm1" \
         --seal_hierearchy_name="seal_hierarchy.bin" \
         --quote_hierearchy_name= "quote_hierarchy.bin" \
         --policy_store_file=$POLICY_STORE_NAME --print_all=true

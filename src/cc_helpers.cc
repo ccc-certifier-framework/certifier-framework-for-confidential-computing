@@ -75,7 +75,7 @@ bool   tpm_Init(const string &device_name,
                 const string &quote_hierarchy_file_name,
                 int           num_pcrs,
                 byte_t       *pcrs);
-bool   g_tpm_plat_certs_initialized;
+bool   g_tpm_plat_certs_initialized = false;
 string g_serialized_quote_cert;
 string g_serialized_endorsement_cert;
 #endif
@@ -204,6 +204,16 @@ bool certifier::framework::cc_trust_manager::initialize_enclave(
              __LINE__);
       return false;
 #endif  // SEV_SNP
+#ifdef TPM_CERTIFIER
+    } else if (enclave_type_ == "tpm-enclave") {
+      return initialize_tpm_enclave(params[0],
+                                    params[1],
+                                    params[2],
+                                    params[3],
+                                    params[4],
+                                    (int)params[5].size(),
+                                    (byte *)params[5].data());
+#endif
     } else if (n < 3) {
       printf("%s() error, line %d, Wrong number of sev parameters\n",
              __func__,
@@ -859,6 +869,7 @@ bool certifier::framework::cc_trust_manager::certify(
 bool certifier::framework::cc_trust_manager::initialize_tpm_enclave(
     const string &device_name,
     const string &endorsement_cert_file_name,
+    const string &endorsement_cert_signer_file_name,
     const string &seal_hierarchy_file_name,
     const string &quote_hierarchy_file_name,
     int           num_pcrs,

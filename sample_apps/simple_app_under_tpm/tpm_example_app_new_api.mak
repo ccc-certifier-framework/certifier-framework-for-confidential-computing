@@ -47,11 +47,13 @@ EXAMPLE_DIR= $(CERTIFIER_ROOT)/sample_apps//simple_app_under_tpm
 
 # Inherit -D<flags> provided externally
 CFLAGS := $(CFLAGS)
+
 ifndef NEWPROTOBUF
 CFLAGS += $(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -D TPM-Wno-deprecated-declarations
 else
 CFLAGS += $(INCLUDE) -O3 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -D TPM -Wno-deprecated-declarations
 endif
+
 CFLAGS += -DTPM_SIMPLE_APP
 CFLAGS += -DTPM_CERTIFIER
 

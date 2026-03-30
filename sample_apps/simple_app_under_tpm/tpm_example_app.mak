@@ -49,7 +49,7 @@ CFLAGS += $(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -D SEV_
 else
 CFLAGS += $(INCLUDE) -O3 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -D SEV_SNP -Wno-deprecated-declarations
 endif
-CFLAGS += -DSEV_SIMPLE_APP
+CFLAGS += -DTPM_SIMPLE_APP
 
 ifdef CF_NEW_API
 CFLAGS += -DNEW_API

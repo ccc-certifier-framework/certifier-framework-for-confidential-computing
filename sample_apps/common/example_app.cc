@@ -76,14 +76,18 @@ DEFINE_string(gramine_cert_file, "sgx.cert.der", "certificate file name");
 // For TPM enclave
 DEFINE_int32(pcr_num, -1, "integer parameter");
 DEFINE_string(tpm_device, "/dev/tpm0", "tpm device");
-DEFINE_string(seal_hierearchy_name,
+DEFINE_string(seal_hierarchy_file_name,
               "seal_hierarchy.bin",
-              "seal hierarch save file name");
-DEFINE_string(quote_hierearchy_name,
+              "seal hierarchy save file name");
+DEFINE_string(quote_hierarchy_file_name,
               "quote_hierarchy.bin",
-              "quote hierarch save file name");
+              "quote hierarchy save file name");
 DEFINE_string(ek_cert_file_name, "ek-rsa2048.crt", "tpm cert file name");
+DEFINE_string(ek_cert_signer_file_name,
+              "ek-rsa2048_signer.crt",
+              "tpm cert signer file name");
 DEFINE_int32(num_pcrs, 1, "number of pcrs");
+DEFINE_string(pcrs_str, "7", "pcr string");
 
 // for fake init
 DEFINE_string(policy_key_file, "policy_key_file.bin", "policy key file");
@@ -208,12 +212,72 @@ err:
 
 #ifdef TPM_SIMPLE_APP
 static string enclave_type("tpm-enclave");
-bool          get_enclave_parameters(string **s, int *n) {
-  *s = nullptr;
-  *n = 0;
+
+/*
+initialize_tpm_enclave(
+    const string &device_name,
+    const string &endorsement_cert_file_name,
+    const string &seal_hierarchy_file_name,
+    const string &quote_hierarchy_file_name,
+    int           num_pcrs,
+    byte         *pcrs)
+ */
+
+bool whitespace(char c) {
+  return c == ' ' || c == ',';
+}
+
+bool scan_integer_list(const string &in, string *out) {
+  const char *p = in.c_str();
+  int         b;
+
+  for (;;) {
+    while (whitespace(*p))
+      p++;
+    if (*p == '\0')
+      return true;
+    if (*p <= '0' && *p >= '9') {
+      p++;
+      continue;
+    }
+    sscanf(p, "%d", &b);
+    *out += (char)b;
+    while (*p >= '0' && *p <= '9')
+      p++;
+  }
   return true;
 }
-#endif
+
+bool get_enclave_parameters(string **s, int *n) {
+
+  string  pcrs_out;
+  string *args = new string[6];
+  if (args == nullptr) {
+    printf("%s() error, line %d, can't allocate args\n", __func__, __LINE__);
+    goto err;
+  }
+  *s = args;
+
+  args[0] = FLAGS_tpm_device;
+  args[1] = FLAGS_ek_cert_signer_file_name;
+  args[2] = FLAGS_ek_cert_file_name;
+  args[3] = FLAGS_seal_hierarchy_file_name;
+  args[4] = FLAGS_quote_hierarchy_file_name;
+  if (!scan_integer_list(FLAGS_pcrs_str, &pcrs_out)) {
+    printf("%s() error, line %d, cant scan_integer_list\n", __func__, __LINE__);
+    goto err;
+  }
+  args[5] = pcrs_out;
+
+  *n = 6;
+  return true;
+
+err:
+  delete[] args;
+  *s = nullptr;
+  return false;
+}
+#endif  // TPM_SIMPLE_APP
 
 #ifdef ISLET_SIMPLE_APP
 static string enclave_type("islet-enclave");

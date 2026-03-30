@@ -34,11 +34,12 @@ else
   CERTIFIER_ROOT=$(pwd)
   popd
 fi
-TPM_SUPPORT_DIR=$(CERTIFIER_ROOT)/src/tpm2
+TPM_SUPPORT_DIR=$CERTIFIER_ROOT/src/tpm2
 
 echo " "
 echo "Certifier root: $CERTIFIER_ROOT"
-echo "TPM support directory: $TPM_SUPPORT_DIR
+echo "TPM support directory: $TPM_SUPPORT_DIR"
+
 pushd $TPM_SUPPORT_DIR
   echo " "
   echo "cleanup-tpm-simulator"
@@ -48,5 +49,7 @@ pushd $TPM_SUPPORT_DIR
 
   # remove the files
   rm seal_hierarchy.bin quote_hierarchy.bin
+popd
+
 echo "Done"
 exit

@@ -134,7 +134,6 @@ bool whitespace(char c) {
   return c == ' ' || c == ',';
 }
 
-
 bool scan_integer_list(const string &in, string *out) {
   const char *p = in.c_str();
   int         b;

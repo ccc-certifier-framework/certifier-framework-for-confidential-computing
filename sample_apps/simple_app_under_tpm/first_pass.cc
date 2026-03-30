@@ -231,7 +231,7 @@ bool first_pass(const string &policy_key_file_name,
     return false;
   }
 
-  string            conf;
+  string conf;
   conf.assign((char *)new_pcrs, new_num_pcrs);
 
 #ifdef DEBUG
@@ -240,8 +240,7 @@ bool first_pass(const string &policy_key_file_name,
     printf("%d ", pcrs[i]);
   printf("\n");
   printf("Digest: ");
-  print_bytes(pcr_digest.size(),
-              (byte_t *)pcr_digest.data());
+  print_bytes(pcr_digest.size(), (byte_t *)pcr_digest.data());
   printf("\n");
 #endif
 
