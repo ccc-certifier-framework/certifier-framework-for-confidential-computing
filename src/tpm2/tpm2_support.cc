@@ -1633,7 +1633,7 @@ bool tpm_Init(const string &device_name,
     return false;
   }
   if (g_quote_hierarchy_file_name == "") {
-    printf("%s() error, line %d, no seal key file name\n", __func__, __LINE__);
+    printf("%s() error, line %d, no quote key file name\n", __func__, __LINE__);
     return false;
   }
 
@@ -1861,7 +1861,11 @@ bool tpm_Attest(int   what_to_say_size,
     return false;
   }
   if ((int)serialized_att.size() > *size_out) {
-    printf("%s() error, line %d, buffer too small\n", __func__, __LINE__);
+    printf("%s() error, line %d, buffer too small: %d, %d\n",
+           __func__,
+           __LINE__,
+           (int)serialized_att.size(),
+           *size_out);
     return false;
   }
   *size_out = serialized_att.size();

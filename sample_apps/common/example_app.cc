@@ -213,16 +213,6 @@ err:
 #ifdef TPM_SIMPLE_APP
 static string enclave_type("tpm-enclave");
 
-/*
-initialize_tpm_enclave(
-    const string &device_name,
-    const string &endorsement_cert_file_name,
-    const string &seal_hierarchy_file_name,
-    const string &quote_hierarchy_file_name,
-    int           num_pcrs,
-    byte         *pcrs)
- */
-
 bool whitespace(char c) {
   return c == ' ' || c == ',';
 }
@@ -405,7 +395,7 @@ void print_options(const char *op) {
                  --ask_cert_file=./service/milan_ask_cert.der \n\
                  --vcek_cert_file=./service/milan_vcek_cert.der ");
 #endif  // SEV_SIMPLE_APP
-	//
+        //
 #ifdef GRAMINE_SIMPLE_APP
    printf("\nCompiled for Gramine\
                  --gramine_cert_file=sgx.cert.der");
@@ -450,6 +440,41 @@ int main(int an, char **av) {
 
   string store_file(FLAGS_data_dir);
   store_file.append(FLAGS_policy_store_file);
+
+#  ifdef FIRST_PASS_ON
+  // first pass is an optional initial pass procedure
+  extern bool first_pass(const string &policy_key_file_name,
+                         const string &tpm_device,
+                         const string &endorsement_file_name,
+                         const string &endorsement_signer_file_name,
+                         const string &seal_hierearchy_name,
+                         const string &quote_hierearchy_name,
+                         int           num_pcrs,
+                         byte         *pcrs);
+  // skip the inits
+  if (FLAGS_operation == "first-pass") {
+
+    string pcrs_out;
+    if (!scan_integer_list(FLAGS_pcrs_str, &pcrs_out)) {
+      printf("%s() error, line %d, first_pass failed\n", __func__, __LINE__);
+      return 1;
+    }
+    if (!first_pass(FLAGS_policy_key_file,
+                    FLAGS_tpm_device,
+                    FLAGS_ek_cert_file_name,
+                    FLAGS_ek_cert_signer_file_name,
+                    FLAGS_seal_hierarchy_file_name,
+                    FLAGS_quote_hierarchy_file_name,
+                    (int)pcrs_out.size(),
+                    (byte *)pcrs_out.data())) {
+      printf("%s() error, line %d, first_pass failed\n", __func__, __LINE__);
+      return 1;
+    } else {
+      printf("first_pass succeeded\n");
+      return 0;
+    }
+  }
+#  endif
 
 #  ifdef DEBUG3
   printf("New API\n");
@@ -644,19 +669,6 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
-#  ifdef FIRST_PASS_ON
-  } else if (FLAGS_operation == "first-pass") {
-#    ifdef DEBUG3
-    printf("\nfirst-pass\n");
-#    endif  // DEBUG3
-    // first pass is an optional initial pass procedure
-    extern bool first_pass(const string &policy_key_file_name,
-                           const string &tpm_device,
-                           const string &seal_hierearchy_name,
-                           const string &quote_hierearchy_name,
-                           int           num_pcrs,
-                           byte         *pcrs);
-#  endif
   } else {
     printf("%s() error, line %d, Unknown operation\n", __func__, __LINE__);
   }

@@ -258,9 +258,10 @@ bool certifier::framework::cc_trust_manager::initialize_enclave(
   } else if (enclave_type_ == "islet-enclave") {
     return initialize_islet_enclave();
   } else {
-    printf("%s() error, line %d, unsupported enclave type\n",
+    printf("%s() error, line %d, unsupported enclave type: %s\n",
            __func__,
-           __LINE__);
+           __LINE__,
+           enclave_type_.c_str());
     return false;
   }
 }

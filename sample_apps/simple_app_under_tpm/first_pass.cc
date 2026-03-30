@@ -25,21 +25,36 @@ using namespace certifier::utilities;
 
 // -----------------------------------------------------------------------
 
+
 bool first_pass(const string &policy_key_file_name,
                 const string &tpm_device,
+                const string &endorsement_cert_file_name,
+                const string &endorsement_cert_signer_file_name,
                 const string &seal_hierarchy_file_name,
                 const string &quote_hierarchy_file_name,
                 int           num_pcrs,
                 byte         *pcrs) {
 
-  string endorsement_cert_file_name;
+#ifdef DEBUG
+  printf("\nfirst-pass\n");
+  printf("    policy key file        : %s\n", policy_key_file_name.c_str());
+  printf("    tpm device             : %s\n", tpm_device.c_str());
+  printf("    endorsement file       : %s\n",
+         endorsement_cert_file_name.c_str());
+  printf("    signer      file       : %s\n",
+         endorsement_cert_signer_file_name.c_str());
+  printf("    seal hierarchy file    : %s\n", seal_hierarchy_file_name.c_str());
+  printf("    quote hierarchy file   : %s\n",
+         quote_hierarchy_file_name.c_str());
+#endif
+
   if (!tpm_Init(tpm_device,
                 endorsement_cert_file_name,
                 seal_hierarchy_file_name,
                 quote_hierarchy_file_name,
                 num_pcrs,
                 pcrs)) {
-    printf("%s() error, line %d, can'r tpm_Init\n", __func__, __LINE__);
+    printf("%s() error, line %d, can't tpm_Init\n", __func__, __LINE__);
     return false;
   }
 
@@ -173,7 +188,7 @@ bool first_pass(const string &policy_key_file_name,
   ud.mutable_enclave_key()->CopyFrom(public_auth_key);
   ud.mutable_policy_key()->CopyFrom(policy_key);
 
-  int    size_out = 2048;
+  int    size_out = 4096;
   byte   out[size_out];
   string serialized_user;
   if (!ud.SerializeToString(&serialized_user)) {
