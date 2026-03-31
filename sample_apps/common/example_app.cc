@@ -90,7 +90,12 @@ DEFINE_int32(num_pcrs, 1, "number of pcrs");
 DEFINE_string(pcrs_str, "7", "pcr string");
 
 // for fake init
-DEFINE_string(policy_key_file, "policy_key_file.bin", "policy key file");
+DEFINE_string(policy_key_file,
+              "./provisioning/policy_key_file.bin",
+              "policy key file");
+DEFINE_string(quote_cert_file,
+              "./provisioning/quote_cert.crt",
+              "quote cert file");
 
 // ----------------------------------------------------------------------
 // Fetch parameters for enclave initialization
@@ -442,29 +447,36 @@ int main(int an, char **av) {
   store_file.append(FLAGS_policy_store_file);
 
 #  ifdef FIRST_PASS_ON
+
   // first pass is an optional initial pass procedure
-  extern bool first_pass(const string &policy_key_file_name,
-                         const string &tpm_device,
-                         const string &endorsement_file_name,
-                         const string &endorsement_signer_file_name,
-                         const string &seal_hierearchy_name,
-                         const string &quote_hierearchy_name,
+  extern bool first_pass(const string &tpm_device,
+                         const string &policy_key_file_name,
+                         const string &endorsement_cert_file_name,
+                         const string &endorsement_cert_signer_file_name,
+                         const string &seal_hierarchy_file_name,
+                         const string &quote_hierarchy_file_name,
+                         const string &quote_cert_file,
+                         const string &measurement_file,
                          int           num_pcrs,
                          byte         *pcrs);
+
   // skip the inits
   if (FLAGS_operation == "first-pass") {
 
+    printf("****** %s\n", FLAGS_quote_hierarchy_file_name.c_str());
     string pcrs_out;
     if (!scan_integer_list(FLAGS_pcrs_str, &pcrs_out)) {
       printf("%s() error, line %d, first_pass failed\n", __func__, __LINE__);
       return 1;
     }
-    if (!first_pass(FLAGS_policy_key_file,
-                    FLAGS_tpm_device,
+    if (!first_pass(FLAGS_tpm_device,
+                    FLAGS_policy_key_file,
                     FLAGS_ek_cert_file_name,
                     FLAGS_ek_cert_signer_file_name,
                     FLAGS_seal_hierarchy_file_name,
                     FLAGS_quote_hierarchy_file_name,
+                    FLAGS_quote_cert_file,
+                    FLAGS_measurement_file,
                     (int)pcrs_out.size(),
                     (byte *)pcrs_out.data())) {
       printf("%s() error, line %d, first_pass failed\n", __func__, __LINE__);

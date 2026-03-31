@@ -1462,7 +1462,9 @@ bool init_proved_statements(key_message       &pk,
           || last_clause.clause().subject().entity_type() != "key") {
         printf("%s(), error, line: %d, last clause in sev-attestation has "
                "wrong format "
-               "(2)\n");
+               "(2)\n",
+               __func__,
+               __LINE__);
         return false;
       }
       const key_message &vcek_key = last_clause.clause().subject().key();
@@ -1555,7 +1557,7 @@ bool init_proved_statements(key_message       &pk,
 
       EVP_PKEY *verify_pkey = pkey_from_key(vcek_key);
       if (verify_pkey == nullptr) {
-        printf("%s(), error, line: %d, empty verify key\n");
+        printf("%s(), error, line: %d, empty verify key\n", __func__, __LINE__);
         return false;
       }
 

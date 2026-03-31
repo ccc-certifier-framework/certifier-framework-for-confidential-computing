@@ -25,17 +25,22 @@ using namespace certifier::utilities;
 
 // -----------------------------------------------------------------------
 
+#ifdef ACTIVATE_CREDENTIAL
 
-bool first_pass(const string &policy_key_file_name,
-                const string &tpm_device,
+#else
+
+bool first_pass(const string &tpm_device,
+                const string &policy_key_file_name,
                 const string &endorsement_cert_file_name,
                 const string &endorsement_cert_signer_file_name,
                 const string &seal_hierarchy_file_name,
                 const string &quote_hierarchy_file_name,
+                const string &quote_cert_file,
+                const string &measurement_file,
                 int           num_pcrs,
                 byte         *pcrs) {
 
-#ifdef DEBUG
+#  ifdef DEBUG
   printf("\nfirst-pass\n");
   printf("    policy key file        : %s\n", policy_key_file_name.c_str());
   printf("    tpm device             : %s\n", tpm_device.c_str());
@@ -46,7 +51,9 @@ bool first_pass(const string &policy_key_file_name,
   printf("    seal hierarchy file    : %s\n", seal_hierarchy_file_name.c_str());
   printf("    quote hierarchy file   : %s\n",
          quote_hierarchy_file_name.c_str());
-#endif
+  printf("    quote_cert  file       : %s\n", quote_cert_file.c_str());
+  printf("    measurement file       : %s\n", measurement_file.c_str());
+#  endif
 
   if (!tpm_Init(tpm_device,
                 endorsement_cert_file_name,
@@ -132,16 +139,16 @@ bool first_pass(const string &policy_key_file_name,
     return false;
   }
 
-#ifdef DEBUG
+#  ifdef DEBUG
   printf("quote cert: ");
   X509_print_fp(stdout, x_quote);
   printf("\n");
-#endif
+#  endif
 
   X509_free(x_quote);
 
   string quote_file_name("quote_cert.crt");
-  if (!write_file_from_string(quote_file_name, serialized_quote_cert)) {
+  if (!write_file_from_string(quote_cert_file, serialized_quote_cert)) {
     printf("%s(), error, line: %d, can't write quote cert\n",
            __func__,
            __LINE__);
@@ -249,7 +256,7 @@ bool first_pass(const string &policy_key_file_name,
   string conf;
   conf.assign((char *)new_pcrs, new_num_pcrs);
 
-#ifdef DEBUG
+#  ifdef DEBUG
   printf("PCR's: ");
   for (int i = 0; i < num_pcrs; i++)
     printf("%d ", pcrs[i]);
@@ -257,10 +264,10 @@ bool first_pass(const string &policy_key_file_name,
   printf("Digest: ");
   print_bytes(pcr_digest.size(), (byte_t *)pcr_digest.data());
   printf("\n");
-#endif
+#  endif
 
   string measurement_file_name("measurement");
-  if (!write_file_from_string(measurement_file_name, pcr_digest)) {
+  if (!write_file_from_string(measurement_file, pcr_digest)) {
     printf("%s(), error, line: %d, can't write measurement\n",
            __func__,
            __LINE__);
@@ -271,5 +278,6 @@ bool first_pass(const string &policy_key_file_name,
   tpm_close();
   return true;
 }
+#endif
 
 // -----------------------------------------------------------------------
