@@ -1,6 +1,6 @@
 #!/bin/bash
 # ############################################################################
-# final-test.sh: Script to make-policy and copy files
+# final-prep.sh: Script to make-policy and copy files
 # ############################################################################
   
 set -Eeuo pipefail
@@ -23,23 +23,13 @@ ARG_SIZE="$#"
     
 if [[ $ARG_SIZE == 0 ]] ; then
   echo "Must call with arguments, as follows:"
-  echo "  ./prepare-test.sh fresh [domain_name]"
-  echo "  ./prepare-test.sh all [domain_name]"
-  echo "  ./prepare-test.sh compile-utilities [domain_name]"
-  echo "  ./prepare-test.sh make-keys [domain_name]"
-  echo "  ./prepare-test.sh compile-program [domain_name]"
-  echo "  ./prepare-test.sh make-policy [domain_name]"
-  echo "  ./prepare-test.sh compile-certifier [domain_name]"
-  echo "  ./prepare-test.sh copy-files [domain_name]"
-  exit
+  echo "  ./final-prep.sh domain_name"
 fi
 
-if [[ $ARG_SIZE == 1 ]] ; then
+if [[ $ARG_SIZE == 0 ]] ; then
   DOMAIN_NAME="datica-test"
 fi
-if [[ $ARG_SIZE == 2 ]] ; then
-  DOMAIN_NAME=$2
-fi
+DOMAIN_NAME=$1
 echo "domain name: $DOMAIN_NAME"
 
 POLICY_KEY_FILE_NAME="policy_key_file.$DOMAIN_NAME"

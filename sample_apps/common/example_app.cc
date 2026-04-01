@@ -448,6 +448,9 @@ int main(int an, char **av) {
 
 #  ifdef FIRST_PASS_ON
 
+#ifdef ACTIVATE_CREDENTIAL
+
+#else
   // first pass is an optional initial pass procedure
   extern bool first_pass(const string &tpm_device,
                          const string &policy_key_file_name,
@@ -459,6 +462,7 @@ int main(int an, char **av) {
                          const string &measurement_file,
                          int           num_pcrs,
                          byte         *pcrs);
+#endif  // ACTIVATE_CREDENTIAL
 
   // skip the inits
   if (FLAGS_operation == "first-pass") {
@@ -469,6 +473,8 @@ int main(int an, char **av) {
       printf("%s() error, line %d, first_pass failed\n", __func__, __LINE__);
       return 1;
     }
+#ifdef ACTIVATE_CREDENTIAL
+#else
     if (!first_pass(FLAGS_tpm_device,
                     FLAGS_policy_key_file,
                     FLAGS_ek_cert_file_name,
@@ -485,8 +491,10 @@ int main(int an, char **av) {
       printf("first_pass succeeded\n");
       return 0;
     }
+#endif  // ACTIVATE_CREDENTIAL
   }
-#  endif
+
+#  endif   // FIRST_PASS_ON
 
 #  ifdef DEBUG3
   printf("New API\n");

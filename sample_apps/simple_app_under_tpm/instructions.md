@@ -28,7 +28,9 @@ the go programs and libraries mentioned below.
 
 The shell scripts use the new API.
 
+
 Set up environment
+------------------
 
 $CERTIFIER_PROTOTYPE is the top level directory for the certifier repository.
 It is helpful to have a shell variable for it, e.g.,:
@@ -42,6 +44,7 @@ shell variable is useful.
 
 
 Preparing the tests
+------------------
 
  In a new window ("Root window"):
 
@@ -59,13 +62,13 @@ In another window, not as root, ("Unpriviledged window"):
 ```
 
 ```shell
-  prepare-test.sh fresh [domain-name]
+  prepare-test.sh fresh domain-name
 ```
       - This clears out all old files
 then
 
 ```shell
-  prepare-test.sh all [domain-name]
+  prepare-test.sh all domain-name
 ```
       - This builds the utilities and and generates the needed keys,
         compiles the programs,
@@ -75,19 +78,20 @@ then
 In the root window:
 
 ```shell
-  ./fresh-pass.sh [domain-name]
+  ./fresh-pass.sh domain-name
 ```
 
 Back in the Unpriviledged window:
 
 ```shell
- final-prep.sh [domain-name]
+ final-prep.sh domain-name
 ```
       - This builds the policy and copies the files for run-test.sh
 
 Everything should be ready to test now,
 
 Running the tests
+-----------------
 
 In the Root window:
 

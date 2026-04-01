@@ -1116,6 +1116,9 @@ bool certifier::framework::cc_trust_manager::initialize_islet_enclave() {
 #endif
 }
 
+bool certifier::framework::cc_trust_manager::close_enclave() {
+  return true;
+}
 
 void certifier::framework::cc_trust_manager::print_trust_data() {
   printf("\n--------------Start of Trust Data ------------------\n");

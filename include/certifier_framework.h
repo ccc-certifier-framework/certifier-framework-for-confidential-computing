@@ -315,6 +315,7 @@ class cc_trust_manager {
                                       int           out_fd);
   bool initialize_keystone_enclave();
   bool initialize_islet_enclave();
+  bool close_enclave();
 
   // If n == 0, systems should be able to find parameters
   // by default, for example, sev and sgx.
