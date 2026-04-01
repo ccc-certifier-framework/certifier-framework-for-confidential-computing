@@ -385,3 +385,16 @@ message full_cert_chain {
   optional key_message final_private_key     = 2;
 };
 
+message tpm_activate_request {
+  optional bytes quote_cert                  = 1;
+  optional bytes endorsement_cert            = 2;
+  optional full_cert_chain endorsement_chain = 3;
+  optional bytes measurement		     = 4;
+  optional bytes pcrs        	     	     = 5;
+};
+message tpm_activate_response {
+  optional string status                    = 1; // "succeeded" or "failed"
+  optional bytes credential_blob            = 2;
+  optional bytes encrypted_secret           = 3;
+};
+

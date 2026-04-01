@@ -173,6 +173,12 @@ bool tpm_verify_attest(const key_message &quote_key,
                        const string      &serialized_tpm_msg);
 bool tpm_verify_attest(const string &quote_cert,
                        const string &serialized_tpm_msg);
+bool tpm_verify_attest_with_measurement(const string &quote_cert,
+                                        const string &serialized_tpm_msg,
+                                        int          *m_size,
+                                        byte_t       *m,
+                                        int          *pcr_size,
+                                        byte_t       *pcrs);
 
 bool make_credential(const TPM2B_PUBLIC &quoting_key,
                      string             &quote_key_name,
@@ -180,12 +186,23 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
                      string             &credential,
                      string             *cred_blob,
                      string             *encrypted_secret);
+bool make_credential(const string &quote_cert,
+                     const string &endorsement_cert,
+                     string       &credential,
+                     string       *cred_blob,
+                     string       *encrypted_secret);
 bool construct_quote_key_cert(const key_message &signing_key,
                               const key_message &quote_public_key,
                               string            *cert_out);
 bool tpm_public_key_to_key(const TPM2B_PUBLIC &in_public,
                            const string       &name,
                            key_message        *out_key);
+bool make_credential_message(const string &serialized_quote_cert,
+                             const string &serialized_endorsement_cert,
+                             const string &serialized_endorsement_chain,
+                             const string &serialized_auth_key,
+                             const string &measurement,
+                             string       *serialized_credential_request);
 
 // ---------------------------------------------------------------
 #endif

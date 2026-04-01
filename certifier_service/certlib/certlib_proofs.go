@@ -31,6 +31,7 @@ import (
 	gramineverify "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/gramineverify"
 	isletverify "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/isletverify"
 	oeverify "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/oeverify"
+	tpmverify "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/tpmverify"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -2875,26 +2876,35 @@ func ConstructProofFromInternalPlatformEvidence(publicPolicyKey *certprotos.KeyM
 }
 
 /*
-	Rules
-		rule 1 (R1): If environment or measurement is-trusted and key1 speaks-for environment or measurement then
-			key1 is-trusted-for-authentication.
-		rule 2 (R2): If key2 speaks-for key1 and key3 speaks-for key2 then key3 speaks-for key1
-		rule 3 (R3): If entity is-trusted and entity says X, then X is true
-		rule 4 (R4): If key2 speaks-for key1 and key1 is-trusted then key2 is-trusted
-		rule 5 (R5): If key1 is-trustedXXX and key1 says key2 is-trustedYYY then key2 is-trustedYYY
-			provided is-trustedXXX dominates is-trustedYYY
-		rule 6 (R6): if key1 is-trustedXXX and key1 says Y then Y (may want to limit Y later)
-			provided is-trustedXXX dominates is-trusted-for-attestation
-		rule 7 (R7): If environment or measurement is-trusted and key1 speaks-for environment or measurement then
-			key1 is-trusted-for-attestation.
-		rule 8 (R8): If environment[platform, measurement] is-environment AND platform-template
-			has-trusted-platform-property then environment[platform, measurement]
-			environment-platform-is-trusted provided platform properties satisfy platform template
-		rule 9 (R9): If environment[platform, measurement] is-environment AND measurement is-trusted then
-			environment[platform, measurement] environment-measurement is-trusted
-		rule 10 (R10): If environment[platform, measurement] environment-platform-is-trusted AND
-			environment[platform, measurement] environment-measurement-is-trusted then
-			environment[platform, measurement] is-trusted
+ *  Rules
+ *
+ *  rule 1 (R1): If environment or measurement is-trusted and
+ *      key1 speaks-for environment or measurement then
+ *  	key1 is-trusted-for-authentication.
+ *  rule 2 (R2): If key2 speaks-for key1 and
+ *      key3 speaks-for key2 then key3 speaks-for key1
+ *  rule 3 (R3): If entity is-trusted and entity says X, then X is true
+ *  rule 4 (R4): If key2 speaks-for key1 and key1 is-trusted then key2 is-trusted
+ *  rule 5 (R5): If key1 is-trustedXXX
+ *      and key1 says key2 is-trustedYYY then key2 is-trustedYYY
+ *  	provided is-trustedXXX dominates is-trustedYYY
+ *  rule 6 (R6): if key1 is-trustedXXX and
+ *      key1 says Y then Y (may want to limit Y later)
+ *  	provided is-trustedXXX dominates is-trusted-for-attestation
+ *  rule 7 (R7): If environment or measurement is-trusted
+ *      and key1 speaks-for environment or measurement then
+ *  	key1 is-trusted-for-attestation.
+ *  rule 8 (R8): If environment[platform, measurement] is-environment
+ *      AND platform-template has-trusted-platform-property
+ *      then environment[platform, measurement]
+ *  	environment-platform-is-trusted provided platform properties
+ *      satisfy platform template
+ *  rule 9 (R9): If environment[platform, measurement] is-environment
+ *      AND measurement is-trusted then
+ *  	environment[platform, measurement] environment-measurement is-trusted
+ *  rule 10 (R10): If environment[platform, measurement] environment-platform-is-trusted
+ *      AND environment[platform, measurement] environment-measurement-is-trusted
+ *      then environment[platform, measurement] is-trusted
 */
 
 func ConstructProofFromTpmPlatformEvidence(publicPolicyKey *certprotos.KeyMessage, purpose string, alreadyProved *certprotos.ProvedStatements) (*certprotos.VseClause, *certprotos.Proof) {
@@ -3625,6 +3635,18 @@ func VerifyGramineAttestation(serializedEvidence []byte) (bool, []byte, []byte, 
 		return false, ga.WhatWasSaid, m, nil
 	}
 	return true, ga.WhatWasSaid, m, nil
+}
+
+func VerifyTpmAttestation(serializedquoteCert []byte, serializedTpmAttest[]byte) (bool, []byte, []byte, error) {
+
+	// Call the cgo tpm verify function
+	m, err := tpmverify.TpmVerify(serializedquoteCert, serializedTpmAttest)
+	if err != nil {
+		fmt.Printf("VerifyTpmAttestation: gramine verify failed\n")
+		return false, m, m, nil
+	}
+	return true, m, m, nil
+	return false, nil, nil, errors.New("tpm attestation not implemented")
 }
 
 //      ------------------------------------------------------------------------

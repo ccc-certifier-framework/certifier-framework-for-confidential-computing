@@ -2476,6 +2476,44 @@ bool tpm_verify_attest(const string &quote_cert,
   return tpm_verify_attest(quote_key, serialized_tpm_msg);
 }
 
+bool tpm_verify_attest_with_measurement(const string &quote_cert,
+                                        const string &serialized_tpm_msg,
+                                        int          *m_size,
+                                        byte_t       *m,
+                                        int          *pcr_size,
+                                        byte_t       *pcrs) {
+
+  // recover quote key form its cert
+  key_message quote_key;
+
+  X509   *quote_cert_x509 = nullptr;
+  byte_t *p = (byte_t *)quote_cert.data();
+  if (d2i_X509(&quote_cert_x509, (const byte_t **)&p, quote_cert.size())
+      == nullptr) {
+    printf("%s() error, line %d, Can't translate quote cert\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  EVP_PKEY *public_evp_key = X509_get_pubkey(quote_cert_x509);
+  RSA      *public_key = EVP_PKEY_get1_RSA(public_evp_key);
+  RSA_up_ref(public_key);
+
+  if (!RSA_to_key(public_key, &quote_key)) {
+    printf("%s() error, line %d, Can't translate RSA key in cert\n",
+           __func__,
+           __LINE__);
+    X509_free(quote_cert_x509);
+    EVP_PKEY_free(public_evp_key);
+    return false;
+  }
+  X509_free(quote_cert_x509);
+  EVP_PKEY_free(public_evp_key);
+
+  return tpm_verify_attest(quote_key, serialized_tpm_msg);
+}
+
+
 // ------------------------------------------------------------------------
 
 // Sequence for quote key verification protocol is:
@@ -2812,20 +2850,31 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   return true;
 }
 
+bool make_credential(const string &quote_cert,
+                     const string &endorsement_cert,
+                     string       &credential,
+                     string       *cred_blob,
+                     string       *encrypted_secret) {
+  return false;
+}
+
+
 // This is the code on the client that requests a quote
-// key certificate using make credential on a provider
+// key certificate using make credential from a provider
 // without a tpm
-bool make_credential_message(const key_message &quote_public_key,
-                             const string      &measurement,
-                             const string      &quote_public_area,
-                             string            *serialized_credential_request) {
+bool make_credential_message(const string &serialized_quote_cert,
+                             const string &serialized_endorsement_cert,
+                             const string &serialized_endorsement_chain,
+                             const string &serialized_auth_key,
+                             const string &measurement,
+                             string       *serialized_credential_request) {
   return false;
 }
 
 // This is the code on the client which obtains the quote
 // key certificate from the make credential message constructed
 // on the provider using ActivateCredential
-bool recover_quote_key_certificate(const string &serialized_cred_response,
+bool recover_quote_key_certificate(const string &serialized_credential_response,
                                    string       *cert) {
   return false;
 }
