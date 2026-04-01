@@ -78,6 +78,7 @@ bool   tpm_Init(const string &device_name,
 bool   g_tpm_plat_certs_initialized = false;
 string g_serialized_quote_cert;
 string g_serialized_endorsement_cert;
+string g_serialized_endorsement_cert_chain;
 #endif
 
 #ifdef GRAMINE_CERTIFIER
@@ -206,14 +207,38 @@ bool certifier::framework::cc_trust_manager::initialize_enclave(
 #endif  // SEV_SNP
 #ifdef TPM_CERTIFIER
     } else if (enclave_type_ == "tpm-enclave") {
-      return initialize_tpm_enclave(params[0],
-                                    params[1],
-                                    params[2],
-                                    params[3],
-                                    params[4],
-                                    (int)params[5].size(),
-                                    (byte *)params[5].data());
+      bool ret = initialize_tpm_enclave(params[0],
+                                        params[1],
+                                        params[2],
+                                        params[3],
+                                        params[4],
+                                        (int)params[5].size(),
+                                        (byte *)params[5].data());
+      if (!ret)
+        return false;
+      if (!read_file_into_string(params[6], &g_serialized_quote_cert)) {
+        printf("%s() error, line %d, Can't read quote cert\n",
+               __func__,
+               __LINE__);
+        return false;
+      }
+      extern local_tpm g_tpm;
+      if (!get_endorsement_cert(g_tpm, &g_serialized_endorsement_cert)) {
+        printf("%s() error, line %d, Can't get endorsement cert\n",
+               __func__,
+               __LINE__);
+        return false;
+      }
+      if (!read_file_into_string(params[7],
+                                 &g_serialized_endorsement_cert_chain)) {
+        printf("%s() error, line %d, Can't get endorsement cert chain\n",
+               __func__,
+               __LINE__);
+        return false;
+      }
+      g_tpm_plat_certs_initialized = true;
 #endif
+      return true;
     } else if (n < 3) {
       printf("%s() error, line %d, Wrong number of sev parameters\n",
              __func__,

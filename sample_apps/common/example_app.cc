@@ -88,14 +88,17 @@ DEFINE_string(ek_cert_signer_file_name,
               "tpm cert signer file name");
 DEFINE_int32(num_pcrs, 1, "number of pcrs");
 DEFINE_string(pcrs_str, "7", "pcr string");
+DEFINE_string(quote_cert_file,
+              "./provisioning/quote_cert.crt",
+              "quote cert file");
+DEFINE_string(endorsement_cert_chain_file,
+              "./provisioning/endorsement_cert_chain.bin",
+              "endorsement cert chain file");
 
 // for fake init
 DEFINE_string(policy_key_file,
               "./provisioning/policy_key_file.bin",
               "policy key file");
-DEFINE_string(quote_cert_file,
-              "./provisioning/quote_cert.crt",
-              "quote cert file");
 
 // ----------------------------------------------------------------------
 // Fetch parameters for enclave initialization
@@ -246,7 +249,7 @@ bool scan_integer_list(const string &in, string *out) {
 bool get_enclave_parameters(string **s, int *n) {
 
   string  pcrs_out;
-  string *args = new string[6];
+  string *args = new string[8];
   if (args == nullptr) {
     printf("%s() error, line %d, can't allocate args\n", __func__, __LINE__);
     goto err;
@@ -263,8 +266,10 @@ bool get_enclave_parameters(string **s, int *n) {
     goto err;
   }
   args[5] = pcrs_out;
+  args[6] = FLAGS_quote_cert_file;
+  args[7] = FLAGS_endorsement_cert_chain_file;
 
-  *n = 6;
+  *n = 8;
   return true;
 
 err:
