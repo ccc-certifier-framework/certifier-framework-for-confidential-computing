@@ -57,7 +57,7 @@ function do-make-policy() {
       --vse_file=vse_policy1.bin --duration=9000 --private_key_file=$POLICY_KEY_FILE_NAME \
       --output=signed_claim_1.bin
 
-    $CERTIFIER_ROOT/utilities/package_claimes.exe \
+    $CERTIFIER_ROOT/utilities/package_claims.exe \
         --input=signed_claim_1.bin \
         --output=policy.bin
     $CERTIFIER_ROOT/utilities/print_packaged_claims.exe --input=policy.bin
@@ -88,9 +88,9 @@ function do-copy-files() {
 
   pushd $EXAMPLE_DIR/provisioning
     cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME policy.bin $EXAMPLE_DIR/service
-    cp -p $POLICY_CERT_FILE_NAME policy.bin $EXAMPLE_DIR/app1_data
-    cp -p $POLICY_CERT_FILE_NAME policy.bin $EXAMPLE_DIR/app2_data
-    cp -p quote_cert.der $EXAMPLE_DIR/service
+    cp -p $POLICY_CERT_FILE_NAME attest_key_file.bin platform_key_file.bin $EXAMPLE_DIR/app1_data
+    cp -p $POLICY_CERT_FILE_NAME attest_key_file.bin platform_key_file.bin $EXAMPLE_DIR/app2_data
+    cp -p quote_cert.crt $EXAMPLE_DIR/service
   popd
   echo "do-copy-files done"
 }

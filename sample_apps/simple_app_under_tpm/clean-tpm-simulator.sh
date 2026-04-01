@@ -8,9 +8,9 @@
 set -Eeuo pipefail
 Me=$(basename "$0")
 
-function cleanup_stale_procs() {
+function cleanup-stale-procs() {
   echo " "
-  echo "cleanup_stale_procs"
+  echo "cleanup-stale-procs"
 
   # Find and kill simulator processes that may be running.
   echo " "
@@ -40,7 +40,6 @@ echo " "
 echo "Certifier root: $CERTIFIER_ROOT"
 echo "TPM support directory: $TPM_SUPPORT_DIR"
 
-pushd $TPM_SUPPORT_DIR
   echo " "
   echo "cleanup-tpm-simulator"
 
@@ -49,7 +48,6 @@ pushd $TPM_SUPPORT_DIR
 
   # remove the files
   rm seal_hierarchy.bin quote_hierarchy.bin
-popd
 
 echo "Done"
 exit
