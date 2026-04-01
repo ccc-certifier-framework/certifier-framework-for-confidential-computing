@@ -67,6 +67,18 @@ function do-make-policy() {
   echo "do-make-policy done"
 }
  
+function make-cert-chain() {
+
+  pushd $EXAMPLE_DIR/provisioning
+    cp /var/lib/swtpm-localca/swtpm-localca-rootca-cert.pem root.pem
+    openssl x509 -inform pem -in root.pem -outform der -out root.der
+    openssl x509 -inform der -in root.der -text
+    $CERTIFIER_ROOT/utilities/make_der_cert_chain.exe \
+	--output="endorsement-cert-chain.bin" -init=true \
+	--new_cert_file="root.der" --add_cert=true
+  popd
+}
+
 function do-copy-files() {
   echo " "
   echo "do-copy-files"
@@ -103,6 +115,8 @@ fi
 
 do-make-policy
 do-copy-files
+make-cert-chain
+
 
 echo " "
 echo "done "

@@ -135,6 +135,7 @@ function do-run() {
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/graminelib
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/isletlib
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/oelib
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/tpmlib
   echo $LD_LIBRARY_PATH
   sudo ldconfig
 
@@ -155,20 +156,6 @@ function do-run() {
 
     sleep 5
   popd
-
-  pushd $EXAMPLE_DIR
-    echo " "
-    echo "first pass"
-    $EXAMPLE_DIR/tpm_example_app.exe --data_dir=./app1_data/  \
-        --domain_name=$DOMAIN_NAME \
-        --operation="first-pass" \
-        --tpm_device="/dev/tpm1" \
-        --seal_hierearchy_name="seal_hierarchy.bin" \
-        --quote_hierearchy_name= "quote_hierarchy.bin" \
-        --policy_store_file=$POLICY_STORE_NAME --print_all=true
-    echo "first pass"
-
-    sleep 5
 
     echo " "
     echo "initializing app1"
