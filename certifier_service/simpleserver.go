@@ -228,7 +228,7 @@ func initCertifierService(useStore bool) bool {
 	return true
 }
 
-//	--------------------------------------------------------------------------------------
+//	------------------------------------------------------------------------
 
 func logRequest(b []byte) *string {
 	if b == nil {
@@ -297,6 +297,12 @@ func ValidateRequestAndObtainToken(remoteIP string, pubKey *certprotos.KeyMessag
 		success, toProve, measurement = certlib.ValidateSevEvidence(pubKey, ep, policyPool, purpose)
 		if !success {
 			fmt.Printf("ValidateRequestAndObtainToken: ValidateSevEvidence failed\n")
+			return false, nil
+		}
+	} else if evType == "tpm-platform-package" {
+		success, toProve, measurement = certlib.ValidateTpmEvidence(pubKey, ep, policyPool, purpose)
+		if !success {
+			fmt.Printf("ValidateRequestAndObtainToken: ValidateTpmEvidence failed\n")
 			return false, nil
 		}
 	} else if evType == "oe-evidence" {
@@ -596,7 +602,7 @@ func keyServiceThread(conn net.Conn, client string) {
 	return
 }
 
-//	------------------------------------------------------------------------------------
+//	------------------------------------------------------------------------
 
 func ProcessRequest(serverAddr string, req []byte) []byte {
 
