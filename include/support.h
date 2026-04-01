@@ -144,6 +144,8 @@ bool ecc_verify(const char *alg,
 
 bool same_key(const key_message &k1, const key_message &k2);
 bool same_measurement(const string &m1, const string &m2);
+bool same_measurement_entity(const entity_message &m1,
+                             const entity_message &m2);
 bool same_entity(const entity_message &e1, const entity_message &e2);
 bool same_property(const property &p1, const property &p2);
 bool same_properties(const properties &p1, const properties &p2);

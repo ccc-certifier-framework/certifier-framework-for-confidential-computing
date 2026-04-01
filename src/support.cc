@@ -2487,6 +2487,29 @@ bool same_key(const key_message &k1, const key_message &k2) {
   return true;
 }
 
+bool same_measurement_entity(const entity_message &m1,
+                             const entity_message &m2) {
+  if (m1.measurement().size() != m2.measurement().size())
+    return false;
+  if (memcmp((byte *)m1.measurement().data(),
+             (byte *)m2.measurement().data(),
+             m1.measurement().size())
+      != 0)
+    return false;
+  if (m1.has_registers() != m2.has_registers())
+    return false;
+  if (m1.has_registers()) {
+    if (m1.registers().size() != m2.registers().size())
+      return false;
+    if (memcmp((byte *)m1.registers().data(),
+               (byte *)m2.registers().data(),
+               m1.registers().size())
+        != 0)
+      return false;
+  }
+  return true;
+}
+
 bool same_measurement(const string &m1, const string &m2) {
   if (m1.size() != m2.size())
     return false;
@@ -2600,11 +2623,7 @@ bool same_entity(const entity_message &e1, const entity_message &e2) {
     return same_key(e1.key(), e2.key());
 
   if (e1.entity_type() == "measurement") {
-    string s1;
-    string s2;
-    s1.assign((char *)e1.measurement().data(), e1.measurement().size());
-    s2.assign((char *)e2.measurement().data(), e2.measurement().size());
-    return same_measurement(s1, s2);
+    return same_measurement_entity(e1, e2);
   }
 
   if (e1.entity_type() == "platform")
