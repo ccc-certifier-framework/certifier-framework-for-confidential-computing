@@ -303,11 +303,11 @@ class cc_trust_manager {
                               const string &vcek_der_cert);
   bool initialize_tpm_enclave(const string &device_name,
                               const string &endorsement_cert_file_name,
-                              const string &endorsement_cert_signer_file_name,
+                              const string &endorsement_cert_chain_file_name,
                               const string &seal_hierarchy_file_name,
                               const string &quote_hierarchy_file_name,
-                              int           num_pcrs,
-                              byte         *pcrs);
+                              const string &tpm_pcr_list,
+                              const string &quote_cert_file_name);
   bool initialize_gramine_enclave(const int size, byte *cert);
   bool initialize_oe_enclave(const string &cert);
   bool initialize_application_enclave(const string &parent_enclave_type,

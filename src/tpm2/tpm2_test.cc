@@ -64,7 +64,8 @@ DEFINE_string(seal_hierarchy_name,
 DEFINE_string(quote_hierarchy_name,
               "quote_hierarchy.bin",
               "quote hierarchy save file name");
-DEFINE_string(ek_cert_file_name, "ek-rsa2048.crt", "tpm cert file name");
+DEFINE_string(ek_cert_file_name, "ek-rsa2048.crt", "tpm endorsement cert file name");
+DEFINE_string(ek_cert_chain_file_name, "", "tpm endorsement cert chain file name");
 DEFINE_int32(num_pcrs, 1, "number of pcrs");
 
 #ifndef GFLAGS_NS
@@ -1025,6 +1026,7 @@ bool certifier_test() {
 
   if (!tpm_Init(FLAGS_tpm_device,
                 FLAGS_ek_cert_file_name,
+                FLAGS_ek_cert_chain_file_name,
                 FLAGS_seal_hierarchy_name,
                 FLAGS_quote_hierarchy_name,
                 num_pcrs,

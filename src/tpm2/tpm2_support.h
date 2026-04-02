@@ -80,6 +80,8 @@ bool write_nv_handle(local_tpm &tpm,
 
 // ---------------------------------------------------------------
 
+bool init_quote_cert_from_file(const string& quote_cert_file_name);
+
 bool init_tpm(const string &device_name);
 bool close_tpm();
 
@@ -133,6 +135,7 @@ bool do_quote(local_tpm    &tpm,
               string       *signature);
 bool tpm_Init(const string &device_name,
               const string &endorsement_cert_file_name,
+              const string &endorsement_cert_chain_file_name,
               const string &seal_hierarchy_file_name,
               const string &quote_hierarchy_file_name,
               int           num_pcrs,

@@ -1369,7 +1369,8 @@ TPM_HANDLE g_quote_handle = 0;
 int          g_seal_key_type;
 string       g_seal_key;
 string       g_endorsement_cert;
-string       g_endorsement_cert_file_name;
+string       g_endorsement_cert_chain;
+string       g_quote_cert;
 string       g_seal_hierarchy_file_name;
 string       g_quote_hierarchy_file_name;
 string       g_seal_thing;
@@ -1617,24 +1618,35 @@ bool init_quote_environment(int num_pcrs, byte_t *pcrs) {
   return true;
 }
 
+bool init_quote_cert_from_file(const string& quote_cert_file_name) {
+  if (!read_file_into_string(quote_cert_file_name, &g_quote_cert)) {
+      printf("%s() error, line %d, can't get quote cert\n",
+            __func__,
+            __LINE__);
+      return false;
+    }
+  return true;
+}
+
 bool tpm_Init(const string &device_name,
               const string &endorsement_cert_file_name,
+              const string &endorsement_cert_chain_file_name,
               const string &seal_hierarchy_file_name,
               const string &quote_hierarchy_file_name,
               int           num_pcrs,
               byte_t       *pcrs) {
 
 #ifdef DEBUG
-  printf("tpm_Init, device %s\n", device_name.c_str());
-  printf("tpm_Init, endorsement cert %s\n", endorsement_cert_file_name.c_str());
-  printf("tpm_Init, seal_hierarchy_file %s\n",
+  printf("tpm_Init, device: %s\n", device_name.c_str());
+  printf("tpm_Init, endorsement cert: %s\n", endorsement_cert_file_name.c_str());
+  printf("tpm_Init, endorsement cert chain: %s\n", endorsement_cert_chain_file_name.c_str());
+  printf("tpm_Init, seal_hierarchy_file: %s\n",
          seal_hierarchy_file_name.c_str());
-  printf("tpm_Init, quote_hierarchy_file %s\n",
+  printf("tpm_Init, quote_hierarchy_file: %s\n",
          quote_hierarchy_file_name.c_str());
   printf("tpm_Init, num pcrs %d\n", num_pcrs);
 #endif
 
-  g_endorsement_cert_file_name = endorsement_cert_file_name;
   g_seal_hierarchy_file_name = seal_hierarchy_file_name;
   g_quote_hierarchy_file_name = quote_hierarchy_file_name;
 
@@ -1658,16 +1670,31 @@ bool tpm_Init(const string &device_name,
   printf("tpm_init, opened tpm: %s %d\n", device_name.c_str(), g_tpm.tpm_fd_);
 #endif
 
-  // init endorsement stuff
-  if (!init_endorsement_environment()) {
-    printf("%s() error, line %d, can't init endorsement environment\n",
-           __func__,
-           __LINE__);
-    return false;
+  g_endorsement_cert_file_name = endorsement_cert_file_name;
+  if (endorsement_cert_file_name != "") {
+    if (!read_file_into_string(g_endorsement_cert_file_name, &g_endorsement_cert)) {
+      printf("%s() error, line %d, can't init endorsement environment\n",
+            __func__,
+            __LINE__);
+      return false;
+    }
+  } else {
+    if (!get_endorsement_cert(g_tpm, &g_endorsement_cert)) {
+      printf("%s() error, line %d, can't get endorsement cert from tpm\n",
+            __func__,
+            __LINE__);
+      return false;
+    }
   }
-#ifdef DEBUG2
-  printf("\nGot endorsement information\n");
-#endif
+  g_endorsement_cert_chain_file_name = endorsement_cert_chain_file_name;
+  if (endorsement_cert_chain_file_name != "") {
+    if (!read_file_into_string(endorsement_cert_chain_file_name, &g_endorsement_cert_chain)) {
+      printf("%s() error, line %d, can't init endorsement cert chain\n",
+            __func__,
+            __LINE__);
+      return false;
+    }
+  }
 
   // init seal envrionment
   if (!init_seal_environment(num_pcrs, pcrs)) {

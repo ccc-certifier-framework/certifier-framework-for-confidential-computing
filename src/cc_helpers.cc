@@ -73,6 +73,7 @@ extern string pem_cert_chain;
 #if TPM_CERTIFIER
 bool   tpm_Init(const string &device_name,
                 const string &endorsement_cert_file_name,
+                const string &endorsement_cert_chain_file_name,
                 const string &seal_hierarchy_file_name,
                 const string &quote_hierarchy_file_name,
                 int           num_pcrs,
@@ -209,39 +210,25 @@ bool certifier::framework::cc_trust_manager::initialize_enclave(
 #endif
 #ifdef TPM_CERTIFIER
   } else if (enclave_type_ == "tpm-enclave") {
-    bool ret = initialize_tpm_enclave(params[0],
-                                      params[1],
-                                      params[2],
-                                      params[3],
-                                      params[4],
-                                      (int)params[5].size(),
-                                      (byte *)params[5].data());
-    if (!ret)
-      return false;
-    if (!read_file_into_string(params[6], &g_serialized_quote_cert)) {
-      printf("%s() error, line %d, Can't read quote cert\n",
+    if (!initialize_tpm_enclave(params[0],  // device name
+                                  params[1],  // endorsement cert file
+                                  params[2],  // endorsement cert chain
+                                  params[3],  // seal hierarchy file name
+                                  params[4],  // quote hierarchy file name
+                                  params[5],  // pcr string
+                                  params[6])) {  // quote_file
+      printf("%s() error, line %d, can't initialize tpm enclave\n",
              __func__,
              __LINE__);
       return false;
     }
 
-#  if 0
-      extern local_tpm g_tpm;
-      if (!get_endorsement_cert(g_tpm, &g_serialized_endorsement_cert)) {
-        printf("%s() error, line %d, Can't get endorsement cert\n",
-               __func__,
-               __LINE__);
-        return false;
-      }
-#  endif
-
-    if (!read_file_into_string(params[7],
-                               &g_serialized_endorsement_cert_chain)) {
-      printf("%s() error, line %d, Can't get endorsement cert chain\n",
-             __func__,
-             __LINE__);
-      return false;
-    }
+    extern string g_endorsement_cert;
+    extern string g_endorsement_cert_chain;
+    extern string g_quote_cert;
+    g_serialized_endorsement_cert= g_endorsement_cert;
+    g_serialized_endorsement_cert_chain = g_endorsement_cert_chain;
+    g_serialized_quote_cert = g_quote_cert;
     g_tpm_plat_certs_initialized = true;
     return true;
 #endif
@@ -892,13 +879,13 @@ bool certifier::framework::cc_trust_manager::certify(
 #endif  // NEW_API
 
 bool certifier::framework::cc_trust_manager::initialize_tpm_enclave(
-    const string &device_name,
-    const string &endorsement_cert_file_name,
-    const string &endorsement_cert_chain_file_name,
-    const string &seal_hierarchy_file_name,
-    const string &quote_hierarchy_file_name,
-    int           num_pcrs,
-    byte         *pcrs) {
+                              const string &device_name,
+                              const string &endorsement_cert_file_name,
+                              const string &endorsement_cert_chain_file_name,
+                              const string &seal_hierarchy_file_name,
+                              const string &quote_hierarchy_file_name,
+                              const string &tpm_pcr_list,
+                              const string &quote_cert_file_name) {
 
 #ifdef TPM_CERTIFIER
 #  ifdef OLD_API
@@ -914,13 +901,20 @@ bool certifier::framework::cc_trust_manager::initialize_tpm_enclave(
     printf("%s() error, line %d, Not a tpm enclave\n", __func__, __LINE__);
     return false;
   }
+
   if (!tpm_Init(device_name,
                 endorsement_cert_file_name,
+                endorsement_cert_chain_file_name,
                 seal_hierarchy_file_name,
                 quote_hierarchy_file_name,
-                num_pcrs,
-                pcrs)) {
+                (int)tpm_pcr_list.size(),
+                (byte_t*)tpm_pcr_list.data()) {
     printf("%s() error, line %d, Can't init tpm-enclave\n", __func__, __LINE__);
+    return false;
+  }
+
+  if (!init_quote_cert_from_file(quote_cert_file_name)) {
+    printf("%s() error, line %d, Can't init quote from file\n", __func__, __LINE__);
     return false;
   }
   cc_provider_provisioned_ = true;
