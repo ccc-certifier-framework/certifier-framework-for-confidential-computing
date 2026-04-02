@@ -1624,6 +1624,11 @@ bool init_quote_cert_from_file(const string& quote_cert_file_name) {
             __LINE__);
       return false;
     }
+#ifdef DEBUG
+  printf("Recovered quote cert\n");
+  print_bytes(g_quote_cert.size(), (byte_t*)g_quote_cert.data());
+  printf("\n");
+#endif
   return true;
 }
 
@@ -1735,7 +1740,8 @@ bool tpm_Seal(string &unsealed, string *sealed) {
     return false;
   }
 
-#ifdef DEBUG
+// CAREFUL: Generally don't include this.
+#ifdef DEBUG7
   printf("g_seal_thing in Seal: ");
   print_bytes(g_seal_thing.size(), (byte_t*)g_seal_thing.data());
   printf("\n");
@@ -1791,7 +1797,8 @@ bool tpm_Unseal(string &sealed, string *unsealed) {
     return false;
   }
 
-#ifdef DEBUG
+// CAREFUL: Generally don't include this.
+#ifdef DEBUG7
   printf("g_seal_thing in Unseal: ");
   print_bytes(g_seal_thing.size(), (byte_t*)g_seal_thing.data());
   printf("\n");

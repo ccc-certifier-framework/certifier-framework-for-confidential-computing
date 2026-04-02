@@ -78,6 +78,7 @@ bool   tpm_Init(const string &device_name,
                 const string &quote_hierarchy_file_name,
                 int           num_pcrs,
                 byte_t       *pcrs);
+
 bool   g_tpm_plat_certs_initialized = false;
 string g_serialized_quote_cert;
 string g_serialized_endorsement_cert;
@@ -102,7 +103,7 @@ extern string gramine_platform_cert;
 //  You may want to augment these or write replacements if your needs are
 //  fancier.
 
-// #define DEBUG
+#define DEBUG6
 
 // ------------------------------------------------------------------------
 
@@ -914,6 +915,16 @@ bool certifier::framework::cc_trust_manager::initialize_tpm_enclave(
     printf("%s() error, line %d, Can't init quote from file\n", __func__, __LINE__);
     return false;
   }
+
+  extern string g_endorsement_cert;
+  extern string g_endorsement_cert_chain;
+  extern string g_quote_cert;
+
+  g_serialized_quote_cert = g_quote_cert;
+  g_serialized_endorsement_cert = g_endorsement_cert;
+  g_serialized_endorsement_cert_chain = g_endorsement_cert_chain;
+  g_tpm_plat_certs_initialized = true;
+
   cc_provider_provisioned_ = true;
   return true;
 #else
@@ -2638,7 +2649,9 @@ bool construct_platform_evidence_package(string        &attesting_enclave_type,
                                          evidence_list &platform_assertions,
                                          string        &serialized_attestation,
                                          evidence_package *ep) {
-
+#ifdef DEBUG6
+  printf("construct_platform_evidence_package\n");
+#endif
   string pt("vse-verifier");
   string et("signed-claim");
   ep->set_prover_type(pt);
@@ -2674,6 +2687,9 @@ bool construct_platform_evidence_package(string        &attesting_enclave_type,
   } else if ("islet-enclave" == attesting_enclave_type) {
     string et2("islet-attestation");
     ev2->set_evidence_type(et2);
+  } else if ("tpm-enclave" == attesting_enclave_type) {
+    string et2("tpm-attestation");
+    ev2->set_evidence_type(et2);
   } else {
     printf("error %s(), line %d: - can't add attestation\n",
            __func__,
@@ -2683,7 +2699,7 @@ bool construct_platform_evidence_package(string        &attesting_enclave_type,
 
   ev2->set_serialized_evidence(serialized_attestation);
 
-#ifdef DEBUG3
+#ifdef DEBUG6
   printf("Evidence package %d\n", ep->fact_assertion_size());
   for (int i = 0; i < ep->fact_assertion_size(); i++) {
     print_evidence(ep->fact_assertion(i));

@@ -1988,10 +1988,13 @@ func PrintEvidence(ev *certprotos.Evidence) {
 	} else if ev.GetEvidenceType() == "gramine-attestation" {
 		PrintBytes(ev.SerializedEvidence)
 	} else if ev.GetEvidenceType() == "cert" {
-		cx509 := Asn1ToX509(ev.SerializedEvidence)
-		fmt.Printf("Issuer: %s, Subject: %s\n", GetIssuerNameFromCert(cx509), *GetSubjectNameFromCert(cx509))
+		fmt.Printf("Serialize cert:\n")
 		PrintBytes(ev.SerializedEvidence)
 		fmt.Printf("\n")
+		cx509 := Asn1ToX509(ev.SerializedEvidence)
+		if cx509 != nil {
+			fmt.Printf("Issuer: %s, Subject: %s\n", GetIssuerNameFromCert(cx509), *GetSubjectNameFromCert(cx509))
+		}
 	} else {
 		return
 	}
@@ -2001,6 +2004,9 @@ func PrintEvidencePackage(evp *certprotos.EvidencePackage, printAll bool) {
 	fmt.Printf("\nProver type: %s\n", evp.GetProverType())
 	for i := 0; i < len(evp.FactAssertion); i++ {
 		ev := evp.FactAssertion[i]
+		if ev == nil {
+			continue
+		}
 		if printAll {
 			PrintEvidence(ev)
 			fmt.Printf("\n\n")

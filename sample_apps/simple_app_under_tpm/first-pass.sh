@@ -60,7 +60,7 @@ function do-get-quote-cert-and-measurement() {
   $EXAMPLE_DIR/tpm_example_app.exe --data_dir=./app1_data/  \
         --domain_name=$DOMAIN_NAME \
         --operation="first-pass" \
-        --tpm_device="/dev/tpm1" \
+        --tpm_device="/dev/tpmrm1" \
         --seal_hierarchy_file_name="seal_hierarchy.bin" \
         --quote_hierarchy_file_name="quote_hierarchy.bin" \
 	--policy_key_file="./provisioning/policy_key_file.$DOMAIN_NAME" \

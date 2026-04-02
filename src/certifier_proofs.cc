@@ -30,6 +30,8 @@
 using namespace certifier::framework;
 using namespace certifier::utilities;
 
+#define DEBUG6
+
 // Proof support
 // -----------------------------------------------------------------------
 
@@ -2343,6 +2345,10 @@ bool add_new_facts_for_tpm_attestation(
     signed_claim_sequence &trusted_measurements,
     proved_statements     *already_proved) {
 
+#ifdef DEBUG6
+  printf("add_new_facts_for_tpm_attestation\n");
+#endif
+
   // At this point, the already_proved should be
   //    "policyKey is-trusted"
   //    "policyKey says quoteKey is-trusted
@@ -2828,6 +2834,10 @@ bool construct_proof_from_tpm_evidence(key_message       &policy_pk,
                                        proved_statements *already_proved,
                                        vse_clause        *to_prove,
                                        proof             *pf) {
+
+#ifdef DEBUG6
+  printf("construct_proof_from_tpm_evidence\n");
+#endif
 
   // At this point, the already_proved should be
   // 0. Key[rsa, policyKey, e57ec0c47ca211f5d9aa73356509ff8631a8a53f] is-trusted
