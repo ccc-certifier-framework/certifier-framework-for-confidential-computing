@@ -74,7 +74,7 @@ function make-cert-chain() {
     openssl x509 -inform pem -in root.pem -outform der -out root.der
     openssl x509 -inform der -in root.der -text
     $CERTIFIER_ROOT/utilities/make_der_cert_chain.exe \
-	--output="endorsement-cert-chain.bin" -init=true \
+	--output="endorsement_cert_chain.bin" -init=true \
 	--new_cert_file="root.der" --add_cert=true
   popd
 }

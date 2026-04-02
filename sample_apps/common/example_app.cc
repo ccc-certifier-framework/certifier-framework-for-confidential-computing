@@ -476,10 +476,11 @@ int main(int an, char **av) {
     }
 #    ifdef ACTIVATE_CREDENTIAL
 #    else
+    string cert_chain;
     if (!first_pass(FLAGS_tpm_device,
                     FLAGS_policy_key_file,
                     FLAGS_endorsement_cert_file_name,
-                    FLAGS_endorsement_cert_chain_file,
+                    cert_chain,
                     FLAGS_seal_hierarchy_file_name,
                     FLAGS_quote_hierarchy_file_name,
                     FLAGS_quote_cert_file,

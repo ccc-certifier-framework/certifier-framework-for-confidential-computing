@@ -164,7 +164,7 @@ function do-run() {
         --operation=fresh-start  \
         --tpm_device="/dev/tpm1", "tpm device" \
         --seal_hierarchy_file_name="seal_hierarchy.bin" \
-        --quote_hierarchy_file_name= "quote_hierarchy.bin" \
+        --quote_hierarchy_file_name="quote_hierarchy.bin" \
         --policy_store_file=$POLICY_STORE_NAME --print_all=true
     echo "certifying app1"
     $EXAMPLE_DIR/tpm_example_app.exe --data_dir=./app1_data/  \
@@ -172,7 +172,7 @@ function do-run() {
         --operation=get-certified \
         --tpm_device="/dev/tpm1", "tpm device" \
         --seal_hierarchy_file_name="seal_hierarchy.bin" \
-        --quote_hierarchy_file_name= "quote_hierarchy.bin" \
+        --quote_hierarchy_file_name="quote_hierarchy.bin" \
         --policy_store_file=$POLICY_STORE_NAME --print_all=true
 
     sleep 5
@@ -184,7 +184,7 @@ function do-run() {
         --operation=fresh-start \
         --tpm_device="/dev/tpm1", "tpm device" \
         --seal_hierarchy_file_name="seal_hierarchy.bin" \
-        --quote_hierarchy_file_name= "quote_hierarchy.bin" \
+        --quote_hierarchy_file_name="quote_hierarchy.bin" \
         --policy_store_file=$POLICY_STORE_NAME --print_all=true
     echo "certifying app2"
     $EXAMPLE_DIR/tpm_example_app.exe  --data_dir=./app2_data/ \
@@ -192,7 +192,7 @@ function do-run() {
         --operation=get-certified  \
         --tpm_device="/dev/tpm1", "tpm device" \
         --seal_hierarchy_file_name="seal_hierarchy.bin" \
-        --quote_hirearchy_file_name= "quote_hierarchy.bin" \
+        --quote_hirearchy_file_name="quote_hierarchy.bin" \
         --policy_store_file=$POLICY_STORE_NAME --print_all=true
 
     sleep 5
@@ -204,7 +204,7 @@ function do-run() {
       --domain_name=$DOMAIN_NAME \
       --tpm_device="/dev/tpm1", "tpm device" \
       --seal_hierarchy_file_name="seal_hierarchy.bin" \
-      --quote_hierarchy_file_name= "quote_hierarchy.bin" \
+      --quote_hierarchy_file_name="quote_hierarchy.bin" \
       --policy_store_file=$POLICY_STORE_NAME  --print_all=true &
 
     sleep 5
@@ -216,7 +216,7 @@ function do-run() {
       --domain_name=$DOMAIN_NAME \
         --tpm_device="/dev/tpm1", "tpm device" \
         --seal_hierarchy_file_name="seal_hierarchy.bin" \
-        --quote_hierarchy_file_name= "quote_hierarchy.bin" \
+        --quote_hierarchy_file_name="quote_hierarchy.bin" \
       --policy_store_file=$POLICY_STORE_NAME --print_all=true
   popd
 
