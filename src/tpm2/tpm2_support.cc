@@ -1624,6 +1624,16 @@ bool tpm_Init(const string &device_name,
               int           num_pcrs,
               byte_t       *pcrs) {
 
+#ifdef DEBUG
+  printf("tpm_Init, device %s\n", device_name.c_str());
+  printf("tpm_Init, endorsement cert %s\n", endorsement_cert_file_name.c_str());
+  printf("tpm_Init, seal_hierarchy_file %s\n",
+         seal_hierarchy_file_name.c_str());
+  printf("tpm_Init, quote_hierarchy_file %s\n",
+         quote_hierarchy_file_name.c_str());
+  printf("tpm_Init, num pcrs %d\n", num_pcrs);
+#endif
+
   g_endorsement_cert_file_name = endorsement_cert_file_name;
   g_seal_hierarchy_file_name = seal_hierarchy_file_name;
   g_quote_hierarchy_file_name = quote_hierarchy_file_name;

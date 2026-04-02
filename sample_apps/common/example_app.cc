@@ -249,7 +249,7 @@ bool scan_integer_list(const string &in, string *out) {
 bool get_enclave_parameters(string **s, int *n) {
 
   string  pcrs_out;
-  string *args = new string[8];
+  string *args = new string[6];
   if (args == nullptr) {
     printf("%s() error, line %d, can't allocate args\n", __func__, __LINE__);
     goto err;
@@ -257,19 +257,18 @@ bool get_enclave_parameters(string **s, int *n) {
   *s = args;
 
   args[0] = FLAGS_tpm_device;
-  args[1] = FLAGS_ek_cert_signer_file_name;
-  args[2] = FLAGS_ek_cert_file_name;
-  args[3] = FLAGS_seal_hierarchy_file_name;
-  args[4] = FLAGS_quote_hierarchy_file_name;
+  args[1] = FLAGS_ek_cert_file_name;
+  // args[2] = FLAGS_endorsement_cert_chain_file;
+  args[2] = FLAGS_seal_hierarchy_file_name;
+  args[3] = FLAGS_quote_hierarchy_file_name;
   if (!scan_integer_list(FLAGS_pcrs_str, &pcrs_out)) {
     printf("%s() error, line %d, cant scan_integer_list\n", __func__, __LINE__);
     goto err;
   }
-  args[5] = pcrs_out;
-  args[6] = FLAGS_quote_cert_file;
-  args[7] = FLAGS_endorsement_cert_chain_file;
+  args[4] = pcrs_out;
+  args[5] = FLAGS_quote_cert_file;
 
-  *n = 8;
+  *n = 6;
   return true;
 
 err:
@@ -525,7 +524,7 @@ int main(int an, char **av) {
     return 1;
   }
 
-  // Init simulated enclave
+  // Init enclave
   if (!trust_mgr->initialize_enclave(n, params)) {
     printf("%s() error, line %d, Can't init enclave\n", __func__, __LINE__);
     return 1;

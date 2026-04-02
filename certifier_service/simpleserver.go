@@ -43,6 +43,7 @@ var enclaveType = flag.String("enclave_type", "simulated-enclave", "enclave type
 var getPolicyKeyFromSecureStore = flag.Bool("get_key_from_secure_store", false, "get policy private key from store")
 
 var serverHost = flag.String("host", "localhost", "address for client/server")
+
 var serverPort = flag.String("port", "8123", "port for client/server")
 
 var keyServerHost = flag.String("key_service_host", "localhost", "address for client/server")
@@ -51,12 +52,17 @@ var keyServerPort = flag.String("key_service_port", "8127", "port for client/ser
 var policyStoreFile = flag.String("policy_store", "store", "policy store")
 
 var policyKeyFile = flag.String("policy_key_file", "policy_key_file.bin", "key file name")
+
 var policyCertFile = flag.String("policy_cert_file", "policy_cert_file.bin", "cert file name")
+
 var readPolicy = flag.Bool("readPolicy", true, "read policy")
+
 var policyFile = flag.String("policyFile", "./certlib/policy.bin", "policy file name")
 
 var attestKeyFile = flag.String("attest_key_file", "attest_key_file.bin", "attest key file name")
+
 var measurementFile = flag.String("measurement_file", "certifier_measurement_file.bin", "measurement key file name")
+
 var attestEndorsementFile = flag.String("endorsement_file", "platform_attest_endorsement.bin", "endorsement file name")
 
 var arkFile = flag.String("ark_file", "ark_cert.der", "ARK cert file name")
@@ -146,7 +152,7 @@ func initCertifierService(useStore bool) bool {
 			*policyKeyFile, *policyCertFile)
 		serializedKey, err := os.ReadFile(*policyKeyFile)
 		if err != nil {
-			fmt.Println("initCertifier: can't read key file, ", err)
+			fmt.Println("initCertifier: can't read key file %s, ", *policyCertFile, err)
 			return false
 		}
 		privatePolicyKey = &certprotos.KeyMessage{}
@@ -160,7 +166,8 @@ func initCertifierService(useStore bool) bool {
 
 	serializedPolicyCert, err := os.ReadFile(*policyCertFile)
 	if err != nil {
-		fmt.Println("initCertifier: can't read policy cert file, ", err)
+		fmt.Printf("initCertifier: can't read policy cert file %s, ", *policyCertFile)
+		fmt.Println(err)
 		return false
 	}
 	policyCert, err = x509.ParseCertificate(serializedPolicyCert)
@@ -949,8 +956,10 @@ func certifierServer(serverAddr string) {
 func main() {
 
 	flag.Parse()
-
 	var serverAddr string
+
+fmt.Printf("Policy key file: %s\n", *policyKeyFile)
+fmt.Printf("Policy cert file: %s\n", *policyCertFile)
 
 	if *operation == "certifier-service" {
 		// later this may turn into a TLS connection, we'll see

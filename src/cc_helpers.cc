@@ -47,7 +47,9 @@
 #  include "sev_support.h"
 #endif  // SEV_SNP
 
-#include "tpm2_support.h"
+#ifdef TPM_CERTIFIER
+#  include "tpm2_support.h"
+#endif
 
 using namespace certifier::framework;
 using namespace certifier::utilities;
@@ -187,41 +189,43 @@ bool certifier::framework::cc_trust_manager::initialize_enclave(
       return false;
     }
     return initialize_simulated_enclave(params[0], params[1], params[2]);
+#ifdef SEV_SNP
   } else if (enclave_type_ == "sev-enclave") {
 
     if (n == 0) {
-#ifdef SEV_SNP
-      // Fetch platform certificates using extended guest request
       string ark, ask, vcek;
       if (sev_get_platform_certs(&vcek, &ask, &ark) != EXIT_SUCCESS) {
         printf("%s() error, line %d, Failed to fetch platform certs\n",
                __func__,
                __LINE__);
       }
-      return initialize_sev_enclave(ark, ask, vcek);
-#else
+    } else {
       printf("%s() error, line %d, Wrong number of sev parameters\n",
              __func__,
              __LINE__);
       return false;
-#endif  // SEV_SNP
+    }
+    return initialize_sev_enclave(ark, ask, vcek);
+#endif
 #ifdef TPM_CERTIFIER
-    } else if (enclave_type_ == "tpm-enclave") {
-      bool ret = initialize_tpm_enclave(params[0],
-                                        params[1],
-                                        params[2],
-                                        params[3],
-                                        params[4],
-                                        (int)params[5].size(),
-                                        (byte *)params[5].data());
-      if (!ret)
-        return false;
-      if (!read_file_into_string(params[6], &g_serialized_quote_cert)) {
-        printf("%s() error, line %d, Can't read quote cert\n",
-               __func__,
-               __LINE__);
-        return false;
-      }
+  } else if (enclave_type_ == "tpm-enclave") {
+    bool ret = initialize_tpm_enclave(params[0],
+                                      params[1],
+                                      params[2],
+                                      params[3],
+                                      params[4],
+                                      (int)params[5].size(),
+                                      (byte *)params[5].data());
+    if (!ret)
+      return false;
+    if (!read_file_into_string(params[6], &g_serialized_quote_cert)) {
+      printf("%s() error, line %d, Can't read quote cert\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+
+#  if 0
       extern local_tpm g_tpm;
       if (!get_endorsement_cert(g_tpm, &g_serialized_endorsement_cert)) {
         printf("%s() error, line %d, Can't get endorsement cert\n",
@@ -229,23 +233,18 @@ bool certifier::framework::cc_trust_manager::initialize_enclave(
                __LINE__);
         return false;
       }
-      if (!read_file_into_string(params[7],
-                                 &g_serialized_endorsement_cert_chain)) {
-        printf("%s() error, line %d, Can't get endorsement cert chain\n",
-               __func__,
-               __LINE__);
-        return false;
-      }
-      g_tpm_plat_certs_initialized = true;
-#endif
-      return true;
-    } else if (n < 3) {
-      printf("%s() error, line %d, Wrong number of sev parameters\n",
+#  endif
+
+    if (!read_file_into_string(params[7],
+                               &g_serialized_endorsement_cert_chain)) {
+      printf("%s() error, line %d, Can't get endorsement cert chain\n",
              __func__,
              __LINE__);
       return false;
     }
-    return initialize_sev_enclave(params[0], params[1], params[2]);
+    g_tpm_plat_certs_initialized = true;
+    return true;
+#endif
   } else if (enclave_type_ == "oe-enclave") {
     return initialize_oe_enclave(params[0]);
   } else if (enclave_type_ == "gramine-enclave") {
@@ -895,7 +894,7 @@ bool certifier::framework::cc_trust_manager::certify(
 bool certifier::framework::cc_trust_manager::initialize_tpm_enclave(
     const string &device_name,
     const string &endorsement_cert_file_name,
-    const string &endorsement_cert_signer_file_name,
+    const string &endorsement_cert_chain_file_name,
     const string &seal_hierarchy_file_name,
     const string &quote_hierarchy_file_name,
     int           num_pcrs,
