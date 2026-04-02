@@ -499,7 +499,6 @@ bool recover_sealing_secret(local_tpm    &tpm,
                  (byte_t *)key_info.priv_key().data(),
                  &seal_handle,
                  &name)) {
-    printf("\n");
     printf("%s() error, line %d, Load failed\n", __func__, __LINE__);
     Tpm2_FlushContext(tpm, srk_handle);
     return false;
@@ -1727,6 +1726,7 @@ bool tpm_Init(const string &device_name,
 }
 
 bool tpm_Seal(string &unsealed, string *sealed) {
+
   // Initialized?
   if (!g_tpm_environment_initialized) {
     printf("%s() error, line %d, environment not initialized\n",
@@ -1735,13 +1735,19 @@ bool tpm_Seal(string &unsealed, string *sealed) {
     return false;
   }
 
+#ifdef DEBUG
+  printf("g_seal_thing in Seal: ");
+  print_bytes(g_seal_thing.size(), (byte_t*)g_seal_thing.data());
+  printf("\n");
+#endif
+
   // Encrypt
   byte iv[32];
   int  out_size = unsealed.size() + 128;
   byte out[out_size];
 
   if (!get_random(32 * NBITSINBYTE, iv)) {
-    printf("%s() error, line %d, gant get iv\n", __func__, __LINE__);
+    printf("%s() error, line %d, cant get iv\n", __func__, __LINE__);
     return false;
   }
   if (!aes_256_gcm_encrypt((byte_t *)unsealed.data(),
@@ -1776,6 +1782,7 @@ bool tpm_Seal(int in_size, byte_t *in, int *size_out, byte_t *out) {
 }
 
 bool tpm_Unseal(string &sealed, string *unsealed) {
+
   // Initialized?
   if (!g_tpm_environment_initialized) {
     printf("%s() error, line %d, environment not initialized\n",
@@ -1783,6 +1790,12 @@ bool tpm_Unseal(string &sealed, string *unsealed) {
            __LINE__);
     return false;
   }
+
+#ifdef DEBUG
+  printf("g_seal_thing in Unseal: ");
+  print_bytes(g_seal_thing.size(), (byte_t*)g_seal_thing.data());
+  printf("\n");
+#endif
 
   // Decrypt
   int  out_size = sealed.size() + 128;

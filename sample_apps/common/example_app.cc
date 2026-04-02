@@ -468,7 +468,6 @@ int main(int an, char **av) {
   // skip the inits
   if (FLAGS_operation == "first-pass") {
 
-    printf("****** %s\n", FLAGS_quote_hierarchy_file_name.c_str());
     string pcrs_out;
     if (!scan_integer_list(FLAGS_pcrs_str, &pcrs_out)) {
       printf("%s() error, line %d, first_pass failed\n", __func__, __LINE__);
@@ -542,13 +541,12 @@ int main(int an, char **av) {
   }
 #  ifdef DEBUG3
   printf("\n\nStore initialized\n");
-#  endif  // DEBUG3
-#  ifdef DEBUG4
   printf("\ntrust data at initialization\n");
   trust_mgr->print_trust_data();
   printf("\nStore\n");
   trust_mgr->store_.print();
 #  endif  // DEBUG4
+
   // See note above about defaults
   string public_key_alg(FLAGS_public_key_alg);
   string symmetric_key_alg(FLAGS_symmetric_key_alg);
@@ -701,6 +699,7 @@ done:
   trust_mgr->print_trust_data();
   printf("\n\nDone\n");
 #  endif  // DEBUG3
+  trust_mgr->close_enclave();
   trust_mgr->clear_sensitive_data();
   if (trust_mgr != nullptr) {
     delete trust_mgr;
