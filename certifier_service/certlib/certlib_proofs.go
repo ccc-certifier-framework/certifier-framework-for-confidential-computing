@@ -363,6 +363,16 @@ fmt.Printf("\n")
 	return info.VerifiedMeasurement
 }
 
+func GetTpmMeasurementFromAttestation(evBuf []byte) []byte {
+	var am certprotos.TpmAttestationMessage
+	err := proto.Unmarshal(evBuf, &am)
+	if err != nil {
+		fmt.Printf("GetTpmSevMeasurementFromAttestation: Can't unmarshal TpmSevAttestationMessage\n")
+		return nil
+	}
+	return GetMeasurementFromTpmAttest(am.TheQuote)
+}
+
 func GetSevMeasurementFromAttestation(evBuf []byte) []byte {
 	var am certprotos.SevAttestationMessage
 	err := proto.Unmarshal(evBuf, &am)
@@ -459,6 +469,9 @@ func GetRelevantMeasurementPolicy(pool *PolicyPool, evType string,
 			break
 		} else if ev.GetEvidenceType() == "sev-attestation" {
 			measurement = GetSevMeasurementFromAttestation(ev.SerializedEvidence)
+			break
+		} else if ev.GetEvidenceType() == "tpm-attestation" {
+			measurement = GetTpmMeasurementFromAttestation(ev.SerializedEvidence)
 			break
 		} else if ev.GetEvidenceType() == "islet-attestation" {
 			measurement = GetIsletMeasurementFromAttestation(ev.SerializedEvidence)
@@ -1780,8 +1793,16 @@ func GetPlatformFromSevAttest(binSevAttest []byte) *certprotos.Platform {
 	return MakePlatform(t1, nil, props)
 }
 
+func GetMeasurementFromTpmAttest(binTpmAttest []byte) []byte {
+	return []byte(binTpmAttest[0x90:0xc0])
+}
+
 func GetMeasurementFromSevAttest(binSevAttest []byte) []byte {
 	return []byte(binSevAttest[0x90:0xc0])
+}
+
+func GetMeasurementEntityFromTpmAttest(binTpmAttest []byte) *certprotos.EntityMessage {
+	return MakeMeasurementEntity(GetMeasurementFromTpmAttest(binTpmAttest))
 }
 
 func GetMeasurementEntityFromSevAttest(binSevAttest []byte) *certprotos.EntityMessage {

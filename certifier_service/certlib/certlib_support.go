@@ -763,6 +763,21 @@ func GeneralAuthenticatedDecrypt(alg string, in []byte, key []byte) []byte {
 	return nil
 }
 
+func SameMeasurementEntity(e1 *certprotos.EntityMessage, e2 *certprotos.EntityMessage) bool {
+	if e1.GetRegisters() == nil && e2.GetRegisters() != nil {
+		return false;
+	} 
+	if e1.GetRegisters() != nil && e2.GetRegisters() == nil {
+		return false;
+	}
+	if e1.GetRegisters() != nil {
+		if !bytes.Equal(e1.GetRegisters(), e2.GetRegisters()) {
+			return false;
+		}
+	}
+	return bytes.Equal(e1.GetMeasurement(), e2.GetMeasurement())
+}
+
 func SameMeasurement(m1 []byte, m2 []byte) bool {
 	return bytes.Equal(m1, m2)
 }
@@ -804,7 +819,7 @@ func SameEntity(e1 *certprotos.EntityMessage, e2 *certprotos.EntityMessage) bool
 		return false
 	}
 	if e1.GetEntityType() == "measurement" {
-		return SameMeasurement(e1.GetMeasurement(), e2.GetMeasurement())
+		return SameMeasurementEntity(e1, e2)
 	}
 	if e1.GetEntityType() == "key" {
 		return SameKey(e1.GetKey(), e2.GetKey())
@@ -1050,6 +1065,13 @@ func PrintEntityDescriptor(e *certprotos.EntityMessage) {
 	if e.GetEntityType() == "measurement" {
 		fmt.Printf("Measurement[")
 		PrintBytes(e.GetMeasurement())
+		if e.GetRegisters() != nil {
+			fmt.Printf("( ")
+			for i := 0; i < len(e.GetRegisters()); i++ {
+				fmt.Printf("%d ", e.GetRegisters()[i])
+			}
+			fmt.Printf(")")
+		}
 		fmt.Printf("]\n")
 	}
 	if e.GetEntityType() == "key" {
@@ -1192,6 +1214,14 @@ func PrintEntity(e *certprotos.EntityMessage) {
 	}
 	if e.GetEntityType() == "measurement" {
 		PrintBytes(e.GetMeasurement())
+		if e.GetRegisters() != nil {
+                        fmt.Printf("( ")
+                        for i := 0; i < len(e.GetRegisters()); i++ {
+                                fmt.Printf("%d ", e.GetRegisters()[i])
+                        }
+                        fmt.Printf(")")
+                }
+                fmt.Printf("]\n")
 	}
 	if e.GetEntityType() == "environment" {
 		PrintEnvironment(e.EnvironmentEnt)
@@ -1987,8 +2017,10 @@ func PrintEvidence(ev *certprotos.Evidence) {
 		PrintBytes(ev.SerializedEvidence)
 	} else if ev.GetEvidenceType() == "gramine-attestation" {
 		PrintBytes(ev.SerializedEvidence)
+	} else if ev.GetEvidenceType() == "tpm-attestation" {
+		PrintBytes(ev.SerializedEvidence)
 	} else if ev.GetEvidenceType() == "cert" {
-		fmt.Printf("Serialize cert:\n")
+		fmt.Printf("Serialized cert:\n")
 		PrintBytes(ev.SerializedEvidence)
 		fmt.Printf("\n")
 		cx509 := Asn1ToX509(ev.SerializedEvidence)
@@ -2003,13 +2035,14 @@ func PrintEvidence(ev *certprotos.Evidence) {
 func PrintEvidencePackage(evp *certprotos.EvidencePackage, printAll bool) {
 	fmt.Printf("\nProver type: %s\n", evp.GetProverType())
 	for i := 0; i < len(evp.FactAssertion); i++ {
+		fmt.Printf("\nEvidence statement %d:\n", i)
 		ev := evp.FactAssertion[i]
 		if ev == nil {
 			continue
 		}
 		if printAll {
 			PrintEvidence(ev)
-			fmt.Printf("\n\n")
+			fmt.Printf("\n")
 		} else {
 			fmt.Printf("    Evidence type: %s\n", ev.GetEvidenceType())
 		}

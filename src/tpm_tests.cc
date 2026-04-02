@@ -40,8 +40,8 @@ bool test_tpm(bool print_all) {
   string seal_hierarchy_file_name("seal_hierarchy.bin");
   string quote_hierarchy_file_name("quote_hierarchy.bin");
 
-  int  num_pcrs = 1;
-  byte pcrs[1] = {7};
+  int    num_pcrs = 1;
+  byte   pcrs[1] = {7};
   string cert_chain;
 
   // Init
@@ -409,7 +409,7 @@ bool test_tpm_platform_certify(const bool    debug_print,
   string cert_chain;
   if (!tpm_Init(device_name,
                 endorsement_cert_file_name,
-		cert_chain,
+                cert_chain,
                 seal_hierarchy_file_name,
                 quote_hierarchy_file_name,
                 num_pcrs,

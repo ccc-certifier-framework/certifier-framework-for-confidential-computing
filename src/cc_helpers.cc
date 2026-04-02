@@ -30,6 +30,7 @@
 #include "simulated_enclave.h"
 #include "application_enclave.h"
 #include "cc_helpers.h"
+
 #ifdef GRAMINE_CERTIFIER
 #  include "gramine_api.h"
 #endif
@@ -71,18 +72,18 @@ extern string pem_cert_chain;
 #endif
 
 #if TPM_CERTIFIER
-bool   tpm_Init(const string &device_name,
-                const string &endorsement_cert_file_name,
-                const string &endorsement_cert_chain_file_name,
-                const string &seal_hierarchy_file_name,
-                const string &quote_hierarchy_file_name,
-                int           num_pcrs,
-                byte_t       *pcrs);
+bool tpm_Init(const string &device_name,
+              const string &endorsement_cert_file_name,
+              const string &endorsement_cert_chain_file_name,
+              const string &seal_hierarchy_file_name,
+              const string &quote_hierarchy_file_name,
+              int           num_pcrs,
+              byte_t       *pcrs);
 
-bool   g_tpm_plat_certs_initialized = false;
-string g_serialized_quote_cert;
-string g_serialized_endorsement_cert;
-string g_serialized_endorsement_cert_chain;
+bool          g_tpm_plat_certs_initialized = false;
+extern string g_serialized_quote_cert;
+extern string g_serialized_endorsement_cert;
+extern string g_serialized_endorsement_cert_chain;
 #endif
 
 #ifdef GRAMINE_CERTIFIER
@@ -211,23 +212,18 @@ bool certifier::framework::cc_trust_manager::initialize_enclave(
 #endif
 #ifdef TPM_CERTIFIER
   } else if (enclave_type_ == "tpm-enclave") {
-    if (!initialize_tpm_enclave(params[0],  // device name
-                                  params[1],  // endorsement cert file
-                                  params[2],  // endorsement cert chain
-                                  params[3],  // seal hierarchy file name
-                                  params[4],  // quote hierarchy file name
-                                  params[5],  // pcr string
-                                  params[6])) {  // quote_file
+    if (!initialize_tpm_enclave(params[0],     // device name
+                                params[1],     // endorsement cert file
+                                params[2],     // endorsement cert chain
+                                params[3],     // seal hierarchy file name
+                                params[4],     // quote hierarchy file name
+                                params[5],     // pcr string
+                                params[6])) {  // quote_file
       printf("%s() error, line %d, can't initialize tpm enclave\n",
              __func__,
              __LINE__);
       return false;
     }
-
-    g_serialized_endorsement_cert= params[1];
-    g_serialized_endorsement_cert_chain = params[2];
-    g_serialized_quote_cert = params[6];
-    g_tpm_plat_certs_initialized = true;
     return true;
 #endif
   } else if (enclave_type_ == "oe-enclave") {
@@ -877,13 +873,13 @@ bool certifier::framework::cc_trust_manager::certify(
 #endif  // NEW_API
 
 bool certifier::framework::cc_trust_manager::initialize_tpm_enclave(
-                              const string &device_name,
-                              const string &endorsement_cert_file_name,
-                              const string &endorsement_cert_chain_file_name,
-                              const string &seal_hierarchy_file_name,
-                              const string &quote_hierarchy_file_name,
-                              const string &tpm_pcr_list,
-                              const string &quote_cert_file_name) {
+    const string &device_name,
+    const string &endorsement_cert_file_name,
+    const string &endorsement_cert_chain_file_name,
+    const string &seal_hierarchy_file_name,
+    const string &quote_hierarchy_file_name,
+    const string &tpm_pcr_list,
+    const string &quote_cert_file_name) {
 
 #ifdef TPM_CERTIFIER
 #  ifdef OLD_API
@@ -906,23 +902,17 @@ bool certifier::framework::cc_trust_manager::initialize_tpm_enclave(
                 seal_hierarchy_file_name,
                 quote_hierarchy_file_name,
                 (int)tpm_pcr_list.size(),
-                (byte_t*)tpm_pcr_list.data())) {
+                (byte_t *)tpm_pcr_list.data())) {
     printf("%s() error, line %d, Can't init tpm-enclave\n", __func__, __LINE__);
     return false;
   }
 
   if (!init_quote_cert_from_file(quote_cert_file_name)) {
-    printf("%s() error, line %d, Can't init quote from file\n", __func__, __LINE__);
+    printf("%s() error, line %d, Can't init quote from file\n",
+           __func__,
+           __LINE__);
     return false;
   }
-
-  extern string g_endorsement_cert;
-  extern string g_endorsement_cert_chain;
-  extern string g_quote_cert;
-
-  g_serialized_quote_cert = g_quote_cert;
-  g_serialized_endorsement_cert = g_endorsement_cert;
-  g_serialized_endorsement_cert_chain = g_endorsement_cert_chain;
   g_tpm_plat_certs_initialized = true;
 
   cc_provider_provisioned_ = true;
@@ -2384,7 +2374,6 @@ bool certifier::framework::certifiers::certify_domain(const string &purpose) {
     }
     ev->set_evidence_type("cert");
     ev->set_serialized_evidence(g_serialized_quote_cert);
-    ev = platform_evidence.add_assertion();
     if (ev == nullptr) {
       printf("%s() error, line: %d, Can't add to platform evidence\n",
              __func__,
@@ -2650,7 +2639,8 @@ bool construct_platform_evidence_package(string        &attesting_enclave_type,
                                          string        &serialized_attestation,
                                          evidence_package *ep) {
 #ifdef DEBUG6
-  printf("construct_platform_evidence_package\n");
+  printf("construct_platform_evidence_package with %d assertions\n",
+         platform_assertions.assertion_size());
 #endif
   string pt("vse-verifier");
   string et("signed-claim");
@@ -2696,7 +2686,6 @@ bool construct_platform_evidence_package(string        &attesting_enclave_type,
            __LINE__);
     return false;
   }
-
   ev2->set_serialized_evidence(serialized_attestation);
 
 #ifdef DEBUG6

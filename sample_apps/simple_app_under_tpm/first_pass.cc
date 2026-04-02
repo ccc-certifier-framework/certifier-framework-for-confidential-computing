@@ -305,7 +305,7 @@ bool first_pass(const string &tpm_device,
 
   if (!tpm_Init(tpm_device,
                 endorsement_cert_file_name,
-		endorsement_cert_chain_file_name,
+                endorsement_cert_chain_file_name,
                 seal_hierarchy_file_name,
                 quote_hierarchy_file_name,
                 num_pcrs,

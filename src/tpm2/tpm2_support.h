@@ -80,7 +80,7 @@ bool write_nv_handle(local_tpm &tpm,
 
 // ---------------------------------------------------------------
 
-bool init_quote_cert_from_file(const string& quote_cert_file_name);
+bool init_quote_cert_from_file(const string &quote_cert_file_name);
 
 bool init_tpm(const string &device_name);
 bool close_tpm();

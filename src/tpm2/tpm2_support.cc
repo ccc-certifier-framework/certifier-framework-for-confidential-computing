@@ -1367,9 +1367,9 @@ TPM_HANDLE g_quote_handle = 0;
 
 int          g_seal_key_type;
 string       g_seal_key;
-string       g_endorsement_cert;
-string       g_endorsement_cert_chain;
-string       g_quote_cert;
+string       g_serialized_quote_cert;
+string       g_serialized_endorsement_cert;
+string       g_serialized_endorsement_cert_chain;
 string       g_seal_hierarchy_file_name;
 string       g_quote_hierarchy_file_name;
 string       g_seal_thing;
@@ -1427,24 +1427,6 @@ bool tpm_close() {
   return true;
 }
 
-/*
- * local_tpm g_tpm;
- * bool g_tpm_initialized = false;
- * bool g_tpm_environment_initialized = false;
- * TPM_HANDLE g_ek_handle = 0;
- * TPM_HANDLE g_srk_handle = 0;
- * TPM_HANDLE g_quote_handle = 0;
- * int          g_seal_key_type;
- * string       g_seal_key;
- * string       g_endorsement_cert;
- * string       g_endorsement_cert_file_name;
- * string       g_seal_hierarchy_file_name;
- * string       g_quote_hierarchy_file_name;
- * string       g_seal_thing;
- * int          g_num_pcrs;
- * byte_t       g_pcrs[32];
- * TPM2B_PUBLIC g_public_quote_key;
- */
 bool init_endorsement_environment() {
 
   string policyString;
@@ -1510,7 +1492,7 @@ bool init_endorsement_environment() {
   printf("\n");
 #endif
 
-  if (!get_endorsement_cert(g_tpm, &g_endorsement_cert)) {
+  if (!get_endorsement_cert(g_tpm, &g_serialized_endorsement_cert)) {
     printf("%s() error, line %d, can't get endorsement cert\n",
            __func__,
            __LINE__);
@@ -1518,7 +1500,8 @@ bool init_endorsement_environment() {
   }
 #ifdef DEBUG3
   printf("Cert:\n");
-  print_bytes(g_endorsement_cert.size(), (byte_t *)g_endorsement_cert.data());
+  print_bytes(g_serialized_endorsement_cert.size(),
+              (byte_t *)g_serialized_endorsement_cert.data());
   printf("\n");
 #endif
 
@@ -1617,16 +1600,15 @@ bool init_quote_environment(int num_pcrs, byte_t *pcrs) {
   return true;
 }
 
-bool init_quote_cert_from_file(const string& quote_cert_file_name) {
-  if (!read_file_into_string(quote_cert_file_name, &g_quote_cert)) {
-      printf("%s() error, line %d, can't get quote cert\n",
-            __func__,
-            __LINE__);
-      return false;
-    }
+bool init_quote_cert_from_file(const string &quote_cert_file_name) {
+  if (!read_file_into_string(quote_cert_file_name, &g_serialized_quote_cert)) {
+    printf("%s() error, line %d, can't get quote cert\n", __func__, __LINE__);
+    return false;
+  }
 #ifdef DEBUG
   printf("Recovered quote cert\n");
-  print_bytes(g_quote_cert.size(), (byte_t*)g_quote_cert.data());
+  print_bytes(g_serialized_quote_cert.size(),
+              (byte_t *)g_serialized_quote_cert.data());
   printf("\n");
 #endif
   return true;
@@ -1642,8 +1624,10 @@ bool tpm_Init(const string &device_name,
 
 #ifdef DEBUG
   printf("tpm_Init, device: %s\n", device_name.c_str());
-  printf("tpm_Init, endorsement cert: %s\n", endorsement_cert_file_name.c_str());
-  printf("tpm_Init, endorsement cert chain: %s\n", endorsement_cert_chain_file_name.c_str());
+  printf("tpm_Init, endorsement cert: %s\n",
+         endorsement_cert_file_name.c_str());
+  printf("tpm_Init, endorsement cert chain: %s\n",
+         endorsement_cert_chain_file_name.c_str());
   printf("tpm_Init, seal_hierarchy_file: %s\n",
          seal_hierarchy_file_name.c_str());
   printf("tpm_Init, quote_hierarchy_file: %s\n",
@@ -1675,25 +1659,27 @@ bool tpm_Init(const string &device_name,
 #endif
 
   if (endorsement_cert_file_name != "") {
-    if (!read_file_into_string(endorsement_cert_file_name, &g_endorsement_cert)) {
+    if (!read_file_into_string(endorsement_cert_file_name,
+                               &g_serialized_endorsement_cert)) {
       printf("%s() error, line %d, can't init endorsement environment\n",
-            __func__,
-            __LINE__);
+             __func__,
+             __LINE__);
       return false;
     }
   } else {
-    if (!get_endorsement_cert(g_tpm, &g_endorsement_cert)) {
+    if (!get_endorsement_cert(g_tpm, &g_serialized_endorsement_cert)) {
       printf("%s() error, line %d, can't get endorsement cert from tpm\n",
-            __func__,
-            __LINE__);
+             __func__,
+             __LINE__);
       return false;
     }
   }
   if (endorsement_cert_chain_file_name != "") {
-    if (!read_file_into_string(endorsement_cert_chain_file_name, &g_endorsement_cert_chain)) {
+    if (!read_file_into_string(endorsement_cert_chain_file_name,
+                               &g_serialized_endorsement_cert_chain)) {
       printf("%s() error, line %d, can't init endorsement cert chain\n",
-            __func__,
-            __LINE__);
+             __func__,
+             __LINE__);
       return false;
     }
   }
@@ -1743,7 +1729,7 @@ bool tpm_Seal(string &unsealed, string *sealed) {
 // CAREFUL: Generally don't include this.
 #ifdef DEBUG7
   printf("g_seal_thing in Seal: ");
-  print_bytes(g_seal_thing.size(), (byte_t*)g_seal_thing.data());
+  print_bytes(g_seal_thing.size(), (byte_t *)g_seal_thing.data());
   printf("\n");
 #endif
 
@@ -1800,7 +1786,7 @@ bool tpm_Unseal(string &sealed, string *unsealed) {
 // CAREFUL: Generally don't include this.
 #ifdef DEBUG7
   printf("g_seal_thing in Unseal: ");
-  print_bytes(g_seal_thing.size(), (byte_t*)g_seal_thing.data());
+  print_bytes(g_seal_thing.size(), (byte_t *)g_seal_thing.data());
   printf("\n");
 #endif
 
