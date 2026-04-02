@@ -1670,9 +1670,8 @@ bool tpm_Init(const string &device_name,
   printf("tpm_init, opened tpm: %s %d\n", device_name.c_str(), g_tpm.tpm_fd_);
 #endif
 
-  g_endorsement_cert_file_name = endorsement_cert_file_name;
   if (endorsement_cert_file_name != "") {
-    if (!read_file_into_string(g_endorsement_cert_file_name, &g_endorsement_cert)) {
+    if (!read_file_into_string(endorsement_cert_file_name, &g_endorsement_cert)) {
       printf("%s() error, line %d, can't init endorsement environment\n",
             __func__,
             __LINE__);
@@ -1686,7 +1685,6 @@ bool tpm_Init(const string &device_name,
       return false;
     }
   }
-  g_endorsement_cert_chain_file_name = endorsement_cert_chain_file_name;
   if (endorsement_cert_chain_file_name != "") {
     if (!read_file_into_string(endorsement_cert_chain_file_name, &g_endorsement_cert_chain)) {
       printf("%s() error, line %d, can't init endorsement cert chain\n",

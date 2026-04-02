@@ -223,12 +223,9 @@ bool certifier::framework::cc_trust_manager::initialize_enclave(
       return false;
     }
 
-    extern string g_endorsement_cert;
-    extern string g_endorsement_cert_chain;
-    extern string g_quote_cert;
-    g_serialized_endorsement_cert= g_endorsement_cert;
-    g_serialized_endorsement_cert_chain = g_endorsement_cert_chain;
-    g_serialized_quote_cert = g_quote_cert;
+    g_serialized_endorsement_cert= params[1];
+    g_serialized_endorsement_cert_chain = params[2];
+    g_serialized_quote_cert = params[6];
     g_tpm_plat_certs_initialized = true;
     return true;
 #endif
@@ -908,7 +905,7 @@ bool certifier::framework::cc_trust_manager::initialize_tpm_enclave(
                 seal_hierarchy_file_name,
                 quote_hierarchy_file_name,
                 (int)tpm_pcr_list.size(),
-                (byte_t*)tpm_pcr_list.data()) {
+                (byte_t*)tpm_pcr_list.data())) {
     printf("%s() error, line %d, Can't init tpm-enclave\n", __func__, __LINE__);
     return false;
   }

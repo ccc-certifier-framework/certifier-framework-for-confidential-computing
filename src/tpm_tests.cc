@@ -42,10 +42,12 @@ bool test_tpm(bool print_all) {
 
   int  num_pcrs = 1;
   byte pcrs[1] = {7};
+  string cert_chain;
 
   // Init
   if (!tpm_Init(device_name,
                 endorsement_cert_file_name,
+                cert_chain,
                 seal_hierarchy_file_name,
                 quote_hierarchy_file_name,
                 num_pcrs,
@@ -404,8 +406,10 @@ bool test_tpm_platform_certify(const bool    debug_print,
   string           enclave_id("test-enclave");
   evidence_package evp;
 
+  string cert_chain;
   if (!tpm_Init(device_name,
                 endorsement_cert_file_name,
+		cert_chain,
                 seal_hierarchy_file_name,
                 quote_hierarchy_file_name,
                 num_pcrs,

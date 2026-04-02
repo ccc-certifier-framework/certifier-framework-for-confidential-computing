@@ -280,7 +280,7 @@ bool first_pass(const string &tpm_device,
 bool first_pass(const string &tpm_device,
                 const string &policy_key_file_name,
                 const string &endorsement_cert_file_name,
-                const string &endorsement_cert_signer_file_name,
+                const string &endorsement_cert_chain_file_name,
                 const string &seal_hierarchy_file_name,
                 const string &quote_hierarchy_file_name,
                 const string &quote_cert_file,
@@ -295,7 +295,7 @@ bool first_pass(const string &tpm_device,
   printf("    endorsement file       : %s\n",
          endorsement_cert_file_name.c_str());
   printf("    signer      file       : %s\n",
-         endorsement_cert_signer_file_name.c_str());
+         endorsement_cert_chain_file_name.c_str());
   printf("    seal hierarchy file    : %s\n", seal_hierarchy_file_name.c_str());
   printf("    quote hierarchy file   : %s\n",
          quote_hierarchy_file_name.c_str());
@@ -305,6 +305,7 @@ bool first_pass(const string &tpm_device,
 
   if (!tpm_Init(tpm_device,
                 endorsement_cert_file_name,
+		endorsement_cert_chain_file_name,
                 seal_hierarchy_file_name,
                 quote_hierarchy_file_name,
                 num_pcrs,

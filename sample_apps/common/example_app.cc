@@ -82,15 +82,12 @@ DEFINE_string(seal_hierarchy_file_name,
 DEFINE_string(quote_hierarchy_file_name,
               "quote_hierarchy.bin",
               "quote hierarchy save file name");
-DEFINE_string(ek_cert_file_name, "ek-rsa2048.crt", "tpm cert file name");
-DEFINE_string(ek_cert_signer_file_name,
-              "ek-rsa2048_signer.crt",
-              "tpm cert signer file name");
 DEFINE_int32(num_pcrs, 1, "number of pcrs");
 DEFINE_string(pcrs_str, "7", "pcr string");
 DEFINE_string(quote_cert_file,
               "./provisioning/quote_cert.crt",
               "quote cert file");
+DEFINE_string(endorsement_cert_file_name, "ek-rsa2048.crt", "tpm cert file name");
 DEFINE_string(endorsement_cert_chain_file,
               "./provisioning/endorsement_cert_chain.bin",
               "endorsement cert chain file");
@@ -257,8 +254,8 @@ bool get_enclave_parameters(string **s, int *n) {
   *s = args;
 
   args[0] = FLAGS_tpm_device;
-  args[1] = FLAGS_ek_cert_file_name;
-  args[2] = FLAGS_ek_cert_chain_file;
+  args[1] = FLAGS_endorsement_cert_file_name;
+  args[2] = FLAGS_endorsement_cert_chain_file;
   args[3] = FLAGS_seal_hierarchy_file_name;
   args[4] = FLAGS_quote_hierarchy_file_name;
   if (!scan_integer_list(FLAGS_pcrs_str, &pcrs_out)) {
@@ -459,7 +456,7 @@ int main(int an, char **av) {
   extern bool first_pass(const string &tpm_device,
                          const string &policy_key_file_name,
                          const string &endorsement_cert_file_name,
-                         const string &endorsement_cert_signer_file_name,
+                         const string &endorsement_cert_chain_file_name,
                          const string &seal_hierarchy_file_name,
                          const string &quote_hierarchy_file_name,
                          const string &quote_cert_file,
@@ -481,8 +478,8 @@ int main(int an, char **av) {
 #    else
     if (!first_pass(FLAGS_tpm_device,
                     FLAGS_policy_key_file,
-                    FLAGS_ek_cert_file_name,
-                    FLAGS_ek_cert_signer_file_name,
+                    FLAGS_endorsement_cert_file_name,
+                    FLAGS_endorsement_cert_chain_file,
                     FLAGS_seal_hierarchy_file_name,
                     FLAGS_quote_hierarchy_file_name,
                     FLAGS_quote_cert_file,
