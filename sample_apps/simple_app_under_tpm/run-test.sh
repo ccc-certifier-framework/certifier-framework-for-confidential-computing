@@ -162,7 +162,7 @@ function do-run() {
     $EXAMPLE_DIR/tpm_example_app.exe --data_dir=./app1_data/  \
         --domain_name=$DOMAIN_NAME \
         --operation=fresh-start  \
-        --tpm_device="/dev/tpm1", "tpm device" \
+        --tpm_device="/dev/tpm1" \
         --seal_hierarchy_file_name="seal_hierarchy.bin" \
         --quote_hierarchy_file_name="quote_hierarchy.bin" \
         --policy_store_file=$POLICY_STORE_NAME --print_all=true
@@ -170,7 +170,7 @@ function do-run() {
     $EXAMPLE_DIR/tpm_example_app.exe --data_dir=./app1_data/  \
         --domain_name=$DOMAIN_NAME \
         --operation=get-certified \
-        --tpm_device="/dev/tpm1", "tpm device" \
+        --tpm_device="/dev/tpm1" \
         --seal_hierarchy_file_name="seal_hierarchy.bin" \
         --quote_hierarchy_file_name="quote_hierarchy.bin" \
         --policy_store_file=$POLICY_STORE_NAME --print_all=true
@@ -182,7 +182,7 @@ function do-run() {
     $EXAMPLE_DIR/tpm_example_app.exe  --data_dir=./app2_data/ \
         --domain_name=$DOMAIN_NAME \
         --operation=fresh-start \
-        --tpm_device="/dev/tpm1", "tpm device" \
+        --tpm_device="/dev/tpm1" \
         --seal_hierarchy_file_name="seal_hierarchy.bin" \
         --quote_hierarchy_file_name="quote_hierarchy.bin" \
         --policy_store_file=$POLICY_STORE_NAME --print_all=true
@@ -190,7 +190,7 @@ function do-run() {
     $EXAMPLE_DIR/tpm_example_app.exe  --data_dir=./app2_data/ \
         --domain_name=$DOMAIN_NAME \
         --operation=get-certified  \
-        --tpm_device="/dev/tpm1", "tpm device" \
+        --tpm_device="/dev/tpm1" \
         --seal_hierarchy_file_name="seal_hierarchy.bin" \
         --quote_hirearchy_file_name="quote_hierarchy.bin" \
         --policy_store_file=$POLICY_STORE_NAME --print_all=true
@@ -202,7 +202,7 @@ function do-run() {
     $EXAMPLE_DIR/tpm_example_app.exe \
       --data_dir=./app2_data/ --operation="run-app-as-server" \
       --domain_name=$DOMAIN_NAME \
-      --tpm_device="/dev/tpm1", "tpm device" \
+      --tpm_device="/dev/tpm1" \
       --seal_hierarchy_file_name="seal_hierarchy.bin" \
       --quote_hierarchy_file_name="quote_hierarchy.bin" \
       --policy_store_file=$POLICY_STORE_NAME  --print_all=true &
@@ -214,7 +214,7 @@ function do-run() {
     $EXAMPLE_DIR/tpm_example_app.exe \
       --data_dir=./app1_data/ --operation="run-app-as-client"   \
       --domain_name=$DOMAIN_NAME \
-        --tpm_device="/dev/tpm1", "tpm device" \
+        --tpm_device="/dev/tpm1" \
         --seal_hierarchy_file_name="seal_hierarchy.bin" \
         --quote_hierarchy_file_name="quote_hierarchy.bin" \
       --policy_store_file=$POLICY_STORE_NAME --print_all=true
