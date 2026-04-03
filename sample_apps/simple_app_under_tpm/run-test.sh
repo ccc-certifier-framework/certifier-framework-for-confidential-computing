@@ -192,7 +192,7 @@ function do-run() {
         --operation=get-certified  \
         --tpm_device="/dev/tpmrm1" \
         --seal_hierarchy_file_name="seal_hierarchy.bin" \
-        --quote_hirearchy_file_name="quote_hierarchy.bin" \
+        --quote_hierarchy_file_name="quote_hierarchy.bin" \
         --policy_store_file=$POLICY_STORE_NAME --print_all=true
 
     sleep 5

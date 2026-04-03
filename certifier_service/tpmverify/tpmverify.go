@@ -53,6 +53,6 @@ func TpmVerify(quoteCert []byte, serializedTpmAttestation []byte) (bool, []byte,
 	outMeasurement := C.GoBytes(unsafe.Pointer(measurementOut),
 		C.int(measurementSize))
 	outRegisters:= C.GoBytes(unsafe.Pointer(pcrOut),
-		C.int(measurementSize))
+		C.int(pcrSize))
 	return true, outMeasurement, outRegisters
 }

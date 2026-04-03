@@ -1622,7 +1622,7 @@ bool tpm_Init(const string &device_name,
               int           num_pcrs,
               byte_t       *pcrs) {
 
-#ifdef DEBUG
+#ifdef DEBUG3
   printf("tpm_Init, device: %s\n", device_name.c_str());
   printf("tpm_Init, endorsement cert: %s\n",
          endorsement_cert_file_name.c_str());
@@ -2406,6 +2406,7 @@ bool get_pcr_from_select(TPML_PCR_SELECTION *p, int *num_pcrs, byte_t *pcrs) {
                      &index,
                      pcrs);
   }
+  *num_pcrs = index;
   return true;
 }
 
