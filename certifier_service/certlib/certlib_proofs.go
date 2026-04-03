@@ -1075,21 +1075,34 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 				fmt.Printf("InitProvedStatements: Can't get quote key (4)\n")
 				return false
 			}
-			// Construct quote-key says enclave-key speaks-for measurement
-			quoteCert := []byte {1,2,3}
+
+			var am certprotos.TpmAttestationMessage
+			err := proto.Unmarshal(ev.SerializedEvidence, &am)
+			if err != nil {
+				fmt.Printf("InitProvedStatements: Can't unmarshal TPMAttestationMessage\n")
+				return false
+			}
+
+			// DEBUG
+
+
+			// Get quoteCert from evidence list
+			evc := evidenceList[0]
+			quoteCert := evc.SerializedEvidence
 			s, m, r := VerifyTpmAttestation(quoteCert, ev.SerializedEvidence)
-			PrintBytes(m)
-			PrintBytes(r)
 			if !s {
 				fmt.Printf("InitProvedStatements: VerifyTpmAttestation failed\n")
 				return false
 			}
-			var am certprotos.TpmAttestationMessage
-			err := proto.Unmarshal(ev.SerializedEvidence, &am)
-			if err != nil {
-				fmt.Printf("InitProvedStatements: Can't unmarshal SevAttestationMessage\n")
-				return false
-			}
+
+			// DEBUG
+			fmt.Printf("Measurement: ")
+			PrintBytes(m)
+			fmt.Printf("\n")
+			fmt.Printf("Pcrs: ")
+			PrintBytes(r)
+			fmt.Printf("\n")
+
 			var ud certprotos.AttestationUserData
 			err = proto.Unmarshal(am.WhatWasSaid, &ud)
 			if err != nil {
@@ -3008,8 +3021,8 @@ func ConstructProofFromInternalPlatformEvidence(publicPolicyKey *certprotos.KeyM
 
 func ConstructProofFromTpmPlatformEvidence(publicPolicyKey *certprotos.KeyMessage, purpose string, alreadyProved *certprotos.ProvedStatements) (*certprotos.VseClause, *certprotos.Proof) {
 
-	// There should be 9 statements in already proved
-	if len(alreadyProved.Proved) < 9 {
+	// There should be 4 statements in already proved
+	if len(alreadyProved.Proved) < 4 {
 		fmt.Printf("ConstructProofFromPlatformEvidence: too few statements %d\n", len(alreadyProved.Proved))
 		return nil, nil
 	}
@@ -3738,7 +3751,6 @@ func VerifyGramineAttestation(serializedEvidence []byte) (bool, []byte, []byte, 
 
 func VerifyTpmAttestation(quoteCert []byte, serializedTpmAttest[]byte) (bool, []byte, []byte) {
 
-	// FIX
 	// Call the cgo tpm verify function
 	s, m, r:= tpmverify.TpmVerify(quoteCert, serializedTpmAttest)
 	if !s {

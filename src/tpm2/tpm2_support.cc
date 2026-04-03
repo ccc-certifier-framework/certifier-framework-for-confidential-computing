@@ -2524,7 +2524,7 @@ bool tpm_verify_attest_with_measurement(int     cert_size,
                                         int    *m_size,
                                         byte_t *m,
                                         int    *pcr_size,
-                                        byte_t *pcrs) {
+                                        byte_t *pcr_buf) {
 
   // recover quote key form its cert
   key_message quote_key;
@@ -2555,7 +2555,54 @@ bool tpm_verify_attest_with_measurement(int     cert_size,
   string serialized_tpm_msg;
   serialized_tpm_msg.assign((char *)tpm_msg, tpm_msg_size);
 
-  return tpm_verify_attest(quote_key, serialized_tpm_msg);
+  bool ret = tpm_verify_attest(quote_key, serialized_tpm_msg);
+  if (!ret) {
+    printf("%s() error, line %d, tpm_verify_attest failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  tpm_attestation_message att;
+  if (!att.ParseFromString(serialized_tpm_msg)) {
+    printf("%s() error, line %d, Parse attest failed\n", __func__, __LINE__);
+    return false;
+  }
+
+  uint32_t           magic;
+  uint16_t           type;
+  string             signer;
+  string             extra_data;
+  TPML_PCR_SELECTION pcrSelect;
+  string             pcr_digest;
+
+  if (!decode_quoted((int)att.the_quote().size(),
+                     (byte_t *)att.the_quote().data(),
+                     &magic,
+                     &type,
+                     &signer,
+                     &extra_data,
+                     &pcrSelect,
+                     &pcr_digest)) {
+    printf("%s() error, line %d, decode quoted failed\n", __func__, __LINE__);
+    return false;
+  }
+
+  int    num_pcrs = 24;
+  byte_t pcrs[num_pcrs];
+
+  if (!get_pcr_from_select(&pcrSelect, &num_pcrs, pcrs)) {
+    printf("%s() error, line %d, get_pcr_from_select failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  *m_size = pcr_digest.size();
+  memcpy(m, (byte_t *)pcr_digest.data(), *m_size);
+  *pcr_size = num_pcrs;
+  memcpy(pcr_buf, pcrs, *pcr_size);
+
+  return true;
 }
 
 
