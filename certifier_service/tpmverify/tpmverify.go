@@ -25,7 +25,8 @@ import (
 	"unsafe"
 )
 
-func TpmVerify(quoteCert []byte, serializedTpmAttestation []byte) ([]byte, error) {
+// returns succeed/fail, pcrDigest and bytes describing pcrs
+func TpmVerify(quoteCert []byte, serializedTpmAttestation []byte) (bool, []byte, []byte) {
 
 	quote_ptr := C.CBytes(quoteCert)
 	defer C.free(quote_ptr)
@@ -47,27 +48,11 @@ func TpmVerify(quoteCert []byte, serializedTpmAttestation []byte) ([]byte, error
 		                        (*C.int)(&pcrSize),
 		                        (*C.uchar)(pcrOut))
 	if !ret {
-		return nil, fmt.Errorf("TpmVerify failed")
+		return false, nil, nil
 	}
 	outMeasurement := C.GoBytes(unsafe.Pointer(measurementOut),
 		C.int(measurementSize))
-	return outMeasurement, nil
+	outRegisters:= C.GoBytes(unsafe.Pointer(pcrOut),
+		C.int(measurementSize))
+	return true, outMeasurement, outRegisters
 }
-
-/*
- *  Sample usage:
- *
- *  attestation, err := os.ReadFile("attestation.bin")
- *  if err != nil {
- *          fmt.Printf("Failed to read attestation file: %s\n", err.Error())
- *  }
- *  whattosay, err := os.ReadFile("whattosay.bin")
- *  if err != nil {
- *          fmt.Printf("Failed to read whattosay file: %s\n", err.Error())
- *  }
- *  outMeasurement, err := tpmverify.TpmVerify(whattosay, attestation)
- *  if err != nil {
- *          fmt.Printf("TpmVerify failed: %s\n", err.Error())
- *  }
- *  fmt.Printf("Measurement length: %d\n", len(outMeasurement));
- */

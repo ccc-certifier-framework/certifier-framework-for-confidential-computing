@@ -9,8 +9,8 @@ all: build
 
 build:
 	@ echo "Compilers used: $(CC), $(CXX)"
-	$(CC)  -g -fPIC -c $(CFLAGS) tpmverify.c
-	$(CC) -shared -o libtpmverify.so tpmverify.o $(LDFLAGS)
+	$(CXX)  -g -fPIC -c $(CFLAGS) -I../../include -I../../src/tpm2 tpmverify.c
+	$(CXX) -shared -o libtpmverify.so tpmverify.o $(LDFLAGS)
 
 dummy:
 	@ echo "Compilers used: $(CC), $(CXX)"

@@ -2903,7 +2903,8 @@ bool construct_proof_from_tpm_evidence(key_message       &policy_pk,
       already_proved->proved(1);
   ps = pf->add_steps();
   ps->mutable_s1()->CopyFrom(policy_key_is_trusted);
-  ps->mutable_s2()->CopyFrom(policy_key_says_quote_key_is_trusted_for_attestation);
+  ps->mutable_s2()->CopyFrom(
+      policy_key_says_quote_key_is_trusted_for_attestation);
   const vse_clause &quote_key_is_trusted_for_attestation =
       already_proved->proved(1).clause();
   ps->mutable_conclusion()->CopyFrom(quote_key_is_trusted_for_attestation);
