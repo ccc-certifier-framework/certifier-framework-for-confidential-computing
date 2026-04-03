@@ -32,4 +32,5 @@ ifeq ($(shell $(CC) --version | grep clang),)
 endif
 
 # Define COMPILER for samples that use only C.
-COMPILER = $(C_COMPILER)
+#COMPILER = $(C_COMPILER)
+COMPILER = $(CXX_COMPILER)

@@ -2517,20 +2517,21 @@ bool tpm_verify_attest(const string &quote_cert,
   return tpm_verify_attest(quote_key, serialized_tpm_msg);
 }
 
-bool tpm_verify_attest_with_measurement(const string &quote_cert,
-                                        const string &serialized_tpm_msg,
-                                        int          *m_size,
-                                        byte_t       *m,
-                                        int          *pcr_size,
-                                        byte_t       *pcrs) {
+bool tpm_verify_attest_with_measurement(int     cert_size,
+                                        byte_t *cert,
+                                        int     tpm_msg_size,
+                                        byte_t *tpm_msg,
+                                        int    *m_size,
+                                        byte_t *m,
+                                        int    *pcr_size,
+                                        byte_t *pcrs) {
 
   // recover quote key form its cert
   key_message quote_key;
 
   X509   *quote_cert_x509 = nullptr;
-  byte_t *p = (byte_t *)quote_cert.data();
-  if (d2i_X509(&quote_cert_x509, (const byte_t **)&p, quote_cert.size())
-      == nullptr) {
+  byte_t *p = (byte_t *)cert;
+  if (d2i_X509(&quote_cert_x509, (const byte_t **)&p, cert_size) == nullptr) {
     printf("%s() error, line %d, Can't translate quote cert\n",
            __func__,
            __LINE__);
@@ -2550,6 +2551,9 @@ bool tpm_verify_attest_with_measurement(const string &quote_cert,
   }
   X509_free(quote_cert_x509);
   EVP_PKEY_free(public_evp_key);
+
+  string serialized_tpm_msg;
+  serialized_tpm_msg.assign((char *)tpm_msg, tpm_msg_size);
 
   return tpm_verify_attest(quote_key, serialized_tpm_msg);
 }

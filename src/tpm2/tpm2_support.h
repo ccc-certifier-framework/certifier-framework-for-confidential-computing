@@ -176,13 +176,14 @@ bool tpm_verify_attest(const key_message &quote_key,
                        const string      &serialized_tpm_msg);
 bool tpm_verify_attest(const string &quote_cert,
                        const string &serialized_tpm_msg);
-bool tpm_verify_attest_with_measurement(const string &quote_cert,
-                                        const string &serialized_tpm_msg,
-                                        int          *m_size,
-                                        byte_t       *m,
-                                        int          *pcr_size,
-                                        byte_t       *pcrs);
-
+bool tpm_verify_attest_with_measurement(int     cert_size,
+                                        byte_t *cert,
+                                        int     tpm_msg_size,
+                                        byte_t *tpm_msg,
+                                        int    *m_size,
+                                        byte_t *m,
+                                        int    *pcr_size,
+                                        byte_t *pcrs);
 bool make_credential(const TPM2B_PUBLIC &quoting_key,
                      string             &quote_key_name,
                      const string       &cert_in,

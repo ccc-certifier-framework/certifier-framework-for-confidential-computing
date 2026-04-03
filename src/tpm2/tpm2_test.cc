@@ -1006,27 +1006,11 @@ bool get_cert(local_tpm &tpm, const string &file_name, string *out) {
   return true;
 }
 
-/*
- * TPM_HANDLE g_ek_handle = 0;
- * TPM_HANDLE g_srk_handle = 0;
- * TPM_HANDLE g_quote_handle = 0;
- * int          g_seal_key_type;
- * string       g_seal_key;
- * string       g_endorsement_cert;
- * string       g_endorsement_cert_file_name;
- * string       g_seal_hierarchy_file_name;
- * string       g_quote_hierarchy_file_name;
- * string       g_seal_thing;
- * int          g_num_pcrs;
- * byte_t       g_pcrs[32];
- * TPM2B_PUBLIC g_public_quote_key;
- * TPM2B_PUBLIC g_public_endorsement_key;
- */
 bool certifier_test() {
   int           num_pcrs = 1;
   byte_t        pcrs[1] = {7};
   extern string g_seal_thing;
-  extern string g_endorsement_cert;
+  extern string g_serialized_endorsement_cert;
 
   if (!tpm_Init(FLAGS_tpm_device,
                 FLAGS_ek_cert_file_name,
@@ -1042,7 +1026,7 @@ bool certifier_test() {
 
 #ifdef DEBUG
   X509 *cert = X509_new();
-  asn1_to_x509(g_endorsement_cert, cert);
+  asn1_to_x509(g_serialized_endorsement_cert, cert);
   printf("\nEndorsement Cert\n");
   X509_print_fp(stdout, cert);
   printf("\n");

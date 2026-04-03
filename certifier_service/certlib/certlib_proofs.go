@@ -1076,7 +1076,8 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 				return false
 			}
 			// Construct quote-key says enclave-key speaks-for measurement
-			s, m, r := VerifyTpmAttestation(quoteKey, ev.SerializedEvidence)
+			quoteCert := []byte {1,2,3}
+			s, m, r := VerifyTpmAttestation(quoteCert, ev.SerializedEvidence)
 			PrintBytes(m)
 			PrintBytes(r)
 			if !s {
@@ -3735,17 +3736,16 @@ func VerifyGramineAttestation(serializedEvidence []byte) (bool, []byte, []byte, 
 	return true, ga.WhatWasSaid, m, nil
 }
 
-func VerifyTpmAttestation(quoteKey *certprotos.KeyMessage, serializedTpmAttest[]byte) (bool, []byte, []byte) {
+func VerifyTpmAttestation(quoteCert []byte, serializedTpmAttest[]byte) (bool, []byte, []byte) {
 
 	// FIX
 	// Call the cgo tpm verify function
-	serializedquoteCert := []byte { 0,1,2}
-	m, err := tpmverify.TpmVerify(serializedquoteCert, serializedTpmAttest)
-	if err != nil {
+	s, m, r:= tpmverify.TpmVerify(quoteCert, serializedTpmAttest)
+	if !s {
 		fmt.Printf("VerifyTpmAttestation: tpm verify failed\n")
 		return false, m, m
 	}
-	return true, m, m
+	return true, m, r
 }
 
 //      ------------------------------------------------------------------------

@@ -28,18 +28,16 @@ CFLAGS += -fPIC -O3 -g -Wall -std=c++17 -Wno-unused-variable -Werror -Wno-missin
 endif
 LDFLAGS=
 
+CFLAGS += -DTPM_CERTIFIER
+
+
 ifndef NEWPROTOBUF
 LDFLAGS += -L $(LOCAL_LIB) -ldl -lprotobuf -pthread $(CERTIFIER_LDFLAGS)
 else
 LDFLAGS += -L $(LOCAL_LIB) -ldl `pkg-config --cflags --libs protobuf` -pthread $(CERTIFIER_LDFLAGS) 
 endif
 
-ifndef NEWPROTOBUF
 TEE_PRIMITIVE_LIB = libtee.so
-else
-TEE_PRIMITIVE_LIB = libtee.so
-#TEE_PRIMITIVE_LIB = libtee.a
-endif
 
 S = $(CERTIFIER_ROOT)/certifier_service/teelib
 CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
@@ -54,9 +52,8 @@ TE=$(CS)/tpm2
 
 dobj = $(O)/certifier.pb.o $(O)/tee_primitives.o $(O)/certifier.o $(O)/support.o \
 	$(O)/sev_support.o $(O)/sev_cert_table.o $(O)/sev_report.o \
-	$(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/certifier_proofs.o
-
-tpm_common_objs = $(O)/tpm2_lib.o $(O)/tpm2.pb.o $(O)/convert.o $(O)/openssl_help.o \
+	$(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/certifier_proofs.o \
+	$(O)/tpm2_lib.o $(O)/tpm2.pb.o $(O)/convert.o $(O)/openssl_help.o \
         $(O)/tpm2_support.o
 
 .PHONY: all build dummy clean
@@ -74,7 +71,7 @@ build: $(TEE_PRIMITIVE_LIB)
 	$(CXX) -shared -o $(TEE_PRIMITIVE_LIB) $(dobj) $(LDFLAGS) -lstdc++ -lm -lc
 endif
 
-$(TEE_PRIMITIVE_LIB): $(dobj) $(tpm_common_objs)
+$(TEE_PRIMITIVE_LIB): $(dobj)
 
 $(I)/certifier.pb.h: $(S)/certifier.pb.cc
 $(S)/certifier.pb.cc: $(CP)/certifier.proto

@@ -21,8 +21,8 @@ package tpmverify
 */
 import "C"
 import (
-	"fmt"
 	"unsafe"
+	//"fmt"
 )
 
 // returns succeed/fail, pcrDigest and bytes describing pcrs
