@@ -870,6 +870,15 @@ func MakeKeyEntity(k *certprotos.KeyMessage) *certprotos.EntityMessage {
 	return &keye
 }
 
+func MakeFullMeasurementEntity(m []byte, r []byte) *certprotos.EntityMessage {
+	me := certprotos.EntityMessage{}
+	measName := "measurement"
+	me.EntityType = &measName
+	me.Measurement = m
+	me.Registers = r
+	return &me
+}
+
 func MakeMeasurementEntity(m []byte) *certprotos.EntityMessage {
 	me := certprotos.EntityMessage{}
 	measName := "measurement"

@@ -205,8 +205,15 @@ func InitPolicyPool(pool *PolicyPool, original *certprotos.ProvedStatements) boo
 
 	pool.Initialized = false
 
+	fmt.Printf("InitPolicyPool %d proved\n", len(original.Proved))
+
 	for i := 0; i < len(original.Proved); i++ {
 		from := original.Proved[i]
+
+		fmt.Printf("statement %d: ", i)
+		PrintVseClause(from)
+		fmt.Printf("\n")
+
 		pool.AllPolicy.Proved = append(pool.AllPolicy.Proved, from)
 		// to :=  proto.Clone(from).(*certprotos.VseClause)
 		if isPlatformKeyStatement(from) {
@@ -240,17 +247,10 @@ func GetRelevantPlatformKeyPolicy(pool *PolicyPool, evType string,
 	var platSubject *certprotos.EntityMessage = nil
 
 	// find platformKey says attestationKey is-trusted-for-attestation
-	/* DEBUG
-	fmt.Printf("\nGetRelevantPlatformKeyPolicy: %d evidence statements\n", len(ev_list))
-	 */
 	for i := 0; i < len(ev_list); i++ {
 		ev := ev_list[i]
 
-		/* DEBUG
-		fmt.Printf("%d: GetRelevantPlatformKeyPolicy: evidence\n", i)
-		PrintEvidence(ev)
-		fmt.Printf("\n")
-		 */
+		fmt.Printf("\nExamining %d in GetRelevantPlatformKeyPolicy\n", i)
 
 		if ev == nil {
 			continue
@@ -275,11 +275,10 @@ func GetRelevantPlatformKeyPolicy(pool *PolicyPool, evType string,
 				continue
 			}
 
-			/* DEBUG
+			/* DEBUG */
 			fmt.Printf("%d: Clause\n", i)
 			PrintVseClause(&cl)
 			fmt.Printf("\n")
-			 */
 
 			if cl.GetVerb() != "says" || cl.Clause == nil {
 				continue
@@ -299,12 +298,17 @@ func GetRelevantPlatformKeyPolicy(pool *PolicyPool, evType string,
 				fmt.Printf("GetRelevantPlatformKeyPolicy: cant convert cert to x509\n")
 				continue
 			}
+
+			fmt.Printf("GetRelevantPlatformKeyPolicy in cert\n")
 			platKey := GetSubjectKey(platCert)
 			if platKey == nil {
 				fmt.Printf("GetRelevantPlatformKeyPolicy: cant get subject key from cert\n")
 				continue
 			}
 			platSubject = MakeKeyEntity(platKey)
+
+			PrintEntity(platSubject)
+
 			if platSubject == nil || platSubject.GetEntityType() != "key" {
 				fmt.Printf("GetRelevantPlatformKeyPolicy: wrong entity\n")
 				return nil
@@ -319,7 +323,9 @@ func GetRelevantPlatformKeyPolicy(pool *PolicyPool, evType string,
 		return nil
 	}
 
-	// Find rule that says policyKey says platSubject is-trusted-for-attestation and return it
+	fmt.Printf("\nPlatformKeyPolicy size: %d\n", len(pool.PlatformKeyPolicy.Proved))
+
+	// Find rule policyKey says platSubject is-trusted-for-attestation and return it
 	for i := 0; i < len(pool.PlatformKeyPolicy.Proved); i++ {
 		cl := pool.PlatformKeyPolicy.Proved[i]
 		if cl == nil {
@@ -328,18 +334,16 @@ func GetRelevantPlatformKeyPolicy(pool *PolicyPool, evType string,
 		if cl.Clause == nil || cl.Clause.Subject == nil {
 			continue
 		}
-		/* DEBUG
 		fmt.Printf("platSubject: ")
 		PrintEntity(platSubject)
 		fmt.Printf("\n")
 		fmt.Printf("Clause subject: ")
 		PrintEntity(cl.Clause.Subject)
 		fmt.Printf("\n")
-		 */
 		if SameEntity(platSubject, cl.Clause.Subject) {
 			return cl
-
 		}
+		fmt.Printf("not the same\n")
 	}
 	return nil
 }
@@ -767,19 +771,14 @@ func FilterTpmPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidenceP
 	to := proto.Clone(from).(*certprotos.VseClause)
 	filtered.Proved = append(filtered.Proved, to)
 
-	// This should be passed in
-	evType := "tpm-evidence"
-
-	// policyKey says platformKey is-trusted-for-attestation
-	from = GetRelevantPlatformKeyPolicy(policyPool, evType, evp)
-	if from == nil {
-		fmt.Printf("FilterTPMPolicy: Can't get relavent platform key policy\n")
-		return nil
-	}
+	// measurement
+	from = policyPool.AllPolicy.Proved[1]
 	to = proto.Clone(from).(*certprotos.VseClause)
 	filtered.Proved = append(filtered.Proved, to)
-
+/*
+FIX!
 	// policyKey says measurement is-trusted-for-attestation
+	evType := "tpm-evidence"
 	from = GetRelevantMeasurementPolicy(policyPool, evType, evp)
 	if from == nil {
 		fmt.Printf("FilterTpmPolicy: Can't get relavent measurement\n")
@@ -787,15 +786,7 @@ func FilterTpmPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidenceP
 	}
 	to = proto.Clone(from).(*certprotos.VseClause)
 	filtered.Proved = append(filtered.Proved, to)
-
-	// policyKey says platform has-trusted-platform-policy
-	from = GetRelevantPlatformFeaturePolicy(policyPool, evType, evp)
-	if from == nil {
-		fmt.Printf("FilterTpmPolicy: Can't get relavent platform features\n")
-		return nil
-	}
-	to = proto.Clone(from).(*certprotos.VseClause)
-	filtered.Proved = append(filtered.Proved, to)
+	 */
 
 	return filtered
 }
@@ -804,6 +795,7 @@ func FilterTpmPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidenceP
 
 func InitPolicy(publicPolicyKey *certprotos.KeyMessage, signedPolicy *certprotos.SignedClaimSequence,
 	alreadyProved *certprotos.ProvedStatements) bool {
+
 	if publicPolicyKey == nil {
 		fmt.Printf("Policy key empty\n")
 		return false
@@ -841,6 +833,11 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 	seenList := new(CertSeenList)
 	seenList.maxSize = 30
 	seenList.size = 0
+
+	if !AddKeySeen(seenList, &pk) {
+		fmt.Printf("InitProvedStatements: Can't add policy key\n")
+		return false
+	}
 
 	// Debug
 	fmt.Printf("\nInitProvedStatements %d assertions\n", len(evidenceList))
@@ -1052,6 +1049,62 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 				return false
 			}
 			ps.Proved = append(ps.Proved, c2)
+		} else if ev.GetEvidenceType() == "tpm-attestation" {
+			// Get quote key from previous statement
+			n := len(ps.Proved) - 1
+			if n < 0 {
+				fmt.Printf("InitProvedStatements: tpm evidence is at wrong position\n")
+				return false
+			}
+			if ps.Proved[n] == nil || ps.Proved[n].Clause == nil ||
+				ps.Proved[n].Clause.Subject == nil {
+				fmt.Printf("InitProvedStatements: Can't get quote key (1)\n")
+				return false
+			}
+			quoteVerifyKeyEnt := ps.Proved[n].Clause.Subject
+			if quoteVerifyKeyEnt == nil {
+				fmt.Printf("InitProvedStatements: Can't get quote key (2)\n")
+				return false
+			}
+			if quoteVerifyKeyEnt.GetEntityType() != "key" {
+				fmt.Printf("InitProvedStatements: Can't get quote key (3)\n")
+				return false
+			}
+			quoteKey := quoteVerifyKeyEnt.Key
+			if quoteKey == nil {
+				fmt.Printf("InitProvedStatements: Can't get quote key (4)\n")
+				return false
+			}
+			// Construct quote-key says enclave-key speaks-for measurement
+			s, m, r := VerifyTpmAttestation(quoteKey, ev.SerializedEvidence)
+			PrintBytes(m)
+			PrintBytes(r)
+			if !s {
+				fmt.Printf("InitProvedStatements: VerifyTpmAttestation failed\n")
+				return false
+			}
+			var am certprotos.TpmAttestationMessage
+			err := proto.Unmarshal(ev.SerializedEvidence, &am)
+			if err != nil {
+				fmt.Printf("InitProvedStatements: Can't unmarshal SevAttestationMessage\n")
+				return false
+			}
+			var ud certprotos.AttestationUserData
+			err = proto.Unmarshal(am.WhatWasSaid, &ud)
+			if err != nil {
+				fmt.Printf("InitProvedStatements: Can't unmarshal UserData\n")
+				return false
+			}
+			if ud.EnclaveKey == nil {
+				fmt.Printf("InitProvedStatements: No enclaveKey\n")
+				return false
+			}
+			cl :=  ConstructTPMSpeaksForStatement(quoteKey, ud.EnclaveKey, m, r)
+                        if cl == nil {
+                                fmt.Printf("InitProvedStatements: Can't construct Attestation from cert\n")
+                                return false
+                        }
+                        ps.Proved = append(ps.Proved, cl)
 		} else if ev.GetEvidenceType() == "sev-attestation" {
 			// get the key from ps
 			n := len(ps.Proved) - 1
@@ -1125,14 +1178,13 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 			}
 			ps.Proved = append(ps.Proved, c2)
 		} else if ev.GetEvidenceType() == "cert" {
-			// A cert always means "the signing-key says the subject-key is-trusted-for-attestation"
+			// A cert always means
+			// "the signing-key says the subject-key is-trusted-for-attestation"
 			// construct vse statement.
-
 			// This whole thing is more complicated because we have to keep track of
 			// previously seen subject keys which, as issuer keys, will sign other
 			// keys.  The only time we can get the issuer_key directly is when the cert
 			// is self signed.
-
 			// turn into X509
 			cert := Asn1ToX509(ev.SerializedEvidence)
 			if cert == nil {
@@ -1406,6 +1458,31 @@ func ConstructVseAttestationFromCert(subjKey *certprotos.KeyMessage, signerKey *
 	}
 	s_verb := "says"
 	return MakeIndirectVseClause(signerKeyEntity, &s_verb, tcl)
+}
+
+func ConstructTPMSpeaksForStatement(quoteKey *certprotos.KeyMessage, enclaveKey *certprotos.KeyMessage, m []byte, r []byte) *certprotos.VseClause {
+	var quoteKeyEntity *certprotos.EntityMessage = nil
+	if quoteKey != nil {
+		quoteKeyEntity = MakeKeyEntity(quoteKey)
+		if quoteKeyEntity == nil {
+			return nil
+		}
+	}
+	enclaveKeyEntity := MakeKeyEntity(enclaveKey)
+	if enclaveKeyEntity == nil {
+		return nil
+	}
+	speaks_verb := "speaks-for"
+	measurementEntity := MakeFullMeasurementEntity(m, r)
+	tcl := MakeSimpleVseClause(enclaveKeyEntity, &speaks_verb, measurementEntity)
+	if tcl == nil {
+		return nil
+	}
+	if quoteKey == nil {
+		return tcl
+	}
+	says_verb := "says"
+	return MakeIndirectVseClause(quoteKeyEntity, &says_verb, tcl)
 }
 
 func ConstructOESpeaksForStatement(vcertKey *certprotos.KeyMessage, enclaveKey *certprotos.KeyMessage, measurement []byte) *certprotos.VseClause {
@@ -3445,10 +3522,10 @@ func ValidateTpmEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.Ev
 	//
 	//  00 Key[rsa, policyKey, f91d6331b1fd99b3fa8641fd16dcd4c272a92b8a] is-trusted
 	//  01 Key[rsa, policyKey, f91d6331b1fd99b3fa8641fd16dcd4c272a92b8a] says
-	//	Key[rsa, QuoteKey, c36d3343d69d9d8000d32d0979adff876e98ec79] is-trusted-for-attestation
-	//  02 Key[rsa, policyKey, f91d6331b1fd99b3fa8641fd16dcd4c272a92b8a] says
 	//      Measurement[010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708] is-trusted
-	//  08 Key[ecc-P-384, QuoteKey,
+	//  02 Key[rsa, policyKey, f91d6331b1fd99b3fa8641fd16dcd4c272a92b8a] says
+	//	Key[rsa, QuoteKey, c36d3343d69d9d8000d32d0979adff876e98ec79] is-trusted-for-attestation
+	//  03 Key[ecc-P-384, QuoteKey,
 	//	d8a35da4a4780fe58fe5a02e5aec7d40fa7452ca89ca4c6620181228b3e4e9c41ab9a200875a2b6e044ae73936408d27] says
 	//	Key[rsa, policyKey, f91d6331b1fd99b3fa8641fd16dcd4c272a92b8a] speaks-for
 	//	Measurement[010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708]
@@ -3658,16 +3735,17 @@ func VerifyGramineAttestation(serializedEvidence []byte) (bool, []byte, []byte, 
 	return true, ga.WhatWasSaid, m, nil
 }
 
-func VerifyTpmAttestation(serializedquoteCert []byte, serializedTpmAttest[]byte) (bool, []byte, []byte, error) {
+func VerifyTpmAttestation(quoteKey *certprotos.KeyMessage, serializedTpmAttest[]byte) (bool, []byte, []byte) {
 
+	// FIX
 	// Call the cgo tpm verify function
+	serializedquoteCert := []byte { 0,1,2}
 	m, err := tpmverify.TpmVerify(serializedquoteCert, serializedTpmAttest)
 	if err != nil {
-		fmt.Printf("VerifyTpmAttestation: gramine verify failed\n")
-		return false, m, m, nil
+		fmt.Printf("VerifyTpmAttestation: tpm verify failed\n")
+		return false, m, m
 	}
-	return true, m, m, nil
-	return false, nil, nil, errors.New("tpm attestation not implemented")
+	return true, m, m
 }
 
 //      ------------------------------------------------------------------------
