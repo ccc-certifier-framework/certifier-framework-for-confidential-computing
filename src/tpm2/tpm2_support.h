@@ -193,6 +193,17 @@ bool make_credential(const string &quote_hash_alg,
 bool tpm_public_key_to_key(const TPM2B_PUBLIC &in_public,
                            const string       &name,
                            key_message        *out_key);
+bool make_credential_from_certifier(const char *quote_hash_alg,
+                                    int         quote_key_name_size,
+                                    byte_t     *quote_key_name_buf,
+                                    int         endoresment_cert_size,
+                                    byte_t     *endoresment_cert_buf,
+                                    int         credential_size,
+                                    byte_t     *credential_buf,
+                                    int        *cred_blob_size,
+                                    byte_t     *cred_blob_buf,
+                                    int        *encrypted_secret_size,
+                                    byte_t     *encrypted_secret_buf);
 
 // ---------------------------------------------------------------
 #endif

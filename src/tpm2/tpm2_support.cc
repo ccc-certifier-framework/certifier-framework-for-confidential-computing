@@ -3042,4 +3042,67 @@ bool make_credential(const string &quote_hash_alg,
   return true;
 }
 
+bool make_credential_from_certifier(const char *quote_hash_alg,
+                                    int         quote_key_name_size,
+                                    byte_t     *quote_key_name_buf,
+                                    int         endoresment_cert_size,
+                                    byte_t     *endoresment_cert_buf,
+                                    int         credential_size,
+                                    byte_t     *credential_buf,
+                                    int        *cred_blob_size,
+                                    byte_t     *cred_blob_buf,
+                                    int        *encrypted_secret_size,
+                                    byte_t     *encrypted_secret_buf) {
+
+  string quote_hash;
+  string quote_key_name;
+  string endorsement_cert_in;
+  string credential;
+  string cred_blob;
+  string encrypted_secret;
+
+  quote_hash = quote_hash_alg;
+  quote_key_name.assign((char *)quote_key_name_buf, quote_key_name_size);
+  endorsement_cert_in.assign((char *)endoresment_cert_buf,
+                             endoresment_cert_size);
+  credential.assign((char *)credential_buf, credential_size);
+
+  bool ret = make_credential(quote_hash_alg,
+                             quote_key_name,
+                             endorsement_cert_in,
+                             credential,
+                             &cred_blob,
+                             &encrypted_secret);
+
+  if (!ret) {
+    printf("%s() error, line %d, Can't make_credential\n", __func__, __LINE__);
+    return false;
+  }
+
+  if ((int)cred_blob.size() > *cred_blob_size) {
+    printf("%s() error, line %d, cred_blob too small %d\n",
+           __func__,
+           __LINE__,
+           *cred_blob_size);
+    return false;
+  }
+  *cred_blob_size = cred_blob.size();
+  memcpy(cred_blob_buf, (byte_t *)cred_blob.data(), *cred_blob_size);
+
+  if ((int)encrypted_secret.size() > *encrypted_secret_size) {
+    printf("%s() error, line %d, encrypted_secret too small %d\n",
+           __func__,
+           __LINE__,
+           *encrypted_secret_size);
+    return false;
+  }
+  *encrypted_secret_size = encrypted_secret.size();
+  memcpy(encrypted_secret_buf,
+         (byte_t *)encrypted_secret.data(),
+         *encrypted_secret_size);
+
+  return true;
+}
+
+
 // ------------------------------------------------------------------------
