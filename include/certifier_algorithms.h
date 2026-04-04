@@ -56,6 +56,7 @@ extern const char *Enc_method_rsa_4096_sha384_pkcs_sign;
 /*
  * Cryptographic hash algorithms supported.
  */
+extern const char *Digest_method_sha1;
 extern const char *Digest_method_sha256;
 extern const char *Digest_method_sha_256;
 extern const char *Digest_method_sha_384;

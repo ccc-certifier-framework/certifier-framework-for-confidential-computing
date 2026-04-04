@@ -76,6 +76,7 @@ const int Num_symmetric_key_algorithms = Enc_authenticated_symmetric_key_algorit
 /*
  * Cryptographic hash algorithms supported.
  */
+const char * Digest_method_sha1  = "sha1";
 const char * Digest_method_sha256  = "sha256";
 const char * Digest_method_sha_256 = "sha-256";
 const char * Digest_method_sha_384 = "sha-384";

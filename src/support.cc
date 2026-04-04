@@ -96,6 +96,7 @@ name_size cipher_key_byte_name_size[] = {
 };
 
 name_size digest_byte_name_size[] = {
+    { Digest_method_sha1     , 20 },
     { Digest_method_sha256   , 32 },
     { Digest_method_sha_256  , 32 },
     { Digest_method_sha_384  , 48 },

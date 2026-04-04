@@ -301,7 +301,21 @@ bool credential_test(local_tpm          &tpm,
   string cred_blob_out;
   string encrypted_secret_out;
   cred.assign((char *)credential.buffer, credential.size);
-  if (!make_credential(quoting_pub_out,
+  string hash_name;
+  switch (quoting_pub_out.publicArea.nameAlg) {
+    default:
+      printf("%s() error, line %d, create_endorsement _session failed\n",
+             __func__,
+             __LINE__);
+      return false;
+    case TPM_ALG_SHA1:
+      hash_name = Digest_method_sha1;
+      break;
+    case TPM_ALG_SHA256:
+      hash_name = Digest_method_sha256;
+      break;
+  }
+  if (!make_credential(hash_name,
                        quote_key_name,
                        endorsement_cert,
                        cred,

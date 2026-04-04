@@ -2668,12 +2668,90 @@ bool construct_quote_key_cert(const key_message &signing_key,
   return true;
 }
 
-bool make_credential(const TPM2B_PUBLIC &quoting_key,
-                     string             &quote_key_name,
-                     const string       &cert_in,
-                     string             &credential,
-                     string             *cred_blob,
-                     string             *encrypted_secret) {
+bool tpm_public_key_to_key(const TPM2B_PUBLIC &in_public,
+                           const string       &name,
+                           key_message        *out_key) {
+
+  if (in_public.publicArea.type != TPM_ALG_RSA) {
+    printf("%s() error, line %d, unsupported key type\n", __func__, __LINE__);
+    return false;
+  }
+
+  out_key->set_key_name(name);
+  out_key->set_key_format("vse-key");
+
+  rsa_message *rk = new rsa_message;
+  out_key->set_allocated_rsa_key(rk);
+
+  uint32_t le_exp;
+  change_endian32(
+      (uint32_t *)&in_public.publicArea.parameters.rsaDetail.exponent,
+      &le_exp);
+
+  switch (in_public.publicArea.unique.rsa.size) {
+    default:
+      printf("%s() error, line %d, unsupported key size\n", __func__, __LINE__);
+      return false;
+    case 128:
+      out_key->set_key_type(Enc_method_rsa_1024_public);
+      out_key->mutable_rsa_key()->set_public_modulus(
+          in_public.publicArea.unique.rsa.buffer,
+          128);
+      out_key->mutable_rsa_key()->set_public_exponent((byte_t *)&le_exp,
+                                                      sizeof(uint32_t));
+      break;
+    case 256:
+      out_key->set_key_type(Enc_method_rsa_2048_public);
+      out_key->mutable_rsa_key()->set_public_modulus(
+          in_public.publicArea.unique.rsa.buffer,
+          256);
+      out_key->mutable_rsa_key()->set_public_exponent((byte_t *)&le_exp,
+                                                      sizeof(uint32_t));
+      break;
+    case 384:
+      out_key->set_key_type(Enc_method_rsa_3072_public);
+      out_key->mutable_rsa_key()->set_public_modulus(
+          in_public.publicArea.unique.rsa.buffer,
+          384);
+      out_key->mutable_rsa_key()->set_public_exponent((byte_t *)&le_exp,
+                                                      sizeof(uint32_t));
+      break;
+    case 512:
+      out_key->set_key_type(Enc_method_rsa_4096_public);
+      out_key->mutable_rsa_key()->set_public_modulus(
+          in_public.publicArea.unique.rsa.buffer,
+          512);
+      out_key->mutable_rsa_key()->set_public_exponent((byte_t *)&le_exp,
+                                                      sizeof(uint32_t));
+      break;
+  }
+
+  time_point t;
+  time_now(&t);
+  string str_now;
+  time_to_string(t, &str_now);
+  time_point a;
+  double     hours = 366.0 * 24.0;
+  if (!add_interval_to_time_point(t, hours, &a)) {
+    printf("%s() error, line %d, can't produce end time\n", __func__, __LINE__);
+    return false;
+  }
+  string str_later;
+  time_to_string(t, &str_later);
+
+  out_key->set_not_before(str_now);
+  out_key->set_not_after(str_later);
+
+  return true;
+}
+
+
+bool make_credential(const string &quote_hash_alg,
+                     string       &quote_key_name,
+                     const string &endorsement_cert_in,
+                     string       &credential,
+                     string       *cred_blob,
+                     string       *encrypted_secret) {
 
   //
   // Performs the following steps:
@@ -2696,20 +2774,37 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   //  (EVP_PKEY_encrypt(ctx, encrypted_protection_seed->secret, &outlen,
   //        protection_seed->buffer, protection_seed->size)
 
-  TPM_ALG_ID hash_alg_id = quoting_key.publicArea.nameAlg;
+  TPM_ALG_ID hash_alg_id = 0;
+  if (quote_hash_alg == Digest_method_sha1) {
+    hash_alg_id = TPM_ALG_SHA1;
+  } else if (quote_hash_alg == Digest_method_sha256
+             || quote_hash_alg == Digest_method_sha_256) {
+    hash_alg_id = TPM_ALG_SHA256;
+  } else {
+    printf("%s() error, line %d, unknown hash alg %s\n",
+           __func__,
+           __LINE__,
+           quote_hash_alg.c_str());
+    return false;
+  }
 
   byte_t zero_iv[32];
   memset(zero_iv, 0, 32);
 
   // 1. Generate seed (This shout be the size of the hash)
-  int    size_seed = SizeHash(hash_alg_id);
+  int size_seed = SizeHash(hash_alg_id);
+  if (size_seed <= 0) {
+    printf("%s() error, line %d, bad hash alg\n", __func__, __LINE__);
+    return false;
+  }
   byte_t seed[size_seed];
   RAND_bytes(seed, size_seed);
 
   // Get endorsement public key, which is protector key
   X509   *endorsement_cert = nullptr;
-  byte_t *p = (byte_t *)cert_in.data();
-  endorsement_cert = d2i_X509(nullptr, (const byte_t **)&p, cert_in.size());
+  byte_t *p = (byte_t *)endorsement_cert_in.data();
+  endorsement_cert =
+      d2i_X509(nullptr, (const byte_t **)&p, endorsement_cert_in.size());
   if (endorsement_cert == nullptr) {
     printf("%s() error, line %d, Can't translate endorsement cert\n",
            __func__,
@@ -2870,8 +2965,12 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   printf("\n");
 #endif
 
-  int    size_hmacKey = SizeHash(hash_alg_id);
-  byte_t hmacKey[128];
+  int size_hmacKey = SizeHash(hash_alg_id);
+  if (size_hmacKey <= 0) {
+    printf("%s() error, line %d\n", __func__, __LINE__);
+    return false;
+  }
+  byte_t hmacKey[size_hmacKey];
 
   // 5. HMACkey ≔ KDFa (ekNameAlg, seed, “INTEGRITY”, NULL, NULL, bits)
   TPM_ALG_ID   ekNameAlg = hash_alg_id;
@@ -2943,109 +3042,4 @@ bool make_credential(const TPM2B_PUBLIC &quoting_key,
   return true;
 }
 
-bool make_credential(const string &quote_cert,
-                     const string &endorsement_cert,
-                     string       &credential,
-                     string       *cred_blob,
-                     string       *encrypted_secret) {
-  return false;
-}
-
-
-// This is the code on the client that requests a quote
-// key certificate using make credential from a provider
-// without a tpm
-bool make_credential_message(const string &serialized_quote_cert,
-                             const string &serialized_endorsement_cert,
-                             const string &serialized_endorsement_chain,
-                             const string &serialized_auth_key,
-                             const string &measurement,
-                             string       *serialized_credential_request) {
-  return false;
-}
-
-// This is the code on the client which obtains the quote
-// key certificate from the make credential message constructed
-// on the provider using ActivateCredential
-bool recover_quote_key_certificate(const string &serialized_credential_response,
-                                   string       *cert) {
-  return false;
-}
-
-bool tpm_public_key_to_key(const TPM2B_PUBLIC &in_public,
-                           const string       &name,
-                           key_message        *out_key) {
-
-  if (in_public.publicArea.type != TPM_ALG_RSA) {
-    printf("%s() error, line %d, unsupported key type\n", __func__, __LINE__);
-    return false;
-  }
-
-  out_key->set_key_name(name);
-  out_key->set_key_format("vse-key");
-
-  rsa_message *rk = new rsa_message;
-  out_key->set_allocated_rsa_key(rk);
-
-  uint32_t le_exp;
-  change_endian32(
-      (uint32_t *)&in_public.publicArea.parameters.rsaDetail.exponent,
-      &le_exp);
-
-  switch (in_public.publicArea.unique.rsa.size) {
-    default:
-      printf("%s() error, line %d, unsupported key size\n", __func__, __LINE__);
-      return false;
-    case 128:
-      out_key->set_key_type(Enc_method_rsa_1024_public);
-      out_key->mutable_rsa_key()->set_public_modulus(
-          in_public.publicArea.unique.rsa.buffer,
-          128);
-      out_key->mutable_rsa_key()->set_public_exponent((byte_t *)&le_exp,
-                                                      sizeof(uint32_t));
-      break;
-    case 256:
-      out_key->set_key_type(Enc_method_rsa_2048_public);
-      out_key->mutable_rsa_key()->set_public_modulus(
-          in_public.publicArea.unique.rsa.buffer,
-          256);
-      out_key->mutable_rsa_key()->set_public_exponent((byte_t *)&le_exp,
-                                                      sizeof(uint32_t));
-      break;
-    case 384:
-      out_key->set_key_type(Enc_method_rsa_3072_public);
-      out_key->mutable_rsa_key()->set_public_modulus(
-          in_public.publicArea.unique.rsa.buffer,
-          384);
-      out_key->mutable_rsa_key()->set_public_exponent((byte_t *)&le_exp,
-                                                      sizeof(uint32_t));
-      break;
-    case 512:
-      out_key->set_key_type(Enc_method_rsa_4096_public);
-      out_key->mutable_rsa_key()->set_public_modulus(
-          in_public.publicArea.unique.rsa.buffer,
-          512);
-      out_key->mutable_rsa_key()->set_public_exponent((byte_t *)&le_exp,
-                                                      sizeof(uint32_t));
-      break;
-  }
-
-  time_point t;
-  time_now(&t);
-  string str_now;
-  time_to_string(t, &str_now);
-  time_point a;
-  double     hours = 366.0 * 24.0;
-  if (!add_interval_to_time_point(t, hours, &a)) {
-    printf("%s() error, line %d, can't produce end time\n", __func__, __LINE__);
-    return false;
-  }
-  string str_later;
-  time_to_string(t, &str_later);
-
-  out_key->set_not_before(str_now);
-  out_key->set_not_after(str_later);
-
-  return true;
-}
 // ------------------------------------------------------------------------
