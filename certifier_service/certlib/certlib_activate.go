@@ -24,17 +24,21 @@ import (
 	"crypto/sha512"
 	"crypto/x509"
 	"errors"
+	*/
 	"fmt"
+	/*
 	"math/big"
 	"os"
+	 */
 
 	certprotos "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/certprotos"
+	/*
 	gramineverify "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/gramineverify"
 	isletverify "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/isletverify"
 	oeverify "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/oeverify"
 	tpmverify "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/tpmverify"
-	"google.golang.org/protobuf/proto"
 	*/
+	"google.golang.org/protobuf/proto"
 )
 
 //      ------------------------------------------------------------------------
@@ -70,6 +74,12 @@ func InitEndorsementTrust(fileName string) bool {
 
  // return decrypted cert
  func processActivationRequest(serializedRequest []byte) (bool, []byte) {
+
+	var response *certprotos.QuoteCertificationResponse
+	err := proto.Unmarshal(serializedRequest, response)
+	if err != nil {
+		fmt.Printf("Can't unmarshal request\n")
+	}
 
 	// Check endorsement evidence (read a policy on trusted roots)
 	// Make symmetric key secret to serve as credential
