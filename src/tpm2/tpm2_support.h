@@ -190,6 +190,7 @@ bool make_credential(const string &quote_hash_alg,
                      string       &credential,
                      string       *cred_blob,
                      string       *encrypted_secret);
+
 bool tpm_public_key_to_key(const TPM2B_PUBLIC &in_public,
                            const string       &name,
                            key_message        *out_key);
@@ -204,6 +205,16 @@ bool make_credential_from_certifier(const char *quote_hash_alg,
                                     byte_t     *cred_blob_buf,
                                     int        *encrypted_secret_size,
                                     byte_t     *encrypted_secret_buf);
+
+bool construct_activate_request(const string& endorsement_cert,
+                                const string& endorsement_cert_chain,
+                                const key_message& quote_key,
+                                const string& quote_key_name,
+                                const string& quote_hash_alg,
+                                string* serialized_request);
+
+bool process_activate_response(const string& serialized_response,
+                               string* quote_cert);
 
 // ---------------------------------------------------------------
 #endif

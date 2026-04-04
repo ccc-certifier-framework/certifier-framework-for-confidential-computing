@@ -47,5 +47,38 @@ func InitEndorsementTrust(fileName string) bool {
   return true
 }
 
+/*
+ * message quote_certification_request {
+ *   optional string requesting_enclave_tag  = 1;
+ *   optional string providing_enclave_tag   = 2;
+ *   optional bytes endorsement_cert         = 3;
+ *   optional bytes endorsement_cert_chain   = 4;
+ *   optional key_message quote_key          = 5;
+ *   optional bytes quote_key_name           = 6;
+ *   optional string quote_hash_alg          = 7;
+ * };
+
+ * message quote_certification_response {
+ *   optional string status                  = 1; // "succeeded" or "failed"
+ *   optional string hash_alg                = 2;
+ *   optional bytes cred_blob                = 3;
+ *   optional bytes encrypted_secret         = 4;
+ *   optional string encrypting_alg          = 5;
+ *   optional bytes encrypted_quote_cert     = 6;
+ * };
+ */
+
+ func processActivationRequest(serializedRequest []byte) (bool, []byte) {
+
+	// Check endorsement evidence (read a policy on trusted roots)
+	// Make symmetric key secret to serve as credential
+	// Make DER cert for quote key and sign it with policy key
+	// Encrypt the DER cert using the credential
+	// call make_credential to get the cred-blob and encrypted secret
+	// Send the encrypted_quote_cert
+
+	return false, nil
+ }
+
 //      ------------------------------------------------------------------------
 

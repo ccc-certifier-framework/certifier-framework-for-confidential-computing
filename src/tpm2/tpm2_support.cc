@@ -3104,5 +3104,54 @@ bool make_credential_from_certifier(const char *quote_hash_alg,
   return true;
 }
 
+// ------------------------------------------------------------------------
+
+bool construct_activate_request(const string& endorsement_cert,
+                                const string& endorsement_cert_chain,
+                                const key_message& quote_key,
+                                const string& quote_key_name,
+                                const string& quote_hash_alg,
+                                string* serialized_request) {
+
+   quote_certification_request req;
+
+   // string requesting_enclave_tag
+   // string providing_enclave_tag
+   // bytes endorsement_cert
+   // bytes endorsement_cert_chain
+   // key_message quote_key
+   // bytes quote_key_name
+   // string quote_hash_alg
+
+  if (!req.SerializeToString(serialized_request)) {
+    return false;
+  }
+
+  return true;
+}
+
+bool process_activate_response(const string& serialized_response,
+                               string* quote_cert) {
+
+  quote_certification_response res;
+  if (!res.ParseFromString(serialized_response)) {
+    return false;
+  }
+  if (res.status() != "succeeded") {
+    return false;
+  }
+
+  // string hash_alg
+  // bytes cred_blob
+  // bytes encrypted_secret
+  // string encrypting_alg
+  // bytes encrypted_quote_cert
+
+  // Use activate_credential to get the credential
+  // decrypt the DER cert
+
+  return true;
+}
 
 // ------------------------------------------------------------------------
+
