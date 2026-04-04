@@ -3113,17 +3113,20 @@ bool construct_activate_request(const string& endorsement_cert,
                                 const string& quote_hash_alg,
                                 string* serialized_request) {
 
-   quote_certification_request req;
+  quote_certification_request req;
 
-   // string requesting_enclave_tag
-   // string providing_enclave_tag
-   // bytes endorsement_cert
-   // bytes endorsement_cert_chain
-   // key_message quote_key
-   // bytes quote_key_name
-   // string quote_hash_alg
+  req.set_requesting_enclave_tag("requesting enclave");
+  req.set_providing_enclave_tag("requesting enclave");
+  req.set_endorsement_cert(endorsement_cert);
+  req.set_endorsement_cert_chain(endorsement_cert_chain);
+  req.mutable_quote_key()->CopyFrom(quote_key);
+  req.set_quote_key_name(quote_key_name);
+  req.set_quote_hash_alg(quote_hash_alg);
 
   if (!req.SerializeToString(serialized_request)) {
+    printf("%s() error, line %d, can't serialize request\n",
+           __func__,
+           __LINE__);
     return false;
   }
 
@@ -3135,20 +3138,102 @@ bool process_activate_response(const string& serialized_response,
 
   quote_certification_response res;
   if (!res.ParseFromString(serialized_response)) {
+    printf("%s() error, line %d, can't parse response\n",
+           __func__,
+           __LINE__);
     return false;
   }
   if (res.status() != "succeeded") {
+    printf("%s() error, line %d, request failed at certifier\n",
+           __func__,
+           __LINE__);
     return false;
   }
 
-  // string hash_alg
-  // bytes cred_blob
-  // bytes encrypted_secret
-  // string encrypting_alg
-  // bytes encrypted_quote_cert
+#if 0
+  string recovered_cred;
+  string cred_blob;
+  string cred_secret;
+  TPM_HANDLE quote_handle = 0;
+  TPM_HANDLE ek_handle = 0;
+  string quoteAuth;
+  string endorsementAuth;
+  TPM_ALG_ID alg = 0;
 
-  // Use activate_credential to get the credential
-  // decrypt the DER cert
+  if (res.hash_alg() == Digest_method_sha1) {
+    alg = TPM_ALG_SHA1;
+  } else if (res.hash_alg() == Digest_method_sha256) {
+    alg = TPM_ALG_SHA256;
+  } else {
+    printf("%s() error, line %d, unsupported hashing algorithm\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  TPM2B_PUBLIC quoting_pub_out;
+  TPM2B_NAME   quoting_pub_name;
+
+  if (!Tpm2_ReadPublic(tpm,
+                       quote_handle,
+                       &quoting_pub_blob_size,
+                       quoting_pub_blob,
+                       &quoting_pub_out,
+                       &quoting_pub_name,
+                       &quoting_qualified_pub_name)) {
+    printf("%s() error, line %d, ReadPublic failed\n", __func__, __LINE__);
+    Tpm2_FlushContext(tpm, ek_handle);
+    return false;
+  }
+
+  if (quoting_pub_out.publicArea.nameAlg != alg) {
+    printf("%s() error, line %d, quote key hashing algorithm is wrong\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  cred_blob.assign((char*)res.cred_blob().data(), res.cred_blob().size());
+  cred_secret.assign((char*)res.cred_secret().data(), res.cred_secret().size());
+  if (!Tpm2_ActivateCredential(g_tpm,
+                               quote_handle,
+                               ek_handle,
+                               quoteAuth,
+                               endorsementAuth,
+                               cred_blob,
+                               cred_secret,
+                               &recovered_cred)) {
+    printf("%s() error, line %d, Tpm2_ActivateCredential failed\n",
+           __func__,
+           __LINE__);
+    Tpm2_FlushContext(tpm, ek_handle);
+    Tpm2_FlushContext(tpm, endorsement_session_handle);
+    return false;
+  }
+
+#  ifdef DEBUG
+  printf("\nActivateCredential succeeded with internal MakeCredential\n");
+  printf("Recovered credential (%d): ", recovered_cred.size);
+  print_bytes(recovered_cred.size, recovered_cred.buffer);
+  printf("\n");
+#  endif
+
+  if (res.encrypting_alg() == Enc_method_aes_256_gcm) {
+    printf("%s() error, line %d, encrypting algorithm is unsupported\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  // now decrypt it
+  if (!aes_256_gcm_decrypt(res.encrypted_quote_cert().data(),
+                         (int) res.encrypted_quote_cert().size(),
+                         (byte *)recovered_credential.data(),
+                         byte *out,
+                         int  *out_size)) {
+  }
+  quote_cert.assign((char*)out, out_size);
+#endif
 
   return true;
 }
