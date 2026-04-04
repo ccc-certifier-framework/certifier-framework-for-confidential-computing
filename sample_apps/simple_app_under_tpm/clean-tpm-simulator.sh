@@ -19,9 +19,9 @@ function cleanup-stale-procs() {
   set -e
   if [[ $sim_pid != "" ]] ; then
     kill -9 $sim_pid
-    echo "killed simulator _service, pid $sim_pid"
+    echo "killed simulator, pid $sim_pid"
   else
-    echo "no simulator service running"
+    echo "no simulator running"
   fi
 
   echo "cleanup_stale_procs done"
