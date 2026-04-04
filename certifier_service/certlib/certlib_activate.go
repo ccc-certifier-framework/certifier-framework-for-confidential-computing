@@ -68,10 +68,15 @@ func InitEndorsementTrust(fileName string) bool {
  * };
  */
 
+ // return decrypted cert
  func processActivationRequest(serializedRequest []byte) (bool, []byte) {
 
 	// Check endorsement evidence (read a policy on trusted roots)
 	// Make symmetric key secret to serve as credential
+	/*
+	s, credBlob, encryptedSecret := TpmMakeCredential(hash_alg,
+		quoteKeyName, endorsementCert, credential)
+	 */
 	// Make DER cert for quote key and sign it with policy key
 	// Encrypt the DER cert using the credential
 	// call make_credential to get the cred-blob and encrypted secret
