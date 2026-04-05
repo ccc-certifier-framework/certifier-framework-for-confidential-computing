@@ -452,7 +452,15 @@ int main(int an, char **av) {
 #  ifdef FIRST_PASS_ON
 
 #    ifdef ACTIVATE_CREDENTIAL
-
+  extern bool first_pass(const string &tpm_device,
+                         const string &endorsement_cert_file_name,
+                         const string &endorsement_cert_chain_file_name,
+                         const string &seal_hierarchy_file_name,
+                         const string &quote_hierarchy_file_name,
+                         const string &quote_cert_file,
+                         int           num_pcrs,
+                         byte         *pcrs,
+                         string       *cert_obtained);
 #    else
   // first pass is an optional initial pass procedure
   extern bool first_pass(const string &tpm_device,

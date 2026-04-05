@@ -27,30 +27,50 @@ using namespace certifier::utilities;
 
 #ifdef ACTIVATE_CREDENTIAL
 
+// This is the real first pass that uses activate-credential
+// The sequence is:
+//    1. Client constructs a "quote_certification_request" to a
+//       new port.
+//    2. Server checks to seed if initial cert in cert chain offered
+//       is trusted
+//    3. If so, the server validates the cert chain and endorsement
+//       cert.
+//    4. If the checks pass, the server produces a quote certificate
+//       and serializes it.
+//    5. The server generates a random symmetric key and encrypts the
+//       quote key certificate.
+//    6. The sever calls make-credential with the symmetric key as the
+//       "credential".
+//    7. server returns the quote_certification_response containing the
+//       encrypted certificate, credBlob and encrypted secret.
+//    8. Client calls "activate credential" to get the random key.
+//    9. Client decrypts the cert and saves it.
 bool first_pass(const string &tpm_device,
                 const string &endorsement_cert_file_name,
-                const string &endorsement_cert_signer_file_name,
+                const string &endorsement_cert_chain_file_name,
                 const string &seal_hierarchy_file_name,
                 const string &quote_hierarchy_file_name,
                 const string &quote_cert_file,
-                const string &measurement_file,
                 int           num_pcrs,
-                byte         *pcrs) {
+                byte         *pcrs,
+                string       *cert_obtained) {
 
 #  ifdef DEBUG
   printf("\nfirst-pass (with activate)\n");
   printf("    tpm device             : %s\n", tpm_device.c_str());
   printf("    endorsement file       : %s\n",
          endorsement_cert_file_name.c_str());
-  printf("    signer      file       : %s\n",
+  printf("    cert chain  file       : %s\n",
          endorsement_cert_signer_file_name.c_str());
   printf("    seal hierarchy file    : %s\n", seal_hierarchy_file_name.c_str());
   printf("    quote hierarchy file   : %s\n",
          quote_hierarchy_file_name.c_str());
-  printf("    quote_cert  file       : %s\n", quote_cert_file.c_str());
-  printf("    measurement file       : %s\n", measurement_file.c_str());
 #  endif
 
+  quote_certification_request  request;
+  quote_certification_response response;
+
+  // Init
   if (!tpm_Init(tpm_device,
                 endorsement_cert_file_name,
                 seal_hierarchy_file_name,
@@ -61,37 +81,13 @@ bool first_pass(const string &tpm_device,
     return false;
   }
 
-  // get policy key
-  key_message policy_key;
-  key_message policy_pk;
-  string      policy_key_str;
-  if (!read_file_into_string(policy_key_file_name, &policy_key_str)) {
-    printf("%s() error, line: %d, Can't read policy key %s\n",
-           __func__,
-           __LINE__,
-           policy_key_file_name.c_str());
-    tpm_close();
-    return false;
-  }
-  if (!policy_key.ParseFromString(policy_key_str)) {
-    printf("%s(), error, line: %d, can't parse policy key\n",
-           __func__,
-           __LINE__);
-    tpm_close();
-    return false;
-  }
-  if (!private_key_to_public_key(policy_key, &policy_pk)) {
-    printf("%s(), error, line: %d, can't convert policy key\n",
-           __func__,
-           __LINE__);
-    tpm_close();
-    return false;
-  }
-
-  // get quote key
-  // Make quote cert
+  // get quote key, endorsement_cert_chain and endorsement_cert.
+  // Construct quote key_message.  Pack the above along with the
+  // quote key hashing alg and quote_key_name into the
+  // request and send it to the server after serialization.
+  // Server returns a response.  If successful, perform the
+  // actions above.
   key_message quote_key;
-  string      quote_key_str;
 
   // make quote key message
   extern TPM2B_PUBLIC g_public_quote_key;
@@ -104,175 +100,23 @@ bool first_pass(const string &tpm_device,
     return false;
   }
 
-  string quote_issuer_desc("policy-key");
-  string quote_issuer_name(policy_key.key_name());
-  string quote_subject_desc("quote-key");
-  string quote_subject_name(quote_key.key_name());
-  X509  *x_quote = X509_new();
-  if (!produce_artifact(policy_key,
-                        quote_issuer_name,
-                        quote_issuer_desc,
-                        quote_key,
-                        quote_subject_name,
-                        quote_subject_desc,
-                        1ULL,
-                        365.26 * 86400,
-                        x_quote,
-                        true)) {
-    printf("%s(), error, line: %d, can't produce quote artifact\n",
-           __func__,
-           __LINE__);
-    tpm_close();
-    return false;
-  }
-
-  string serialized_quote_cert;
-  if (!x509_to_asn1(x_quote, &serialized_quote_cert)) {
-    printf("%s(), error, line: %d, can't translate quote cert\n",
-           __func__,
-           __LINE__);
-    tpm_close();
-    return false;
-  }
-
-#  ifdef DEBUG
-  printf("quote cert: ");
-  X509_print_fp(stdout, x_quote);
-  printf("\n");
-#  endif
-
-  X509_free(x_quote);
-
-  string quote_file_name("quote_cert.crt");
-  if (!write_file_from_string(quote_cert_file, serialized_quote_cert)) {
-    printf("%s(), error, line: %d, can't write quote cert\n",
-           __func__,
-           __LINE__);
-    tpm_close();
-    return false;
-  }
-
-  // get measurement
-  // save it
-  attestation_user_data ud;
-  ud.set_enclave_type("tpm-enclave");
-  RSA *auth_r = RSA_new();
-  if (!generate_new_rsa_key(2048, auth_r)) {
-    printf("%s, %d, generate_new_rsa_key error\n", __func__, __LINE__);
-    tpm_close();
-    return false;
-  }
-  key_message private_auth_key;
-  key_message public_auth_key;
-  if (!RSA_to_key(auth_r, &private_auth_key)) {
-    printf("%s, %d, RSA_to_key error\n", __func__, __LINE__);
-    tpm_close();
-    return false;
-  }
-  private_auth_key.set_key_name("enclave-key");
-  if (!private_key_to_public_key(private_auth_key, &public_auth_key)) {
-    printf("%s, %d, private_key_to_public_key error\n", __func__, __LINE__);
-    return false;
-  }
-  RSA_free(auth_r);
-
-  printf("tpm_test: generated enclave key:\n");
-  print_key(public_auth_key);
-  printf("\n");
-
-  // time
-  time_point t;
-  time_now(&t);
-  string str_now;
-  time_to_string(t, &str_now);
-  ud.set_time(str_now);
-
-  // key
-  ud.mutable_enclave_key()->CopyFrom(public_auth_key);
-  ud.mutable_policy_key()->CopyFrom(policy_key);
-
-  int    size_out = 4096;
-  byte   out[size_out];
-  string serialized_user;
-  if (!ud.SerializeToString(&serialized_user)) {
-    printf("%s, %d, SerializeToString error\n", __func__, __LINE__);
-    tpm_close();
-    return false;
-  }
-
-  if (!Attest(ud.enclave_type(),
-              serialized_user.size(),
-              (byte *)serialized_user.data(),
-              &size_out,
-              out)) {
-    printf("%s, %d Attest failed\n", __func__, __LINE__);
-    tpm_close();
-    return false;
-  }
-
-  string serialized_tpm_msg;
-  serialized_tpm_msg.assign((char *)out, size_out);
-
-  tpm_attestation_message att;
-  if (!att.ParseFromString(serialized_tpm_msg)) {
-    printf("%s, %d, can't parse attestation\n", __func__, __LINE__);
-    tpm_close();
-    return false;
-  }
-
-  // extract measurement
-  string             extra_data;
-  uint32_t           magic;
-  uint16_t           type;
-  string             signer;
-  TPML_PCR_SELECTION pcrSelect;
-  string             pcr_digest;
-  int                new_num_pcrs = 10;
-  byte_t             new_pcrs[num_pcrs];
-
-  if (!decode_quoted((int)att.the_quote().size(),
-                     (byte_t *)att.the_quote().data(),
-                     &magic,
-                     &type,
-                     &signer,
-                     &extra_data,
-                     &pcrSelect,
-                     &pcr_digest)) {
-    printf("%s, %d, decode_quoted failed\n", __func__, __LINE__);
-    tpm_close();
-    return false;
-  }
-
-  if (!get_pcr_from_select(&pcrSelect, &new_num_pcrs, new_pcrs)) {
-    printf("%s, %d, get_pcr_from_select failed\n", __func__, __LINE__);
-    tpm_close();
-    return false;
-  }
-
-  string conf;
-  conf.assign((char *)new_pcrs, new_num_pcrs);
-
-#  ifdef DEBUG
-  printf("PCR's: ");
-  for (int i = 0; i < num_pcrs; i++)
-    printf("%d ", pcrs[i]);
-  printf("\n");
-  printf("Digest: ");
-  print_bytes(pcr_digest.size(), (byte_t *)pcr_digest.data());
-  printf("\n");
-#  endif
-
-  string measurement_file_name("measurement");
-  if (!write_file_from_string(measurement_file, pcr_digest)) {
-    printf("%s(), error, line: %d, can't write measurement\n",
-           __func__,
-           __LINE__);
-    tpm_close();
-    return false;
-  }
+  // construct_activate_request(const string      &endorsement_cert,
+  //                              const string      &endorsement_cert_chain,
+  //                              const key_message &quote_key,
+  //                              const string      &quote_key_name,
+  //                              const string      &quote_hash_alg,
+  //                              string            *serialized_request)
+  //  send the rquest
+  //
+  //  get the response
+  //
+  // process_activate_response(const string &serialized_response,
+  //                             string       *quote_cert)
+  //
+  // save the cert
 
   tpm_close();
-  return true;
+  return false;
 }
 
 #else
