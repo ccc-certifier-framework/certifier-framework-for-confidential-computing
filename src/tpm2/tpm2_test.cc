@@ -80,20 +80,18 @@ DEFINE_int32(num_pcrs, 1, "number of pcrs");
 
 // ----------------------------------------------------------
 
-#define INTERNALTPMMAKECRED
-
 bool credential_test(local_tpm          &tpm,
                      TPML_PCR_SELECTION &pcrSelect,
                      TPM_HANDLE         &srk_handle,
                      TPM_HANDLE         &quote_handle) {
 
   TPM_HANDLE ek_handle = 0;
-  string     policyString;
-  string     authString;
+
+  // replace with get_srk_auth
   string     emptyAuth;
   int        size_buf = 128;
   byte_t     buf[size_buf];
-
+  string     authString;
   int m = CreatePasswordAuthArea(emptyAuth, size_buf, buf);
   if (m < 0) {
     printf("%s() error, line %d, CreatePasswordAuthArea failed\n",
@@ -101,9 +99,11 @@ bool credential_test(local_tpm          &tpm,
            __LINE__);
     return false;
   }
-
-  extern byte_t g_policy_rsa_2048[32];
   authString.assign((char *)(buf + 2), m - 2);
+
+  // replace with get_endorsement_auth
+  string     policyString;
+  extern byte_t g_policy_rsa_2048[32];
   policyString.assign((char *)g_policy_rsa_2048, sizeof(g_policy_rsa_2048));
 
   if (!get_endorsement_key(tpm, authString, policyString, &ek_handle)) {
@@ -156,41 +156,11 @@ bool credential_test(local_tpm          &tpm,
   printf("\n");
 #endif
 
-  if (!Tpm2_MakeCredential(tpm,
-                           ek_handle,
-                           credential,
-                           quoting_pub_name,
-                           &credentialBlob,
-                           &secret)) {
-    printf("%s() error, line %d, Tpm2_MakeCredential failed\n",
-           __func__,
-           __LINE__);
-    Tpm2_FlushContext(tpm, ek_handle);
-    return false;
-  }
-
-#ifdef DEBUG2
-  printf("TPM MakeCredential succeeded\n");
-  printf("credBlob size: %d\n", credentialBlob.size);
-  print_bytes(credentialBlob.size, credentialBlob.credential);
-  printf("\n");
-  printf("secret size: %d\n", secret.size);
-  print_bytes(secret.size, secret.secret);
-  printf("\n");
-  printf("\ncredentialBlob: ");
-  print_bytes(sizeof(credentialBlob), (byte_t *)&credentialBlob);
-  printf("\n");
-#endif
-
-  // Activate
   string nonce;
-  string policyDigest;
-  policyDigest.assign((char *)quoting_pub_out.publicArea.authPolicy.buffer,
-                      quoting_pub_out.publicArea.authPolicy.size);
 
+  // replace with get_quote_auth
   byte_t auth_buf[256];
   int    n = 0;
-
   string quoteAuth = authString;
 
 #ifdef DEBUG1
@@ -209,7 +179,7 @@ bool credential_test(local_tpm          &tpm,
 #endif
   nonce.clear();
   if (!create_endorsement_session(tpm,
-                                  authString,
+                                  authString,  //srkAuth
                                   &nonce,
                                   &endorsement_session_handle)) {
     printf("%s() error, line %d, create_endorsement _session failed\n",
@@ -240,47 +210,6 @@ bool credential_test(local_tpm          &tpm,
   cur += sizeof(uint16_t);
   n += sizeof(uint16_t);
   endorsementAuth.assign((char *)auth_buf, n);
-
-#ifdef DEBUG2
-  printf("Endorsement session handle: %08x\n", endorsement_session_handle);
-  printf("Endorsement auth: ");
-  print_bytes(endorsementAuth.size(), (byte_t *)endorsementAuth.data());
-  printf("\n");
-  printf("Nonce (%d): ", (int)nonce.size());
-  print_bytes(nonce.size(), (byte_t *)nonce.data());
-  printf("\n");
-  int    num_pcrs = 1;
-  byte_t pcrs[1] = {7};
-  printf("PCRs at activate:\n");
-  print_pcrs(tpm, num_pcrs, pcrs);
-  printf("\n");
-#endif
-
-#ifndef INTERNALTPMMAKECRED
-
-  if (!Tpm2_ActivateCredential(tpm,
-                               quote_handle,
-                               ek_handle,
-                               quoteAuth,
-                               endorsementAuth,
-                               credentialBlob,
-                               secret,
-                               &recovered_credential)) {
-    printf("%s() error, line %d, Tpm2_ActivateCredential failed\n",
-           __func__,
-           __LINE__);
-    Tpm2_FlushContext(tpm, ek_handle);
-    Tpm2_FlushContext(tpm, endorsement_session_handle);
-    return false;
-  }
-
-#  ifdef DEBUG
-  printf("ActivateCredential succeeded\n");
-  printf("Recovered credential (%d): ", recovered_credential.size);
-  print_bytes(recovered_credential.size, recovered_credential.buffer);
-  printf("\n");
-#  endif
-#endif  // INTERNALTPMMAKECRED
 
   // Standalone makecredential
   string endorsement_cert;
@@ -350,7 +279,6 @@ bool credential_test(local_tpm          &tpm,
   printf("\n");
 #endif
 
-#ifdef INTERNALTPMMAKECRED
   if (!Tpm2_ActivateCredential(tpm,
                                quote_handle,
                                ek_handle,
@@ -373,7 +301,6 @@ bool credential_test(local_tpm          &tpm,
   print_bytes(recovered_cred.size, recovered_cred.buffer);
   printf("\n");
 #  endif
-#endif
 
   Tpm2_FlushContext(tpm, ek_handle);
   Tpm2_FlushContext(tpm, endorsement_session_handle);

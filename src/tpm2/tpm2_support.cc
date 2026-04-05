@@ -910,7 +910,7 @@ bool create_quote_session(local_tpm          &tpm,
  */
 
 bool get_endorsement_key(local_tpm  &tpm,
-                         string     &authString,
+                         string     &authString,  // srkAuth
                          string     &policyString,
                          TPM_HANDLE *ek_handle) {
 
@@ -1087,10 +1087,10 @@ bool create_quote_hierarchy(local_tpm    &tpm,
   printf("\n");
 #endif
 
-  // Create the policy for the quote key
+  // FIX this
+  string       nonce;
   TPM_HANDLE   session_handle = 0;
   TPM2B_DIGEST policy_digest;
-  string       nonce;
   if (!create_quote_session(tpm, pcrSelect, &nonce, &session_handle)) {
     printf("%s() error, line %d, create_quote_session failed\n",
            __func__,
@@ -1430,143 +1430,17 @@ bool tpm_close() {
 }
 
 #if 0
-bool init_endorsement_auth() {
+bool get_endorsement_auth(string* endorsementAuth) {
 
-  string policyString;
-  string authString;
-  string emptyAuth;
-  int    size_buf = 128;
-  byte_t buf[size_buf];
-
-  int m = CreatePasswordAuthArea(emptyAuth, size_buf, buf);
-  if (m < 0) {
-    printf("%s() error, line %d, CreatePasswordAuthArea failed\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-
-  authString.assign((char *)(buf + 2), m - 2);
-  policyString.assign((char *)g_policy_rsa_2048, sizeof(g_policy_rsa_2048));
-
-  if (!get_endorsement_key(g_tpm, authString, policyString, &g_ek_handle)) {
-    printf("%s() error, line %d, get_endorsement_key failed\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-
-  TPM2B_PUBLIC pub_out;
-  TPM2B_NAME   pub_name;
-  TPM2B_NAME   qualified_pub_name;
-  uint16_t     pub_blob_size = 4096;
-  byte_t       pub_blob[pub_blob_size];
-  if (!Tpm2_ReadPublic(g_tpm,
-                       g_ek_handle,
-                       &pub_blob_size,
-                       pub_blob,
-                       &g_public_endorsement_key,
-                       &pub_name,
-                       &qualified_pub_name)) {
-    printf("%s() error, line %d, ReadPublic failed\n", __func__, __LINE__);
-    return false;
-  }
-#ifdef DEBUG3
-  printf("\n");
-  printf("Endorsement Key\n");
-  printf("Public blob: ");
-  print_bytes(pub_blob_size, pub_blob);
-  printf("\n");
-  printf("Name: ");
-  print_bytes(pub_name.size, pub_name.name);
-  printf("\n");
-  printf("Qualified name: ");
-  print_bytes(qualified_pub_name.size, qualified_pub_name.name);
-  printf("\n");
-  printf("Pubout size: %d\n", pub_out.size);
-  printf("Type: %d\n", pub_out.publicArea.type);
-  printf("Name: %d\n", pub_out.publicArea.nameAlg);
-  printf("Scheme: %d\n", pub_out.publicArea.parameters.rsaDetail.scheme.scheme);
-  printf("Bytes (%d):\n", (int)pub_out.publicArea.unique.rsa.size);
-  print_bytes((int)pub_out.publicArea.unique.rsa.size,
-              (byte_t *)pub_out.publicArea.unique.rsa.buffer);
-  printf("\n");
-  printf("Exponent: %d\n", pub_out.publicArea.parameters.rsaDetail.exponent);
-  printf("\n");
-#endif
-
-  if (!get_endorsement_cert(g_tpm, &g_serialized_endorsement_cert)) {
-    printf("%s() error, line %d, can't get endorsement cert\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-#ifdef DEBUG3
-  printf("Cert:\n");
-  print_bytes(g_serialized_endorsement_cert.size(),
-              (byte_t *)g_serialized_endorsement_cert.data());
-  printf("\n");
-#endif
-
+  endorsementAuth->assign((char *)g_policy_rsa_2048, sizeof(g_policy_rsa_2048));
   return true;
-}
-
-bool init_quote_auth(const TPM2B_PUBLIC &quote_pub,
-                   string             *quoteAuth,
-                   string             *endorsementAuth) {
-  string     policyString;
-  string     authString;
-  string     emptyAuth;
-  int        size_buf = 128;
-  byte_t     buf[size_buf];
-
-  int m = CreatePasswordAuthArea(emptyAuth, size_buf, buf);
-  if (m < 0) {
-    printf("%s() error, line %d, CreatePasswordAuthArea failed\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-
-  extern byte_t g_policy_rsa_2048[32];
-  authString.assign((char *)(buf + 2), m - 2);
-  policyString.assign((char *)g_policy_rsa_2048, sizeof(g_policy_rsa_2048));
-
-  if (!get_endorsement_key(tpm, authString, policyString, &ek_handle)) {
-    printf("%s() error, line %d, get_endorsement_key failed\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-#ifdef DEBUG1
-  printf("\nGot endorsement key %08x\n", ek_handle);
-#endif
-
-// Activate
-  string nonce;
-  string policyDigest;
-  policyDigest.assign((char *)quoting_pub_out.publicArea.authPolicy.buffer,
-                      quoting_pub_out.publicArea.authPolicy.size);
-
-  byte_t auth_buf[256];
-  int    n = 0;
-
-  string quoteAuth = authString;
-
-#  ifdef DEBUG1
-  print_bytes(quoteAuth.size(), (byte_t *)quoteAuth.data());
-  printf("\n");
-  printf("Nonce (%d): ", (int)nonce.size());
-  print_bytes(nonce.size(), (byte_t *)nonce.data());
-  printf("\n");
-#  endif
-
+  /*
   // endorsement auth session
   TPM_HANDLE endorsement_session_handle = 0;
   string     endorsementAuth;
-#  ifdef DEBUG1
+#ifdef DEBUG1
   printf("\nCalling create_endorsement_session\n");
-#  endif
+#endif
   nonce.clear();
   if (!create_endorsement_session(tpm,
                                   authString,
@@ -1600,7 +1474,76 @@ bool init_quote_auth(const TPM2B_PUBLIC &quote_pub,
   cur += sizeof(uint16_t);
   n += sizeof(uint16_t);
   endorsementAuth.assign((char *)auth_buf, n);
-  return false;
+
+#ifdef DEBUG2
+  printf("Endorsement session handle: %08x\n", endorsement_session_handle);
+  printf("Endorsement auth: ");
+  print_bytes(endorsementAuth.size(), (byte_t *)endorsementAuth.data());
+  printf("\n");
+  printf("Nonce (%d): ", (int)nonce.size());
+  print_bytes(nonce.size(), (byte_t *)nonce.data());
+  printf("\n");
+  int    num_pcrs = 1;
+  byte_t pcrs[1] = {7};
+  printf("PCRs at activate:\n");
+  print_pcrs(tpm, num_pcrs, pcrs);
+  printf("\n");
+#endif
+   */
+}
+
+bool get_quote_auth(const TPM2B_PUBLIC &quote_pub,
+                   string             *quoteAuth) {
+  string     emptyAuth;
+  int        size_buf = 128;
+  byte_t     buf[size_buf];
+
+  int m = CreatePasswordAuthArea(emptyAuth, size_buf, buf);
+  if (m < 0) {
+    printf("%s() error, line %d, CreatePasswordAuthArea failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  quoteAuth->assign((char *)(buf + 2), m - 2);
+  /*
+  // Create the policy for the quote key
+  // FIX
+  TPM_HANDLE   session_handle = 0;
+  TPM2B_DIGEST policy_digest;
+  string       nonce;
+  if (!create_quote_session(tpm, pcrSelect, &nonce, &session_handle)) {
+    printf("%s() error, line %d, create_quote_session failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if (!Tpm2_PolicyGetDigest(tpm, session_handle, &policy_digest)) {
+    printf("%s() error, line %d, PolicyGetDigest failed\n", __func__, __LINE__);
+    Tpm2_FlushContext(tpm, session_handle);
+    return false;
+  }
+  Tpm2_FlushContext(tpm, session_handle);
+  policyString.assign((char *)policy_digest.buffer, policy_digest.size);
+  */
+  return true;
+}
+
+bool get_srk_auth(string *srkAuth) {
+  string     emptyAuth;
+  int        size_buf = 128;
+  byte_t     buf[size_buf];
+
+  int m = CreatePasswordAuthArea(emptyAuth, size_buf, buf);
+  if (m < 0) {
+    printf("%s() error, line %d, CreatePasswordAuthArea failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  srkAuth->assign((char *)(buf + 2), m - 2);
+  return true;
 }
 #endif
 
@@ -1779,6 +1722,22 @@ bool tpm_Init(const string &device_name,
       return false;
     }
   }
+
+#if 0
+    if (!get_endorsement_key(g_tpm, authString, policyString, &g_ek_handle)) {
+    printf("%s() error, line %d, get_endorsement_key failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  if (!get_endorsement_cert(g_tpm, &g_serialized_endorsement_cert)) {
+    printf("%s() error, line %d, can't get endorsement cert\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+#endif
 
   // init seal envrionment
   if (!init_seal_environment(num_pcrs, pcrs)) {
