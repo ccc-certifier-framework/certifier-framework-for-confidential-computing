@@ -1364,6 +1364,8 @@ bool g_tpm_environment_initialized = false;
 TPM_HANDLE g_ek_handle = 0;
 TPM_HANDLE g_srk_handle = 0;
 TPM_HANDLE g_quote_handle = 0;
+string     g_quoteAuth;
+string     g_endorsementAuth;
 
 int          g_seal_key_type;
 string       g_seal_key;
@@ -3151,13 +3153,21 @@ bool process_activate_response(const string& serialized_response,
   }
 
 #if 0
+  g_tpm_environment_initialized
+  string g_serialized_endorsement_cert;
+  string g_serialized_endorsement_cert_chain;
+  TPM2B_PUBLIC g_public_quote_key;
+  TPM2B_PUBLIC g_public_endorsement_key
+  TPM_HANDLE g_ek_handle = 0;
+  TPM_HANDLE g_srk_handle = 0;
+  TPM_HANDLE g_quote_handle = 0;
+  TPM2B_PUBLIC g_public_quote_key;
+  TPM2B_PUBLIC g_public_endorsement_key;
   string recovered_cred;
   string cred_blob;
   string cred_secret;
   TPM_HANDLE quote_handle = 0;
   TPM_HANDLE ek_handle = 0;
-  string quoteAuth;
-  string endorsementAuth;
   TPM_ALG_ID alg = 0;
 
   if (res.hash_alg() == Digest_method_sha1) {
@@ -3171,22 +3181,9 @@ bool process_activate_response(const string& serialized_response,
     return false;
   }
 
-  TPM2B_PUBLIC quoting_pub_out;
-  TPM2B_NAME   quoting_pub_name;
+  // TPM2B_PUBLIC g_public_endorsement_key;
 
-  if (!Tpm2_ReadPublic(tpm,
-                       quote_handle,
-                       &quoting_pub_blob_size,
-                       quoting_pub_blob,
-                       &quoting_pub_out,
-                       &quoting_pub_name,
-                       &quoting_qualified_pub_name)) {
-    printf("%s() error, line %d, ReadPublic failed\n", __func__, __LINE__);
-    Tpm2_FlushContext(tpm, ek_handle);
-    return false;
-  }
-
-  if (quoting_pub_out.publicArea.nameAlg != alg) {
+  if (g_public_quote_key.publicArea.nameAlg != alg) {
     printf("%s() error, line %d, quote key hashing algorithm is wrong\n",
            __func__,
            __LINE__);
@@ -3196,18 +3193,16 @@ bool process_activate_response(const string& serialized_response,
   cred_blob.assign((char*)res.cred_blob().data(), res.cred_blob().size());
   cred_secret.assign((char*)res.cred_secret().data(), res.cred_secret().size());
   if (!Tpm2_ActivateCredential(g_tpm,
-                               quote_handle,
-                               ek_handle,
-                               quoteAuth,
-                               endorsementAuth,
+                               g_quote_handle,
+                               g_ek_handle,
+                               g_quoteAuth,
+                               g_endorsementAuth,
                                cred_blob,
                                cred_secret,
                                &recovered_cred)) {
     printf("%s() error, line %d, Tpm2_ActivateCredential failed\n",
            __func__,
            __LINE__);
-    Tpm2_FlushContext(tpm, ek_handle);
-    Tpm2_FlushContext(tpm, endorsement_session_handle);
     return false;
   }
 
