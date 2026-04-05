@@ -379,6 +379,18 @@ bool endorsement_test(local_tpm &tpm, string authString) {
     return false;
   }
 
+  X509 *cert = X509_new();
+  if (!asn1_to_x509(cert_out, cert)) {
+    printf("%s() error, line %d, can't translate endorsement cert to x509\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  printf("\nEndorsement ertificate:\n");
+  X509_print_fp(stdout, cert);
+  printf("\n");
+  X509_free(cert);
+
   string tmp_cert_name("jlm_cert.crt");
   if (!write_file_from_string(tmp_cert_name, cert_out)) {
     printf("%s() error, line %d, get_endorsement_cert failed\n",
