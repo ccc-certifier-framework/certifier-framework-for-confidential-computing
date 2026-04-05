@@ -31,33 +31,15 @@ bool extend_pcrs(local_tpm &tpm, int pcr_num);
 bool create_seal_session(local_tpm          &tpm,
                          TPML_PCR_SELECTION &pcrSelect,
                          TPM_HANDLE         *session_handle);
-bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
-                                      int           num_pcrs,
-                                      byte_t       *pcrs,
-                                      const string &seal_file);
-bool recover_sealing_secret(local_tpm    &tpm,
-                            int           num_pcrs,
-                            byte_t       *pcrs,
-                            const string &file_name,
-                            string       *seal_secret);
-bool recover_and_load_quote_hierarchy(local_tpm    &tpm,
-                                      int           num_pcrs,
-                                      byte_t       *pcrs,
-                                      const string &file_name,
-                                      TPM_HANDLE   *srk_handle,
-                                      TPM_HANDLE   *quote_handle);
 bool create_quote_session(local_tpm          &tpm,
                           TPML_PCR_SELECTION &pcrSelect,
                           string             *nonce,
                           TPM_HANDLE         *session_handle);
-bool create_quote_hierarchy(local_tpm    &tpm,
-                            int           num_pcrs,
-                            byte_t       *pcrs,
-                            const string &file_name);
 bool create_endorsement_session(local_tpm  &tpm,
                                 string     &authString,
                                 string     *nonce,
                                 TPM_HANDLE *session_handle);
+
 
 bool get_endorsement_key(local_tpm  &tpm,
                          string     &authString,
@@ -78,6 +60,26 @@ bool write_nv_handle(local_tpm &tpm,
                      string    &authString,
                      string    &in);
 
+bool create_quote_hierarchy(local_tpm    &tpm,
+                            int           num_pcrs,
+                            byte_t       *pcrs,
+                            const string &file_name);
+bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
+                                      int           num_pcrs,
+                                      byte_t       *pcrs,
+                                      const string &seal_file);
+bool recover_sealing_secret(local_tpm    &tpm,
+                            int           num_pcrs,
+                            byte_t       *pcrs,
+                            const string &file_name,
+                            string       *seal_secret);
+bool recover_and_load_quote_hierarchy(local_tpm    &tpm,
+                                      int           num_pcrs,
+                                      byte_t       *pcrs,
+                                      const string &file_name,
+                                      TPM_HANDLE   *srk_handle,
+                                      TPM_HANDLE   *quote_handle);
+
 // ---------------------------------------------------------------
 
 bool init_quote_cert_from_file(const string &quote_cert_file_name);
@@ -85,9 +87,12 @@ bool init_quote_cert_from_file(const string &quote_cert_file_name);
 bool init_tpm(const string &device_name);
 bool close_tpm();
 
-bool get_srk_auth(string *srkAuth);
-bool get_quote_auth(string *quoteAuth);
-bool get_endorsement_auth(string* endorsementAuth);
+bool get_password_auth(string& password, string *auth);
+bool get_endorsement_auth_with_session(local_tpm &tpm,
+                                       string& authString,
+                                       string nonce,
+                                       TPM_HANDLE* endorsement_session_handle,
+                                       string* auth);
 
 bool create_pcr_policy(local_tpm    &tpm,
                        int           num_pcrs,

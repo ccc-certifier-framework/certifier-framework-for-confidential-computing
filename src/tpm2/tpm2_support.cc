@@ -1087,7 +1087,7 @@ bool create_quote_hierarchy(local_tpm    &tpm,
   printf("\n");
 #endif
 
-  // replace with get_quote_auth
+  // replace with get_quote_policy
   string       nonce;
   TPM_HANDLE   session_handle = 0;
   TPM2B_DIGEST policy_digest;
@@ -1128,7 +1128,7 @@ bool create_quote_hierarchy(local_tpm    &tpm,
                       srkAuth,
                       sensitiveData,
                       outsideInfo,
-                      policyString,  // replace with quoteAuth
+                      policyString,
                       pcrSelect,
                       TPM_ALG_RSA,
                       TPM_ALG_SHA256,
@@ -1185,6 +1185,7 @@ bool recover_and_load_quote_hierarchy(local_tpm    &tpm,
                                       const string &file_name,
                                       TPM_HANDLE   *srk_handle,
                                       TPM_HANDLE   *quote_handle) {
+  string empty;
   string srkAuth;
   string quoteAuth;
 
@@ -1212,20 +1213,14 @@ bool recover_and_load_quote_hierarchy(local_tpm    &tpm,
 
   string sensitiveData;
   string outsideInfo;
-  string emptyAuth;
   string policyString;
 
-  int    size_buf = 128;
-  byte_t buf[size_buf];
-
-  int m = CreatePasswordAuthArea(emptyAuth, size_buf, buf);
-  if (m < 0) {
-    printf("%s() error, line %d, CreatePasswordAuthArea failed\n",
+  if (!get_password_auth(empty, &srkAuth)) {
+    printf("%s() error, line %d, can't get password auth\n",
            __func__,
            __LINE__);
     return false;
   }
-  srkAuth.assign((char *)(buf + 2), m - 2);
 
   // Storage root key
   if (!Tpm2_CreatePrimary(tpm,
@@ -1429,32 +1424,27 @@ bool tpm_close() {
   return true;
 }
 
-bool get_endorsement_auth(string* endorsementAuth) {
+bool get_endorsement_auth_with_session(local_tpm &tpm,
+		                       string& authString,
+				       string nonce,
+				       TPM_HANDLE* endorsement_session_handle,
+				       string* auth) {
 
-  endorsementAuth->assign((char *)g_policy_rsa_2048, sizeof(g_policy_rsa_2048));
-  return true;
-  /*
-  // endorsement auth session
-  TPM_HANDLE endorsement_session_handle = 0;
-  string     endorsementAuth;
- 
-  nonce.clear();
   if (!create_endorsement_session(tpm,
-                                  authString,
+                                  authString,  //srkAuth
                                   &nonce,
-                                  &endorsement_session_handle)) {
+                                  endorsement_session_handle)) {
     printf("%s() error, line %d, create_endorsement _session failed\n",
            __func__,
            __LINE__);
-    Tpm2_FlushContext(tpm, ek_handle);
-    Tpm2_FlushContext(tpm, quote_handle);
     return false;
   }
 
   // endorsement auth
-  n = 0;
+  byte_t auth_buf[256];
+  int n = 0;
   byte_t *cur = auth_buf;
-  change_endian32((uint32_t *)&endorsement_session_handle, (uint32_t *)cur);
+  change_endian32((uint32_t *)endorsement_session_handle, (uint32_t *)cur);
   cur += sizeof(uint32_t);
   n += sizeof(uint32_t);
   n += 1;
@@ -1470,10 +1460,10 @@ bool get_endorsement_auth(string* endorsementAuth) {
   *((uint16_t *)cur) = 0;
   cur += sizeof(uint16_t);
   n += sizeof(uint16_t);
-  endorsementAuth.assign((char *)auth_buf, n);
+  auth->assign((char *)auth_buf, n);
 
 #ifdef DEBUG2
-  printf("Endorsement session handle: %08x\n", endorsement_session_handle);
+  printf("Endorsement session handle: %08x\n", *endorsement_session_handle);
   printf("Endorsement auth: ");
   print_bytes(endorsementAuth.size(), (byte_t *)endorsementAuth.data());
   printf("\n");
@@ -1486,7 +1476,7 @@ bool get_endorsement_auth(string* endorsementAuth) {
   print_pcrs(tpm, num_pcrs, pcrs);
   printf("\n");
 #endif
-   */
+  return true;
 }
 
 bool get_quote_auth(string *quoteAuth) {
@@ -1526,19 +1516,18 @@ bool get_quote_auth(string *quoteAuth) {
   return true;
 }
 
-bool get_srk_auth(string *srkAuth) {
-  string     emptyAuth;
+bool get_password_auth(string& password, string *auth) {
   int        size_buf = 128;
   byte_t     buf[size_buf];
 
-  int m = CreatePasswordAuthArea(emptyAuth, size_buf, buf);
+  int m = CreatePasswordAuthArea((string&)password, size_buf, buf);
   if (m < 0) {
     printf("%s() error, line %d, CreatePasswordAuthArea failed\n",
            __func__,
            __LINE__);
     return false;
   }
-  srkAuth->assign((char *)(buf + 2), m - 2);
+  auth->assign((char *)(buf + 2), m - 2);
   return true;
 }
 

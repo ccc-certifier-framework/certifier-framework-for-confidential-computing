@@ -86,22 +86,17 @@ bool credential_test(local_tpm          &tpm,
                      TPM_HANDLE         &quote_handle) {
 
   TPM_HANDLE ek_handle = 0;
-
-  // replace with get_srk_auth
-  string     emptyAuth;
-  int        size_buf = 128;
-  byte_t     buf[size_buf];
+  string     empty;
   string     authString;
-  int m = CreatePasswordAuthArea(emptyAuth, size_buf, buf);
-  if (m < 0) {
-    printf("%s() error, line %d, CreatePasswordAuthArea failed\n",
+
+  if (!get_password_auth(empty, &authString)) {
+    printf("%s() error, line %d, can't get password auth\n",
            __func__,
            __LINE__);
     return false;
   }
-  authString.assign((char *)(buf + 2), m - 2);
 
-  // replace with get_endorsement_auth
+  // replace with get_endorsement_policy
   string     policyString;
   extern byte_t g_policy_rsa_2048[32];
   policyString.assign((char *)g_policy_rsa_2048, sizeof(g_policy_rsa_2048));
@@ -156,15 +151,20 @@ bool credential_test(local_tpm          &tpm,
   printf("\n");
 #endif
 
-  // replace with get_quote_auth
-  byte_t auth_buf[256];
+
   int    n = 0;
-  string quoteAuth = authString;
+  string quoteAuth;
+  if (!get_password_auth(empty, &quoteAuth)) {
+    printf("%s() error, line %d, can't get password auth\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
 
   // Standalone makecredential
   string endorsement_cert;
   if (!get_endorsement_cert(tpm, &endorsement_cert)) {
-    printf("%s() error, line %d, create_endorsement _session failed\n",
+    printf("%s() error, line %d, get_endorsement_cert failed\n",
            __func__,
            __LINE__);
     return false;
@@ -177,10 +177,11 @@ bool credential_test(local_tpm          &tpm,
   string cred_blob_out;
   string encrypted_secret_out;
   cred.assign((char *)credential.buffer, credential.size);
+
   string hash_name;
   switch (quoting_pub_out.publicArea.nameAlg) {
     default:
-      printf("%s() error, line %d, create_endorsement _session failed\n",
+      printf("%s() error, line %d, unknown algorithm\n",
              __func__,
              __LINE__);
       return false;
@@ -218,41 +219,19 @@ bool credential_test(local_tpm          &tpm,
 
   // endorsement auth session
   string nonce;
-  nonce.clear();
   TPM_HANDLE endorsement_session_handle = 0;
-  if (!create_endorsement_session(tpm,
-                                  authString,  //srkAuth
-                                  &nonce,
-                                  &endorsement_session_handle)) {
-    printf("%s() error, line %d, create_endorsement _session failed\n",
+  string endorsementAuth;
+  if (!get_endorsement_auth_with_session(tpm,
+                                       authString,
+                                       nonce,
+                                       &endorsement_session_handle,
+                                       &endorsementAuth)) {
+    printf("%s() error, line %d, get_endorsement_auth_with_session failed\n",
            __func__,
            __LINE__);
     Tpm2_FlushContext(tpm, ek_handle);
-    Tpm2_FlushContext(tpm, quote_handle);
     return false;
   }
-
-  // endorsement auth
-  string     endorsementAuth;
-  n = 0;
-  byte_t *cur = auth_buf;
-  change_endian32((uint32_t *)&endorsement_session_handle, (uint32_t *)cur);
-  cur += sizeof(uint32_t);
-  n += sizeof(uint32_t);
-  n += 1;
-  uint16_t t = nonce.size();
-  change_endian16(&t, (uint16_t *)cur);
-  cur += sizeof(uint16_t);
-  n += sizeof(uint16_t);
-  memcpy(cur, (byte_t *)nonce.data(), t);
-  cur += t;
-  n += t;
-  *cur = 1;
-  cur += 1;
-  *((uint16_t *)cur) = 0;
-  cur += sizeof(uint16_t);
-  n += sizeof(uint16_t);
-  endorsementAuth.assign((char *)auth_buf, n);
 
   if (!Tpm2_ActivateCredential(tpm,
                                quote_handle,
@@ -336,21 +315,7 @@ extern byte_t g_policy_rsa_3072[48];
 bool endorsement_test(local_tpm &tpm, string authString) {
   TPM_HANDLE ek_handle;
 
-  // replace with srkAuth, get rid of arg
-  string emptyAuth;
-  int    size_buf = 128;
-  byte_t buf[size_buf];
-
-  int m = CreatePasswordAuthArea(emptyAuth, size_buf, buf);
-  if (m < 0) {
-    printf("%s() error, line %d, CreatePasswordAuthArea failed\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-  authString.assign((char *)(buf + 2), m - 2);
-
-  // get endorsement key
+  // get endorsement key policy
   string policyString;
   policyString.assign((char *)g_policy_rsa_2048, sizeof(g_policy_rsa_2048));
   if (!get_endorsement_key(tpm, authString, policyString, &ek_handle)) {
@@ -1128,8 +1093,18 @@ int main(int an, char **av) {
   }
 
   extern local_tpm g_tpm;
-  string           authString;
+
   if (FLAGS_operation == "EndorsementTest") {
+
+    string empty;
+    string authString;
+    if (!get_password_auth(empty, &authString)) {
+      printf("%s() error, line %d, can't get password auth\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
     printf("\n");
     if (endorsement_test(g_tpm, authString)) {
       printf("endorsement test succeeded\n");
