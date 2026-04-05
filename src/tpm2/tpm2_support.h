@@ -85,6 +85,10 @@ bool init_quote_cert_from_file(const string &quote_cert_file_name);
 bool init_tpm(const string &device_name);
 bool close_tpm();
 
+bool get_srk_auth(string *srkAuth);
+bool get_quote_auth(string *quoteAuth);
+bool get_endorsement_auth(string* endorsementAuth);
+
 bool create_pcr_policy(local_tpm    &tpm,
                        int           num_pcrs,
                        byte_t       *pcrs,

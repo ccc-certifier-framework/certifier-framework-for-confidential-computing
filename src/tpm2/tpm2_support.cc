@@ -1087,7 +1087,7 @@ bool create_quote_hierarchy(local_tpm    &tpm,
   printf("\n");
 #endif
 
-  // FIX this
+  // replace with get_quote_auth
   string       nonce;
   TPM_HANDLE   session_handle = 0;
   TPM2B_DIGEST policy_digest;
@@ -1128,7 +1128,7 @@ bool create_quote_hierarchy(local_tpm    &tpm,
                       srkAuth,
                       sensitiveData,
                       outsideInfo,
-                      policyString,
+                      policyString,  // replace with quoteAuth
                       pcrSelect,
                       TPM_ALG_RSA,
                       TPM_ALG_SHA256,
@@ -1429,7 +1429,6 @@ bool tpm_close() {
   return true;
 }
 
-#if 0
 bool get_endorsement_auth(string* endorsementAuth) {
 
   endorsementAuth->assign((char *)g_policy_rsa_2048, sizeof(g_policy_rsa_2048));
@@ -1492,8 +1491,7 @@ bool get_endorsement_auth(string* endorsementAuth) {
    */
 }
 
-bool get_quote_auth(const TPM2B_PUBLIC &quote_pub,
-                   string             *quoteAuth) {
+bool get_quote_auth(string *quoteAuth) {
   string     emptyAuth;
   int        size_buf = 128;
   byte_t     buf[size_buf];
@@ -1506,6 +1504,7 @@ bool get_quote_auth(const TPM2B_PUBLIC &quote_pub,
     return false;
   }
   quoteAuth->assign((char *)(buf + 2), m - 2);
+  return true;
   /*
   // Create the policy for the quote key
   // FIX
@@ -1541,11 +1540,9 @@ bool get_srk_auth(string *srkAuth) {
            __LINE__);
     return false;
   }
-
   srkAuth->assign((char *)(buf + 2), m - 2);
   return true;
 }
-#endif
 
 bool init_seal_environment(int num_pcrs, byte_t *pcrs) {
 
@@ -1726,13 +1723,6 @@ bool tpm_Init(const string &device_name,
 #if 0
     if (!get_endorsement_key(g_tpm, authString, policyString, &g_ek_handle)) {
     printf("%s() error, line %d, get_endorsement_key failed\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-
-  if (!get_endorsement_cert(g_tpm, &g_serialized_endorsement_cert)) {
-    printf("%s() error, line %d, can't get endorsement cert\n",
            __func__,
            __LINE__);
     return false;

@@ -269,16 +269,6 @@ bool credential_test(local_tpm          &tpm,
          (byte_t *)encrypted_secret_out.data(),
          encrypted_secret_out.size());
 
-#ifdef DEBUG2
-  printf("\nStandalone MakeCredential succeeded\n");
-  printf("\ncred_secret size: %d\n", cred_secret.size);
-  print_bytes(cred_secret.size, cred_secret.secret);
-  printf("\n");
-  printf("\ncredBlob size: %d\n", (int)cred_blob.size);
-  print_bytes(cred_blob.size, (byte_t *)cred_blob.credential);
-  printf("\n");
-#endif
-
   if (!Tpm2_ActivateCredential(tpm,
                                quote_handle,
                                ek_handle,
@@ -296,6 +286,13 @@ bool credential_test(local_tpm          &tpm,
   }
 
 #  ifdef DEBUG
+  printf("\nUsing MakeCredential succeeded\n");
+  printf("\ncred_secret size: %d\n", cred_secret.size);
+  print_bytes(cred_secret.size, cred_secret.secret);
+  printf("\n");
+  printf("\ncredBlob size: %d\n", (int)cred_blob.size);
+  print_bytes(cred_blob.size, (byte_t *)cred_blob.credential);
+  printf("\n");
   printf("\nActivateCredential succeeded with internal MakeCredential\n");
   printf("Recovered credential (%d): ", recovered_cred.size);
   print_bytes(recovered_cred.size, recovered_cred.buffer);
