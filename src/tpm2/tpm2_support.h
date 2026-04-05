@@ -206,15 +206,15 @@ bool make_credential_from_certifier(const char *quote_hash_alg,
                                     int        *encrypted_secret_size,
                                     byte_t     *encrypted_secret_buf);
 
-bool construct_activate_request(const string& endorsement_cert,
-                                const string& endorsement_cert_chain,
-                                const key_message& quote_key,
-                                const string& quote_key_name,
-                                const string& quote_hash_alg,
-                                string* serialized_request);
+bool construct_activate_request(const string      &endorsement_cert,
+                                const string      &endorsement_cert_chain,
+                                const key_message &quote_key,
+                                const string      &quote_key_name,
+                                const string      &quote_hash_alg,
+                                string            *serialized_request);
 
-bool process_activate_response(const string& serialized_response,
-                               string* quote_cert);
+bool process_activate_response(const string &serialized_response,
+                               string       *quote_cert);
 
 // ---------------------------------------------------------------
 #endif

@@ -3108,12 +3108,12 @@ bool make_credential_from_certifier(const char *quote_hash_alg,
 
 // ------------------------------------------------------------------------
 
-bool construct_activate_request(const string& endorsement_cert,
-                                const string& endorsement_cert_chain,
-                                const key_message& quote_key,
-                                const string& quote_key_name,
-                                const string& quote_hash_alg,
-                                string* serialized_request) {
+bool construct_activate_request(const string      &endorsement_cert,
+                                const string      &endorsement_cert_chain,
+                                const key_message &quote_key,
+                                const string      &quote_key_name,
+                                const string      &quote_hash_alg,
+                                string            *serialized_request) {
 
   quote_certification_request req;
 
@@ -3135,14 +3135,12 @@ bool construct_activate_request(const string& endorsement_cert,
   return true;
 }
 
-bool process_activate_response(const string& serialized_response,
-                               string* quote_cert) {
+bool process_activate_response(const string &serialized_response,
+                               string       *quote_cert) {
 
   quote_certification_response res;
   if (!res.ParseFromString(serialized_response)) {
-    printf("%s() error, line %d, can't parse response\n",
-           __func__,
-           __LINE__);
+    printf("%s() error, line %d, can't parse response\n", __func__, __LINE__);
     return false;
   }
   if (res.status() != "succeeded") {
@@ -3152,23 +3150,20 @@ bool process_activate_response(const string& serialized_response,
     return false;
   }
 
-#if 0
-  g_tpm_environment_initialized
-  string g_serialized_endorsement_cert;
-  string g_serialized_endorsement_cert_chain;
-  TPM2B_PUBLIC g_public_quote_key;
-  TPM2B_PUBLIC g_public_endorsement_key
-  TPM_HANDLE g_ek_handle = 0;
-  TPM_HANDLE g_srk_handle = 0;
-  TPM_HANDLE g_quote_handle = 0;
-  TPM2B_PUBLIC g_public_quote_key;
-  TPM2B_PUBLIC g_public_endorsement_key;
-  string recovered_cred;
-  string cred_blob;
-  string cred_secret;
-  TPM_HANDLE quote_handle = 0;
-  TPM_HANDLE ek_handle = 0;
-  TPM_ALG_ID alg = 0;
+  if (!g_tpm_environment_initialized) {
+    printf("%s() error, line %d, environment not initialized\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  // FIX:
+  //    Make sure g_quoteAuth and g_endorsementAuth
+  //
+  TPM2B_ID_OBJECT        cred_blob;
+  TPM2B_ENCRYPTED_SECRET cred_secret;
+  TPM2B_DIGEST           recovered_cred;
+  TPM_ALG_ID             alg = 0;
 
   if (res.hash_alg() == Digest_method_sha1) {
     alg = TPM_ALG_SHA1;
@@ -3181,8 +3176,6 @@ bool process_activate_response(const string& serialized_response,
     return false;
   }
 
-  // TPM2B_PUBLIC g_public_endorsement_key;
-
   if (g_public_quote_key.publicArea.nameAlg != alg) {
     printf("%s() error, line %d, quote key hashing algorithm is wrong\n",
            __func__,
@@ -3190,8 +3183,14 @@ bool process_activate_response(const string& serialized_response,
     return false;
   }
 
-  cred_blob.assign((char*)res.cred_blob().data(), res.cred_blob().size());
-  cred_secret.assign((char*)res.cred_secret().data(), res.cred_secret().size());
+  cred_blob.size = res.cred_blob().size();
+  memcpy(cred_blob.credential,
+         (byte_t *)res.cred_blob().data(),
+         cred_blob.size);
+  cred_secret.size = res.encrypted_secret().size();
+  memcpy(cred_secret.secret,
+         (byte_t *)res.encrypted_secret().data(),
+         cred_secret.size);
   if (!Tpm2_ActivateCredential(g_tpm,
                                g_quote_handle,
                                g_ek_handle,
@@ -3206,12 +3205,12 @@ bool process_activate_response(const string& serialized_response,
     return false;
   }
 
-#  ifdef DEBUG
-  printf("\nActivateCredential succeeded with internal MakeCredential\n");
+#ifdef DEBUG
+  printf("\nActivateCredential succeeded in construct_activate_request\n");
   printf("Recovered credential (%d): ", recovered_cred.size);
-  print_bytes(recovered_cred.size, recovered_cred.buffer);
+  print_bytes(recovered_cred.size, (byte_t *)recovered_cred.buffer);
   printf("\n");
-#  endif
+#endif
 
   if (res.encrypting_alg() == Enc_method_aes_256_gcm) {
     printf("%s() error, line %d, encrypting algorithm is unsupported\n",
@@ -3221,17 +3220,19 @@ bool process_activate_response(const string& serialized_response,
   }
 
   // now decrypt it
-  if (!aes_256_gcm_decrypt(res.encrypted_quote_cert().data(),
-                         (int) res.encrypted_quote_cert().size(),
-                         (byte *)recovered_credential.data(),
-                         byte *out,
-                         int  *out_size)) {
+  int    out_size = 256;
+  byte_t out[out_size];
+  if (!aes_256_gcm_decrypt((byte_t *)res.encrypted_quote_cert().data(),
+                           (int)res.encrypted_quote_cert().size(),
+                           (byte *)recovered_cred.buffer,
+                           out,
+                           &out_size)) {
+    printf("%s() error, line %d, can't decrypt cert\n", __func__, __LINE__);
+    return false;
   }
-  quote_cert.assign((char*)out, out_size);
-#endif
+  quote_cert->assign((char *)out, out_size);
 
   return true;
 }
 
 // ------------------------------------------------------------------------
-
