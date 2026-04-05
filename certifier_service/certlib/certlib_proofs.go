@@ -205,7 +205,8 @@ func InitPolicyPool(pool *PolicyPool, original *certprotos.ProvedStatements) boo
 
 	pool.Initialized = false
 
-	fmt.Printf("InitPolicyPool %d proved\n", len(original.Proved))
+	// DEBUG
+	// fmt.Printf("InitPolicyPool %d proved\n", len(original.Proved))
 
 	for i := 0; i < len(original.Proved); i++ {
 		from := original.Proved[i]
@@ -239,9 +240,7 @@ func GetRelevantPlatformKeyPolicy(pool *PolicyPool, evType string,
 	// find the platform key needed from evp and the corresponding policy rule
 	ev_list := evp.FactAssertion
 	if ev_list == nil {
-		/* DEBUG
 		fmt.Printf("ev_list is empty\n")
-		 */
 		return nil
 	}
 	var platSubject *certprotos.EntityMessage = nil
@@ -275,10 +274,11 @@ func GetRelevantPlatformKeyPolicy(pool *PolicyPool, evType string,
 				continue
 			}
 
-			/* DEBUG */
+			/* DEBUG
 			fmt.Printf("%d: Clause\n", i)
 			PrintVseClause(&cl)
 			fmt.Printf("\n")
+			 */
 
 			if cl.GetVerb() != "says" || cl.Clause == nil {
 				continue
@@ -1104,7 +1104,7 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 			}
 
 			// DEBUG
-			fmt.Printf("Calling ConstructTPMSpeaksForStatement\n")
+			// fmt.Printf("Calling ConstructTPMSpeaksForStatement\n")
 
 			cl :=  ConstructTPMSpeaksForStatement(quoteKey, ud.EnclaveKey, m, r)
                         if cl == nil {
@@ -3022,7 +3022,7 @@ func ConstructProofFromTpmPlatformEvidence(publicPolicyKey *certprotos.KeyMessag
 	}
 
 	// DEBUG
-	fmt.Printf("ConstructProofFromTpmPlatformEvidence: %d already proved\n", len(alreadyProved.Proved))
+	// fmt.Printf("ConstructProofFromTpmPlatformEvidence: %d already proved\n", len(alreadyProved.Proved))
 
 	proof := &certprotos.Proof{}
 	r1 := int32(1)

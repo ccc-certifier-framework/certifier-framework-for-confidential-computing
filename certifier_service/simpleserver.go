@@ -148,8 +148,8 @@ func initCertifierService(useStore bool) bool {
 	} else {
 
 		// Debug
-		fmt.Printf("Initializing CertifierService from file: %s, cert file: %s\n",
-			*policyKeyFile, *policyCertFile)
+		//fmt.Printf("Initializing CertifierService from file: %s, cert file: %s\n",
+		//	*policyKeyFile, *policyCertFile)
 		serializedKey, err := os.ReadFile(*policyKeyFile)
 		if err != nil {
 			fmt.Println("initCertifier: can't read key file %s, ", *policyCertFile, err)
@@ -161,7 +161,8 @@ func initCertifierService(useStore bool) bool {
 			fmt.Printf("initCertifier: Can't unmarshal serialized policy key\n")
 			return false
 		}
-		fmt.Printf("Read policy key file\n")
+		// Debug
+		//fmt.Printf("Read policy key file\n")
 	}
 
 	serializedPolicyCert, err := os.ReadFile(*policyCertFile)
@@ -175,7 +176,8 @@ func initCertifierService(useStore bool) bool {
 		fmt.Println("initCertifier: Can't Parse policy cert, ", err)
 		return false
 	}
-	fmt.Printf("Parsed certificate\n")
+	// Debug
+	//fmt.Printf("Parsed certificate\n")
 
 	publicPolicyKey = certlib.InternalPublicFromPrivateKey(privatePolicyKey)
 	if publicPolicyKey == nil {
@@ -191,46 +193,52 @@ func initCertifierService(useStore bool) bool {
 	// Read policy
 
 	// Debug
-	fmt.Printf("Getting Policy file: %s\n", *policyFile)
+	fmt.Printf("\nGetting Policy file: %s\n", *policyFile)
 
 	serializedPolicy, err := os.ReadFile(*policyFile)
 	if err != nil {
 		fmt.Printf("initCertifier: Can't read policy\n")
 		return false
 	}
-	fmt.Printf("Read Policy\n")
+	// DEBUG
+	// fmt.Printf("Read Policy\n")
 
 	err = proto.Unmarshal(serializedPolicy, signedPolicy)
 	if err != nil {
 		fmt.Printf("initCertifier: Can't unmarshal signed policy\n")
 		return false
 	}
-	fmt.Printf("Deserialized Policy\n")
+	// DEBUG
+	//fmt.Printf("Deserialized Policy\n")
 
 	var originalPolicy *certprotos.ProvedStatements = &certprotos.ProvedStatements{}
 	if !certlib.InitAxiom(*publicPolicyKey, originalPolicy) {
 		fmt.Printf("initCertifier: Can't InitAxiom\n")
 		return false
 	}
-	fmt.Printf("InitAxiom succeeded\n")
+	// DEBUG
+	//fmt.Printf("InitAxiom succeeded\n")
 
 	if !certlib.InitPolicy(publicPolicyKey, signedPolicy, originalPolicy) {
 		fmt.Printf("initCertifier: Couldn't initialize policy\n")
 		return false
 	}
-	fmt.Printf("InitPolicy succeeded\n")
+	// DEBUG
+	// fmt.Printf("InitPolicy succeeded\n")
 
 	if !certlib.InitPolicyPool(&policyPool, originalPolicy) {
 		fmt.Printf("initCertifier: Can't init policy pool\n")
 		return false
 	}
-	fmt.Printf("InitPolicyPool succeeded\n")
+	// DEBUG
+	//fmt.Printf("InitPolicyPool succeeded\n")
 
 	if !certlib.InitSimulatedEnclave() {
 		fmt.Printf("initCertifier: Can't init simulated enclave\n")
 		return false
 	}
-	fmt.Printf("InitSimulatedEnclave succeeded, all initialized\n")
+	// Debug
+	// fmt.Printf("InitSimulatedEnclave succeeded, all initialized\n")
 
 	return true
 }
