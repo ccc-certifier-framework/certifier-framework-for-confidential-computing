@@ -375,7 +375,6 @@ bool credential_test(local_tpm          &tpm,
 #  endif
 #endif
 
-
   Tpm2_FlushContext(tpm, ek_handle);
   Tpm2_FlushContext(tpm, endorsement_session_handle);
   return true;

@@ -1429,7 +1429,8 @@ bool tpm_close() {
   return true;
 }
 
-bool init_endorsement_environment() {
+#if 0
+bool init_endorsement_auth() {
 
   string policyString;
   string authString;
@@ -1509,6 +1510,99 @@ bool init_endorsement_environment() {
 
   return true;
 }
+
+bool init_quote_auth(const TPM2B_PUBLIC &quote_pub,
+                   string             *quoteAuth,
+                   string             *endorsementAuth) {
+  string     policyString;
+  string     authString;
+  string     emptyAuth;
+  int        size_buf = 128;
+  byte_t     buf[size_buf];
+
+  int m = CreatePasswordAuthArea(emptyAuth, size_buf, buf);
+  if (m < 0) {
+    printf("%s() error, line %d, CreatePasswordAuthArea failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  extern byte_t g_policy_rsa_2048[32];
+  authString.assign((char *)(buf + 2), m - 2);
+  policyString.assign((char *)g_policy_rsa_2048, sizeof(g_policy_rsa_2048));
+
+  if (!get_endorsement_key(tpm, authString, policyString, &ek_handle)) {
+    printf("%s() error, line %d, get_endorsement_key failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+#ifdef DEBUG1
+  printf("\nGot endorsement key %08x\n", ek_handle);
+#endif
+
+// Activate
+  string nonce;
+  string policyDigest;
+  policyDigest.assign((char *)quoting_pub_out.publicArea.authPolicy.buffer,
+                      quoting_pub_out.publicArea.authPolicy.size);
+
+  byte_t auth_buf[256];
+  int    n = 0;
+
+  string quoteAuth = authString;
+
+#  ifdef DEBUG1
+  print_bytes(quoteAuth.size(), (byte_t *)quoteAuth.data());
+  printf("\n");
+  printf("Nonce (%d): ", (int)nonce.size());
+  print_bytes(nonce.size(), (byte_t *)nonce.data());
+  printf("\n");
+#  endif
+
+  // endorsement auth session
+  TPM_HANDLE endorsement_session_handle = 0;
+  string     endorsementAuth;
+#  ifdef DEBUG1
+  printf("\nCalling create_endorsement_session\n");
+#  endif
+  nonce.clear();
+  if (!create_endorsement_session(tpm,
+                                  authString,
+                                  &nonce,
+                                  &endorsement_session_handle)) {
+    printf("%s() error, line %d, create_endorsement _session failed\n",
+           __func__,
+           __LINE__);
+    Tpm2_FlushContext(tpm, ek_handle);
+    Tpm2_FlushContext(tpm, quote_handle);
+    return false;
+  }
+
+  // endorsement auth
+  n = 0;
+  byte_t *cur = auth_buf;
+  change_endian32((uint32_t *)&endorsement_session_handle, (uint32_t *)cur);
+  cur += sizeof(uint32_t);
+  n += sizeof(uint32_t);
+  n += 1;
+  uint16_t t = nonce.size();
+  change_endian16(&t, (uint16_t *)cur);
+  cur += sizeof(uint16_t);
+  n += sizeof(uint16_t);
+  memcpy(cur, (byte_t *)nonce.data(), t);
+  cur += t;
+  n += t;
+  *cur = 1;
+  cur += 1;
+  *((uint16_t *)cur) = 0;
+  cur += sizeof(uint16_t);
+  n += sizeof(uint16_t);
+  endorsementAuth.assign((char *)auth_buf, n);
+  return false;
+}
+#endif
 
 bool init_seal_environment(int num_pcrs, byte_t *pcrs) {
 
