@@ -3148,9 +3148,6 @@ bool process_activate_response(const string &serialized_response,
     return false;
   }
 
-  // FIX:
-  //    Make sure g_quoteAuth and g_endorsementAuth
-  //
   TPM2B_ID_OBJECT        cred_blob;
   TPM2B_ENCRYPTED_SECRET cred_secret;
   TPM2B_DIGEST           recovered_cred;
@@ -3174,6 +3171,29 @@ bool process_activate_response(const string &serialized_response,
     return false;
   }
 
+  string empty;
+  string quoteAuth;
+  string endorsementAuth;
+  string nonce;
+  TPM_HANDLE endorsement_session_handle = 0;
+
+  if (!get_password_auth(empty, &quoteAuth)) {
+    printf("%s() error, line %d, can't get password auth\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if (!get_endorsement_auth_with_session(g_tpm,
+                                       quoteAuth,
+                                       nonce,
+                                       &endorsement_session_handle,
+                                       &endorsementAuth)) {
+    printf("%s() error, line %d, can't get endorsement auth\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
   cred_blob.size = res.cred_blob().size();
   memcpy(cred_blob.credential,
          (byte_t *)res.cred_blob().data(),
@@ -3185,16 +3205,18 @@ bool process_activate_response(const string &serialized_response,
   if (!Tpm2_ActivateCredential(g_tpm,
                                g_quote_handle,
                                g_ek_handle,
-                               g_quoteAuth,
-                               g_endorsementAuth,
+                               quoteAuth,
+                               endorsementAuth,
                                cred_blob,
                                cred_secret,
                                &recovered_cred)) {
     printf("%s() error, line %d, Tpm2_ActivateCredential failed\n",
            __func__,
            __LINE__);
+    Tpm2_FlushContext(g_tpm, endorsement_session_handle);
     return false;
   }
+  Tpm2_FlushContext(g_tpm, endorsement_session_handle);
 
 #ifdef DEBUG
   printf("\nActivateCredential succeeded in construct_activate_request\n");
