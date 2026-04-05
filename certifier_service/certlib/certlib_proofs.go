@@ -840,7 +840,7 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 	}
 
 	// Debug
-	fmt.Printf("\nInitProvedStatements %d assertions\n", len(evidenceList))
+	//fmt.Printf("\nInitProvedStatements %d assertions\n", len(evidenceList))
 
 	for i := 0; i < len(evidenceList); i++ {
 		ev := evidenceList[i]
@@ -3539,7 +3539,7 @@ func ValidateTpmEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.Ev
 	//	Measurement[010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708]
 
 	// Debug
-	fmt.Printf("\nValidateTpmEvidence, after InitProved:\n")
+	fmt.Printf("ValidateTpmEvidence, after InitProved:\n")
 	PrintProvedStatements(alreadyProved)
 
 	// ConstructProofFromTpmPlatformEvidence()

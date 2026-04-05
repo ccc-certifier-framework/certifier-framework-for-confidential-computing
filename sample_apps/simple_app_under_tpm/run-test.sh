@@ -107,7 +107,7 @@ function cleanup_stale_procs() {
   # Find and kill app processes that app still running.
   echo " "
   set +e
-  app_pid=$(ps -ef | grep -E "sev_example_app" | grep -v -w -E 'grep|vi|vim' | awk '{print $2}')
+  app_pid=$(ps -ef | grep -E "tpm_example_app" | grep -v -w -E 'grep|vi|vim' | awk '{print $2}')
   set -e
   
   if [[ $app_pid != "" ]] ; then
@@ -126,7 +126,6 @@ function do-run() {
   echo " "
   echo "do-run"
 
-  cleanup_stale_procs
   echo " "
   echo " cleaned old  procs"
 
@@ -157,6 +156,7 @@ function do-run() {
     sleep 5
   popd
 
+  pushd $EXAMPLE_DIR
     echo " "
     echo "initializing app1"
     $EXAMPLE_DIR/tpm_example_app.exe --data_dir=./app1_data/  \
@@ -194,33 +194,7 @@ function do-run() {
         --seal_hierarchy_file_name="seal_hierarchy.bin" \
         --quote_hierarchy_file_name="quote_hierarchy.bin" \
         --policy_store_file=$POLICY_STORE_NAME --print_all=true
-
-    sleep 5
-
-    echo " "
-    echo "running app-as-server"
-    $EXAMPLE_DIR/tpm_example_app.exe \
-      --data_dir=./app2_data/ --operation="run-app-as-server" \
-      --domain_name=$DOMAIN_NAME \
-      --tpm_device="/dev/tpmrm1" \
-      --seal_hierarchy_file_name="seal_hierarchy.bin" \
-      --quote_hierarchy_file_name="quote_hierarchy.bin" \
-      --policy_store_file=$POLICY_STORE_NAME  --print_all=true &
-
-    sleep 5
-
-    echo " "
-    echo "running app-as-client"
-    $EXAMPLE_DIR/tpm_example_app.exe \
-      --data_dir=./app1_data/ --operation="run-app-as-client"   \
-      --domain_name=$DOMAIN_NAME \
-        --tpm_device="/dev/tpmrm1" \
-        --seal_hierarchy_file_name="seal_hierarchy.bin" \
-        --quote_hierarchy_file_name="quote_hierarchy.bin" \
-      --policy_store_file=$POLICY_STORE_NAME --print_all=true
   popd
-
-  cleanup_stale_procs
 
   echo "do-run done"
 }

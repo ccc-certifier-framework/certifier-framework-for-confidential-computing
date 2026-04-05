@@ -1348,6 +1348,51 @@ byte_t       g_pcrs[32];
 TPM2B_PUBLIC g_public_quote_key;
 TPM2B_PUBLIC g_public_endorsement_key;
 
+#ifdef DEBUG
+void print_globals() {
+  if (!g_tpm_initialized) {
+    printf("\ntpm not initialized\n");
+    return;
+  }
+  printf("\ntpm initialized\n");
+  if (!g_tpm_environment_initialized) {
+    printf("tpm environment not initialized\n");
+    return;
+  }
+  printf("tpm environment initialized\n");
+  if (g_seal_thing.size() > 0) {
+    printf("\nseal thing: ");
+    print_bytes(g_seal_thing.size(), (byte_t *)g_seal_thing.data());
+    printf("\n");
+  }
+  printf("\n%d pcrs: ", g_num_pcrs);
+  for (int i = 0; i < g_num_pcrs; i++) {
+    printf("%d ", g_pcrs[i]);
+  }
+  printf("\n");
+
+  if (g_serialized_quote_cert.size() > 0) {
+    printf("\nquote cert:\n");
+    print_bytes(g_serialized_quote_cert.size(),
+                (byte_t *)g_serialized_quote_cert.data());
+    printf("\n");
+  }
+  if (g_serialized_endorsement_cert.size() > 0) {
+    printf("\nendorsement cert:\n");
+    print_bytes(g_serialized_endorsement_cert.size(),
+                (byte_t *)g_serialized_endorsement_cert.data());
+    printf("\n");
+  }
+  if (g_serialized_endorsement_cert_chain.size() > 0) {
+    printf("\nendorsement cert chain :\n");
+    print_bytes(g_serialized_endorsement_cert_chain.size(),
+                (byte_t *)g_serialized_endorsement_cert_chain.data());
+    printf("\n");
+  }
+  printf("\n");
+}
+#endif
+
 bool close_tpm() {
   if (g_tpm_initialized) {
     g_tpm.close_tpm();
@@ -1692,14 +1737,27 @@ bool tpm_Init(const string &device_name,
     }
   }
 
-#if 0
-    if (!get_endorsement_key(g_tpm, authString, policyString, &g_ek_handle)) {
+  string empty;
+  string authString;
+  if (!get_password_auth(empty, &authString)) {
+    printf("%s() error, line %d, can't get password auth\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  string policyString;
+  if (!get_endorsement_policy(&policyString)) {
+    printf("%s() error, line %d, get_endorsement_policy failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if (!get_endorsement_key(g_tpm, authString, policyString, &g_ek_handle)) {
     printf("%s() error, line %d, get_endorsement_key failed\n",
            __func__,
            __LINE__);
     return false;
   }
-#endif
 
   // init seal envrionment
   if (!init_seal_environment(num_pcrs, pcrs)) {
@@ -1729,6 +1787,11 @@ bool tpm_Init(const string &device_name,
   g_tpm_environment_initialized = true;
 #ifdef DEBUG2
   printf("\ntpm_init succeeded\n\n");
+#endif
+#ifdef DEBUG
+  printf("\n\n");
+  print_globals();
+  printf("\n\n");
 #endif
   return true;
 }
@@ -3257,8 +3320,8 @@ bool process_activate_response(const string &serialized_response,
   }
 
   // now decrypt it
-  int    out_size = 256;
-  byte_t out[out_size];
+  int  out_size = 256;
+  byte out[256];
   if (!aes_256_gcm_decrypt((byte_t *)res.encrypted_quote_cert().data(),
                            (int)res.encrypted_quote_cert().size(),
                            (byte *)recovered_cred.buffer,

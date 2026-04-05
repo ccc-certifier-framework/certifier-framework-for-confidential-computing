@@ -24,7 +24,7 @@ ARG_SIZE="$#"
 if [[ $ARG_SIZE != 1 ]] ; then
   echo "Wrong number of arguments"
   echo "Must call, as follows:"
-  echo "  ./run-client-app.sh fresh domain-name"
+  echo "  ./run-client-app.sh domain-name"
   exit
 fi
 DOMAIN_NAME=$1
@@ -37,15 +37,11 @@ echo "Policy key file name: $POLICY_KEY_FILE_NAME"
 echo "Policy cert file name: $POLICY_CERT_FILE_NAME"
 echo "Example dir: : $EXAMPLE_DIR"
 echo "Domain name: $DOMAIN_NAME"
-echo "Policy store: $DOMAIN_NAME"
+echo "Policy store file name: $POLICY_STORE_FILE_NAME"
 
 function do-run() {
   echo " "
   echo "do-run"
-
-  cleanup_stale_procs
-  echo " "
-  echo " cleaned old  procs"
 
   export LD_LIBRARY_PATH=/usr/local/lib
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/teelib
@@ -59,18 +55,15 @@ function do-run() {
   sleep 5
 
   pushd $EXAMPLE_DIR
-    echo " "
     echo "running app-as-client"
     $EXAMPLE_DIR/tpm_example_app.exe \
       --data_dir=./app1_data/ --operation="run-app-as-client"   \
       --domain_name=$DOMAIN_NAME \
-        --tpm_device="/dev/tpmrm1" \
-        --seal_hierarchy_file_name="seal_hierarchy.bin" \
-        --quote_hierarchy_file_name="quote_hierarchy.bin" \
-      --policy_store_file=$POLICY_STORE_NAME --print_all=true
+      --tpm_device="/dev/tpmrm1" \
+      --seal_hierarchy_file_name="seal_hierarchy.bin" \
+      --quote_hierarchy_file_name="quote_hierarchy.bin" \
+      --policy_store_file=$POLICY_STORE_FILE_NAME --print_all=true
   popd
-
-  cleanup_stale_procs
 
   echo "do-run done"
 }

@@ -49,16 +49,16 @@ EXAMPLE_DIR= $(CERTIFIER_ROOT)/sample_apps//simple_app_under_tpm
 CFLAGS := $(CFLAGS)
 
 ifndef NEWPROTOBUF
-CFLAGS += $(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -D TPM-Wno-deprecated-declarations
+CFLAGS += $(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
 else
-CFLAGS += $(INCLUDE) -O3 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -D TPM -Wno-deprecated-declarations
+CFLAGS += $(INCLUDE) -O3 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
 endif
 
 CFLAGS += -DTPM_SIMPLE_APP
 CFLAGS += -DTPM_CERTIFIER
 CFLAGS += -DFIRST_PASS_ON
 CFLAGS += -fPIE
-CFLAGS += -D_GLIBCXX_USE_CXX17_ABI=1
+#CFLAGS += -D_GLIBCXX_USE_CXX17_ABI=1
 
 ifdef CF_NEW_API
 CFLAGS += -DNEW_API

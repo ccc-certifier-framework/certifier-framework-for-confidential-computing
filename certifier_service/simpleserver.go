@@ -26,7 +26,7 @@ import (
 	"net"
 	"os"
 	"strconv"
-	"time"
+	// "time"
 
 	certlib "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/certlib"
 	certprotos "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/certprotos"
@@ -79,7 +79,7 @@ var publicPolicyKey *certprotos.KeyMessage = nil
 var serializedPolicyCert []byte
 var policyCert *x509.Certificate = nil
 
-var sn uint64 = uint64(time.Now().UnixNano())
+var sn uint64 = 10
 var duration float64 = 365.0 * 86400
 
 var logging bool = false
@@ -394,9 +394,9 @@ func ValidateRequestAndObtainToken(remoteIP string, pubKey *certprotos.KeyMessag
 		org := "CertifierUsers"
 
 		// Debug
-		fmt.Printf("Enclave key is:\n")
+		fmt.Printf("\nEnclave key is:\n")
 		certlib.PrintKey(toProve.Subject.Key)
-		fmt.Printf("\norg: %s, appOrgName: %s\n", org, appOrgName)
+		fmt.Printf("\norg: %s\nappOrgName: %s\n", org, appOrgName)
 
 		cert := certlib.ProduceAdmissionCert(remoteIP, privKey, policyCert,
 			toProve.Subject.Key, org, appOrgName, sn, duration)
@@ -406,6 +406,7 @@ func ValidateRequestAndObtainToken(remoteIP string, pubKey *certprotos.KeyMessag
 		}
 
 		// Debug
+		fmt.Printf("\n\nPrinting cert %d\n", sn);
 		certlib.PrintX509Cert(cert)
 		artifact = cert.Raw
 		if artifact == nil {
@@ -418,7 +419,7 @@ func ValidateRequestAndObtainToken(remoteIP string, pubKey *certprotos.KeyMessag
 	if artifact == nil {
 		fmt.Printf("ValidateRequestAndObtainToken: why is the artifact nil?\n")
 	}
-	fmt.Printf("Artifact:\n")
+	fmt.Printf("\nArtifact:\n")
 	certlib.PrintBytes(artifact)
 	fmt.Printf("\n")
 
