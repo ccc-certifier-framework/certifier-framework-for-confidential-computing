@@ -97,6 +97,12 @@ bool get_quote_policy(local_tpm          &tpm,
                       TPML_PCR_SELECTION &pcrSelect,
                       string             *nonce,
                       string             *policyString);
+bool get_endorsement_policy(string *policyString);
+bool get_endorsement_policy(local_tpm          &tpm,
+                            TPML_PCR_SELECTION &pcrSelect,
+                            string             &authString,
+                            string             *nonce,
+                            string             *policyString);
 
 bool create_pcr_policy(local_tpm    &tpm,
                        int           num_pcrs,

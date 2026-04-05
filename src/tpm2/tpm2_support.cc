@@ -1334,8 +1334,6 @@ bool g_tpm_environment_initialized = false;
 TPM_HANDLE g_ek_handle = 0;
 TPM_HANDLE g_srk_handle = 0;
 TPM_HANDLE g_quote_handle = 0;
-string     g_quoteAuth;
-string     g_endorsementAuth;
 
 int          g_seal_key_type;
 string       g_seal_key;
@@ -1451,6 +1449,32 @@ bool get_endorsement_auth_with_session(local_tpm  &tpm,
   print_pcrs(tpm, num_pcrs, pcrs);
   printf("\n");
 #endif
+  return true;
+}
+
+bool get_endorsement_policy(string *policyString) {
+  policyString->assign((char *)g_policy_rsa_2048, sizeof(g_policy_rsa_2048));
+  return true;
+}
+
+bool get_endorsement_policy(local_tpm          &tpm,
+                            TPML_PCR_SELECTION &pcrSelect,
+                            string             &authString,
+                            string             *nonce,
+                            string             *policyString) {
+  TPM_HANDLE session_handle = 0;
+  if (!create_endorsement_session(tpm, authString, nonce, &session_handle)) {
+    printf("%s() error, line %d, ReadPublic failed\n", __func__, __LINE__);
+    return false;
+  }
+  TPM2B_DIGEST policy_digest;
+  if (!Tpm2_PolicyGetDigest(tpm, session_handle, &policy_digest)) {
+    printf("%s() error, line %d, PolicyGetDigest failed\n", __func__, __LINE__);
+    Tpm2_FlushContext(tpm, session_handle);
+    return false;
+  }
+  policyString->assign((char *)policy_digest.buffer, policy_digest.size);
+  Tpm2_FlushContext(tpm, session_handle);
   return true;
 }
 
@@ -3171,10 +3195,10 @@ bool process_activate_response(const string &serialized_response,
     return false;
   }
 
-  string empty;
-  string quoteAuth;
-  string endorsementAuth;
-  string nonce;
+  string     empty;
+  string     quoteAuth;
+  string     endorsementAuth;
+  string     nonce;
   TPM_HANDLE endorsement_session_handle = 0;
 
   if (!get_password_auth(empty, &quoteAuth)) {
@@ -3184,10 +3208,10 @@ bool process_activate_response(const string &serialized_response,
     return false;
   }
   if (!get_endorsement_auth_with_session(g_tpm,
-                                       quoteAuth,
-                                       nonce,
-                                       &endorsement_session_handle,
-                                       &endorsementAuth)) {
+                                         quoteAuth,
+                                         nonce,
+                                         &endorsement_session_handle,
+                                         &endorsementAuth)) {
     printf("%s() error, line %d, can't get endorsement auth\n",
            __func__,
            __LINE__);

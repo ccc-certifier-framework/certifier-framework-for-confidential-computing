@@ -96,10 +96,13 @@ bool credential_test(local_tpm          &tpm,
     return false;
   }
 
-  // replace with get_endorsement_policy
-  string        policyString;
-  extern byte_t g_policy_rsa_2048[32];
-  policyString.assign((char *)g_policy_rsa_2048, sizeof(g_policy_rsa_2048));
+  string policyString;
+  if (!get_endorsement_policy(&policyString)) {
+    printf("%s() error, line %d, can't get endorsement policy\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
 
   if (!get_endorsement_key(tpm, authString, policyString, &ek_handle)) {
     printf("%s() error, line %d, get_endorsement_key failed\n",
@@ -315,7 +318,12 @@ bool endorsement_test(local_tpm &tpm, string authString) {
 
   // get endorsement key policy
   string policyString;
-  policyString.assign((char *)g_policy_rsa_2048, sizeof(g_policy_rsa_2048));
+  if (!get_endorsement_policy(&policyString)) {
+    printf("%s() error, line %d, can't get endorsement policy\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
   if (!get_endorsement_key(tpm, authString, policyString, &ek_handle)) {
     printf("%s() error, line %d, get_endorsement_key failed\n",
            __func__,
