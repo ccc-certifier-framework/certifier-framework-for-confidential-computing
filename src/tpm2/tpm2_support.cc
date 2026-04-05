@@ -235,19 +235,14 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
 
   string sensitiveData;
   string outsideInfo;
-  string emptyString;
+  string empty;
 
-  int    size_buf = 128;
-  byte_t buf[size_buf];
-
-  int m = CreatePasswordAuthArea(emptyString, size_buf, buf);
-  if (m < 0) {
-    printf("%s() error, line %d, CreatePasswordAuthArea failed\n",
+  if (!get_password_auth(empty, &srkAuth)) {
+    printf("%s() error, line %d, can't get password auth\n",
            __func__,
            __LINE__);
     return false;
   }
-  srkAuth.assign((char *)(buf + 2), m - 2);
 
   // Creating a new SRK
   if (!Tpm2_CreatePrimary(tpm,
@@ -255,7 +250,7 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
                           srkAuth,
                           sensitiveData,
                           outsideInfo,
-                          emptyString,
+                          empty,
                           pcrSelect,
                           TPM_ALG_RSA,
                           TPM_ALG_SHA256,
@@ -422,19 +417,14 @@ bool recover_sealing_secret(local_tpm    &tpm,
     add_pcr_selection(pcrs[i], TPM_ALG_SHA256, &pcrSelect);
   }
 
-  int    size_buf = 128;
-  byte_t buf[size_buf];
-
-  int m = CreatePasswordAuthArea(emptyAuth, size_buf, buf);
-  if (m < 0) {
-    printf("%s() error, line %d, CreatePasswordAuthArea failed\n",
+  string empty;
+  if (!get_password_auth(empty, &srkAuth)) {
+    printf("%s() error, line %d, can't get password auth\n",
            __func__,
            __LINE__);
     return false;
   }
-
-  srkAuth.assign((char *)(buf + 2), m - 2);
-  sealAuth.assign((char *)(buf + 2), m - 2);
+  sealAuth = srkAuth;
 
   TPMA_OBJECT primary_flags;
   primary_flags.fixedTPM = 1;
@@ -982,12 +972,12 @@ bool create_quote_hierarchy(local_tpm    &tpm,
                             byte_t       *pcrs,
                             const string &file_name) {
 
-  TPM_HANDLE srk_handle;
-
-  TPM2B_PUBLIC       pub_out;
   TPML_PCR_SELECTION pcrSelect;
   memset((void *)&pcrSelect, 0, sizeof(TPML_PCR_SELECTION));
-  string policyString;
+
+  TPM_HANDLE   srk_handle;
+  TPM2B_PUBLIC pub_out;
+  string       policyString;
 
   if (num_pcrs < 1) {
     printf("%s() error, line %d: No pcrs\n", __func__, __LINE__);
@@ -1010,19 +1000,14 @@ bool create_quote_hierarchy(local_tpm    &tpm,
   string srkAuth;
   string sensitiveData;
   string outsideInfo;
-  string emptyAuth;
+  string empty;
 
-  int    size_buf = 128;
-  byte_t buf[size_buf];
-
-  int m = CreatePasswordAuthArea(emptyAuth, size_buf, buf);
-  if (m < 0) {
-    printf("%s() error, line %d, CreatePasswordAuthArea failed\n",
+  if (!get_password_auth(empty, &srkAuth)) {
+    printf("%s() error, line %d, can't get password auth\n",
            __func__,
            __LINE__);
     return false;
   }
-  srkAuth.assign((char *)(buf + 2), m - 2);
 
   // Storage root key
   if (!Tpm2_CreatePrimary(tpm,
@@ -1087,23 +1072,13 @@ bool create_quote_hierarchy(local_tpm    &tpm,
   printf("\n");
 #endif
 
-  // replace with get_quote_policy
-  string       nonce;
-  TPM_HANDLE   session_handle = 0;
-  TPM2B_DIGEST policy_digest;
-  if (!create_quote_session(tpm, pcrSelect, &nonce, &session_handle)) {
-    printf("%s() error, line %d, create_quote_session failed\n",
+  string nonce;
+  if (!get_quote_policy(tpm, pcrSelect, &nonce, &policyString)) {
+    printf("%s() error, line %d, create_quote_policy failed\n",
            __func__,
            __LINE__);
     return false;
   }
-  if (!Tpm2_PolicyGetDigest(tpm, session_handle, &policy_digest)) {
-    printf("%s() error, line %d, PolicyGetDigest failed\n", __func__, __LINE__);
-    Tpm2_FlushContext(tpm, session_handle);
-    return false;
-  }
-  Tpm2_FlushContext(tpm, session_handle);
-  policyString.assign((char *)policy_digest.buffer, policy_digest.size);
 
   TPM2B_CREATION_DATA creation_out;
   TPMT_TK_CREATION    creation_ticket;
@@ -1424,14 +1399,14 @@ bool tpm_close() {
   return true;
 }
 
-bool get_endorsement_auth_with_session(local_tpm &tpm,
-		                       string& authString,
-				       string nonce,
-				       TPM_HANDLE* endorsement_session_handle,
-				       string* auth) {
+bool get_endorsement_auth_with_session(local_tpm  &tpm,
+                                       string     &authString,
+                                       string      nonce,
+                                       TPM_HANDLE *endorsement_session_handle,
+                                       string     *auth) {
 
   if (!create_endorsement_session(tpm,
-                                  authString,  //srkAuth
+                                  authString,  // srkAuth
                                   &nonce,
                                   endorsement_session_handle)) {
     printf("%s() error, line %d, create_endorsement _session failed\n",
@@ -1441,8 +1416,8 @@ bool get_endorsement_auth_with_session(local_tpm &tpm,
   }
 
   // endorsement auth
-  byte_t auth_buf[256];
-  int n = 0;
+  byte_t  auth_buf[256];
+  int     n = 0;
   byte_t *cur = auth_buf;
   change_endian32((uint32_t *)endorsement_session_handle, (uint32_t *)cur);
   cur += sizeof(uint32_t);
@@ -1479,27 +1454,14 @@ bool get_endorsement_auth_with_session(local_tpm &tpm,
   return true;
 }
 
-bool get_quote_auth(string *quoteAuth) {
-  string     emptyAuth;
-  int        size_buf = 128;
-  byte_t     buf[size_buf];
+bool get_quote_policy(local_tpm          &tpm,
+                      TPML_PCR_SELECTION &pcrSelect,
+                      string             *nonce,
+                      string             *policyString) {
 
-  int m = CreatePasswordAuthArea(emptyAuth, size_buf, buf);
-  if (m < 0) {
-    printf("%s() error, line %d, CreatePasswordAuthArea failed\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-  quoteAuth->assign((char *)(buf + 2), m - 2);
-  return true;
-  /*
-  // Create the policy for the quote key
-  // FIX
   TPM_HANDLE   session_handle = 0;
   TPM2B_DIGEST policy_digest;
-  string       nonce;
-  if (!create_quote_session(tpm, pcrSelect, &nonce, &session_handle)) {
+  if (!create_quote_session(tpm, pcrSelect, nonce, &session_handle)) {
     printf("%s() error, line %d, create_quote_session failed\n",
            __func__,
            __LINE__);
@@ -1511,16 +1473,15 @@ bool get_quote_auth(string *quoteAuth) {
     return false;
   }
   Tpm2_FlushContext(tpm, session_handle);
-  policyString.assign((char *)policy_digest.buffer, policy_digest.size);
-  */
+  policyString->assign((char *)policy_digest.buffer, policy_digest.size);
   return true;
 }
 
-bool get_password_auth(string& password, string *auth) {
-  int        size_buf = 128;
-  byte_t     buf[size_buf];
+bool get_password_auth(string &password, string *auth) {
+  int    size_buf = 128;
+  byte_t buf[size_buf];
 
-  int m = CreatePasswordAuthArea((string&)password, size_buf, buf);
+  int m = CreatePasswordAuthArea((string &)password, size_buf, buf);
   if (m < 0) {
     printf("%s() error, line %d, CreatePasswordAuthArea failed\n",
            __func__,

@@ -87,12 +87,16 @@ bool init_quote_cert_from_file(const string &quote_cert_file_name);
 bool init_tpm(const string &device_name);
 bool close_tpm();
 
-bool get_password_auth(string& password, string *auth);
-bool get_endorsement_auth_with_session(local_tpm &tpm,
-                                       string& authString,
-                                       string nonce,
-                                       TPM_HANDLE* endorsement_session_handle,
-                                       string* auth);
+bool get_password_auth(string &password, string *auth);
+bool get_endorsement_auth_with_session(local_tpm  &tpm,
+                                       string     &authString,
+                                       string      nonce,
+                                       TPM_HANDLE *endorsement_session_handle,
+                                       string     *auth);
+bool get_quote_policy(local_tpm          &tpm,
+                      TPML_PCR_SELECTION &pcrSelect,
+                      string             *nonce,
+                      string             *policyString);
 
 bool create_pcr_policy(local_tpm    &tpm,
                        int           num_pcrs,

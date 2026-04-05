@@ -97,7 +97,7 @@ bool credential_test(local_tpm          &tpm,
   }
 
   // replace with get_endorsement_policy
-  string     policyString;
+  string        policyString;
   extern byte_t g_policy_rsa_2048[32];
   policyString.assign((char *)g_policy_rsa_2048, sizeof(g_policy_rsa_2048));
 
@@ -181,9 +181,7 @@ bool credential_test(local_tpm          &tpm,
   string hash_name;
   switch (quoting_pub_out.publicArea.nameAlg) {
     default:
-      printf("%s() error, line %d, unknown algorithm\n",
-             __func__,
-             __LINE__);
+      printf("%s() error, line %d, unknown algorithm\n", __func__, __LINE__);
       return false;
     case TPM_ALG_SHA1:
       hash_name = Digest_method_sha1;
@@ -218,14 +216,14 @@ bool credential_test(local_tpm          &tpm,
          encrypted_secret_out.size());
 
   // endorsement auth session
-  string nonce;
+  string     nonce;
   TPM_HANDLE endorsement_session_handle = 0;
-  string endorsementAuth;
+  string     endorsementAuth;
   if (!get_endorsement_auth_with_session(tpm,
-                                       authString,
-                                       nonce,
-                                       &endorsement_session_handle,
-                                       &endorsementAuth)) {
+                                         authString,
+                                         nonce,
+                                         &endorsement_session_handle,
+                                         &endorsementAuth)) {
     printf("%s() error, line %d, get_endorsement_auth_with_session failed\n",
            __func__,
            __LINE__);
@@ -249,7 +247,7 @@ bool credential_test(local_tpm          &tpm,
     return false;
   }
 
-#  ifdef DEBUG
+#ifdef DEBUG
   printf("\nSucceeded using MakeCredential succeeded\n");
   printf("Recovered credential (%d): ", recovered_cred.size);
   print_bytes(recovered_cred.size, recovered_cred.buffer);
@@ -262,7 +260,7 @@ bool credential_test(local_tpm          &tpm,
   printf("\ncredBlob size: %d\n", (int)cred_blob.size);
   print_bytes(cred_blob.size, (byte_t *)cred_blob.credential);
   printf("\n");
-#  endif
+#endif
 
   Tpm2_FlushContext(tpm, ek_handle);
   Tpm2_FlushContext(tpm, endorsement_session_handle);
@@ -1100,10 +1098,10 @@ int main(int an, char **av) {
     string authString;
     if (!get_password_auth(empty, &authString)) {
       printf("%s() error, line %d, can't get password auth\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
+             __func__,
+             __LINE__);
+      return false;
+    }
 
     printf("\n");
     if (endorsement_test(g_tpm, authString)) {
