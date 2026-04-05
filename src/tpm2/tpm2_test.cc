@@ -156,60 +156,10 @@ bool credential_test(local_tpm          &tpm,
   printf("\n");
 #endif
 
-  string nonce;
-
   // replace with get_quote_auth
   byte_t auth_buf[256];
   int    n = 0;
   string quoteAuth = authString;
-
-#ifdef DEBUG1
-  print_bytes(quoteAuth.size(), (byte_t *)quoteAuth.data());
-  printf("\n");
-  printf("Nonce (%d): ", (int)nonce.size());
-  print_bytes(nonce.size(), (byte_t *)nonce.data());
-  printf("\n");
-#endif
-
-  // endorsement auth session
-  TPM_HANDLE endorsement_session_handle = 0;
-  string     endorsementAuth;
-#ifdef DEBUG1
-  printf("\nCalling create_endorsement_session\n");
-#endif
-  nonce.clear();
-  if (!create_endorsement_session(tpm,
-                                  authString,  //srkAuth
-                                  &nonce,
-                                  &endorsement_session_handle)) {
-    printf("%s() error, line %d, create_endorsement _session failed\n",
-           __func__,
-           __LINE__);
-    Tpm2_FlushContext(tpm, ek_handle);
-    Tpm2_FlushContext(tpm, quote_handle);
-    return false;
-  }
-
-  // endorsement auth
-  n = 0;
-  byte_t *cur = auth_buf;
-  change_endian32((uint32_t *)&endorsement_session_handle, (uint32_t *)cur);
-  cur += sizeof(uint32_t);
-  n += sizeof(uint32_t);
-  n += 1;
-  uint16_t t = nonce.size();
-  change_endian16(&t, (uint16_t *)cur);
-  cur += sizeof(uint16_t);
-  n += sizeof(uint16_t);
-  memcpy(cur, (byte_t *)nonce.data(), t);
-  cur += t;
-  n += t;
-  *cur = 1;
-  cur += 1;
-  *((uint16_t *)cur) = 0;
-  cur += sizeof(uint16_t);
-  n += sizeof(uint16_t);
-  endorsementAuth.assign((char *)auth_buf, n);
 
   // Standalone makecredential
   string endorsement_cert;
@@ -219,9 +169,6 @@ bool credential_test(local_tpm          &tpm,
            __LINE__);
     return false;
   }
-#ifdef DEBUG
-  printf("get_endorsement_cert succeeded\n");
-#endif
 
   // make_credential
   string quote_key_name;
@@ -269,6 +216,44 @@ bool credential_test(local_tpm          &tpm,
          (byte_t *)encrypted_secret_out.data(),
          encrypted_secret_out.size());
 
+  // endorsement auth session
+  string nonce;
+  nonce.clear();
+  TPM_HANDLE endorsement_session_handle = 0;
+  if (!create_endorsement_session(tpm,
+                                  authString,  //srkAuth
+                                  &nonce,
+                                  &endorsement_session_handle)) {
+    printf("%s() error, line %d, create_endorsement _session failed\n",
+           __func__,
+           __LINE__);
+    Tpm2_FlushContext(tpm, ek_handle);
+    Tpm2_FlushContext(tpm, quote_handle);
+    return false;
+  }
+
+  // endorsement auth
+  string     endorsementAuth;
+  n = 0;
+  byte_t *cur = auth_buf;
+  change_endian32((uint32_t *)&endorsement_session_handle, (uint32_t *)cur);
+  cur += sizeof(uint32_t);
+  n += sizeof(uint32_t);
+  n += 1;
+  uint16_t t = nonce.size();
+  change_endian16(&t, (uint16_t *)cur);
+  cur += sizeof(uint16_t);
+  n += sizeof(uint16_t);
+  memcpy(cur, (byte_t *)nonce.data(), t);
+  cur += t;
+  n += t;
+  *cur = 1;
+  cur += 1;
+  *((uint16_t *)cur) = 0;
+  cur += sizeof(uint16_t);
+  n += sizeof(uint16_t);
+  endorsementAuth.assign((char *)auth_buf, n);
+
   if (!Tpm2_ActivateCredential(tpm,
                                quote_handle,
                                ek_handle,
@@ -286,16 +271,17 @@ bool credential_test(local_tpm          &tpm,
   }
 
 #  ifdef DEBUG
-  printf("\nUsing MakeCredential succeeded\n");
+  printf("\nSucceeded using MakeCredential succeeded\n");
+  printf("Recovered credential (%d): ", recovered_cred.size);
+  print_bytes(recovered_cred.size, recovered_cred.buffer);
+  printf("\n");
+#endif
+#ifdef DEBUG3
   printf("\ncred_secret size: %d\n", cred_secret.size);
   print_bytes(cred_secret.size, cred_secret.secret);
   printf("\n");
   printf("\ncredBlob size: %d\n", (int)cred_blob.size);
   print_bytes(cred_blob.size, (byte_t *)cred_blob.credential);
-  printf("\n");
-  printf("\nActivateCredential succeeded with internal MakeCredential\n");
-  printf("Recovered credential (%d): ", recovered_cred.size);
-  print_bytes(recovered_cred.size, recovered_cred.buffer);
   printf("\n");
 #  endif
 
@@ -350,7 +336,7 @@ extern byte_t g_policy_rsa_3072[48];
 bool endorsement_test(local_tpm &tpm, string authString) {
   TPM_HANDLE ek_handle;
 
-  string policyString;
+  // replace with srkAuth, get rid of arg
   string emptyAuth;
   int    size_buf = 128;
   byte_t buf[size_buf];
@@ -362,10 +348,11 @@ bool endorsement_test(local_tpm &tpm, string authString) {
            __LINE__);
     return false;
   }
-
   authString.assign((char *)(buf + 2), m - 2);
-  policyString.assign((char *)g_policy_rsa_2048, sizeof(g_policy_rsa_2048));
 
+  // get endorsement key
+  string policyString;
+  policyString.assign((char *)g_policy_rsa_2048, sizeof(g_policy_rsa_2048));
   if (!get_endorsement_key(tpm, authString, policyString, &ek_handle)) {
     printf("%s() error, line %d, get_endorsement_key failed\n",
            __func__,
@@ -420,6 +407,7 @@ bool endorsement_test(local_tpm &tpm, string authString) {
            __LINE__);
     return false;
   }
+
   string tmp_cert_name("jlm_cert.crt");
   if (!write_file_from_string(tmp_cert_name, cert_out)) {
     printf("%s() error, line %d, get_endorsement_cert failed\n",

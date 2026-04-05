@@ -1437,9 +1437,7 @@ bool get_endorsement_auth(string* endorsementAuth) {
   // endorsement auth session
   TPM_HANDLE endorsement_session_handle = 0;
   string     endorsementAuth;
-#ifdef DEBUG1
-  printf("\nCalling create_endorsement_session\n");
-#endif
+ 
   nonce.clear();
   if (!create_endorsement_session(tpm,
                                   authString,
@@ -1641,7 +1639,7 @@ bool init_quote_cert_from_file(const string &quote_cert_file_name) {
     printf("%s() error, line %d, can't get quote cert\n", __func__, __LINE__);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("Recovered quote cert\n");
   print_bytes(g_serialized_quote_cert.size(),
               (byte_t *)g_serialized_quote_cert.data());
