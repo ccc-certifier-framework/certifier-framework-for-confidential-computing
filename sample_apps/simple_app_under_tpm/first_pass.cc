@@ -50,9 +50,11 @@ bool first_pass(const string &tpm_device,
                 const string &endorsement_cert_chain_file_name,
                 const string &seal_hierarchy_file_name,
                 const string &quote_hierarchy_file_name,
-                const string &quote_cert_file,
                 int           num_pcrs,
                 byte         *pcrs,
+                const string &service_host,
+                const string &service_port,
+                const string &quote_file_name,
                 string       *cert_obtained) {
 
 #  ifdef DEBUG
@@ -65,6 +67,7 @@ bool first_pass(const string &tpm_device,
   printf("    seal hierarchy file    : %s\n", seal_hierarchy_file_name.c_str());
   printf("    quote hierarchy file   : %s\n",
          quote_hierarchy_file_name.c_str());
+  printf("    quote_cert  file       : %s\n", quote_cert_file.c_str());
 #  endif
 
   quote_certification_request  request;
@@ -81,15 +84,20 @@ bool first_pass(const string &tpm_device,
     return false;
   }
 
-  // get quote key, endorsement_cert_chain and endorsement_cert.
+  // read endorsement cert chain file
+  string serialized_endorsement_cert_chain;
+  string serialized_quote_key_name;
+  string quote_key_hash_alg;
+
+  // get quote key
   // Construct quote key_message.  Pack the above along with the
   // quote key hashing alg and quote_key_name into the
   // request and send it to the server after serialization.
   // Server returns a response.  If successful, perform the
   // actions above.
-  key_message quote_key;
 
   // make quote key message
+  key_message         quote_key;
   extern TPM2B_PUBLIC g_public_quote_key;
   string              name("quote-key");
   if (!tpm_public_key_to_key(g_public_quote_key, name, &quote_key)) {
@@ -100,23 +108,68 @@ bool first_pass(const string &tpm_device,
     return false;
   }
 
-  // construct_activate_request(const string      &endorsement_cert,
-  //                              const string      &endorsement_cert_chain,
-  //                              const key_message &quote_key,
-  //                              const string      &quote_key_name,
-  //                              const string      &quote_hash_alg,
-  //                              string            *serialized_request)
-  //  send the rquest
-  //
-  //  get the response
-  //
-  // process_activate_response(const string &serialized_response,
-  //                             string       *quote_cert)
-  //
-  // save the cert
+  string serialized_request;
+  if (!construct_activate_request(g_serialized_endorsement_cert,
+                                  serialized_endorsement_cert_chain quote_key,
+                                  serialized_quote_key_name,
+                                  quote_hash_alg,
+                                  &serialized_request)) {
+    printf("%s(), error, line: %d, can't construct request\n",
+           __func__,
+           __LINE__);
+    tpm_close();
+    return false;
+  }
+
+  // Open socket and send request.
+  int sock = -1;
+  if (!open_client_socket(service_host, service_port, &sock)) {
+    printf("%s() error, line: %d, Can't open request socket\n",
+           __func__,
+           __LINE__);
+    tpm_close();
+    return false;
+  }
+
+  // Send request to activate service
+  int sized_write_len = sized_socket_write(sock,
+                                           serialized_request.size(),
+                                           (byte *)serialized_request.data());
+  if (sized_write_len < (int)serialized_request.size()) {
+    printf("%s() error, line: %d sized_socket_write() len=%d is "
+           "< requested size, %d\n",
+           __func__,
+           __LINE__,
+           sized_write_len,
+           (int)serialized_request.size());
+    tpm_close();
+    return false;
+  }
 
   tpm_close();
-  return false;
+
+  // Read response from Activate Service.
+  string serialized_response;
+  int    resp_size = sized_socket_read(sock, &serialized_response);
+  if (resp_size < 0) {
+    printf("%s() error, line: %d, Can't read response\n", __func__, __LINE__);
+    return false;
+  }
+  close(sock);
+
+  if (!process_activate_response(g_tpm, serialized_response, cert_obtained)) {
+    printf("%s(), error, line: %d, can't parse response\n", __func__, __LINE__);
+    tpm_close();
+    return false;
+  }
+  tpm_close();
+
+  (!write_file_from_string(quote_file_name, *cert_obtained)) {
+    printf("%s(), error, line: %d, couldn't write file\n", __func__, __LINE__);
+    return false;
+  }
+
+  return true;
 }
 
 #else

@@ -3213,7 +3213,8 @@ bool construct_activate_request(const string      &endorsement_cert,
   return true;
 }
 
-bool process_activate_response(const string &serialized_response,
+bool process_activate_response(local_tpm    &tpm,
+                               const string &serialized_response,
                                string       *quote_cert) {
 
   quote_certification_response res;
@@ -3227,6 +3228,10 @@ bool process_activate_response(const string &serialized_response,
            __LINE__);
     return false;
   }
+#ifdef DEBUG
+  printf("cert response:\n");
+  print_quote_certification_response(res);
+#endif
 
   if (!g_tpm_environment_initialized) {
     printf("%s() error, line %d, environment not initialized\n",
@@ -3270,7 +3275,7 @@ bool process_activate_response(const string &serialized_response,
            __LINE__);
     return false;
   }
-  if (!get_endorsement_auth_with_session(g_tpm,
+  if (!get_endorsement_auth_with_session(tpm,
                                          quoteAuth,
                                          nonce,
                                          &endorsement_session_handle,
@@ -3289,7 +3294,7 @@ bool process_activate_response(const string &serialized_response,
   memcpy(cred_secret.secret,
          (byte_t *)res.encrypted_secret().data(),
          cred_secret.size);
-  if (!Tpm2_ActivateCredential(g_tpm,
+  if (!Tpm2_ActivateCredential(tpm,
                                g_quote_handle,
                                g_ek_handle,
                                quoteAuth,
@@ -3300,10 +3305,10 @@ bool process_activate_response(const string &serialized_response,
     printf("%s() error, line %d, Tpm2_ActivateCredential failed\n",
            __func__,
            __LINE__);
-    Tpm2_FlushContext(g_tpm, endorsement_session_handle);
+    Tpm2_FlushContext(tpm, endorsement_session_handle);
     return false;
   }
-  Tpm2_FlushContext(g_tpm, endorsement_session_handle);
+  Tpm2_FlushContext(tpm, endorsement_session_handle);
 
 #ifdef DEBUG
   printf("\nActivateCredential succeeded in construct_activate_request\n");

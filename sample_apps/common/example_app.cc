@@ -93,6 +93,8 @@ DEFINE_string(endorsement_cert_file_name,
 DEFINE_string(endorsement_cert_chain_file,
               "./provisioning/endorsement_cert_chain.bin",
               "endorsement cert chain file");
+DEFINE_string(activate_service_host, "localhost", "activate service host IP");
+DEFINE_string(activate_service_port, "8130", "activate service port");
 
 // for fake init
 DEFINE_string(policy_key_file,
@@ -452,15 +454,18 @@ int main(int an, char **av) {
 #  ifdef FIRST_PASS_ON
 
 #    ifdef ACTIVATE_CREDENTIAL
-  extern bool first_pass(const string &tpm_device,
-                         const string &endorsement_cert_file_name,
-                         const string &endorsement_cert_chain_file_name,
-                         const string &seal_hierarchy_file_name,
-                         const string &quote_hierarchy_file_name,
-                         const string &quote_cert_file,
-                         int           num_pcrs,
-                         byte         *pcrs,
-                         string       *cert_obtained);
+  extern bool first_pass(const string     &tpm_device,
+                         const string     &endorsement_cert_file_name,
+                         const string     &endorsement_cert_chain_file_name,
+                         const string     &seal_hierarchy_file_name,
+                         const string     &quote_hierarchy_file_name,
+                         const key_message quote_key,
+                         int               num_pcrs,
+                         byte             *pcrs,
+                         const string     &service_host,
+                         const string     &service_port,
+                         const string     &quote_cert_file_name,
+                         string           *cert_obtained);
 #    else
   // first pass is an optional initial pass procedure
   extern bool first_pass(const string &tpm_device,
@@ -484,6 +489,17 @@ int main(int an, char **av) {
       return 1;
     }
 #    ifdef ACTIVATE_CREDENTIAL
+    string cert_obtained;
+    bool   first_pass(FLAGS_tpm_device,
+                    FLAGS_endorsement_cert_file_name,
+                    FLAGS_endorsement_cert_chain_file_name,
+                    FLAGS_seal_hierarchy_file_name,
+                    FLAGS_quote_hierarchy_file_name,
+                    num_pcrs,
+                    pcrs,
+                    FLAGS_service_host,
+                    FLAGS_service_port,
+                    &cert_obtained);
 #    else
     string cert_chain;
     if (!first_pass(FLAGS_tpm_device,

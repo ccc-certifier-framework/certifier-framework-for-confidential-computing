@@ -87,6 +87,8 @@ void print_proof_step(const proof_step &ps);
 void print_proof(proof &pf);
 void print_trust_response_message(trust_response_message &m);
 void print_trust_request_message(trust_request_message &m);
+void print_quote_certification_request(quote_certification_request &m);
+void print_quote_certification_response(quote_certification_response &m);
 bool read_signed_vse_statements(const string &in, signed_claim_sequence *s);
 
 class predicate_dominance {
