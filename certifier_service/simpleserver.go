@@ -692,7 +692,7 @@ func activateServiceThread(conn net.Conn, client string) {
 		remoteIP = remoteAddr.IP.String()
 	}
 
-	outcome, serializedResponse := certlib.ProcessActivationRequest(b, remoteIP, trustedRoots, publicPolicyKey, privatePolicyKey)
+	outcome, serializedResponse := certlib.ProcessActivationRequest(b, remoteIP, trustedRoots, publicPolicyKey, policyCert, privatePolicyKey)
 
 	if !certlib.SizedSocketWrite(conn, serializedResponse) {
 		fmt.Printf("SizedSocketWrite failed (2)\n")

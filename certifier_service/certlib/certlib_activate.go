@@ -18,13 +18,15 @@ import (
 	/*
 	"bytes"
 	"crypto/ecdsa"
+	*/
 	"crypto/rand"
+	/*
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/sha512"
+	 */
 	"crypto/x509"
-	"errors"
-	*/
+	//"errors"
 	"fmt"
 	/*
 	"math/big"
@@ -32,24 +34,11 @@ import (
 	 */
 
 	certprotos "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/certprotos"
-	/*
-	gramineverify "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/gramineverify"
-	isletverify "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/isletverify"
-	oeverify "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/oeverify"
 	tpmverify "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/tpmverify"
-	*/
 	"google.golang.org/protobuf/proto"
 )
 
 //      ------------------------------------------------------------------------
-
-var endorsementTrustInitialized bool = false
-var endorsementTrustList []byte
-
-
-func InitEndorsementTrust(fileName string) bool {
-  return true
-}
 
 /*
  * message quote_certification_request {
@@ -123,41 +112,125 @@ func PrintQuoteCertificationResponse(res *certprotos.QuoteCertificationResponse)
 	fmt.Printf("\n")
 }
 
- func ProcessActivationRequest(serializedRequest []byte, remoteIP string, roots *certprotos.BufferSequence, pubKey *certprotos.KeyMessage, privKey *certprotos.KeyMessage) (bool, []byte) {
+func FillAndSerializeQuoteFailure(res *certprotos.QuoteCertificationResponse) []byte {
+	*res.Status = "failed"
+	serializedResponse, _ := proto.Marshal(res)
+	return serializedResponse
+}
+
+func SameRoot(c []byte, r []byte) bool {
+	return true
+}
+
+func CheckCertChain(bufSeq *certprotos.BufferSequence, rootCert []byte) (bool, *certprotos.KeyMessage) {
+	var lastKey *certprotos.KeyMessage = nil
+	return true, lastKey
+}
+
+ func ProcessActivationRequest(serializedRequest []byte, remoteIP string, roots *certprotos.BufferSequence, pubKey *certprotos.KeyMessage, policyCert *x509.Certificate, privKey *certprotos.KeyMessage) (bool, []byte) {
 
 	request := &certprotos.QuoteCertificationRequest{}
+	response := &certprotos.QuoteCertificationResponse{}
 	err := proto.Unmarshal(serializedRequest, request)
 	if err != nil {
 		fmt.Println("activateServiceThread: Failed to decode request", err)
-                return false, nil
+                return false, FillAndSerializeQuoteFailure(response)
 	}
 
 	// Debug
 	fmt.Printf("activateServiceThread: Trust request received:\n")
 	PrintQuoteCertificationRequest(request)
 
-	var response *certprotos.QuoteCertificationResponse
 	err = proto.Unmarshal(serializedRequest, response)
 	if err != nil {
 		fmt.Printf("Can't unmarshal request\n")
 	}
 
-	// Check endorsement evidence (read a policy on trusted roots)
-	// Make symmetric key secret to serve as credential
-	/*
-	s, credBlob, encryptedSecret := TpmMakeCredential(hash_alg,
-		quoteKeyName, endorsementCert, credential)
-	 */
+	// deserialize Endorsement cert chain
+	certChain := &certprotos.BufferSequence{}
+	err = proto.Unmarshal(request.EndorsementCertChain, certChain)
+
+	var root []byte = nil
+	for j := 0; j < len(roots.Block); j++ {
+		blk := roots.Block[j]
+		PrintBytes(blk)
+		if SameRoot(certChain.Block[0], blk) {
+			root = blk
+			break;
+		}
+	}
+
+	if root == nil {
+		fmt.Println("activateServiceThread: no trusted root", err)
+                return false, FillAndSerializeQuoteFailure(response)
+	}
+
+	s, lastKey := CheckCertChain(certChain, root)
+	if  !s {
+		fmt.Printf("activateServiceThread: cert chain does not verify")
+                return false, FillAndSerializeQuoteFailure(response)
+	}
+
+	PrintKey(lastKey)
+	// now check endorsement cert signature
+
+        iv := make([]byte, 16)
+        _, err = rand.Read(iv)
+        if err != nil {
+                fmt.Printf("ProcessActivationRequest: Can't generate iv\n")
+                return false, FillAndSerializeQuoteFailure(response)
+        }
+        key := make([]byte, 32)
+        _, err = rand.Read(key)
+        if err != nil {
+                fmt.Printf("ProcessActivationRequest: Can't generate\n")
+                return false, FillAndSerializeQuoteFailure(response)
+        }
+	PrintBytes(iv)
+	PrintBytes(key)
+
+	s, credBlob, encryptedSecret := tpmverify.TpmMakeCredential(*request.QuoteHashAlg,
+		request.QuoteKeyName, request.EndorsementCert, key)
+	if !s {
+                fmt.Printf("ProcessActivationRequest: MakeCredential\n")
+                return false, FillAndSerializeQuoteFailure(response)
+	}
+	PrintBytes(credBlob)
+	PrintBytes(encryptedSecret)
+
+	encryptingAlg := "aes-256-gcm"
+
 	// Make DER cert for quote key and sign it with policy key
+	cert := ProduceAdmissionCert(remoteIP, privKey, policyCert, request.QuoteKey, "quote-key", "", uint64(5), 365.0*86400)
+	if cert == nil {
+	}
+
+	// Serialize Cert
+	serializedCert := X509ToAsn1(cert)
+	if serializedCert == nil {
+	}
+
 	// Encrypt the DER cert using the credential
-	// call make_credential to get the cred-blob and encrypted secret
-	// Send the encrypted_quote_cert
+        encryptedCert:= GeneralAuthenticatedEncrypt(encryptingAlg, serializedCert, key, iv)
+        if encryptedCert == nil {
+                fmt.Printf("ProcessActivationRequest: Can't AuthenticatedEncrypt Data\n")
+                return false, FillAndSerializeQuoteFailure(response)
+        }
+
+	*response.Status = "succeeded"
+	*response.HashAlg= *request.QuoteHashAlg
+	*response.EncryptingAlg = encryptingAlg
+	response.CredBlob = credBlob
+	response.EncryptedSecret = encryptedSecret
+	response.EncryptedQuoteCert = encryptedCert
 
 	// Debug
 	fmt.Printf("activateServiceThread: Quote Certification Response\n")
 	PrintQuoteCertificationResponse(response)
 
-	return false, nil
+	// serialize it
+	serializedResponse, _ := proto.Marshal(response)
+	return true, serializedResponse
  }
 
 //      ------------------------------------------------------------------------
