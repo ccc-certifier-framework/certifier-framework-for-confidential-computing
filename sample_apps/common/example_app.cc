@@ -454,18 +454,17 @@ int main(int an, char **av) {
 #  ifdef FIRST_PASS_ON
 
 #    ifdef ACTIVATE_CREDENTIAL
-  extern bool first_pass(const string     &tpm_device,
-                         const string     &endorsement_cert_file_name,
-                         const string     &endorsement_cert_chain_file_name,
-                         const string     &seal_hierarchy_file_name,
-                         const string     &quote_hierarchy_file_name,
-                         const key_message quote_key,
-                         int               num_pcrs,
-                         byte             *pcrs,
-                         const string     &service_host,
-                         const string     &service_port,
-                         const string     &quote_cert_file_name,
-                         string           *cert_obtained);
+  extern bool first_pass(const string &tpm_device,
+                         const string &endorsement_cert_file_name,
+                         const string &endorsement_cert_chain_file_name,
+                         const string &seal_hierarchy_file_name,
+                         const string &quote_hierarchy_file_name,
+                         int           num_pcrs,
+                         byte         *pcrs,
+                         const string &service_host,
+                         const string &service_port,
+                         const string &quote_cert_file_name,
+                         string       *cert_obtained);
 #    else
   // first pass is an optional initial pass procedure
   extern bool first_pass(const string &tpm_device,
@@ -488,18 +487,24 @@ int main(int an, char **av) {
       printf("%s() error, line %d, first_pass failed\n", __func__, __LINE__);
       return 1;
     }
+
 #    ifdef ACTIVATE_CREDENTIAL
     string cert_obtained;
-    bool   first_pass(FLAGS_tpm_device,
+    if (!first_pass(FLAGS_tpm_device,
                     FLAGS_endorsement_cert_file_name,
-                    FLAGS_endorsement_cert_chain_file_name,
+                    FLAGS_endorsement_cert_chain_file,
                     FLAGS_seal_hierarchy_file_name,
                     FLAGS_quote_hierarchy_file_name,
-                    num_pcrs,
-                    pcrs,
-                    FLAGS_service_host,
-                    FLAGS_service_port,
-                    &cert_obtained);
+                    (int)pcrs_out.size(),
+                    (byte *)pcrs_out.data(),
+                    FLAGS_activate_service_host,
+                    FLAGS_activate_service_port,
+                    FLAGS_quote_cert_file,
+                    &cert_obtained)) {
+    } else {
+      printf("first_pass succeeded\n");
+      return 0;
+    }
 #    else
     string cert_chain;
     if (!first_pass(FLAGS_tpm_device,

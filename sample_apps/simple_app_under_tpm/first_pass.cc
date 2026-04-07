@@ -17,6 +17,19 @@
 #include "support.h"
 #include "simulated_enclave.h"
 #include "tpm2_support.h"
+#include "cc_helpers.h"
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <openssl/ssl.h>
+#include <openssl/rsa.h>
+#include <openssl/x509.h>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
+#include <openssl/hmac.h>
+#include <openssl/err.h>
+
 
 using namespace certifier::framework;
 using namespace certifier::utilities;
@@ -52,9 +65,9 @@ bool first_pass(const string &tpm_device,
                 const string &quote_hierarchy_file_name,
                 int           num_pcrs,
                 byte         *pcrs,
-                const string &service_host,
-                const string &service_port,
-                const string &quote_file_name,
+                const string &activate_service_host,
+                const string &activate_service_port,
+                const string &quote_cert_file_name,
                 string       *cert_obtained) {
 
 #  ifdef DEBUG
@@ -63,12 +76,22 @@ bool first_pass(const string &tpm_device,
   printf("    endorsement file       : %s\n",
          endorsement_cert_file_name.c_str());
   printf("    cert chain  file       : %s\n",
-         endorsement_cert_signer_file_name.c_str());
+         endorsement_cert_chain_file_name.c_str());
   printf("    seal hierarchy file    : %s\n", seal_hierarchy_file_name.c_str());
   printf("    quote hierarchy file   : %s\n",
          quote_hierarchy_file_name.c_str());
-  printf("    quote_cert  file       : %s\n", quote_cert_file.c_str());
+  printf("    quote_cert  file       : %s\n", quote_cert_file_name.c_str());
 #  endif
+
+  extern string       g_serialized_quote_cert;
+  extern string       g_serialized_endorsement_cert;
+  extern string       g_serialized_endorsement_cert_chain;
+  extern string       g_seal_hierarchy_file_name;
+  extern string       g_quote_hierarchy_file_name;
+  extern string       g_seal_thing;
+  extern TPM2B_PUBLIC g_public_quote_key;
+  extern TPM2B_PUBLIC g_public_endorsement_key;
+
 
   quote_certification_request  request;
   quote_certification_response response;
@@ -76,6 +99,7 @@ bool first_pass(const string &tpm_device,
   // Init
   if (!tpm_Init(tpm_device,
                 endorsement_cert_file_name,
+                endorsement_cert_chain_file_name,
                 seal_hierarchy_file_name,
                 quote_hierarchy_file_name,
                 num_pcrs,
@@ -83,11 +107,6 @@ bool first_pass(const string &tpm_device,
     printf("%s() error, line %d, can't tpm_Init\n", __func__, __LINE__);
     return false;
   }
-
-  // read endorsement cert chain file
-  string serialized_endorsement_cert_chain;
-  string serialized_quote_key_name;
-  string quote_key_hash_alg;
 
   // get quote key
   // Construct quote key_message.  Pack the above along with the
@@ -108,9 +127,13 @@ bool first_pass(const string &tpm_device,
     return false;
   }
 
+  string serialized_quote_key_name;
   string serialized_request;
+  string quote_hash_alg("sha256");
+  // serialized_quote_key_name.assign((char*)g_public_quote_key.publicArea.nameAlg
   if (!construct_activate_request(g_serialized_endorsement_cert,
-                                  serialized_endorsement_cert_chain quote_key,
+                                  g_serialized_endorsement_cert_chain,
+                                  quote_key,
                                   serialized_quote_key_name,
                                   quote_hash_alg,
                                   &serialized_request)) {
@@ -123,7 +146,8 @@ bool first_pass(const string &tpm_device,
 
   // Open socket and send request.
   int sock = -1;
-  if (!open_client_socket(service_host, service_port, &sock)) {
+  int port = atoi(activate_service_port.c_str());
+  if (!open_client_socket(activate_service_host, port, &sock)) {
     printf("%s() error, line: %d, Can't open request socket\n",
            __func__,
            __LINE__);
@@ -157,6 +181,7 @@ bool first_pass(const string &tpm_device,
   }
   close(sock);
 
+  extern local_tpm g_tpm;
   if (!process_activate_response(g_tpm, serialized_response, cert_obtained)) {
     printf("%s(), error, line: %d, can't parse response\n", __func__, __LINE__);
     tpm_close();
@@ -164,7 +189,7 @@ bool first_pass(const string &tpm_device,
   }
   tpm_close();
 
-  (!write_file_from_string(quote_file_name, *cert_obtained)) {
+  if (!write_file_from_string(quote_cert_file_name, *cert_obtained)) {
     printf("%s(), error, line: %d, couldn't write file\n", __func__, __LINE__);
     return false;
   }

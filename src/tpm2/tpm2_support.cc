@@ -1347,6 +1347,7 @@ int          g_num_pcrs = 0;
 byte_t       g_pcrs[32];
 TPM2B_PUBLIC g_public_quote_key;
 TPM2B_PUBLIC g_public_endorsement_key;
+string       g_public_quote_key_name;
 
 #ifdef DEBUG
 void print_globals() {
@@ -1635,6 +1636,7 @@ bool init_quote_environment(int num_pcrs, byte_t *pcrs) {
     printf("%s() error, line %d, ReadPublic failed\n", __func__, __LINE__);
     return false;
   }
+  g_public_quote_key_name.assign((char *)q_pub_name.name, q_pub_name.size);
 #ifdef DEBUG2
   printf("\nQuote key\n");
   printf("Type: %d\n", g_public_quote_key.publicArea.type);

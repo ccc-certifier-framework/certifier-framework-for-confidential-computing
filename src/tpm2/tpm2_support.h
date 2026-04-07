@@ -232,7 +232,8 @@ bool construct_activate_request(const string      &endorsement_cert,
                                 const string      &quote_hash_alg,
                                 string            *serialized_request);
 
-bool process_activate_response(const string &serialized_response,
+bool process_activate_response(local_tpm    &tpm,
+                               const string &serialized_response,
                                string       *quote_cert);
 
 // ---------------------------------------------------------------
