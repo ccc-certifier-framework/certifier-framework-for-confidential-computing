@@ -1,0 +1,37 @@
+CheckTimeRange(nb *string, na *string) bool
+PKecc, ok := cert.PublicKey.(*ecdsa.PublicKey)
+Time t := cert.NotBefore
+func (t Time) Day() int
+func (t Time) Hour() int
+func (t Time) Year() int
+func (t Time) Second() int
+func Now() Time
+func (t Time) YearDay() int
+ecdsa.Verify(PK.(*ecdsa.PublicKey), hashed[0:], r, s) 
+ecdsa.VerifyASN1(PK, hashed[:], signed[:]
+func RsaSha256Verify(r *rsa.PublicKey, in []byte, sig []byte) 
+fmt.Printf("Signature (hex): %x\n", signature)
+fmt.Printf("Signature Algorithm: %s\n", cert.SignatureAlgorithm)
+monthInt := int(month)
+func GetInternalKeyFromRsaPublicKey(name string, PK *rsa.PublicKey, km *certprotos.KeyMessage) bool
+issuerPublic := InternalPublicFromPrivateKey(issuerKey)
+GetInternalKeyFromRsaPublicKey(name string, PK *rsa.PublicKey, km *certprotos.KeyMessage) bool
+hashed := sha256.Sum256(data)
+err := rsa.VerifyPKCS1v15(pubKey, crypto.SHA256, hashed[:], signature)
+if err != nil {
+    // Verification failed
+func main() {
+	roots := x509.NewCertPool()
+	intermediates := x509.NewCertPool()
+	roots.AddCert(root)
+	intermediates.AddCert(intermediate)
+	opts := x509.VerifyOptions{
+		Roots:         roots,
+		Intermediates: intermediates,
+		DNSName:       "example.com", // Optional: checks if cert is valid for this host
+	}
+	chains, err := leaf.Verify(opts)
+	if err != nil {
+		fmt.Printf("Verification failed: %v\n", err)
+		}
+

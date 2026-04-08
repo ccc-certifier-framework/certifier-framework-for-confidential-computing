@@ -40,27 +40,6 @@ import (
 
 //      ------------------------------------------------------------------------
 
-/*
- * message quote_certification_request {
- *   optional string requesting_enclave_tag  = 1;
- *   optional string providing_enclave_tag   = 2;
- *   optional bytes endorsement_cert         = 3;
- *   optional bytes endorsement_cert_chain   = 4;
- *   optional key_message quote_key          = 5;
- *   optional bytes quote_key_name           = 6;
- *   optional string quote_hash_alg          = 7;
- * };
-
- * message quote_certification_response {
- *   optional string status                  = 1; // "succeeded" or "failed"
- *   optional string hash_alg                = 2;
- *   optional bytes cred_blob                = 3;
- *   optional bytes encrypted_secret         = 4;
- *   optional string encrypting_alg          = 5;
- *   optional bytes encrypted_quote_cert     = 6;
- * };
- */
-
 func PrintQuoteCertificationRequest(req *certprotos.QuoteCertificationRequest) {
 	fmt.Printf("\nRequest:\n")
 	fmt.Printf("Requesting Enclave Tag : %s\n", req.GetRequestingEnclaveTag())
@@ -112,29 +91,81 @@ func PrintQuoteCertificationResponse(res *certprotos.QuoteCertificationResponse)
 	fmt.Printf("\n")
 }
 
-func FillAndSerializeQuoteFailure(res *certprotos.QuoteCertificationResponse) []byte {
+func fillAndSerializeQuoteFailure(res *certprotos.QuoteCertificationResponse) []byte {
 	*res.Status = "failed"
 	serializedResponse, _ := proto.Marshal(res)
 	return serializedResponse
 }
 
 func SameRoot(c []byte, r []byte) bool {
+	return false
+}
+
+/*
+	a := Asn1ToX509(c)
+	b := Asn1ToX509(c)
+	PK1, ok  := cert.PublicKey.(*rsa.PublicKey)
+	PK2, ok := cert.PublicKey.(*rsa.PublicKey)
+	k := certprotos.KeyMessage{}
+        if !GetInternalKeyFromRsaPublicKey(*name, PKrsa, &k) {
+	 return SameKey(k1, k2)
 	return true
 }
 
-func CheckCertChain(bufSeq *certprotos.BufferSequence, rootCert []byte) (bool, *certprotos.KeyMessage) {
+func getKeyFromCert(der_cert []byte) (bool, *certprotos.KeyMessage) {
 	var lastKey *certprotos.KeyMessage = nil
 	return true, lastKey
 }
 
- func ProcessActivationRequest(serializedRequest []byte, remoteIP string, roots *certprotos.BufferSequence, pubKey *certprotos.KeyMessage, policyCert *x509.Certificate, privKey *certprotos.KeyMessage) (bool, []byte) {
+func CheckCertChain(roots *certprotos.BufferSequence, userChain *certprotos.BufferSequence, serializedEndorsementCert []byte) (bool, *X509 {
+	a := Asn1ToX509(c)
+	b := Asn1ToX509(c)
+
+        roots := x509.NewCertPool()
+        intermediates := x509.NewCertPool()
+        roots.AddCert(root)
+        intermediates.AddCert(intermediate)
+        opts := x509.VerifyOptions{
+                Roots:         roots,
+                Intermediates: intermediates,
+                DNSName:       "example.com", // Optional: checks if cert is valid for this host
+        }
+        chains, err := leaf.Verify(opts)
+        if err != nil {
+                fmt.Printf("Verification failed: %v\n", err)
+		return false
+                }
+	return true, lastKey
+}
+
+CheckTimeRange(nb *string, na *string) bool
+hashed := sha256.Sum256(data)
+PK, ok := cert.PublicKey.(*rsa.PublicKey)
+func RsaSha256Verify(r *rsa.PublicKey, in []byte, sig []byte)
+Time t := cert.NotBefore
+func (t Time) Day() int
+func (t Time) Hour() int
+func (t Time) Year() int
+func (t Time) Second() int
+func Now() Time
+monthInt := int(month)
+func GetInternalKeyFromRsaPublicKey(name string, PK *rsa.PublicKey, km *certprotos.KeyMessage) bool
+issuerPublic := InternalPublicFromPrivateKey(issuerKey)
+GetInternalKeyFromRsaPublicKey(name string, PK *rsa.PublicKey, km *certprotos.KeyMessage) bool
+hashed := sha256.Sum256(data)
+ */
+
+func ProcessActivationRequest(serializedRequest []byte, remoteIP string, roots *certprotos.BufferSequence, pubKey *certprotos.KeyMessage, policyCert *x509.Certificate, privKey *certprotos.KeyMessage) (bool, []byte) {
+
+	// Debug
+	fmt.Printf("activateServiceThread: Trust request received:\n")
 
 	request := &certprotos.QuoteCertificationRequest{}
 	response := &certprotos.QuoteCertificationResponse{}
 	err := proto.Unmarshal(serializedRequest, request)
 	if err != nil {
 		fmt.Println("activateServiceThread: Failed to decode request", err)
-                return false, FillAndSerializeQuoteFailure(response)
+                return false, fillAndSerializeQuoteFailure(response)
 	}
 
 	// Debug
@@ -147,44 +178,29 @@ func CheckCertChain(bufSeq *certprotos.BufferSequence, rootCert []byte) (bool, *
 	}
 
 	// deserialize Endorsement cert chain
-	certChain := &certprotos.BufferSequence{}
+	roots := &certprotos.BufferSequence{}
+	derCertChain := &certprotos.BufferSequence{}
 	err = proto.Unmarshal(request.EndorsementCertChain, certChain)
 
-	var root []byte = nil
-	for j := 0; j < len(roots.Block); j++ {
-		blk := roots.Block[j]
-		PrintBytes(blk)
-		if SameRoot(certChain.Block[0], blk) {
-			root = blk
-			break;
-		}
-	}
-
-	if root == nil {
-		fmt.Println("activateServiceThread: no trusted root", err)
-                return false, FillAndSerializeQuoteFailure(response)
-	}
-
-	s, lastKey := CheckCertChain(certChain, root)
-	if  !s {
-		fmt.Printf("activateServiceThread: cert chain does not verify")
-                return false, FillAndSerializeQuoteFailure(response)
-	}
-
+/*
+	serializedCertChain := request.EndorsementCertChain()
+	serializedEndorsementCert := request.EndorsementCert()
 	PrintKey(lastKey)
-	// now check endorsement cert signature
+
+	// Get Endorsement key from the cert
+*/
 
         iv := make([]byte, 16)
         _, err = rand.Read(iv)
         if err != nil {
                 fmt.Printf("ProcessActivationRequest: Can't generate iv\n")
-                return false, FillAndSerializeQuoteFailure(response)
+                return false, fillAndSerializeQuoteFailure(response)
         }
         key := make([]byte, 32)
         _, err = rand.Read(key)
         if err != nil {
                 fmt.Printf("ProcessActivationRequest: Can't generate\n")
-                return false, FillAndSerializeQuoteFailure(response)
+                return false, fillAndSerializeQuoteFailure(response)
         }
 	PrintBytes(iv)
 	PrintBytes(key)
@@ -193,7 +209,7 @@ func CheckCertChain(bufSeq *certprotos.BufferSequence, rootCert []byte) (bool, *
 		request.QuoteKeyName, request.EndorsementCert, key)
 	if !s {
                 fmt.Printf("ProcessActivationRequest: MakeCredential\n")
-                return false, FillAndSerializeQuoteFailure(response)
+                return false, fillAndSerializeQuoteFailure(response)
 	}
 	PrintBytes(credBlob)
 	PrintBytes(encryptedSecret)
@@ -214,7 +230,7 @@ func CheckCertChain(bufSeq *certprotos.BufferSequence, rootCert []byte) (bool, *
         encryptedCert:= GeneralAuthenticatedEncrypt(encryptingAlg, serializedCert, key, iv)
         if encryptedCert == nil {
                 fmt.Printf("ProcessActivationRequest: Can't AuthenticatedEncrypt Data\n")
-                return false, FillAndSerializeQuoteFailure(response)
+                return false, fillAndSerializeQuoteFailure(response)
         }
 
 	*response.Status = "succeeded"

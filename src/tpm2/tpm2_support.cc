@@ -1439,6 +1439,7 @@ bool tpm_close() {
     close_tpm();
   }
   g_tpm_environment_initialized = false;
+  g_seal_thing.clear();
 
   return true;
 }
