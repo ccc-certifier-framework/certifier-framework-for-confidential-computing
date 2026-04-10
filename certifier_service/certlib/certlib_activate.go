@@ -18,12 +18,14 @@ import (
 	/*
 	"bytes"
 	"crypto/ecdsa"
+	*/
 	"crypto/rsa"
+	/*
 	"crypto/sha256"
 	"crypto/sha512"
 	"math/big"
 	"os"
-	//"errors"
+	"errors"
 	*/
 	"crypto/rand"
 	"crypto/x509"
@@ -94,7 +96,7 @@ func fillAndSerializeQuoteFailure(res *certprotos.QuoteCertificationResponse) []
 }
 
 // TODO: other key types
-func getKeyFromCert(cert *X509) (bool, *certprotos.KeyMessage) {
+func getKeyFromCert(cert *x509.Certificate) (bool, *rsa.PublicKey) {
 	PK, ok  := cert.PublicKey.(*rsa.PublicKey)
 	if !ok {
 		return false, nil
@@ -102,25 +104,25 @@ func getKeyFromCert(cert *X509) (bool, *certprotos.KeyMessage) {
 	return true, PK
 }
 
-func CheckCertChain(tRoots *certprotos.BufferSequence, userChain *certprotos.BufferSequence, serializedEndorsementCert []byte) (bool, *X509) {
+func CheckCertChain(tRoots *certprotos.BufferSequence, userChain *certprotos.BufferSequence, serializedEndorsementCert []byte) (bool, *x509.Certificate) {
 
         roots := x509.NewCertPool()
         intermediates := x509.NewCertPool()
 
 	// add trusted roots
-	for int i := 0; i < len(tRoots.Block); i++ {
-		nr := Asn1ToX509(tRoots.Block[i]))
+	for i := 0; i < len(tRoots.Block); i++ {
+		nr := Asn1ToX509(tRoots.Block[i])
 		roots.AddCert(nr)
 	}
 
 	// add intermediates
-	for int i := 0; i < len(tuserChain.Block); i++ {
-		ni := Asn1ToX509(tRoots.Block[i]))
-		intermediates.AddCert(nr)
+	for i := 0; i < len(userChain.Block); i++ {
+		ni := Asn1ToX509(tRoots.Block[i])
+		intermediates.AddCert(ni)
 	}
 
 	// finally, add endorsement cert
-	ec := Asn1ToX509(tRoots.Block[i]))
+	ec := Asn1ToX509(serializedEndorsementCert)
 	intermediates.AddCert(ec)
 
         opts := x509.VerifyOptions{
@@ -132,7 +134,7 @@ func CheckCertChain(tRoots *certprotos.BufferSequence, userChain *certprotos.Buf
 	// Debug
 	fmt.Printf("Calling verify for cert chain\n")
 
-        chains, err := leaf.Verify(opts)
+        _, err := ec.Verify(opts)
         if err != nil {
                 fmt.Printf("Verification failed: %v\n", err)
 		return false, nil
@@ -188,18 +190,7 @@ func ProcessActivationRequest(serializedRequest []byte, remoteIP string, roots *
 	// Debug
 	fmt.Printf("Deserialized cert chain\n")
 
-	derRoots := &certprotos.BufferSequence{}
-	err = proto.Unmarshal(roots, derRoots)
-	if err != nil {
-		fmt.Printf("Can't unmarshal roots\n")
-                return false, fillAndSerializeQuoteFailure(response)
-	}
-
-	// Debug
-	fmt.Printf("Deserialized roots\n")
-	serializedEndorsementCert := request.EndorsementCert()
-
-	ok, endorsementCert :=  CheckCertChain(derRoots, derCerChain, serializedEndorsementCert)
+	ok, endorsementCert :=  CheckCertChain(roots, derCertChain, request.EndorsementCert)
 	if !ok {
 		fmt.Printf("Cert chain does not verify\n")
                 return false, fillAndSerializeQuoteFailure(response)
@@ -217,9 +208,9 @@ func ProcessActivationRequest(serializedRequest []byte, remoteIP string, roots *
 	// Debug
 	fmt.Printf("Got endorsement key\n")
 
-	keyName ;= "endorsement-key"
+	keyName := "endorsement-key"
 	internalEndorsementKey := &certprotos.KeyMessage{}
-	if (!GetInternalKeyFromRsaPublicKey(keyName, endorsementKey, internalEndorsementKey) {
+	if !GetInternalKeyFromRsaPublicKey(keyName, endorsementKey, internalEndorsementKey) {
 		fmt.Printf("Can't get translated endorsement key\n")
                 return false, fillAndSerializeQuoteFailure(response)
 	}
@@ -252,7 +243,7 @@ func ProcessActivationRequest(serializedRequest []byte, remoteIP string, roots *
 	fmt.Printf("\n")
 
 	s, credBlob, encryptedSecret := tpmverify.TpmMakeCredential(*request.QuoteHashAlg,
-		request.QuoteKeyName, serializedEndorsementCert, key)
+		request.QuoteKeyName, request.EndorsementCert, key)
 	if !s {
                 fmt.Printf("ProcessActivationRequest: MakeCredential\n")
                 return false, fillAndSerializeQuoteFailure(response)

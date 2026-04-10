@@ -150,7 +150,6 @@ func initActivateService(useStore bool) bool {
 		fmt.Printf("Recovered policy key from store\n")
 	} else {
 
-		// trustedRootsFile
 		// Debug
 		fmt.Printf("Initializing ActivateService from file: %s, cert file: %s\n",
 			*policyKeyFile, *policyCertFile)
@@ -696,7 +695,7 @@ func activateServiceThread(conn net.Conn, client string) {
 	}
 
 	outcome, serializedResponse := certlib.ProcessActivationRequest(b, remoteIP, trustedRoots, publicPolicyKey, policyCert, privatePolicyKey)
-	if (!outcome {
+	if !outcome {
 		fmt.Printf("ProcessActivate failed (2)\n")
 		return
 	}
