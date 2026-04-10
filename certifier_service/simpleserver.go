@@ -180,7 +180,7 @@ func initActivateService(useStore bool) bool {
 		return false
 	}
 	// Debug
-	//fmt.Printf("Parsed certificate\n")
+	fmt.Printf("Parsed certificate\n")
 
 	publicPolicyKey = certlib.InternalPublicFromPrivateKey(privatePolicyKey)
 	if publicPolicyKey == nil {
@@ -194,7 +194,7 @@ func initActivateService(useStore bool) bool {
 	}
 
 	// Debug
-	fmt.Printf("\nTrusted roots file: %s\n", *policyFile)
+	fmt.Printf("\nTrusted roots file: %s\n", *trustedRootsFile)
 
 	serializedTrustedRoots, err := os.ReadFile(*trustedRootsFile)
 	if err != nil {

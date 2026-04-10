@@ -3,6 +3,7 @@
 # first-pass.sh: Script to run build simple_app_under_tpm test environment.
 # ############################################################################
 
+
 set -Eeuo pipefail
 Me=$(basename "$0")
 
@@ -30,6 +31,10 @@ if [[ $ARG_SIZE == 0 ]] ; then
 fi
 
 DOMAIN_NAME=$1
+
+if [[ $ARG_SIZE == 2 ]] ; then
+  REAL_TEST=1
+fi
 echo "domain name: $DOMAIN_NAME"
 
 POLICY_KEY_FILE_NAME="policy_key_file.$DOMAIN_NAME"
@@ -78,17 +83,19 @@ function do-get-quote-cert-and-measurement() {
   echo " "
   echo "first pass"
 
-  pushd service
-    echo ""
-    echo "starting certifier for first pass"
-    $CERTIFIER_ROOT/certifier_service/simpleserver  \
-      --policy_key_file=$POLICY_KEY_FILE_NAME \
-      --policy_cert_file=$POLICY_CERT_FILE_NAME \
-      --trustedRootsFile="trustedRoots.bin" \
-      --doActivate=true &
-    echo "certifier first pass started"
-    echo ""
-  popd
+  if [[ -v REAL_TEST ]] ; then
+    pushd service
+      echo ""
+      echo "starting certifier for first pass"
+      $CERTIFIER_ROOT/certifier_service/simpleserver  \
+        --policy_key_file=$POLICY_KEY_FILE_NAME \
+        --policy_cert_file=$POLICY_CERT_FILE_NAME \
+        --trustedRootsFile="trustedRoots.bin" \
+        --doActivate=true &
+      echo "certifier first pass started"
+      echo ""
+    popd
+  fi
 
   echo ""
   echo "getting quote cert"
