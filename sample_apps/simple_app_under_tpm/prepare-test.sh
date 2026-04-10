@@ -240,6 +240,16 @@ function do-all() {
   do-compile-program
   do-compile-certifier
   make-root-list
+    pushd $EXAMPLE_DIR
+    if [[ ! -d "$EXAMPLE_DIR/provisioning" ]] ; then
+      mkdir $EXAMPLE_DIR/provisioning
+    fi
+    if [[ ! -d "$EXAMPLE_DIR/service" ]] ; then
+      mkdir $EXAMPLE_DIR/service
+    fi
+  popd
+
+  cp $EXAMPLE_DIR/provisioning/trustedRoots.bin $EXAMPLE_DIR/service
   
   echo " "
   echo "do-all done"

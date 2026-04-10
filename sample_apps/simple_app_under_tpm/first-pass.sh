@@ -1,6 +1,6 @@
 #!/bin/bash
 # ############################################################################
-# prepare-test.sh: Script to run build simple_app_under_tpm test environment.
+# first-pass.sh: Script to run build simple_app_under_tpm test environment.
 # ############################################################################
 
 set -Eeuo pipefail
@@ -40,6 +40,26 @@ echo "policy cert file name: $POLICY_CERT_FILE_NAME"
 POLICY_STORE_NAME="policy_store.$DOMAIN_NAME"
 echo "policy store name: $POLICY_STORE_NAME"
 
+function cleanup-stale-procs() {
+  echo " "
+  echo "cleanup-stale-procs"
+
+  # Find and kill simpleserver processes that may be running.
+  echo " "
+  set +e
+  certifier_pid=$(ps -ef | grep -E "simpleserver" | grep -v -w -E 'grep|vi|vim' | awk '{print $2}')
+  set -e
+  if [[ $certifier_pid != "" ]] ; then
+    kill -9 $certifier_pid
+    echo "killed certifier_service, pid $certifier_pid"
+  else
+    echo "no certifier_service running"
+  fi
+
+  echo "cleanup-stale-procs done"
+}
+
+
 function do-get-quote-cert-and-measurement() {
   echo " "
   echo "do-get-quote-cert-and-measurement"
@@ -57,18 +77,38 @@ function do-get-quote-cert-and-measurement() {
   pushd $EXAMPLE_DIR
   echo " "
   echo "first pass"
+
+  pushd service
+    echo ""
+    echo "starting certifier for first pass"
+    $CERTIFIER_ROOT/certifier_service/simpleserver  \
+      --policy_key_file=$POLICY_KEY_FILE_NAME \
+      --policy_cert_file=$POLICY_CERT_FILE_NAME \
+      --trustedRootsFile="trustedRoots.bin" \
+      --doActivate=true &
+    echo "certifier first pass started"
+    echo ""
+  popd
+
+  echo ""
+  echo "getting quote cert"
   $EXAMPLE_DIR/tpm_example_app.exe --data_dir=./app1_data/  \
         --domain_name=$DOMAIN_NAME \
         --operation="first-pass" \
         --tpm_device="/dev/tpmrm1" \
         --seal_hierarchy_file_name="seal_hierarchy.bin" \
         --quote_hierarchy_file_name="quote_hierarchy.bin" \
-	--policy_key_file="./provisioning/policy_key_file.$DOMAIN_NAME" \
-	--quote_cert_file="./provisioning/quote_cert.crt" \
-	--measurement_file="./provisioning/measurement" \
+        --policy_key_file="./provisioning/policy_key_file.$DOMAIN_NAME" \
+        --quote_cert_file="./provisioning/quote_cert.crt" \
+        --measurement_file="./provisioning/measurement" \
         --policy_store_file=$POLICY_STORE_NAME --print_all=true
+  echo "got quote cert"
+  echo ""
+
   echo ""
   echo "first pass done"
+
+  cleanup-stale-procs
 }
 
 do-get-quote-cert-and-measurement
