@@ -185,6 +185,18 @@ function do-compile-program() {
   echo "do-compile-program done"
 }
 
+function make-root-list() {
+
+  pushd $EXAMPLE_DIR/provisioning
+    cp /var/lib/swtpm-localca/swtpm-localca-rootca-cert.pem root.pem
+    openssl x509 -inform pem -in root.pem -outform der -out root.der
+    openssl x509 -inform der -in root.der -text
+    $CERTIFIER_ROOT/utilities/make_der_cert_chain.exe \
+	--output="trustedRoots.bin" -init=true \
+	--new_cert_file="root.der" --add_cert=true
+  popd
+}
+
 function do-compile-certifier() {
   echo " "
   echo "do-compile-certifier"
@@ -227,6 +239,7 @@ function do-all() {
   do-make-keys
   do-compile-program
   do-compile-certifier
+  make-root-list
   
   echo " "
   echo "do-all done"

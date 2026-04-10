@@ -128,6 +128,10 @@ func CheckCertChain(tRoots *certprotos.BufferSequence, userChain *certprotos.Buf
                 Intermediates: intermediates,
                 // DNSName:       "example.com", // Optional: checks if cert is valid for this host
         }
+
+	// Debug
+	fmt.Printf("Calling verify for cert chain\n")
+
         chains, err := leaf.Verify(opts)
         if err != nil {
                 fmt.Printf("Verification failed: %v\n", err)
@@ -173,19 +177,26 @@ func ProcessActivationRequest(serializedRequest []byte, remoteIP string, roots *
 		fmt.Printf("Can't unmarshal request\n")
 	}
 
-	// deserialize Endorsement cert chain
-	derRoots := &certprotos.BufferSequence{}
+	// Deserialize Endorsement cert chain
 	derCertChain := &certprotos.BufferSequence{}
 	err = proto.Unmarshal(request.EndorsementCertChain, derCertChain)
 	if err != nil {
 		fmt.Printf("Can't unmarshal cert chain\n")
                 return false, fillAndSerializeQuoteFailure(response)
 	}
+
+	// Debug
+	fmt.Printf("Deserialized cert chain\n")
+
+	derRoots := &certprotos.BufferSequence{}
 	err = proto.Unmarshal(roots, derRoots)
 	if err != nil {
 		fmt.Printf("Can't unmarshal roots\n")
                 return false, fillAndSerializeQuoteFailure(response)
 	}
+
+	// Debug
+	fmt.Printf("Deserialized roots\n")
 	serializedEndorsementCert := request.EndorsementCert()
 
 	ok, endorsementCert :=  CheckCertChain(derRoots, derCerChain, serializedEndorsementCert)
@@ -194,16 +205,22 @@ func ProcessActivationRequest(serializedRequest []byte, remoteIP string, roots *
                 return false, fillAndSerializeQuoteFailure(response)
 	}
 
+	// Debug
+	fmt.Printf("Got endorsement cert\n")
+
 	ok, endorsementKey := getKeyFromCert(endorsementCert)
 	if !ok {
 		fmt.Printf("Can't get endorsement key from cert\n")
                 return false, fillAndSerializeQuoteFailure(response)
 	}
 
+	// Debug
+	fmt.Printf("Got endorsement key\n")
+
 	keyName ;= "endorsement-key"
 	internalEndorsementKey := &certprotos.KeyMessage{}
 	if (!GetInternalKeyFromRsaPublicKey(keyName, endorsementKey, internalEndorsementKey) {
-		fmt.Printf("Can't get translate endorsement\n")
+		fmt.Printf("Can't get translated endorsement key\n")
                 return false, fillAndSerializeQuoteFailure(response)
 	}
 
@@ -249,14 +266,15 @@ func ProcessActivationRequest(serializedRequest []byte, remoteIP string, roots *
 	PrintBytes(encryptedSecret)
 	fmt.Printf("\n")
 
-	encryptingAlg := "aes-256-gcm"
-
 	// Make DER cert for quote key and sign it with policy key
 	cert := ProduceAdmissionCert(remoteIP, privKey, policyCert, request.QuoteKey, "quote-key", "", uint64(5), 365.0*86400)
 	if cert == nil {
                 fmt.Printf("ProcessActivationRequest: Can't ProduceAdmissionCert\n")
                 return false, fillAndSerializeQuoteFailure(response)
 	}
+
+	// Debug
+	fmt.Printf("Generated quote cert\n")
 
 	// Serialize Cert
 	serializedCert := X509ToAsn1(cert)
@@ -266,11 +284,15 @@ func ProcessActivationRequest(serializedRequest []byte, remoteIP string, roots *
 	}
 
 	// Encrypt the DER cert using the credential
+	encryptingAlg := "aes-256-gcm"
         encryptedCert:= GeneralAuthenticatedEncrypt(encryptingAlg, serializedCert, key, iv)
         if encryptedCert == nil {
                 fmt.Printf("ProcessActivationRequest: Can't AuthenticatedEncrypt Data\n")
                 return false, fillAndSerializeQuoteFailure(response)
         }
+
+	// Debug
+	fmt.Printf("Encrypted cert, %d bytes\n", len(encryptedCert))
 
 	*response.Status = "succeeded"
 	*response.HashAlg= *request.QuoteHashAlg

@@ -69,7 +69,7 @@ var arkFile = flag.String("ark_file", "ark_cert.der", "ARK cert file name")
 var askFile = flag.String("ask_file", "ask_cert.der", "ASK cert file name")
 var vcekFile = flag.String("vcek_file", "vcek_cert.der", "VCEK cert file name")
 
-var trustedRootsFile = flag.String("trustedRootsFile", "./certlib/trustedRoots.bin", "trusted roots file name")
+var trustedRootsFile = flag.String("trustedRootsFile", "./provisioning/trustedRoots.bin", "trusted roots file name")
 var doActivate = flag.Bool("doActivate", false, "run activation")
 var activateServerHost = flag.String("activate_service_host", "localhost", "address for client/server")
 var activateServerPort = flag.String("activate_service_port", "8130", "port for activate")
@@ -213,7 +213,7 @@ func initActivateService(useStore bool) bool {
 	// DEBUG
 	fmt.Printf("Deserialized trusted roots\n")
 
-	return false;
+	return true;
 }
 
 var signedPolicy *certprotos.SignedClaimSequence = &certprotos.SignedClaimSequence{}
@@ -687,12 +687,22 @@ func activateServiceThread(conn net.Conn, client string) {
 		return
 	}
 
+	// Debug
+	fmt.Printf("Read %d byte request\n", len(b));
+
 	var remoteIP string
 	if remoteAddr, ok := conn.RemoteAddr().(*net.TCPAddr); ok {
 		remoteIP = remoteAddr.IP.String()
 	}
 
 	outcome, serializedResponse := certlib.ProcessActivationRequest(b, remoteIP, trustedRoots, publicPolicyKey, policyCert, privatePolicyKey)
+	if (!outcome {
+		fmt.Printf("ProcessActivate failed (2)\n")
+		return
+	}
+
+	// Debug
+	fmt.Printf("ProcessActivationRequest succeeded, writing %d bytes\n", len(serializedResponse));
 
 	if !certlib.SizedSocketWrite(conn, serializedResponse) {
 		fmt.Printf("SizedSocketWrite failed (2)\n")
