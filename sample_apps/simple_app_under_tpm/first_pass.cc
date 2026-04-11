@@ -72,6 +72,8 @@ bool first_pass(const string &tpm_device,
 
 #  ifdef DEBUG
   printf("\nfirst-pass (with activate)\n");
+#endif
+#  ifdef DEBUG2
   printf("    tpm device             : %s\n", tpm_device.c_str());
   printf("    endorsement file       : %s\n",
          endorsement_cert_file_name.c_str());
@@ -105,6 +107,12 @@ bool first_pass(const string &tpm_device,
                 num_pcrs,
                 pcrs)) {
     printf("%s() error, line %d, can't tpm_Init\n", __func__, __LINE__);
+    return false;
+  }
+
+  extern local_tpm g_tpm;
+  if (!extend_pcrs(g_tpm, 7)) {
+    printf("%s() error, line %d, extend_pcrs failed\n", __func__, __LINE__);
     return false;
   }
 
@@ -180,14 +188,32 @@ bool first_pass(const string &tpm_device,
   close(sock);
 
   extern local_tpm g_tpm;
-  if (!process_activate_response(g_tpm, serialized_response, cert_obtained)) {
+  bool             ret =
+      process_activate_response(g_tpm, serialized_response, cert_obtained);
+
+#  ifdef DEBUG2
+  extern bool g_tpm_initialized;
+  extern bool g_tpm_environment_initialized;
+
+  if (g_tpm_initialized) {
+    printf("tpm initialized\n");
+  } else {
+    printf("tpm not initialized\n");
+  }
+  if (g_tpm_environment_initialized) {
+    printf("tpm environment initialized\n");
+  } else {
+    printf("tpm environment not initialized\n");
+  }
+#  endif
+
+  tpm_close();
+  if (!ret) {
     printf("%s(), error, line: %d, can't process_activate_response\n",
            __func__,
            __LINE__);
-    tpm_close();
     return false;
   }
-  tpm_close();
 
   if (!write_file_from_string(quote_cert_file_name, *cert_obtained)) {
     printf("%s(), error, line: %d, couldn't write file\n", __func__, __LINE__);

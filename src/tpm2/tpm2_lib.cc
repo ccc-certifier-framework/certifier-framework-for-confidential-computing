@@ -2037,6 +2037,8 @@ bool Tpm2_MakeCredential(local_tpm              &tpm,
   return true;
 }
 
+#define DEBUG8
+
 bool Tpm2_ActivateCredential(local_tpm              &tpm,
                              TPM_HANDLE              activeHandle,
                              TPM_HANDLE              keyHandle,
@@ -2115,7 +2117,7 @@ bool Tpm2_ActivateCredential(local_tpm              &tpm,
                                 commandBuf,
                                 total_size,
                                 params);
-#ifdef DEBUG
+#ifdef DEBUG8
   print_command("ActivateCredential", in_size, commandBuf);
 #endif
   if (!tpm.send_command(in_size, commandBuf)) {
@@ -2134,7 +2136,7 @@ bool Tpm2_ActivateCredential(local_tpm              &tpm,
                          &cap,
                          &responseSize,
                          &responseCode);
-#ifdef DEBUG
+#ifdef DEBUG8
   print_response("ActivateCredential",
                  cap,
                  responseSize,

@@ -1351,11 +1351,12 @@ string       g_public_quote_key_name;
 
 #ifdef DEBUG
 void print_globals() {
+  printf("\ntpm state globals\n");
   if (!g_tpm_initialized) {
-    printf("\ntpm not initialized\n");
+    printf("tpm not initialized\n");
     return;
   }
-  printf("\ntpm initialized\n");
+  printf("tpm initialized\n");
   if (!g_tpm_environment_initialized) {
     printf("tpm environment not initialized\n");
     return;
@@ -1366,7 +1367,7 @@ void print_globals() {
     print_bytes(g_seal_thing.size(), (byte_t *)g_seal_thing.data());
     printf("\n");
   }
-  printf("\n%d pcrs: ", g_num_pcrs);
+  printf("%d pcrs: ", g_num_pcrs);
   for (int i = 0; i < g_num_pcrs; i++) {
     printf("%d ", g_pcrs[i]);
   }
@@ -1379,10 +1380,19 @@ void print_globals() {
     printf("\n");
   }
   if (g_serialized_endorsement_cert.size() > 0) {
-    printf("\nendorsement cert:\n");
+    printf("endorsement cert:\n");
     print_bytes(g_serialized_endorsement_cert.size(),
                 (byte_t *)g_serialized_endorsement_cert.data());
     printf("\n");
+
+    X509 *x = X509_new();
+    if (!asn1_to_x509(g_serialized_endorsement_cert, x)) {
+      printf("%s() error, line %d, can't convert to x509\n",
+             __func__,
+             __LINE__);
+    }
+    X509_print_fp(stdout, x);
+    X509_free(x);
   }
   if (g_serialized_endorsement_cert_chain.size() > 0) {
     printf("\nendorsement cert chain :\n");
@@ -1390,7 +1400,9 @@ void print_globals() {
                 (byte_t *)g_serialized_endorsement_cert_chain.data());
     printf("\n");
   }
-  printf("\n");
+  printf("g_ek_handle: %08x\n", g_ek_handle);
+  printf("g_srk_handle: %08x\n", g_srk_handle);
+  printf("g_quote_handle: %08x\n", g_quote_handle);
 }
 #endif
 
@@ -1482,10 +1494,10 @@ bool get_endorsement_auth_with_session(local_tpm  &tpm,
   n += sizeof(uint16_t);
   auth->assign((char *)auth_buf, n);
 
-#ifdef DEBUG2
+#ifdef DEBUG
   printf("Endorsement session handle: %08x\n", *endorsement_session_handle);
   printf("Endorsement auth: ");
-  print_bytes(endorsementAuth.size(), (byte_t *)endorsementAuth.data());
+  print_bytes(auth->size(), (byte_t *)auth->data());
   printf("\n");
   printf("Nonce (%d): ", (int)nonce.size());
   print_bytes(nonce.size(), (byte_t *)nonce.data());
@@ -1638,7 +1650,8 @@ bool init_quote_environment(int num_pcrs, byte_t *pcrs) {
     return false;
   }
   g_public_quote_key_name.assign((char *)q_pub_name.name, q_pub_name.size);
-#ifdef DEBUG
+
+#ifdef DEBUG2
   printf("\ninit quote environment, Quote key\n");
   printf("Type: %d\n", g_public_quote_key.publicArea.type);
   printf("Name: %d\n", g_public_quote_key.publicArea.nameAlg);
@@ -1681,7 +1694,7 @@ bool tpm_Init(const string &device_name,
               int           num_pcrs,
               byte_t       *pcrs) {
 
-#ifdef DEBUG3
+#ifdef DEBUG
   printf("tpm_Init, device: %s\n", device_name.c_str());
   printf("tpm_Init, endorsement cert: %s\n",
          endorsement_cert_file_name.c_str());
@@ -1718,6 +1731,10 @@ bool tpm_Init(const string &device_name,
 #endif
 
   if (endorsement_cert_file_name != "") {
+#ifdef DEBUG2
+    printf("tpm_init, getting endorsement cert from: %s\n",
+           endorsement_cert_file_name.c_str());
+#endif
     if (!read_file_into_string(endorsement_cert_file_name,
                                &g_serialized_endorsement_cert)) {
       printf("%s() error, line %d, can't init endorsement environment\n",
@@ -1726,6 +1743,9 @@ bool tpm_Init(const string &device_name,
       return false;
     }
   } else {
+#ifdef DEBUG2
+    printf("tpm_init, getting endorsement cert from nv\n");
+#endif
     if (!get_endorsement_cert(g_tpm, &g_serialized_endorsement_cert)) {
       printf("%s() error, line %d, can't get endorsement cert from tpm\n",
              __func__,
@@ -1741,6 +1761,10 @@ bool tpm_Init(const string &device_name,
              __LINE__);
       return false;
     }
+  } else {
+#ifdef DEBUG
+    printf("tpm_init, no endorsement chain\n");
+#endif
   }
 
   string empty;
@@ -3147,6 +3171,23 @@ bool make_credential_from_certifier(const char *quote_hash_alg,
   string cred_blob;
   string encrypted_secret;
 
+#ifdef DEBUG8
+  printf("\nmake_credential_from_certifier\n");
+  printf("  Hash alg: %s\n", quote_hash_alg);
+  printf("  Quote key name   (%d): ", quote_key_name_size);
+  print_bytes(quote_key_name_size, quote_key_name_buf);
+  printf("\n");
+  printf("  Endorsement cert (%d):\n", endoresment_cert_size);
+  print_bytes(endoresment_cert_size, endoresment_cert_buf);
+  printf("\n");
+#endif
+#ifdef DEBUG
+  printf("\nmake_credential_from_certifier\n");
+  printf("  Credential       (%d): ", credential_size);
+  print_bytes(credential_size, credential_buf);
+  printf("\n");
+#endif
+
   quote_hash = quote_hash_alg;
   quote_key_name.assign((char *)quote_key_name_buf, quote_key_name_size);
   endorsement_cert_in.assign((char *)endoresment_cert_buf,
@@ -3235,7 +3276,7 @@ bool process_activate_response(local_tpm    &tpm,
     return false;
   }
 #ifdef DEBUG
-  printf("cert response:\n");
+  printf("Request response at caller:\n");
   print_quote_certification_response(res);
   printf("\n");
 #endif
@@ -3270,24 +3311,11 @@ bool process_activate_response(local_tpm    &tpm,
     return false;
   }
 
-  string     empty;
-  string     quoteAuth;
-  string     endorsementAuth;
-  string     nonce;
-  TPM_HANDLE endorsement_session_handle = 0;
+  string empty;
+  string quoteAuth;
 
   if (!get_password_auth(empty, &quoteAuth)) {
     printf("%s() error, line %d, can't get password auth\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-  if (!get_endorsement_auth_with_session(tpm,
-                                         quoteAuth,
-                                         nonce,
-                                         &endorsement_session_handle,
-                                         &endorsementAuth)) {
-    printf("%s() error, line %d, can't get endorsement auth\n",
            __func__,
            __LINE__);
     return false;
@@ -3301,6 +3329,22 @@ bool process_activate_response(local_tpm    &tpm,
   memcpy(cred_secret.secret,
          (byte_t *)res.encrypted_secret().data(),
          cred_secret.size);
+
+  // endorsement auth session
+  string     endorsementAuth;
+  string     nonce;
+  TPM_HANDLE endorsement_session_handle = 0;
+  if (!get_endorsement_auth_with_session(tpm,
+                                         quoteAuth,
+                                         nonce,
+                                         &endorsement_session_handle,
+                                         &endorsementAuth)) {
+    printf("%s() error, line %d, can't get endorsement auth\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
   if (!Tpm2_ActivateCredential(tpm,
                                g_quote_handle,
                                g_ek_handle,

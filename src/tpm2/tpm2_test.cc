@@ -147,7 +147,7 @@ bool credential_test(local_tpm          &tpm,
     Tpm2_FlushContext(tpm, ek_handle);
     return false;
   }
-#ifdef DEBUG1
+#ifdef DEBUG
   printf("Credential tests, ReadPublic succeeded\n");
   printf("Active Name (%d): ", quoting_pub_name.size);
   print_bytes(quoting_pub_name.size, quoting_pub_name.name);
@@ -386,7 +386,7 @@ bool endorsement_test(local_tpm &tpm, string authString) {
            __LINE__);
     return false;
   }
-  printf("\nEndorsement ertificate:\n");
+  printf("\nEndorsement certificate:\n");
   X509_print_fp(stdout, cert);
   printf("\n");
   X509_free(cert);

@@ -174,6 +174,7 @@ func ProcessActivationRequest(serializedRequest []byte, remoteIP string, roots *
 	}
 
 	// Debug
+	fmt.Printf("Request at certifier.\n")
 	PrintQuoteCertificationRequest(request)
 
 	err = proto.Unmarshal(serializedRequest, response)
@@ -190,7 +191,7 @@ func ProcessActivationRequest(serializedRequest []byte, remoteIP string, roots *
 	}
 
 	// Debug
-	fmt.Printf("Deserialized cert chain\n")
+	// fmt.Printf("Deserialized cert chain\n")
 
 	ok, endorsementCert :=  CheckCertChain(roots, derCertChain, request.EndorsementCert)
 	if !ok {
@@ -199,7 +200,7 @@ func ProcessActivationRequest(serializedRequest []byte, remoteIP string, roots *
 	}
 
 	// Debug
-	fmt.Printf("Got endorsement cert\n")
+	// fmt.Printf("Got endorsement cert\n")
 
 	ok, endorsementKey := getKeyFromCert(endorsementCert)
 	if !ok {
@@ -208,7 +209,7 @@ func ProcessActivationRequest(serializedRequest []byte, remoteIP string, roots *
 	}
 
 	// Debug
-	fmt.Printf("Got endorsement key\n")
+	// fmt.Printf("Got endorsement key\n")
 
 	keyName := "endorsement-key"
 	internalEndorsementKey := &certprotos.KeyMessage{}
@@ -296,7 +297,7 @@ func ProcessActivationRequest(serializedRequest []byte, remoteIP string, roots *
 	response.EncryptedQuoteCert = encryptedCert
 
 	// Debug
-	fmt.Printf("activateServiceThread: Quote Certification Response\n")
+	fmt.Printf("Quote Certification Response at certifier.\n")
 	PrintQuoteCertificationResponse(response)
 
 	// serialize response
