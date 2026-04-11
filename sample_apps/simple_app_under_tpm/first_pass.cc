@@ -127,14 +127,14 @@ bool first_pass(const string &tpm_device,
     return false;
   }
 
+  extern string g_public_quote_key_name;
   string serialized_quote_key_name;
   string serialized_request;
   string quote_hash_alg("sha256");
-  // serialized_quote_key_name.assign((char*)g_public_quote_key.publicArea.nameAlg
   if (!construct_activate_request(g_serialized_endorsement_cert,
                                   g_serialized_endorsement_cert_chain,
                                   quote_key,
-                                  serialized_quote_key_name,
+                                  g_public_quote_key_name,
                                   quote_hash_alg,
                                   &serialized_request)) {
     printf("%s(), error, line: %d, can't construct request\n",

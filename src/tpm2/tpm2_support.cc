@@ -1638,8 +1638,8 @@ bool init_quote_environment(int num_pcrs, byte_t *pcrs) {
     return false;
   }
   g_public_quote_key_name.assign((char *)q_pub_name.name, q_pub_name.size);
-#ifdef DEBUG2
-  printf("\nQuote key\n");
+#ifdef DEBUG
+  printf("\ninit quote environment, Quote key\n");
   printf("Type: %d\n", g_public_quote_key.publicArea.type);
   printf("Name: %d\n", g_public_quote_key.publicArea.nameAlg);
   printf("Scheme: %d\n",
@@ -1650,6 +1650,9 @@ bool init_quote_environment(int num_pcrs, byte_t *pcrs) {
   printf("\n");
   printf("Exponent: %d\n",
          g_public_quote_key.publicArea.parameters.rsaDetail.exponent);
+  printf("\n");
+  printf("Quote key name: ");
+  print_bytes(q_pub_name.size, q_pub_name.name);
   printf("\n");
 #endif
 
