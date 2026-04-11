@@ -128,9 +128,9 @@ bool first_pass(const string &tpm_device,
   }
 
   extern string g_public_quote_key_name;
-  string serialized_quote_key_name;
-  string serialized_request;
-  string quote_hash_alg("sha256");
+  string        serialized_quote_key_name;
+  string        serialized_request;
+  string        quote_hash_alg("sha256");
   if (!construct_activate_request(g_serialized_endorsement_cert,
                                   g_serialized_endorsement_cert_chain,
                                   quote_key,
@@ -170,8 +170,6 @@ bool first_pass(const string &tpm_device,
     return false;
   }
 
-  tpm_close();
-
   // Read response from Activate Service.
   string serialized_response;
   int    resp_size = sized_socket_read(sock, &serialized_response);
@@ -183,7 +181,9 @@ bool first_pass(const string &tpm_device,
 
   extern local_tpm g_tpm;
   if (!process_activate_response(g_tpm, serialized_response, cert_obtained)) {
-    printf("%s(), error, line: %d, can't parse response\n", __func__, __LINE__);
+    printf("%s(), error, line: %d, can't process_activate_response\n",
+           __func__,
+           __LINE__);
     tpm_close();
     return false;
   }

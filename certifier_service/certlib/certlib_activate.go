@@ -258,6 +258,7 @@ func ProcessActivationRequest(serializedRequest []byte, remoteIP string, roots *
 	fmt.Printf("Encrypted Secret:\n")
 	PrintBytes(encryptedSecret)
 	fmt.Printf("\n")
+	fmt.Printf("remoteIP: %s\n", remoteIP)
 
 	// Make x509 cert for quote key and sign it with policy key
 	cert := ProduceAdmissionCert(remoteIP, privKey, policyCert, request.QuoteKey, "quote-key", "The_TPM", uint64(5), 365.0*86400)
@@ -270,15 +271,15 @@ func ProcessActivationRequest(serializedRequest []byte, remoteIP string, roots *
 	fmt.Printf("Generated quote cert\n")
 
 	// Serialize Cert
-	serializedCert := X509ToAsn1(cert)
-	if serializedCert == nil {
+	serializedQuoteCert := X509ToAsn1(cert)
+	if serializedQuoteCert == nil {
                 fmt.Printf("Can't serialize quote cert\n")
                 return false, fillAndSerializeQuoteFailure(response)
 	}
 
 	// Encrypt the DER cert using the credential
 	encryptingAlg := "aes-256-gcm"
-        encryptedCert:= GeneralAuthenticatedEncrypt(encryptingAlg, serializedCert, key, iv)
+        encryptedCert:= GeneralAuthenticatedEncrypt(encryptingAlg, serializedQuoteCert, key, iv)
         if encryptedCert == nil {
                 fmt.Printf("ProcessActivationRequest: Can't AuthenticatedEncrypt Data\n")
                 return false, fillAndSerializeQuoteFailure(response)

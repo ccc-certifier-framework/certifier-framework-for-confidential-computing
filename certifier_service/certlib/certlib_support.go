@@ -35,6 +35,7 @@ import (
 	"net"
 	"strings"
 	"time"
+	// "os"
 
 	certprotos "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/certprotos"
 	"google.golang.org/protobuf/proto"
@@ -1792,6 +1793,9 @@ func Asn1ToX509(in []byte) *x509.Certificate {
 func X509ToAsn1(cert *x509.Certificate) []byte {
 	out, err := asn1.Marshal(cert)
 	if err != nil {
+		if cert.Raw != nil {
+			return cert.Raw
+		}
 		fmt.Printf("X509ToAsn1 error: %s\n", err.Error())
 		return nil
 	}
@@ -1874,6 +1878,15 @@ func ProduceAdmissionCert(remoteIP string, issuerKey *certprotos.KeyMessage, iss
 		fmt.Printf("ProduceAdmissionCert: Can't Create Certificate\n")
 		return nil
 	}
+
+	/*
+	// Debug
+	fileName := "test_quote.der"
+	if os.WriteFile(fileName, derBytes, 0666) != nil {
+		fmt.Printf("ProduceAdmissionCert: Can't write %s\n", fileName)
+	}
+	 */
+
 	newCert, err := x509.ParseCertificate(derBytes)
 	if err != nil {
 		fmt.Printf("ProduceAdmissionCert: Can't Parse Certificate\n")

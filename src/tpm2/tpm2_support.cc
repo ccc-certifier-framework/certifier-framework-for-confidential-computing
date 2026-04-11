@@ -3237,6 +3237,7 @@ bool process_activate_response(local_tpm    &tpm,
 #ifdef DEBUG
   printf("cert response:\n");
   print_quote_certification_response(res);
+  printf("\n");
 #endif
 
   if (!g_tpm_environment_initialized) {
