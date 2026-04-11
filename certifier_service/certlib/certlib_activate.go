@@ -163,7 +163,7 @@ First Aid
 func ProcessActivationRequest(serializedRequest []byte, remoteIP string, roots *certprotos.BufferSequence, pubKey *certprotos.KeyMessage, policyCert *x509.Certificate, privKey *certprotos.KeyMessage) (bool, []byte) {
 
 	// Debug
-	fmt.Printf("activateServiceThread: Trust request received:\n")
+	fmt.Printf("activateServiceThread: Trust request received.\n")
 
 	request := &certprotos.QuoteCertificationRequest{}
 	response := &certprotos.QuoteCertificationResponse{}
@@ -174,7 +174,6 @@ func ProcessActivationRequest(serializedRequest []byte, remoteIP string, roots *
 	}
 
 	// Debug
-	fmt.Printf("activateServiceThread: Trust request received:\n")
 	PrintQuoteCertificationRequest(request)
 
 	err = proto.Unmarshal(serializedRequest, response)

@@ -622,7 +622,7 @@ func certifierServiceThread(conn net.Conn, client string) {
 	}
 
 	// Debug
-	fmt.Printf("certifierServiceThread: Trust request received:\n")
+	fmt.Printf("certifierServiceThread: Trust request received.\n")
 	certlib.PrintTrustRequest(request)
 
 	// Prepare response
