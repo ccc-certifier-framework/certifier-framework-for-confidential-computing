@@ -501,6 +501,8 @@ int main(int an, char **av) {
                     FLAGS_activate_service_port,
                     FLAGS_quote_cert_file,
                     &cert_obtained)) {
+      printf("%s() error, line %d, first_pass failed\n", __func__, __LINE__);
+      return 1;
     } else {
       printf("first_pass succeeded\n");
       return 0;
