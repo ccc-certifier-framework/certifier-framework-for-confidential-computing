@@ -157,6 +157,47 @@ bool create_pcr_policy(local_tpm    &tpm,
   return true;
 }
 
+#if 0
+void print_tpm_public_key_info(local_tpm& tpm, TPM_HANDLE& key_handle) {
+
+  TPM2B_NAME pub_name;
+  TPM2B_NAME qualified_pub_name;
+  uint16_t   pub_blob_size = 4096;
+  byte_t     pub_blob[pub_blob_size];
+  if (!Tpm2_ReadPublic(tpm,
+                       key_handle,
+                       &pub_blob_size,
+                       pub_blob,
+                       &pub_out,
+                       &pub_name,
+                       &qualified_pub_name)) {
+    printf("%s() error, line %d, ReadPublic failed\n", __func__, __LINE__);
+    return;
+  }
+
+  printf("Public blob: ");
+  print_bytes(pub_blob_size, pub_blob);
+  printf("\n");
+  printf("\nName: ");
+  print_bytes(pub_name.size, pub_name.name);
+  printf("\n");
+  printf("Qualified name: ");
+  print_bytes(qualified_pub_name.size, qualified_pub_name.name);
+  printf("\n");
+  printf("\n");
+  printf("Pubout size: %d\n", pub_out.size);
+  printf("Type: %d\n", pub_out.publicArea.type);
+  printf("Name: %d\n", pub_out.publicArea.nameAlg);
+  printf("Scheme: %d\n", pub_out.publicArea.parameters.rsaDetail.scheme.scheme);
+  printf("Bytes (%d):\n", (int)pub_out.publicArea.unique.rsa.size);
+  print_bytes((int)pub_out.publicArea.unique.rsa.size,
+              (byte_t *)pub_out.publicArea.unique.rsa.buffer);
+  printf("\n");
+  printf("Exponent: %d\n", pub_out.publicArea.parameters.rsaDetail.exponent);
+  printf("\n");
+}
+#endif
+
 bool create_seal_session(local_tpm          &tpm,
                          TPML_PCR_SELECTION &pcrSelect,
                          TPM_HANDLE         *session_handle) {
@@ -1373,6 +1414,12 @@ void print_globals() {
   }
   printf("\n");
 
+#if 0
+  printf("PCR's\n");
+  print_pcrs(g_tpm, g_num_pcrs, g_pcrs);
+  printf("\n");
+#endif
+
   if (g_serialized_quote_cert.size() > 0) {
     printf("\nquote cert:\n");
     print_bytes(g_serialized_quote_cert.size(),
@@ -1403,6 +1450,23 @@ void print_globals() {
   printf("g_ek_handle: %08x\n", g_ek_handle);
   printf("g_srk_handle: %08x\n", g_srk_handle);
   printf("g_quote_handle: %08x\n", g_quote_handle);
+#if 0
+  if (g_ek_handle != 0) {
+    printf("Public g_ek\n");
+    print_tpm_public_key_info(g_tpm, g_ek_handle);
+    printf("\n");
+  }
+  if (g_srk_handle != 0) {
+    printf("Public g_srk\n");
+    print_tpm_public_key_info(g_tpm, g_srk_handle);
+    printf("\n");
+  }
+  if (g_quote_handle != 0) {
+    printf("Public g_quote\n");
+    print_tpm_public_key_info(g_tpm, g_quote_handle);
+    printf("\n");
+  }
+#endif
 }
 #endif
 
@@ -1651,7 +1715,7 @@ bool init_quote_environment(int num_pcrs, byte_t *pcrs) {
   }
   g_public_quote_key_name.assign((char *)q_pub_name.name, q_pub_name.size);
 
-#ifdef DEBUG2
+#ifdef DEBUG
   printf("\ninit quote environment, Quote key\n");
   printf("Type: %d\n", g_public_quote_key.publicArea.type);
   printf("Name: %d\n", g_public_quote_key.publicArea.nameAlg);
@@ -1719,15 +1783,21 @@ bool tpm_Init(const string &device_name,
     return false;
   }
 
-  if (!init_tpm(device_name)) {
-    printf("%s() error, line %d, can't open tpm: %s\n",
-           __func__,
-           __LINE__,
-           device_name.c_str());
-    return false;
+  // We allow tpm to be opened prior to this
+  if (!g_tpm_initialized) {
+    if (!init_tpm(device_name)) {
+      printf("%s() error, line %d, can't open tpm: %s\n",
+             __func__,
+             __LINE__,
+             device_name.c_str());
+      return false;
+    }
   }
-#ifdef DEBUG2
-  printf("tpm_init, opened tpm: %s %d\n", device_name.c_str(), g_tpm.tpm_fd_);
+
+#if 0
+  printf("PCR's at tpm_Init entry:\n");
+  print_pcrs(g_tpm, num_pcrs, pcrs);
+  printf("\n");
 #endif
 
   if (endorsement_cert_file_name != "") {
@@ -1753,6 +1823,8 @@ bool tpm_Init(const string &device_name,
       return false;
     }
   }
+
+  // endorsement chain
   if (endorsement_cert_chain_file_name != "") {
     if (!read_file_into_string(endorsement_cert_chain_file_name,
                                &g_serialized_endorsement_cert_chain)) {
@@ -1789,6 +1861,12 @@ bool tpm_Init(const string &device_name,
     return false;
   }
 
+#if 0
+  printf("Public ek before environment inits\n");
+  print_tpm_public_key_info(g_tpm, g_ek_handle);
+  printf("\n");
+#endif
+
   // init seal envrionment
   if (!init_seal_environment(num_pcrs, pcrs)) {
     printf("%s() error, line %d, can't init seal environment\n",
@@ -1811,6 +1889,7 @@ bool tpm_Init(const string &device_name,
   printf("\nGot quote environment\n");
 #endif
 
+  // Fill globals
   g_num_pcrs = num_pcrs;
   memcpy(g_pcrs, pcrs, num_pcrs);
 
@@ -1819,7 +1898,7 @@ bool tpm_Init(const string &device_name,
   printf("\ntpm_init succeeded\n\n");
 #endif
 #ifdef DEBUG
-  printf("\n\n");
+  printf("\n");
   print_globals();
   printf("\n\n");
 #endif
@@ -3240,6 +3319,16 @@ bool construct_activate_request(const string      &endorsement_cert,
                                 const string      &quote_hash_alg,
                                 string            *serialized_request) {
 
+#if 0
+  printf("PCR's at construct_activate_request entry:\n");
+  print_pcrs(g_tpm, g_num_pcrs, g_pcrs);
+  printf("Public ek\n");
+  print_tpm_public_key_info(g_tpm, g_ek_handle);
+  printf("\n");
+  printf("Public quote\n");
+  print_tpm_public_key_info(g_tpm, g_quote_handle);
+  printf("\n");
+#endif
   quote_certification_request req;
 
   req.set_requesting_enclave_tag("requesting enclave");
@@ -3263,6 +3352,17 @@ bool construct_activate_request(const string      &endorsement_cert,
 bool process_activate_response(local_tpm    &tpm,
                                const string &serialized_response,
                                string       *quote_cert) {
+
+#if 0
+  printf("PCR's at process_activate_response entry:\n");
+  print_pcrs(g_tpm, g_num_pcrs, g_pcrs);
+  printf("Public ek\n");
+  print_tpm_public_key_info(g_tpm, g_ek_handle);
+  printf("\n");
+  printf("Public quote\n");
+  print_tpm_public_key_info(g_tpm, g_quote_handle);
+  printf("\n");
+#endif
 
   quote_certification_response res;
   if (!res.ParseFromString(serialized_response)) {

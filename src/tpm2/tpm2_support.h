@@ -27,6 +27,7 @@ using namespace certifier::utilities;
 
 bool print_pcrs(local_tpm &tpm, int num_pcrs, byte *pcrs);
 bool extend_pcrs(local_tpm &tpm, int pcr_num);
+void print_tpm_public_key_info(local_tpm& tpm, TPM_HANDLE& key_handle);
 
 bool create_seal_session(local_tpm          &tpm,
                          TPML_PCR_SELECTION &pcrSelect,

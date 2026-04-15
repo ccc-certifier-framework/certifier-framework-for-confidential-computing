@@ -112,6 +112,11 @@ bool credential_test(local_tpm          &tpm,
   }
 #ifdef DEBUG1
   printf("\nGot endorsement key %08x\n", ek_handle);
+  printf("PCR's at credential test entry:\n");
+  print_pcrs(tpm, num_pcrs, pcrs);
+  printf("Public ek at credential test entry\n");
+  print_tpm_public_key_info(tpm, ek_handle);
+  printf("\n");
 #endif
 
   TPM2B_DIGEST           credential;
@@ -153,7 +158,6 @@ bool credential_test(local_tpm          &tpm,
   print_bytes(quoting_pub_name.size, quoting_pub_name.name);
   printf("\n");
 #endif
-
 
   int    n = 0;
   string quoteAuth;
@@ -251,7 +255,7 @@ bool credential_test(local_tpm          &tpm,
   }
 
 #ifdef DEBUG
-  printf("\nSucceeded using MakeCredential succeeded\n");
+  printf("\nSucceeded using library MakeCredential\n");
   printf("Recovered credential (%d): ", recovered_cred.size);
   print_bytes(recovered_cred.size, recovered_cred.buffer);
   printf("\n");
@@ -262,6 +266,9 @@ bool credential_test(local_tpm          &tpm,
   printf("\n");
   printf("\ncredBlob size: %d\n", (int)cred_blob.size);
   print_bytes(cred_blob.size, (byte_t *)cred_blob.credential);
+  printf("\n");
+  printf("Public ek at end of credential\n");
+  print_tpm_public_key_info(tpm, ek_handle);
   printf("\n");
 #endif
 
@@ -407,6 +414,11 @@ bool seal_test(local_tpm &tpm, int pcr_num, const string &seal_file) {
   int    num_pcrs = 1;
   byte_t pcrs[1] = {7};
 
+#if 0
+  printf("PCR's at seal test entry:\n");
+  print_pcrs(tpm, num_pcrs, pcrs);
+#endif
+
   if (!extend_pcrs(tpm, 7)) {
     printf("%s() error, line %d, extend_pcrs failed\n", __func__, __LINE__);
     return false;
@@ -432,6 +444,10 @@ bool seal_test(local_tpm &tpm, int pcr_num, const string &seal_file) {
     return false;
   }
 
+#if 0
+  printf("PCR's at end of seal_test:\n");
+  print_pcrs(tpm, num_pcrs, pcrs);
+#endif
   printf("Recovered seal secret: ");
   print_bytes(seal_secret.size(), (byte_t *)seal_secret.data());
   printf("\n");
@@ -445,6 +461,11 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
 
   TPM_HANDLE srk_handle;
   TPM_HANDLE quote_handle;
+
+#if 0
+  printf("PCR's at quote test entry:\n");
+  print_pcrs(tpm, num_pcrs, pcrs);
+#endif
 
   if (!extend_pcrs(tpm, 7)) {
     printf("%s() error, line %d, extend_pcrs failed\n", __func__, __LINE__);
@@ -616,7 +637,7 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
   // Make/Activate Credential test
   TPML_PCR_SELECTION pcrSelect;
   memset((void *)&pcrSelect, 0, sizeof(TPML_PCR_SELECTION));
-  string policyString;
+  string policyString;  // Not used?
 
   if (num_pcrs < 1) {
     printf("%s() error, line %d: No pcrs\n", __func__, __LINE__);
@@ -627,15 +648,21 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
     add_pcr_selection(pcrs[i], TPM_ALG_SHA256, &pcrSelect);
   }
 
-#ifdef DEBUG
-  printf("PCRs: \n");
-  print_pcrs(tpm, num_pcrs, pcrs);
-#endif
-
   if (!credential_test(tpm, pcrSelect, srk_handle, quote_handle)) {
     printf("%s() error, line %d, credential_test failed\n", __func__, __LINE__);
     return false;
   }
+
+#if 0
+  printf("PCRs at end of test: \n");
+  print_pcrs(tpm, num_pcrs, pcrs);
+  printf("quote key at end of quote test\n");
+  print_tpm_public_key_info(tpm, quote_handle);
+  printf("\n");
+  printf("srk key at end of quote test\n");
+  print_tpm_public_key_info(tpm, srk_handle);
+  printf("\n");
+#endif
 
   Tpm2_FlushContext(tpm, quote_handle);
   Tpm2_FlushContext(tpm, srk_handle);
