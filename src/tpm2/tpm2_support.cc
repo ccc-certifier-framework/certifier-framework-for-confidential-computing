@@ -3459,10 +3459,8 @@ bool process_activate_response(local_tpm    &tpm,
   printf("encrypted cert size: %d\n", (int)res.encrypted_quote_cert().size());
 #endif
 
-  return true;
-
   // now decrypt it
-  int  out_size = 256;
+  int  out_size = 2048;
   byte out[out_size];
 
   if (res.encrypting_alg() == Enc_method_aes_256_gcm) {
@@ -3486,7 +3484,7 @@ bool process_activate_response(local_tpm    &tpm,
   quote_cert->assign((char *)out, out_size);
 
 #ifdef DEBUG
-  printf("decrypted cert (%d):\n", out_size);
+  printf("\ndecrypted cert (%d):\n", out_size);
   print_bytes(quote_cert->size(), (byte_t *)quote_cert->data());
   printf("\n");
 #endif

@@ -263,7 +263,6 @@ bool first_pass(const string &tpm_device,
   }
   RSA_free(auth_r);
 
-  printf("tpm_test: generated enclave key:\n");
   print_key(public_auth_key);
   printf("\n");
 
@@ -345,7 +344,9 @@ bool first_pass(const string &tpm_device,
   printf("\n");
   print_pcrs(g_tpm, new_num_pcrs, new_pcrs);
   printf("\n");
-  printf("Digest: ");
+#  endif
+#  ifdef DEBUG
+  printf("Measurement digest: ");
   print_bytes(pcr_digest.size(), (byte_t *)pcr_digest.data());
   printf("\n");
 #  endif
