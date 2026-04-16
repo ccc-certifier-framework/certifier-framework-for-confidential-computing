@@ -157,13 +157,14 @@ bool create_pcr_policy(local_tpm    &tpm,
   return true;
 }
 
-#if 0
-void print_tpm_public_key_info(local_tpm& tpm, TPM_HANDLE& key_handle) {
+void print_tpm_public_key_info(local_tpm &tpm, TPM_HANDLE &key_handle) {
 
-  TPM2B_NAME pub_name;
-  TPM2B_NAME qualified_pub_name;
-  uint16_t   pub_blob_size = 4096;
-  byte_t     pub_blob[pub_blob_size];
+  TPM2B_PUBLIC pub_out;
+  TPM2B_NAME   pub_name;
+  TPM2B_NAME   qualified_pub_name;
+  uint16_t     pub_blob_size = 4096;
+  byte_t       pub_blob[pub_blob_size];
+
   if (!Tpm2_ReadPublic(tpm,
                        key_handle,
                        &pub_blob_size,
@@ -196,7 +197,6 @@ void print_tpm_public_key_info(local_tpm& tpm, TPM_HANDLE& key_handle) {
   printf("Exponent: %d\n", pub_out.publicArea.parameters.rsaDetail.exponent);
   printf("\n");
 }
-#endif
 
 bool create_seal_session(local_tpm          &tpm,
                          TPML_PCR_SELECTION &pcrSelect,
@@ -1414,11 +1414,9 @@ void print_globals() {
   }
   printf("\n");
 
-#if 0
   printf("PCR's\n");
   print_pcrs(g_tpm, g_num_pcrs, g_pcrs);
   printf("\n");
-#endif
 
   if (g_serialized_quote_cert.size() > 0) {
     printf("\nquote cert:\n");
@@ -1450,7 +1448,6 @@ void print_globals() {
   printf("g_ek_handle: %08x\n", g_ek_handle);
   printf("g_srk_handle: %08x\n", g_srk_handle);
   printf("g_quote_handle: %08x\n", g_quote_handle);
-#if 0
   if (g_ek_handle != 0) {
     printf("Public g_ek\n");
     print_tpm_public_key_info(g_tpm, g_ek_handle);
@@ -1466,7 +1463,6 @@ void print_globals() {
     print_tpm_public_key_info(g_tpm, g_quote_handle);
     printf("\n");
   }
-#endif
 }
 #endif
 
@@ -1794,11 +1790,9 @@ bool tpm_Init(const string &device_name,
     }
   }
 
-#if 0
   printf("PCR's at tpm_Init entry:\n");
   print_pcrs(g_tpm, num_pcrs, pcrs);
   printf("\n");
-#endif
 
   if (endorsement_cert_file_name != "") {
 #ifdef DEBUG2
@@ -1861,11 +1855,9 @@ bool tpm_Init(const string &device_name,
     return false;
   }
 
-#if 0
   printf("Public ek before environment inits\n");
   print_tpm_public_key_info(g_tpm, g_ek_handle);
   printf("\n");
-#endif
 
   // init seal envrionment
   if (!init_seal_environment(num_pcrs, pcrs)) {
@@ -3319,7 +3311,6 @@ bool construct_activate_request(const string      &endorsement_cert,
                                 const string      &quote_hash_alg,
                                 string            *serialized_request) {
 
-#if 0
   printf("PCR's at construct_activate_request entry:\n");
   print_pcrs(g_tpm, g_num_pcrs, g_pcrs);
   printf("Public ek\n");
@@ -3328,7 +3319,7 @@ bool construct_activate_request(const string      &endorsement_cert,
   printf("Public quote\n");
   print_tpm_public_key_info(g_tpm, g_quote_handle);
   printf("\n");
-#endif
+
   quote_certification_request req;
 
   req.set_requesting_enclave_tag("requesting enclave");
@@ -3353,7 +3344,6 @@ bool process_activate_response(local_tpm    &tpm,
                                const string &serialized_response,
                                string       *quote_cert) {
 
-#if 0
   printf("PCR's at process_activate_response entry:\n");
   print_pcrs(g_tpm, g_num_pcrs, g_pcrs);
   printf("Public ek\n");
@@ -3362,7 +3352,6 @@ bool process_activate_response(local_tpm    &tpm,
   printf("Public quote\n");
   print_tpm_public_key_info(g_tpm, g_quote_handle);
   printf("\n");
-#endif
 
   quote_certification_response res;
   if (!res.ParseFromString(serialized_response)) {

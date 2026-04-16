@@ -72,7 +72,7 @@ bool first_pass(const string &tpm_device,
 
 #  ifdef DEBUG
   printf("\nfirst-pass (with activate)\n");
-#endif
+#  endif
 #  ifdef DEBUG2
   printf("    tpm device             : %s\n", tpm_device.c_str());
   printf("    endorsement file       : %s\n",
