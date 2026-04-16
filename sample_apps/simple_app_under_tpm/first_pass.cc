@@ -72,7 +72,7 @@ bool first_pass(const string &tpm_device,
 
 #  ifdef DEBUG
   printf("\nfirst-pass (with activate)\n");
-#endif
+#  endif
 #  ifdef DEBUG2
   printf("    tpm device             : %s\n", tpm_device.c_str());
   printf("    endorsement file       : %s\n",
@@ -85,7 +85,7 @@ bool first_pass(const string &tpm_device,
   printf("    quote_cert  file       : %s\n", quote_cert_file_name.c_str());
 #  endif
 
-#if 0
+#  if 0
   if (!init_tpm(FLAGS_tpm_device)) {
     printf("%s() error, line %d, tpm_init failed\n", __func__, __LINE__);
     return false;
@@ -102,7 +102,7 @@ bool first_pass(const string &tpm_device,
 
   printf("PCR's at first psss after extend:\n");
   print_pcrs(tpm, num_pcrs, pcrs);
-#endif
+#  endif
 
   extern string       g_serialized_quote_cert;
   extern string       g_serialized_endorsement_cert;

@@ -185,7 +185,7 @@ bool credential_test(local_tpm          &tpm,
   cred.assign((char *)credential.buffer, credential.size);
 
 #ifdef DEBUG
-  X509* x = X509_new();
+  X509 *x = X509_new();
   asn1_to_x509(endorsement_cert, x);
   printf("\nCert:\n");
   X509_print_fp(stdout, x);

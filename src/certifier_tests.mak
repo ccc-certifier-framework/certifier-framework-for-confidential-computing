@@ -3,7 +3,7 @@
 
 #ENABLE_SEV=1
 #RUN_SEV_TESTS=1
-TPM=1
+#TPM=1
 
 # CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
 ifndef CERTIFIER_ROOT

@@ -910,6 +910,7 @@ bool aes_256_gcm_encrypt(byte *in,
   int             ciphertext_len;
   int             blk_size = cipher_block_byte_size(Enc_method_aes_256);
   int             key_size = cipher_key_byte_size(Enc_method_aes_256);
+  int             iv_size = 12;
   int             tag_len = 0;
   byte            tag[16];
   int             aad_len = 0;
@@ -937,8 +938,7 @@ bool aes_256_gcm_encrypt(byte *in,
   }
 
   // set IV length
-  if (1
-      != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, blk_size, nullptr)) {
+  if (1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, iv_size, nullptr)) {
     printf("%s() error, line: %d, EVP_CIPHER_CTX_ctrl failed\n",
            __func__,
            __LINE__);
@@ -953,7 +953,7 @@ bool aes_256_gcm_encrypt(byte *in,
     goto done;
   }
 
-  memcpy(out, iv, blk_size);
+  memcpy(out, iv, iv_size);
 
   if (1 != EVP_EncryptUpdate(ctx, nullptr, &len, aad, aad_len)) {
     printf("%s() error, line: %d, EVP_EncryptUpdate failed\n",
@@ -962,14 +962,14 @@ bool aes_256_gcm_encrypt(byte *in,
     ret = false;
     goto done;
   }
-  if (1 != EVP_EncryptUpdate(ctx, out + blk_size, &len, in, in_len)) {
+  if (1 != EVP_EncryptUpdate(ctx, out + iv_size, &len, in, in_len)) {
     printf("%s() error, line: %d, EVP_EncryptUpdate failed\n",
            __func__,
            __LINE__);
     ret = false;
     goto done;
   }
-  ciphertext_len = len + blk_size;
+  ciphertext_len = len + iv_size;
 
   // Finalize
   if (1 != EVP_EncryptFinal_ex(ctx, out + len, &len)) {
@@ -981,8 +981,7 @@ bool aes_256_gcm_encrypt(byte *in,
   }
   ciphertext_len += len;
 
-  tag_len = EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, blk_size, tag);
-  if (tag_len <= 0) {
+  if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, blk_size, tag) <= 0) {
     printf("%s() error, line: %d, EVP_CIPHER_CTX_ctrl failed\n",
            __func__,
            __LINE__);
@@ -1011,6 +1010,7 @@ bool aes_256_gcm_decrypt(byte *in,
   EVP_CIPHER_CTX *ctx = nullptr;
   int             blk_size = cipher_block_byte_size(Enc_method_aes_256);
   int             key_size = cipher_key_byte_size(Enc_method_aes_256);
+  int             iv_size = 12;
   byte           *iv = in;
   bool            ret = true;
   byte           *tag = in + in_len - blk_size;
@@ -1018,7 +1018,7 @@ bool aes_256_gcm_decrypt(byte *in,
   byte           *aad = nullptr;
   int             len;
   int             plaintext_len;
-  int             stream_len = in_len - 2 * blk_size;
+  int             stream_len = in_len - blk_size - iv_size;
   int             err = 0;
 
   if (!(ctx = EVP_CIPHER_CTX_new())) {
@@ -1034,7 +1034,7 @@ bool aes_256_gcm_decrypt(byte *in,
     ret = false;
     goto done;
   }
-  if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, blk_size, nullptr)) {
+  if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, iv_size, nullptr)) {
     printf("%s() error, line: %d, EVP_CIPHER_CTX_ctrl failed\n",
            __func__,
            __LINE__);
@@ -1056,7 +1056,7 @@ bool aes_256_gcm_decrypt(byte *in,
     ret = false;
     goto done;
   }
-  if (!EVP_DecryptUpdate(ctx, out, &len, in + blk_size, stream_len)) {
+  if (!EVP_DecryptUpdate(ctx, out, &len, in + iv_size, stream_len)) {
     printf("%s() error, line: %d, EVP_DecryptUpdate failed\n",
            __func__,
            __LINE__);

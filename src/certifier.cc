@@ -1197,14 +1197,14 @@ void print_quote_certification_response(quote_certification_response &m) {
   printf("encrypting_alg: %s\n", m.encrypting_alg().c_str());
 
   if (m.has_cred_blob()) {
-    printf("Cred blob:\n");
+    printf("Cred blob (%d):\n", (int)m.cred_blob().size());
     print_bytes(m.cred_blob().size(), (byte *)m.cred_blob().data());
     printf("\n");
   } else {
     printf("No cred blob\n");
   }
   if (m.has_encrypted_secret()) {
-    printf("Encrypted secret:\n");
+    printf("Encrypted secret (%d):\n", (int)m.encrypted_secret().size());
     print_bytes(m.encrypted_secret().size(),
                 (byte *)m.encrypted_secret().data());
     printf("\n");
@@ -1212,7 +1212,8 @@ void print_quote_certification_response(quote_certification_response &m) {
     printf("No encrypted secret\n");
   }
   if (m.has_encrypted_quote_cert()) {
-    printf("Encrypted quote cert:\n");
+    printf("Encrypted quote cert (%d):\n",
+           (int)m.encrypted_quote_cert().size());
     print_bytes(m.encrypted_quote_cert().size(),
                 (byte *)m.encrypted_quote_cert().data());
     printf("\n");

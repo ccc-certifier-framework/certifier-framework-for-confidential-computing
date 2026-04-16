@@ -259,13 +259,15 @@ bool test_authenticated_encrypt(bool print_all) {
   size_encrypt_out = out_size;
   size_decrypt_out = out_size;
 
+  int gcm_iv_size = 12;
+
   if (!authenticated_encrypt(Enc_method_aes_256_gcm,
                              plain,
                              in_size,
                              key,
                              key_size,
                              iv,
-                             iv_size,
+                             gcm_iv_size,
                              cipher,
                              &size_encrypt_out)) {
     printf("%s() error, line: %d, authenticated_encrypt() for aes-256-gcm "
@@ -280,7 +282,7 @@ bool test_authenticated_encrypt(bool print_all) {
            in_size,
            size_encrypt_out);
     printf("iv: ");
-    print_bytes(block_size, iv);
+    print_bytes(gcm_iv_size, iv);
     printf("\n");
     printf("cipher: ");
     print_bytes(size_encrypt_out, cipher);

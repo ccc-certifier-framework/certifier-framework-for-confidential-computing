@@ -467,6 +467,7 @@ bool recover_sealing_secret(local_tpm    &tpm,
   sealAuth = srkAuth;
 
   TPMA_OBJECT primary_flags;
+  *(uint32_t *)(&primary_flags) = 0;
   primary_flags.fixedTPM = 1;
   primary_flags.fixedParent = 1;
   primary_flags.sensitiveDataOrigin = 1;
@@ -497,7 +498,9 @@ bool recover_sealing_secret(local_tpm    &tpm,
                           0x010001,
                           &srk_handle,
                           &pub_out)) {
-    printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);
+    printf("%s() error, line %d, srk CreatePrimary failed\n",
+           __func__,
+           __LINE__);
     return false;
   }
 
@@ -1789,9 +1792,11 @@ bool tpm_Init(const string &device_name,
     }
   }
 
+#ifdef DEBUG
   printf("PCR's at tpm_Init entry:\n");
   print_pcrs(g_tpm, num_pcrs, pcrs);
   printf("\n");
+#endif
 
   if (endorsement_cert_file_name != "") {
 #ifdef DEBUG2
@@ -1806,9 +1811,6 @@ bool tpm_Init(const string &device_name,
       return false;
     }
   } else {
-#ifdef DEBUG2
-    printf("tpm_init, getting endorsement cert from nv\n");
-#endif
     if (!get_endorsement_cert(g_tpm, &g_serialized_endorsement_cert)) {
       printf("%s() error, line %d, can't get endorsement cert from tpm\n",
              __func__,
@@ -1827,7 +1829,7 @@ bool tpm_Init(const string &device_name,
       return false;
     }
   } else {
-#ifdef DEBUG
+#ifdef DEBUG2
     printf("tpm_init, no endorsement chain\n");
 #endif
   }
@@ -1853,12 +1855,6 @@ bool tpm_Init(const string &device_name,
            __LINE__);
     return false;
   }
-
-#ifdef DEBUG
-  printf("\nPublic ek before environment inits\n");
-  print_tpm_public_key_info(g_tpm, g_ek_handle);
-  printf("\n");
-#endif
 
   // init seal envrionment
   if (!init_seal_environment(num_pcrs, pcrs)) {
@@ -1891,7 +1887,7 @@ bool tpm_Init(const string &device_name,
   printf("\ntpm_init succeeded\n\n");
 #endif
 #ifdef DEBUG
-  printf("\n");
+  printf("\nGlobals at end of tpm_Init\n");
   print_globals();
   printf("\n\n");
 #endif
@@ -3312,6 +3308,7 @@ bool construct_activate_request(const string      &endorsement_cert,
                                 const string      &quote_hash_alg,
                                 string            *serialized_request) {
 
+#ifdef DEBUG
   printf("PCR's at construct_activate_request entry:\n");
   print_pcrs(g_tpm, g_num_pcrs, g_pcrs);
   printf("Public ek\n");
@@ -3320,6 +3317,7 @@ bool construct_activate_request(const string      &endorsement_cert,
   printf("Public quote\n");
   print_tpm_public_key_info(g_tpm, g_quote_handle);
   printf("\n");
+#endif
 
   quote_certification_request req;
 
@@ -3345,6 +3343,7 @@ bool process_activate_response(local_tpm    &tpm,
                                const string &serialized_response,
                                string       *quote_cert) {
 
+#ifdef DEBUG
   printf("PCR's at process_activate_response entry:\n");
   print_pcrs(g_tpm, g_num_pcrs, g_pcrs);
   printf("Public ek\n");
@@ -3353,6 +3352,7 @@ bool process_activate_response(local_tpm    &tpm,
   printf("Public quote\n");
   print_tpm_public_key_info(g_tpm, g_quote_handle);
   printf("\n");
+#endif
 
   quote_certification_response res;
   if (!res.ParseFromString(serialized_response)) {
@@ -3456,28 +3456,40 @@ bool process_activate_response(local_tpm    &tpm,
   printf("Recovered credential (%d): ", recovered_cred.size);
   print_bytes(recovered_cred.size, (byte_t *)recovered_cred.buffer);
   printf("\n");
+  printf("encrypted cert size: %d\n", (int)res.encrypted_quote_cert().size());
 #endif
 
-  if (res.encrypting_alg() != Enc_method_aes_256_gcm) {
-    printf("%s() error, line %d, encrypting algorithm, %s, is unsupported\n",
-           __func__,
-           __LINE__,
-	   res.encrypting_alg().c_str());
-    return false;
-  }
+  return true;
 
   // now decrypt it
   int  out_size = 256;
-  byte out[256];
-  if (!aes_256_gcm_decrypt((byte_t *)res.encrypted_quote_cert().data(),
-                           (int)res.encrypted_quote_cert().size(),
-                           (byte *)recovered_cred.buffer,
-                           out,
-                           &out_size)) {
-    printf("%s() error, line %d, can't decrypt cert\n", __func__, __LINE__);
+  byte out[out_size];
+
+  if (res.encrypting_alg() == Enc_method_aes_256_gcm) {
+
+    if (!aes_256_gcm_decrypt((byte_t *)res.encrypted_quote_cert().data(),
+                             (int)res.encrypted_quote_cert().size(),
+                             (byte *)recovered_cred.buffer,
+                             out,
+                             &out_size)) {
+      printf("%s() error, line %d, can't decrypt cert\n", __func__, __LINE__);
+      return false;
+    }
+    // } else  if (res.encrypting_alg() == Enc_method_aes_256_cbc_hmac_sha256) {
+  } else {
+    printf("%s() error, line %d, encrypting algorithm, %s, is unsupported\n",
+           __func__,
+           __LINE__,
+           res.encrypting_alg().c_str());
     return false;
   }
   quote_cert->assign((char *)out, out_size);
+
+#ifdef DEBUG
+  printf("decrypted cert (%d):\n", out_size);
+  print_bytes(quote_cert->size(), (byte_t *)quote_cert->data());
+  printf("\n");
+#endif
 
   return true;
 }

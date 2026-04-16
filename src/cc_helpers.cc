@@ -1133,8 +1133,10 @@ bool certifier::framework::cc_trust_manager::initialize_islet_enclave() {
 }
 
 bool certifier::framework::cc_trust_manager::close_enclave() {
+#ifdef TPM_CERTIFIER
   if (enclave_type_ == "tpm-enclave")
     tpm_close();
+#endif
   return true;
 }
 

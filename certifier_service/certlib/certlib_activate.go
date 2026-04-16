@@ -218,13 +218,14 @@ func ProcessActivationRequest(serializedRequest []byte, remoteIP string, roots *
                 return false, fillAndSerializeQuoteFailure(response)
 	}
 
+	/*
 	// Debug
 	fmt.Printf("\nEndorsement key:\n")
 	PrintKey(internalEndorsementKey)
 	fmt.Printf("\n")
+	 */
 
-
-        iv := make([]byte, 16)
+        iv := make([]byte, 12)
         _, err = rand.Read(iv)
         if err != nil {
                 fmt.Printf("ProcessActivationRequest: Can't generate iv\n")
@@ -252,6 +253,7 @@ func ProcessActivationRequest(serializedRequest []byte, remoteIP string, roots *
                 return false, fillAndSerializeQuoteFailure(response)
 	}
 
+	/*
 	// Debug
 	fmt.Printf("CertBlob:\n")
 	PrintBytes(credBlob)
@@ -260,6 +262,7 @@ func ProcessActivationRequest(serializedRequest []byte, remoteIP string, roots *
 	PrintBytes(encryptedSecret)
 	fmt.Printf("\n")
 	fmt.Printf("remoteIP: %s\n", remoteIP)
+	 */
 
 	// Make x509 cert for quote key and sign it with policy key
 	cert := ProduceAdmissionCert(remoteIP, privKey, policyCert, request.QuoteKey, "quote-key", "The_TPM", uint64(5), 365.0*86400)
@@ -287,6 +290,7 @@ func ProcessActivationRequest(serializedRequest []byte, remoteIP string, roots *
         }
 
 	// Debug
+	fmt.Printf("Unencrypted cert, %d bytes\n", len(serializedQuoteCert))
 	fmt.Printf("Encrypted cert, %d bytes\n", len(encryptedCert))
 
 	*response.Status = "succeeded"
@@ -296,9 +300,11 @@ func ProcessActivationRequest(serializedRequest []byte, remoteIP string, roots *
 	response.EncryptedSecret = encryptedSecret
 	response.EncryptedQuoteCert = encryptedCert
 
+	/*
 	// Debug
 	fmt.Printf("Quote Certification Response at certifier.\n")
 	PrintQuoteCertificationResponse(response)
+	 */
 
 	// serialize response
 	serializedResponse, _ := proto.Marshal(response)
