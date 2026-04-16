@@ -2037,8 +2037,6 @@ bool Tpm2_MakeCredential(local_tpm              &tpm,
   return true;
 }
 
-#define DEBUG8
-
 bool Tpm2_ActivateCredential(local_tpm              &tpm,
                              TPM_HANDLE              activeHandle,
                              TPM_HANDLE              keyHandle,

@@ -263,9 +263,6 @@ bool first_pass(const string &tpm_device,
   }
   RSA_free(auth_r);
 
-  print_key(public_auth_key);
-  printf("\n");
-
   // time
   time_point t;
   time_now(&t);
@@ -337,7 +334,7 @@ bool first_pass(const string &tpm_device,
   string conf;
   conf.assign((char *)new_pcrs, new_num_pcrs);
 
-#  ifdef DEBUG
+#  ifdef DEBUG3
   printf("PCR's after attest\n");
   for (int i = 0; i < new_num_pcrs; i++)
     printf("%d ", new_pcrs[i]);

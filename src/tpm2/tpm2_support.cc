@@ -1406,7 +1406,7 @@ void print_globals() {
   }
   printf("tpm environment initialized\n");
   if (g_seal_thing.size() > 0) {
-    printf("\nseal thing: ");
+    printf("seal thing: ");
     print_bytes(g_seal_thing.size(), (byte_t *)g_seal_thing.data());
     printf("\n");
   }
@@ -1421,7 +1421,7 @@ void print_globals() {
   printf("\n");
 
   if (g_serialized_quote_cert.size() > 0) {
-    printf("\nquote cert:\n");
+    printf("quote cert:\n");
     print_bytes(g_serialized_quote_cert.size(),
                 (byte_t *)g_serialized_quote_cert.data());
     printf("\n");
@@ -1451,19 +1451,16 @@ void print_globals() {
   printf("g_srk_handle: %08x\n", g_srk_handle);
   printf("g_quote_handle: %08x\n", g_quote_handle);
   if (g_ek_handle != 0) {
-    printf("\nPublic g_ek\n");
+    printf("Public g_ek\n");
     print_tpm_public_key_info(g_tpm, g_ek_handle);
-    printf("\n");
   }
   if (g_srk_handle != 0) {
     printf("Public g_srk\n");
     print_tpm_public_key_info(g_tpm, g_srk_handle);
-    printf("\n");
   }
   if (g_quote_handle != 0) {
     printf("Public g_quote\n");
     print_tpm_public_key_info(g_tpm, g_quote_handle);
-    printf("\n");
   }
 }
 #endif
@@ -1556,7 +1553,7 @@ bool get_endorsement_auth_with_session(local_tpm  &tpm,
   n += sizeof(uint16_t);
   auth->assign((char *)auth_buf, n);
 
-#ifdef DEBUG
+#ifdef DEBUG3
   printf("Endorsement session handle: %08x\n", *endorsement_session_handle);
   printf("Endorsement auth: ");
   print_bytes(auth->size(), (byte_t *)auth->data());
@@ -3343,7 +3340,7 @@ bool process_activate_response(local_tpm    &tpm,
                                const string &serialized_response,
                                string       *quote_cert) {
 
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("PCR's at process_activate_response entry:\n");
   print_pcrs(g_tpm, g_num_pcrs, g_pcrs);
   printf("Public ek\n");
@@ -3366,7 +3363,7 @@ bool process_activate_response(local_tpm    &tpm,
     return false;
   }
 #ifdef DEBUG
-  printf("Request response at caller:\n");
+  printf("\nRequest response at caller:\n");
   print_quote_certification_response(res);
   printf("\n");
 #endif
@@ -3452,7 +3449,7 @@ bool process_activate_response(local_tpm    &tpm,
   Tpm2_FlushContext(tpm, endorsement_session_handle);
 
 #ifdef DEBUG
-  printf("\nActivateCredential succeeded in construct_activate_request\n");
+  printf("ActivateCredential succeeded in construct_activate_request\n");
   printf("Recovered credential (%d): ", recovered_cred.size);
   print_bytes(recovered_cred.size, (byte_t *)recovered_cred.buffer);
   printf("\n");
