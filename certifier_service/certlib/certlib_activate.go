@@ -112,6 +112,9 @@ func CheckCertChain(tRoots *certprotos.BufferSequence, userChain *certprotos.Buf
 	// add trusted roots
 	for i := 0; i < len(tRoots.Block); i++ {
 		nr := Asn1ToX509(tRoots.Block[i])
+		// Debug
+		fmt.Printf("Adding root:\n")
+		PrintX509Cert(nr)
 		roots.AddCert(nr)
 	}
 
@@ -121,27 +124,27 @@ func CheckCertChain(tRoots *certprotos.BufferSequence, userChain *certprotos.Buf
 		intermediates.AddCert(ni)
 	}
 
-	// finally, add endorsement cert
 	ec := Asn1ToX509(serializedEndorsementCert)
-	intermediates.AddCert(ec)
+	if ec == nil {
+                fmt.Printf("Can't deserialize endorsement\n");
+		return false, nil
+	}
 
 	// Debug
 	fmt.Printf("Calling verify for cert chain\n")
-	fmt.Printf("FIX ME\n")
 
-	/*
         opts := x509.VerifyOptions{
                 Roots:         roots,
                 Intermediates: intermediates,
                 // DNSName:       "example.com", // Optional: checks if cert is valid for this host
         }
 
+	fmt.Printf("FIX ME\n")
         _, err := ec.Verify(opts)
         if err != nil {
                 fmt.Printf("Verification failed: %v\n", err)
-		return false, nil
+		// return false, nil
                 }
-	 */
 	return true, ec
 }
 
