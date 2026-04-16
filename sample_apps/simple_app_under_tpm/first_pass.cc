@@ -72,7 +72,7 @@ bool first_pass(const string &tpm_device,
 
 #  ifdef DEBUG
   printf("\nfirst-pass (with activate)\n");
-#  endif
+#endif
 #  ifdef DEBUG2
   printf("    tpm device             : %s\n", tpm_device.c_str());
   printf("    endorsement file       : %s\n",
@@ -85,6 +85,25 @@ bool first_pass(const string &tpm_device,
   printf("    quote_cert  file       : %s\n", quote_cert_file_name.c_str());
 #  endif
 
+#if 0
+  if (!init_tpm(FLAGS_tpm_device)) {
+    printf("%s() error, line %d, tpm_init failed\n", __func__, __LINE__);
+    return false;
+  }
+
+  printf("PCR's at first psss entry:\n");
+  print_pcrs(tpm, num_pcrs, pcrs);
+
+  extern local_tpm g_tpm;
+  if (!extend_pcrs(g_tpm, 7)) {
+    printf("%s() error, line %d, extend_pcrs failed\n", __func__, __LINE__);
+    return false;
+  }
+
+  printf("PCR's at first psss after extend:\n");
+  print_pcrs(tpm, num_pcrs, pcrs);
+#endif
+
   extern string       g_serialized_quote_cert;
   extern string       g_serialized_endorsement_cert;
   extern string       g_serialized_endorsement_cert_chain;
@@ -93,7 +112,6 @@ bool first_pass(const string &tpm_device,
   extern string       g_seal_thing;
   extern TPM2B_PUBLIC g_public_quote_key;
   extern TPM2B_PUBLIC g_public_endorsement_key;
-
 
   quote_certification_request  request;
   quote_certification_response response;
@@ -191,10 +209,25 @@ bool first_pass(const string &tpm_device,
   bool             ret =
       process_activate_response(g_tpm, serialized_response, cert_obtained);
 
+  if (!ret) {
+    printf("%s(), error, line: %d, can't process_activate_response\n",
+           __func__,
+           __LINE__);
+    tpm_close();
+    return false;
+  }
+
+  if (!write_file_from_string(quote_cert_file_name, *cert_obtained)) {
+    printf("%s(), error, line: %d, couldn't write file\n", __func__, __LINE__);
+    tpm_close();
+    return false;
+  }
+
 #  ifdef DEBUG2
   extern bool g_tpm_initialized;
   extern bool g_tpm_environment_initialized;
 
+  printf("process_activate_response succeeded, quote cert written\n");
   if (g_tpm_initialized) {
     printf("tpm initialized\n");
   } else {
@@ -207,19 +240,126 @@ bool first_pass(const string &tpm_device,
   }
 #  endif
 
-  tpm_close();
-  if (!ret) {
-    printf("%s(), error, line: %d, can't process_activate_response\n",
+  // Don't really need to do all this
+  attestation_user_data ud;
+  ud.set_enclave_type("tpm-enclave");
+  RSA *auth_r = RSA_new();
+  if (!generate_new_rsa_key(2048, auth_r)) {
+    printf("%s, %d, generate_new_rsa_key error\n", __func__, __LINE__);
+    tpm_close();
+    return false;
+  }
+  key_message private_auth_key;
+  key_message public_auth_key;
+  if (!RSA_to_key(auth_r, &private_auth_key)) {
+    printf("%s, %d, RSA_to_key error\n", __func__, __LINE__);
+    tpm_close();
+    return false;
+  }
+  private_auth_key.set_key_name("enclave-key");
+  if (!private_key_to_public_key(private_auth_key, &public_auth_key)) {
+    printf("%s, %d, private_key_to_public_key error\n", __func__, __LINE__);
+    return false;
+  }
+  RSA_free(auth_r);
+
+  printf("tpm_test: generated enclave key:\n");
+  print_key(public_auth_key);
+  printf("\n");
+
+  // time
+  time_point t;
+  time_now(&t);
+  string str_now;
+  time_to_string(t, &str_now);
+  ud.set_time(str_now);
+
+  // key
+  ud.mutable_enclave_key()->CopyFrom(public_auth_key);
+
+  int    size_out = 4096;
+  byte   out[size_out];
+  string serialized_user;
+  if (!ud.SerializeToString(&serialized_user)) {
+    printf("%s, %d, SerializeToString error\n", __func__, __LINE__);
+    tpm_close();
+    return false;
+  }
+
+  if (!Attest(ud.enclave_type(),
+              serialized_user.size(),
+              (byte *)serialized_user.data(),
+              &size_out,
+              out)) {
+    printf("%s, %d Attest failed\n", __func__, __LINE__);
+    tpm_close();
+    return false;
+  }
+
+  string serialized_tpm_msg;
+  serialized_tpm_msg.assign((char *)out, size_out);
+
+  tpm_attestation_message att;
+  if (!att.ParseFromString(serialized_tpm_msg)) {
+    printf("%s, %d, can't parse attestation\n", __func__, __LINE__);
+    tpm_close();
+    return false;
+  }
+
+  // extract measurement
+  string             extra_data;
+  uint32_t           magic;
+  uint16_t           type;
+  string             signer;
+  TPML_PCR_SELECTION pcrSelect;
+  string             pcr_digest;
+  int                new_num_pcrs = 10;
+  byte_t             new_pcrs[num_pcrs];
+
+  if (!decode_quoted((int)att.the_quote().size(),
+                     (byte_t *)att.the_quote().data(),
+                     &magic,
+                     &type,
+                     &signer,
+                     &extra_data,
+                     &pcrSelect,
+                     &pcr_digest)) {
+    printf("%s, %d, decode_quoted failed\n", __func__, __LINE__);
+    tpm_close();
+    return false;
+  }
+
+  if (!get_pcr_from_select(&pcrSelect, &new_num_pcrs, new_pcrs)) {
+    printf("%s, %d, get_pcr_from_select failed\n", __func__, __LINE__);
+    tpm_close();
+    return false;
+  }
+
+  string conf;
+  conf.assign((char *)new_pcrs, new_num_pcrs);
+
+#  ifdef DEBUG
+  printf("PCR's after attest\n");
+  for (int i = 0; i < new_num_pcrs; i++)
+    printf("%d ", new_pcrs[i]);
+  printf("\n");
+  print_pcrs(g_tpm, new_num_pcrs, new_pcrs);
+  printf("\n");
+  printf("Digest: ");
+  print_bytes(pcr_digest.size(), (byte_t *)pcr_digest.data());
+  printf("\n");
+#  endif
+
+  string measurement_file_name("measurement");
+  if (!write_file_from_string(measurement_file_name, pcr_digest)) {
+    printf("%s(), error, line: %d, can't write measurement\n",
            __func__,
            __LINE__);
+    tpm_close();
     return false;
   }
 
-  if (!write_file_from_string(quote_cert_file_name, *cert_obtained)) {
-    printf("%s(), error, line: %d, couldn't write file\n", __func__, __LINE__);
-    return false;
-  }
-
+  tpm_close();
   return true;
 }
 

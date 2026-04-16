@@ -110,11 +110,10 @@ bool credential_test(local_tpm          &tpm,
            __LINE__);
     return false;
   }
-#ifdef DEBUG1
+
+#ifdef DEBUG
   printf("\nGot endorsement key %08x\n", ek_handle);
-  printf("PCR's at credential test entry:\n");
-  print_pcrs(tpm, num_pcrs, pcrs);
-  printf("Public ek at credential test entry\n");
+  printf("\nPublic ek at credential test entry\n");
   print_tpm_public_key_info(tpm, ek_handle);
   printf("\n");
 #endif
@@ -184,6 +183,14 @@ bool credential_test(local_tpm          &tpm,
   string cred_blob_out;
   string encrypted_secret_out;
   cred.assign((char *)credential.buffer, credential.size);
+
+#ifdef DEBUG
+  X509* x = X509_new();
+  asn1_to_x509(endorsement_cert, x);
+  printf("\nCert:\n");
+  X509_print_fp(stdout, x);
+  X509_free(x);
+#endif
 
   string hash_name;
   switch (quoting_pub_out.publicArea.nameAlg) {

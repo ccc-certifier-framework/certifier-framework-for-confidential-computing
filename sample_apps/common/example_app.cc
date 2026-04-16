@@ -88,10 +88,10 @@ DEFINE_string(quote_cert_file,
               "./provisioning/quote_cert.crt",
               "quote cert file");
 DEFINE_string(endorsement_cert_file_name,
-              "ek-rsa2048.crt",
+              "",
               "tpm cert file name");
 DEFINE_string(endorsement_cert_chain_file,
-              "./provisioning/endorsement_cert_chain.bin",
+              "",
               "endorsement cert chain file");
 DEFINE_string(activate_service_host, "localhost", "activate service host IP");
 DEFINE_string(activate_service_port, "8130", "activate service port");

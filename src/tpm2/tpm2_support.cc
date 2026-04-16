@@ -176,21 +176,20 @@ void print_tpm_public_key_info(local_tpm &tpm, TPM_HANDLE &key_handle) {
     return;
   }
 
-  printf("Public blob: ");
+  printf("Pub blob (size: %d)\n", pub_blob_size);
   print_bytes(pub_blob_size, pub_blob);
   printf("\n");
-  printf("\nName: ");
+  printf("Pubout size: %d\n", pub_out.size);
+  printf("Name: ");
   print_bytes(pub_name.size, pub_name.name);
   printf("\n");
   printf("Qualified name: ");
   print_bytes(qualified_pub_name.size, qualified_pub_name.name);
   printf("\n");
-  printf("\n");
-  printf("Pubout size: %d\n", pub_out.size);
   printf("Type: %d\n", pub_out.publicArea.type);
   printf("Name: %d\n", pub_out.publicArea.nameAlg);
   printf("Scheme: %d\n", pub_out.publicArea.parameters.rsaDetail.scheme.scheme);
-  printf("Bytes (%d):\n", (int)pub_out.publicArea.unique.rsa.size);
+  printf("Bytes (%d): ", (int)pub_out.publicArea.unique.rsa.size);
   print_bytes((int)pub_out.publicArea.unique.rsa.size,
               (byte_t *)pub_out.publicArea.unique.rsa.buffer);
   printf("\n");
@@ -1449,7 +1448,7 @@ void print_globals() {
   printf("g_srk_handle: %08x\n", g_srk_handle);
   printf("g_quote_handle: %08x\n", g_quote_handle);
   if (g_ek_handle != 0) {
-    printf("Public g_ek\n");
+    printf("\nPublic g_ek\n");
     print_tpm_public_key_info(g_tpm, g_ek_handle);
     printf("\n");
   }
@@ -1855,9 +1854,11 @@ bool tpm_Init(const string &device_name,
     return false;
   }
 
-  printf("Public ek before environment inits\n");
+#ifdef DEBUG
+  printf("\nPublic ek before environment inits\n");
   print_tpm_public_key_info(g_tpm, g_ek_handle);
   printf("\n");
+#endif
 
   // init seal envrionment
   if (!init_seal_environment(num_pcrs, pcrs)) {
@@ -3457,10 +3458,11 @@ bool process_activate_response(local_tpm    &tpm,
   printf("\n");
 #endif
 
-  if (res.encrypting_alg() == Enc_method_aes_256_gcm) {
-    printf("%s() error, line %d, encrypting algorithm is unsupported\n",
+  if (res.encrypting_alg() != Enc_method_aes_256_gcm) {
+    printf("%s() error, line %d, encrypting algorithm, %s, is unsupported\n",
            __func__,
-           __LINE__);
+           __LINE__,
+	   res.encrypting_alg().c_str());
     return false;
   }
 
