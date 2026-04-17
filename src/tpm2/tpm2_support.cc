@@ -1710,7 +1710,7 @@ bool init_quote_environment(int num_pcrs, byte_t *pcrs) {
   }
   g_public_quote_key_name.assign((char *)q_pub_name.name, q_pub_name.size);
 
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("\ninit quote environment, Quote key\n");
   printf("Type: %d\n", g_public_quote_key.publicArea.type);
   printf("Name: %d\n", g_public_quote_key.publicArea.nameAlg);
@@ -3242,8 +3242,8 @@ bool make_credential_from_certifier(const char *quote_hash_alg,
   printf("\n");
 #endif
 #ifdef DEBUG
-  printf("\nmake_credential_from_certifier\n");
-  printf("  Credential       (%d): ", credential_size);
+  printf("make_credential_from_certifier\n");
+  printf("Credential (%d): ", credential_size);
   print_bytes(credential_size, credential_buf);
   printf("\n");
 #endif
@@ -3299,7 +3299,7 @@ bool construct_activate_request(const string      &endorsement_cert,
                                 const string      &quote_hash_alg,
                                 string            *serialized_request) {
 
-#ifdef DEBUG
+#ifdef DEBUG8
   printf("PCR's at construct_activate_request entry:\n");
   print_pcrs(g_tpm, g_num_pcrs, g_pcrs);
   printf("Public ek\n");

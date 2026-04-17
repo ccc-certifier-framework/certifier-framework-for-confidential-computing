@@ -187,6 +187,8 @@ function do-compile-program() {
 
 function make-root-list() {
 
+  echo "root cert in prepare-test"
+  echo ""
   pushd $EXAMPLE_DIR/provisioning
     cp /var/lib/swtpm-localca/swtpm-localca-rootca-cert.pem root.pem
     openssl x509 -inform pem -in root.pem -outform der -out root.der
@@ -195,6 +197,8 @@ function make-root-list() {
 	--output="trustedRoots.bin" -init=true \
 	--new_cert_file="root.der" --add_cert=true
   popd
+  echo ""
+  echo "make-root-list done"
 }
 
 function do-compile-certifier() {

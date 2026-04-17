@@ -132,11 +132,14 @@ func CheckCertChain(tRoots *certprotos.BufferSequence, userChain *certprotos.Buf
 
 	// Debug
 	fmt.Printf("Calling verify for cert chain\n")
+	fmt.Printf("Endorsement :\n")
+	PrintX509Cert(ec)
 
         opts := x509.VerifyOptions{
                 Roots:         roots,
                 Intermediates: intermediates,
-                // DNSName:       "example.com", // Optional: checks if cert is valid for this host
+		KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageAny},
+                // DNSName:       "example.com", // Optional: is cert valid for this host
         }
 
 	fmt.Printf("FIX ME\n")
@@ -145,6 +148,18 @@ func CheckCertChain(tRoots *certprotos.BufferSequence, userChain *certprotos.Buf
                 fmt.Printf("Verification failed: %v\n", err)
 		// return false, nil
                 }
+
+	nt := Asn1ToX509(tRoots.Block[0])
+	fmt.Printf("Root:\n")
+	PrintX509Cert(nt)
+	err = ec.CheckSignatureFrom(nt)
+	if err != nil {
+		fmt.Printf("Check Signature failed: %v\n", err)
+		// return false, nil
+	} else {
+		fmt.Printf("Check Signature succeeded\n")
+	}
+
 	return true, ec
 }
 
@@ -242,7 +257,7 @@ func ProcessActivationRequest(serializedRequest []byte, remoteIP string, roots *
         }
 
 	// Debug
-	fmt.Printf("\niv: ")
+	fmt.Printf("\niv : ")
 	PrintBytes(iv)
 	fmt.Printf("\n")
 	fmt.Printf("key: ")
