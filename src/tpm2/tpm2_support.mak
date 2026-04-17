@@ -64,22 +64,28 @@ certifier_objs = $(O)/certifier.pb.o $(O)/certifier.o \
 	      $(O)/application_enclave.o
 
 dobj_tpm2= $(certifier_objs) $(O)/tpm2.pb.o $(O)/tpm2_lib.o $(O)/openssl_help.o \
-	$(O)/convert.o $(O)/tpm2_support.o $(O)/tpm2_test.o
+	$(O)/convert.o $(O)/tpm2_support.o
 
-all:	$(EXE_DIR)/tpm2_test.exe \
+all:	$(EXE_DIR)/tpm2_test.exe  $(EXE_DIR)/tpm2_set_pcrs.exe
 
 clean:
 	@echo "removing object files"
 	rm $(O)/*.o
 	@echo "removing executable file"
 	rm $(EXE_DIR)/tpm2_test.exe
+	@echo "removing executable file"
+	rm $(EXE_DIR)/tpm2_set_pcrs.exe
 	@echo "removing protobuf files"
 	rm $(CI)/certifier.pb.h
 	rm $(s)/certifier.pb.cc
 
-$(EXE_DIR)/tpm2_test.exe: $(dobj_tpm2)
+$(EXE_DIR)/tpm2_test.exe: $(dobj_tpm2) $(O)/tpm2_test.o
 	@echo "linking tpm2_test"
-	$(LINK) -o $(EXE_DIR)/tpm2_test.exe $(dobj_tpm2) $(LDFLAGS)
+	$(LINK) -o $(EXE_DIR)/tpm2_test.exe $(dobj_tpm2)  $(O)/tpm2_test.o $(LDFLAGS)
+
+$(EXE_DIR)/tpm2_set_pcrs.exe: $(dobj_tpm2) $(O)/tpm2_set_pcrs.o
+	@echo "linking tpm2_set_pcrs"
+	$(LINK) -o $(EXE_DIR)/tpm2_set_pcrs.exe $(dobj_tpm2) $(O)/tpm2_set_pcrs.o $(LDFLAGS)
 
 $(O)/certifier.pb.o: $(S)/certifier.pb.cc $(CI)/certifier.pb.h
 	@echo "\ncompiling $<"
@@ -112,6 +118,10 @@ $(O)/tpm2_support.o: $(S)/tpm2_support.cc $(S)/certifier.pb.cc $(S)/tpm2.pb.cc
 $(O)/tpm2_test.o: $(S)/tpm2_test.cc
 	@echo "compiling tpm2_test.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/tpm2_test.o $(S)/tpm2_test.cc
+
+$(O)/tpm2_set_pcrs.o: $(S)/tpm2_set_pcrs.cc
+	@echo "compiling tpm2_set_pcrs.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/tpm2_set_pcrs.o $(S)/tpm2_set_pcrs.cc
 
 $(O)/tpm2.pb.o: $(S)/tpm2.pb.cc $(S)/tpm2.pb.h
 	@echo "\ncompiling $<"
