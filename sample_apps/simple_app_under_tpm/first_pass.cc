@@ -85,9 +85,6 @@ bool first_pass(const string &tpm_device,
   printf("    quote_cert  file       : %s\n", quote_cert_file_name.c_str());
 #  endif
 
-
-// Remove this later, PCR's should already been set.
-#  if 1
   extern local_tpm g_tpm;
   if (!init_tpm(tpm_device)) {
     printf("%s() error, line %d, tpm_init failed\n", __func__, __LINE__);
@@ -97,6 +94,8 @@ bool first_pass(const string &tpm_device,
   printf("PCR's at first pass entry:\n");
   print_pcrs(g_tpm, num_pcrs, pcrs);
 
+#  if 0
+  // run tpm2_set_pcrs.exe instead
   if (!extend_pcrs(g_tpm, 7)) {
     printf("%s() error, line %d, extend_pcrs failed\n", __func__, __LINE__);
     return false;
@@ -357,7 +356,7 @@ bool first_pass(const string &tpm_device,
   return true;
 }
 
-#else
+#else  // ACTIVATE_CREDENTIAL
 
 bool first_pass(const string &tpm_device,
                 const string &policy_key_file_name,
@@ -609,6 +608,6 @@ bool first_pass(const string &tpm_device,
   tpm_close();
   return true;
 }
-#endif
+#endif  // ACTIVATE_CREDENTIAL
 
 // -----------------------------------------------------------------------

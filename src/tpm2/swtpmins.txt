@@ -305,6 +305,7 @@ tpm2_nvread -T swtpm:port=2321 -C o 0x01c00002 -o tool_ek_rsa_cert.bin
 
 --------------------------------------------------------------------------------
 
+./tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
 ./tpm2_test.exe --operation=MiscTest --tpm_device=/dev/tpmrm1
 ./tpm2_test.exe --operation=GetCert --tpm_device=/dev/tpmrm1
 ./tpm2_test.exe --operation=EndorsementTest --tpm_device=/dev/tpmrm1
