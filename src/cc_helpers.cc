@@ -195,8 +195,8 @@ bool certifier::framework::cc_trust_manager::initialize_enclave(
 #ifdef SEV_SNP
   } else if (enclave_type_ == "sev-enclave") {
 
+    string ark, ask, vcek;
     if (n == 0) {
-      string ark, ask, vcek;
       if (sev_get_platform_certs(&vcek, &ask, &ark) != EXIT_SUCCESS) {
         printf("%s() error, line %d, Failed to fetch platform certs\n",
                __func__,

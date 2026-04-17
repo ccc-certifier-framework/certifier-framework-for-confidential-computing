@@ -119,6 +119,26 @@ DEFINE_string(platform_attest_endorsement_file,
 
 const string sub_directory_name("cf_data/");
 
+// For TPM enclave
+DEFINE_bool(run_first_pass, false, "run first pass");
+DEFINE_int32(pcr_num, -1, "integer parameter");
+DEFINE_string(tpm_device, "/dev/tpm0", "tpm device");
+DEFINE_string(seal_hierarchy_file_name,
+              "seal_hierarchy.bin",
+              "seal hierarchy save file name");
+DEFINE_string(quote_hierarchy_file_name,
+              "quote_hierarchy.bin",
+              "quote hierarchy save file name");
+DEFINE_int32(num_pcrs, 1, "number of pcrs");
+DEFINE_string(pcrs_str, "7", "pcr string");
+DEFINE_string(quote_cert_file,
+              "./provisioning/quote_cert.crt",
+              "quote cert file");
+DEFINE_string(endorsement_cert_file_name, "", "tpm cert file name");
+DEFINE_string(endorsement_cert_chain_file, "", "endorsement cert chain file");
+DEFINE_string(activate_service_host, "localhost", "activate service host IP");
+DEFINE_string(activate_service_port, "8130", "activate service port");
+
 // -------------------------------------------------------------------------
 
 void print_os_model_parameters() {
@@ -793,6 +813,32 @@ bool reinit_domain_and_update(const string &domain_name) {
   return true;
 }
 
+//---------------------------------------------------------------------------------
+
+bool whitespace(char c) {
+  return c == ' ' || c == ',';
+}
+
+bool scan_integer_list(const string &in, string *out) {
+  const char *p = in.c_str();
+  int         b;
+
+  for (;;) {
+    while (whitespace(*p))
+      p++;
+    if (*p == '\0')
+      return true;
+    if (*p <= '0' && *p >= '9') {
+      p++;
+      continue;
+    }
+    sscanf(p, "%d", &b);
+    *out += (char)b;
+    while (*p >= '0' && *p <= '9')
+      p++;
+  }
+  return true;
+}
 
 int main(int an, char **av) {
   string usage("cf-utility");
@@ -812,6 +858,47 @@ int main(int an, char **av) {
   if (FLAGS_print_level > 0) {
     print_os_model_parameters();
   }
+
+#ifdef TPM_CERTIFIER
+  extern bool first_pass(const string &tpm_device,
+                         const string &endorsement_cert_file_name,
+                         const string &endorsement_cert_chain_file_name,
+                         const string &seal_hierarchy_file_name,
+                         const string &quote_hierarchy_file_name,
+                         int           num_pcrs,
+                         byte         *pcrs,
+                         const string &service_host,
+                         const string &service_port,
+                         const string &quote_cert_file_name,
+                         string       *cert_obtained);
+
+  if (FLAGS_run_first_pass) {
+    string cert_obtained;
+    string pcrs_out;
+    if (!scan_integer_list(FLAGS_pcrs_str, &pcrs_out)) {
+      printf("%s() error, line %d, first_pass failed\n", __func__, __LINE__);
+      return 1;
+    }
+
+    if (!first_pass(FLAGS_tpm_device,
+                    FLAGS_endorsement_cert_file_name,
+                    FLAGS_endorsement_cert_chain_file,
+                    FLAGS_seal_hierarchy_file_name,
+                    FLAGS_quote_hierarchy_file_name,
+                    (int)pcrs_out.size(),
+                    (byte *)pcrs_out.data(),
+                    FLAGS_activate_service_host,
+                    FLAGS_activate_service_port,
+                    FLAGS_quote_cert_file,
+                    &cert_obtained)) {
+      printf("%s() error, line %d, first_pass failed\n", __func__, __LINE__);
+      return 1;
+    } else {
+      printf("first_pass succeeded\n");
+      return 0;
+    }
+  }
+#endif
 
   // Get parameters
   string *params = nullptr;
