@@ -1802,7 +1802,7 @@ bool tpm_Init(const string &device_name,
 #endif
     if (!read_file_into_string(endorsement_cert_file_name,
                                &g_serialized_endorsement_cert)) {
-      printf("%s() error, line %d, can't init endorsement environment\n",
+      printf("%s() error, line %d, can't read endorsement cert\n",
              __func__,
              __LINE__);
       return false;
@@ -1830,7 +1830,6 @@ bool tpm_Init(const string &device_name,
     printf("tpm_init, no endorsement chain\n");
 #endif
   }
-
   string empty;
   string authString;
   if (!get_password_auth(empty, &authString)) {

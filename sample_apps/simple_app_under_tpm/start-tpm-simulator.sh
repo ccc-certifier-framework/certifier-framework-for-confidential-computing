@@ -37,7 +37,7 @@ pushd $TPM_SUPPORT_DIR
   modprobe tpm_vtpm_proxy
 
   swtpm_setup --tpmstate ${XDG_CONFIG_HOME}/mytpm1 --create-ek-cert \
-    --create-platform-cert --tpm2 --write-ek-cert-files . --create-platform-cert .
+    --create-platform-cert --tpm2 --write-ek-cert-files .
 
   chmod 0777 *.crt
 

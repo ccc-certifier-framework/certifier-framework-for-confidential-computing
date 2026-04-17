@@ -134,30 +134,37 @@ func CheckCertChain(tRoots *certprotos.BufferSequence, userChain *certprotos.Buf
 	fmt.Printf("Calling verify for cert chain\n")
 	fmt.Printf("Endorsement :\n")
 	PrintX509Cert(ec)
+	fmt.Printf("\n*****FIX ME\n\n")
 
-        opts := x509.VerifyOptions{
-                Roots:         roots,
-                Intermediates: intermediates,
+	opts := x509.VerifyOptions {
+		Roots:	 roots,
+		Intermediates: intermediates,
 		KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageAny},
-                // DNSName:       "example.com", // Optional: is cert valid for this host
-        }
+	}
 
-	fmt.Printf("FIX ME\n")
-        _, err := ec.Verify(opts)
-        if err != nil {
-                fmt.Printf("Verification failed: %v\n", err)
+	_, err := ec.Verify(opts)
+	if err != nil {
+		fmt.Printf("Verification failed: %v\n", err)
+		fmt.Printf("Apparently the wrong root cert\n")
 		// return false, nil
-                }
+	}
 
+	// Debug: Why doesnt cert verify?  Probably the root cert isn't right.
 	nt := Asn1ToX509(tRoots.Block[0])
-	fmt.Printf("Root:\n")
-	PrintX509Cert(nt)
-	err = ec.CheckSignatureFrom(nt)
+	err = nt.CheckSignatureFrom(nt)
 	if err != nil {
 		fmt.Printf("Check Signature failed: %v\n", err)
 		// return false, nil
 	} else {
 		fmt.Printf("Check Signature succeeded\n")
+	}
+
+	_, err = nt.Verify(opts)
+        if err != nil {
+		fmt.Printf("Root verification failed: %v\n", err)
+		// return false, nil
+	} else {
+		fmt.Printf("Root verification succeeded\n")
 	}
 
 	return true, ec
