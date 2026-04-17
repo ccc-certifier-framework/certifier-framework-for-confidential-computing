@@ -898,6 +898,8 @@ bool aes_256_cbc_sha384_decrypt(byte *in,
   return (memcmp(hmac_out, in + msg_with_iv_size, mac_size) == 0);
 }
 
+const int gcm_overhead = 28;
+
 // We use 128 bit tag
 bool aes_256_gcm_encrypt(byte *in,
                          int   in_len,
@@ -917,6 +919,12 @@ bool aes_256_gcm_encrypt(byte *in,
   byte           *aad = nullptr;
   bool            ret = true;
 
+  if (*out_size < (in_len + gcm_overhead)) {
+    printf("%s() error, line: %d, output buffer too small\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
   if (!(ctx = EVP_CIPHER_CTX_new())) {
     printf("%s() error, line: %d, EVP_CIPHER_CTX_new failed\n",
            __func__,
@@ -1021,6 +1029,12 @@ bool aes_256_gcm_decrypt(byte *in,
   int             stream_len = in_len - blk_size - iv_size;
   int             err = 0;
 
+  if (*out_size < in_len) {
+    printf("%s() error, line: %d, output buffer too small\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
   if (!(ctx = EVP_CIPHER_CTX_new())) {
     printf("%s() error, line: %d, EVP_CIPHER_CTX_new failed\n",
            __func__,

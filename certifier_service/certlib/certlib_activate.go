@@ -268,7 +268,7 @@ func ProcessActivationRequest(serializedRequest []byte, remoteIP string, roots *
 	 */
 
 	// Make x509 cert for quote key and sign it with policy key
-	cert := ProduceAdmissionCert(remoteIP, privKey, policyCert, request.QuoteKey, "quote-key", "The_TPM", uint64(5), 365.0*86400)
+	cert := ProduceAdmissionCert(remoteIP, privKey, policyCert, request.QuoteKey, "quote-key", "TPM", uint64(5), 365.0 * 86400)
 	if cert == nil {
                 fmt.Printf("ProcessActivationRequest: Can't ProduceAdmissionCert\n")
                 return false, fillAndSerializeQuoteFailure(response)

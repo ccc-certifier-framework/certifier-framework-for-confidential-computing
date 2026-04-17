@@ -85,23 +85,25 @@ bool first_pass(const string &tpm_device,
   printf("    quote_cert  file       : %s\n", quote_cert_file_name.c_str());
 #  endif
 
-#  if 0
-  if (!init_tpm(FLAGS_tpm_device)) {
+
+// Remove this later, PCR's should already been set.
+#  if 1
+  extern local_tpm g_tpm;
+  if (!init_tpm(tpm_device)) {
     printf("%s() error, line %d, tpm_init failed\n", __func__, __LINE__);
     return false;
   }
 
-  printf("PCR's at first psss entry:\n");
-  print_pcrs(tpm, num_pcrs, pcrs);
+  printf("PCR's at first pass entry:\n");
+  print_pcrs(g_tpm, num_pcrs, pcrs);
 
-  extern local_tpm g_tpm;
   if (!extend_pcrs(g_tpm, 7)) {
     printf("%s() error, line %d, extend_pcrs failed\n", __func__, __LINE__);
     return false;
   }
 
-  printf("PCR's at first psss after extend:\n");
-  print_pcrs(tpm, num_pcrs, pcrs);
+  printf("PCR's at first pass after extend:\n");
+  print_pcrs(g_tpm, num_pcrs, pcrs);
 #  endif
 
   extern string       g_serialized_quote_cert;
@@ -125,12 +127,6 @@ bool first_pass(const string &tpm_device,
                 num_pcrs,
                 pcrs)) {
     printf("%s() error, line %d, can't tpm_Init\n", __func__, __LINE__);
-    return false;
-  }
-
-  extern local_tpm g_tpm;
-  if (!extend_pcrs(g_tpm, 7)) {
-    printf("%s() error, line %d, extend_pcrs failed\n", __func__, __LINE__);
     return false;
   }
 

@@ -1829,6 +1829,7 @@ func ProduceAdmissionCert(remoteIP string, issuerKey *certprotos.KeyMessage, iss
 	subjKey *certprotos.KeyMessage, subjName string, subjOrg string,
 	serialNumber uint64, durationSeconds float64) *x509.Certificate {
 
+	/*
 	// DEBUG
 	fmt.Printf("\nProduceAdmissionCert, sn: %d, duration: %f\n", serialNumber, durationSeconds)
 	fmt.Printf("subjName: %s\n", subjName)
@@ -1839,6 +1840,7 @@ func ProduceAdmissionCert(remoteIP string, issuerKey *certprotos.KeyMessage, iss
 	fmt.Printf("Subject Public Key: \n")
 	PrintKey(subjKey)
 	fmt.Printf("\n")
+	 */
 
 	dur := int64(durationSeconds * 1000 * 1000 * 1000)
 	cert := x509.Certificate{

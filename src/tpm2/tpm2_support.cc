@@ -1860,9 +1860,6 @@ bool tpm_Init(const string &device_name,
            __LINE__);
     return false;
   }
-#ifdef DEBUG2
-  printf("\nGot seal environment\n");
-#endif
 
   // init quote envrionment
   if (!init_quote_environment(num_pcrs, pcrs)) {
@@ -1880,9 +1877,7 @@ bool tpm_Init(const string &device_name,
   memcpy(g_pcrs, pcrs, num_pcrs);
 
   g_tpm_environment_initialized = true;
-#ifdef DEBUG2
-  printf("\ntpm_init succeeded\n\n");
-#endif
+
 #ifdef DEBUG
   printf("\nGlobals at end of tpm_Init\n");
   print_globals();
@@ -3265,7 +3260,6 @@ bool make_credential_from_certifier(const char *quote_hash_alg,
                              credential,
                              &cred_blob,
                              &encrypted_secret);
-
   if (!ret) {
     printf("%s() error, line %d, Can't make_credential\n", __func__, __LINE__);
     return false;
@@ -3362,8 +3356,9 @@ bool process_activate_response(local_tpm    &tpm,
            __LINE__);
     return false;
   }
+
 #ifdef DEBUG
-  printf("\nRequest response at caller:\n");
+  printf("Request response at caller:\n");
   print_quote_certification_response(res);
   printf("\n");
 #endif
