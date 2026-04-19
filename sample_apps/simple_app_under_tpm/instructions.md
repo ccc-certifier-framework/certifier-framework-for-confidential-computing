@@ -11,6 +11,9 @@ This example embeds the policy key in the application using the
 
 We also support a TPM simulator (swtpm) which can be configured and installed
 on any Linux host.  This is done using the script start-tpm-simulator.sh.
+You should follow the instructions in $CERTIFIER_PROTOTYPE/src/tpm2 to install the
+simulator and build the pcr utility.  If you use a "real" tpm, you should change
+the device name in the scripts.
 
 ----
 
@@ -27,6 +30,7 @@ The shell scripts assume you have all the right software installed including
 the go programs and libraries mentioned below.
 
 The shell scripts use the new API.
+If you use the "real" tpm, you should change the device name in the shell scripts.
 
 
 Set up environment
@@ -46,6 +50,11 @@ shell variable is useful.
 Preparing the tests
 ------------------
 
+First, we'll start the simulator.  AS described in the instructions for the
+TPM utilities, you should set the also change the directoy set by the variable
+XDG_CONFIG_HOME to the location of your tpm state;  I recommend using the full
+pathname.
+
  In a new window ("Root window"):
 
 ```shell
@@ -62,7 +71,7 @@ In another window, not as root, ("Unpriviledged window"):
 ```
 
 ```shell
-  prepare-test.sh fresh domain-name
+  .prepare-test.sh fresh domain-name
 ```
       - This clears out all old files
 then

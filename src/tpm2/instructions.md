@@ -1,13 +1,21 @@
 # TPM utilities and tests
-
-
 ----
+This directory contains the tpm tests andutilities.:w
+
 
 ## Install the simulator (swtpm) --- one time step
 
 It is usually convenient to run the simulator in a different window.
 The simulator must run as root.
 
+The simulator is at https://github.com/stefanberger/swtpm. On Ubuntu, you can install
+it as follwos:
+
+```shell
+  sudo apt-get update
+  sudo apt install swtpm swtpm-tools apparmor -y
+er``
+You only need to do thsi once/machine.
 
 ## Build utility and tests
 ------------------
@@ -29,15 +37,18 @@ Preparing the tests and utility
 ------------------
 
 ```shell
-   cd $CERTIFIER_ROOT/sample_apps/simple_app_under_tpm
-   sudo bash
-   password
-   ./start-tpm-simulator.sh
+   cd $EXAPLE_DIR
+   make clean -f tpm2_support.mak
+   make -f tpm2_support.mak
 ```
 
 ## run utility and tests
  
-In another window, the "Priviledged window":w
+There are a number of scripts to help run the tests and simulator,
+to run them, edit the .sh files to set XDG_CONFIG_HOME.  Since
+the scripts are run asroot, it's best to name a full path.
+
+In another window, the "Priviledged window":
 
 ```shell
    cd $EXAMPLE_DIR
@@ -46,8 +57,20 @@ In another window, the "Priviledged window":w
    ./start-tpm-simulator.sh
 ```
 
-```shell
-```
+Then run the utility to set PCR 7:
 
 ```shell
+  ./tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
+
+Finally, run the tests:
+
+```shell
+./tpm2_test.exe --operation=MiscTest --tpm_device=/dev/tpmrm1
+./tpm2_test.exe --operation=GetCert --tpm_device=/dev/tpmrm1
+./tpm2_test.exe --operation=EndorsementTest --tpm_device=/dev/tpmrm1
+./tpm2_test.exe --operation=SealTest --tpm_device=/dev/tpmrm1
+./tpm2_test.exe --operation=QuoteTest --tpm_device=/dev/tpmrm1
+./tpm2_test.exe --operation=CertifierTest --tpm_device=/dev/tpmrm1
 ```
+
+If you use the "real" tpm, you should change the device name above.
