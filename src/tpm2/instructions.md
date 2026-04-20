@@ -1,6 +1,6 @@
 # TPM utilities and tests
 ----
-This directory contains the tpm tests andutilities.:w
+This directory contains the tpm tests and utilities.
 
 
 ## Install the simulator (swtpm) --- one time step
@@ -9,12 +9,12 @@ It is usually convenient to run the simulator in a different window.
 The simulator must run as root.
 
 The simulator is at https://github.com/stefanberger/swtpm. On Ubuntu, you can install
-it as follwos:
+it as follows:
 
 ```shell
   sudo apt-get update
   sudo apt install swtpm swtpm-tools apparmor -y
-er``
+``
 You only need to do thsi once/machine.
 
 ## Build utility and tests
@@ -61,6 +61,7 @@ Then run the utility to set PCR 7:
 
 ```shell
   ./tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
+```
 
 Finally, run the tests:
 
