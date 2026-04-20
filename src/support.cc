@@ -742,6 +742,8 @@ bool certifier::utilities::digest_message(const char  *alg,
   return true;
 }
 
+const int aes_256_cbc_sha256_overhead = 64;
+
 bool aes_256_cbc_sha256_encrypt(byte *in,
                                 int   in_len,
                                 byte *key,
@@ -752,6 +754,16 @@ bool aes_256_cbc_sha256_encrypt(byte *in,
   int key_size = cipher_key_byte_size(Enc_method_aes_256_cbc_hmac_sha256);
   int mac_size = mac_output_byte_size(Enc_method_aes_256_cbc_hmac_sha256);
   int cipher_size = *out_size - blk_size;
+
+  // uncomment this when you can test
+#if 0
+  if (*out_size < (in_len + aes_256_cbc_sha256_overhead)) {
+    printf("%s() error, line: %d, output buffer too small\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+#endif
 
   memset(out, 0, *out_size);
 
@@ -789,6 +801,16 @@ bool aes_256_cbc_sha256_decrypt(byte *in,
   int          plain_size = *out_size - blk_size - mac_size;
   int          msg_with_iv_size = in_len - mac_size;
   unsigned int hmac_size = mac_size;
+
+  // uncomment this when you can test
+#if 0
+  if (*out_size < in_len) {
+    printf("%s() error, line: %d, output buffer too small\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+#endif
 
   byte hmac_out[hmac_size];
   HMAC(EVP_sha256(),
