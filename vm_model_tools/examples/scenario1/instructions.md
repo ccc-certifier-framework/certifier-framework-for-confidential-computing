@@ -26,6 +26,30 @@ Running the tests is considerably simplified by a consolidated script,
 run-test-scenario1.sh.  It runs all the subordinate scripts described
 in Sevprovisioning.
 
+### Special note for tpms:
+The TPM enclave introduces an additional policy step for cefrtification.  For
+enclaves like SEV, the public key for the quote or attestation, is part of
+platform provisioning.  If the certifier "trusts" the manufacturer root certificate,
+the elements of the certification can be provided in one pass.  By contrast, the
+TPM employs a "first pass" in which the quoting key established trust with the
+certifier using a protocol.  This protocol uses the "ActivateCredential"
+functionality of the TPM.
+
+To implement this.  The certifier opens a new protocol channel that accepts a certificate
+chain from the TPM manufacturers that offers evidence to support the security of the
+TPM "endorsement cert."  The deployed program packages this along with unforgeable information
+about the ultimate "quoting key," produces a cert for the quoting key, encrypts the cert with
+a random key (a "credential") and encrypts the the credential to the endorsement key.  The
+credential can only be decrypted by the TPM with the trusted endorsement cert which verifies
+properties of the quoting key and unlocks the credential which, in turn, is used to
+decrypt the quoting key certificate.  This certificate can then be used in the same way
+an authenticated vcek key is  used in SEV.
+
+The upshot is that the certifier is first called with the "first pass" tag that implements
+the new step to approve the quote key.  After the quote key is validated, resulting in
+a certificate signed by the policy key.  The customary proof protocol used in other
+enclaves is used to produce an "Admisions Certificate" as is customary.
+
 
 # Running either in SEV or the test environment using the consolidated tests script
 
