@@ -79,13 +79,15 @@ if [[ $TEST_TYPE = "simulated" ]]; then
 	ALLSIMARG1="-tt simulated -pn scenario1-test -dn dom0"
 	ALLSIMARG2="-clean 1 -loud 1 -dd ./ -ccf $COMPILE_CF -bss $BUILD_SEV_SIMULATOR"
 	ALLSIMARG3="-pkn policy_key_file -cfn policy_cert_file -psn policy_store -csn cryptstore"
-	ALLSIMARG4="-pfn policy.bin -psa localhost -ksa localhost"
-	ALLSIMARG5="-vmn pauls_vm -et1 simulated-enclave -et2 sev-enclave"
-	ALLSIMARG6="-psn1 $DEPLOYMENT_POLICY_STORE_NAME $DEPLOYED_POLICY_STORE_NAME -csn1 $DEPLOYMENT_CRYPTSTORE_NAME -csn2 $DEPLOYED_CRYPTSTORE_NAME"
+	ALLSIMARG4="-pfn policy.bin -psa POLICY_SERVER_ADDRESS -ksa $KEY_SERVER_ADDRESS"
+	ALLSIMARG5="-vmn pauls_vm -et1 $DEPLOYMENT_ENCLAVE_TYPE -et2 $DEPLOYED_ENCLAVE_TYPE"
+	ALLSIMARG6="-psn1 $DEPLOYMENT_POLICY_STORE_NAME -csn1 $DEPLOYMENT_CRYPTSTORE_NAME -csn2 $DEPLOYED_CRYPTSTORE_NAME"
+	ALLSIMARG7="-npcr $NUM_PCR -pcrs $PCRSTR -tpm $TPM_DEVICE -seal $SEAL_STORE -quote $QUOTE_STORE -quote_cert $QUOTE_CERT_FILE"
+	ALLSIMARG8="-end_cert $END_CERT_FILE -end_chain $END_CERT_CHAIN_FILE -act_host $ACTIVATE_HOST -act_port $ACTIVATE_PORT"
 
-	ALLARGS="$ALLSIMARG1 $ALLSIMARG2 $ALLSIMARG3 $ALLSIMARG4 $ALLSIMARG5 ALLSIMARG6"
+	ALLARGS="$ALLSIMARG1 $ALLSIMARG2 $ALLSIMARG3 $ALLSIMARG4 $ALLSIMARG5 $ALLSIMARG6 $ALLSIMARG7 $ALLSIMARG8"
 else
-	echo ""real" sev test not working yet"
+	echo "\"real\" sev test not working yet"
 	exit
 fi
 
@@ -104,6 +106,11 @@ fi
 TA="$ALLARGS -op measure"
 ./measure-programs.sh $TA			# working
 ./measure-vm-programs.sh $TA			# working
+if [[ $DEPLOYED_ENCLAVE_TYPE == "tpm-enclave" ]]; then
+  # run first pass
+  cp measureent ./provisioning
+  cp $QUOTE_CERT_FILE ./provisioning
+fi
 ./build-policy.sh $ALLARGS			# working
 ./copy-files.sh $ALLARGS			# working
 ./copy-vm-files.sh $ALLARGS			# working
