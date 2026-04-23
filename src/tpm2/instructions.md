@@ -66,12 +66,12 @@ Then run the utility to set PCR 7:
 Finally, run the tests:
 
 ```shell
-./tpm2_test.exe --operation=MiscTest --tpm_device=/dev/tpmrm1
-./tpm2_test.exe --operation=GetCert --tpm_device=/dev/tpmrm1
-./tpm2_test.exe --operation=EndorsementTest --tpm_device=/dev/tpmrm1
-./tpm2_test.exe --operation=SealTest --tpm_device=/dev/tpmrm1
-./tpm2_test.exe --operation=QuoteTest --tpm_device=/dev/tpmrm1
-./tpm2_test.exe --operation=CertifierTest --tpm_device=/dev/tpmrm1
+  ./tpm2_test.exe --operation=MiscTest --tpm_device=/dev/tpmrm1
+  ./tpm2_test.exe --operation=GetCert --tpm_device=/dev/tpmrm1
+  ./tpm2_test.exe --operation=EndorsementTest --tpm_device=/dev/tpmrm1
+  ./tpm2_test.exe --operation=SealTest --tpm_device=/dev/tpmrm1
+  ./tpm2_test.exe --operation=QuoteTest --tpm_device=/dev/tpmrm1
+  ./tpm2_test.exe --operation=CertifierTest --tpm_device=/dev/tpmrm1
 ```
 
 If you use the "real" tpm, you should change the device name above.
