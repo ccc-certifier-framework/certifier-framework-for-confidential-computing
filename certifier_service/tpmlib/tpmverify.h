@@ -5,7 +5,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
 extern "C" {
+#endif
 
 bool tpm_host_verify_attest(int      serialized_cert_size,
                             uint8_t *serialized_cert,
@@ -15,9 +17,13 @@ bool tpm_host_verify_attest(int      serialized_cert_size,
                             uint8_t *measurement_out,
                             int     *pcr_size,
                             uint8_t *pcr_out);
+#ifdef __cplusplus
 }
+#endif
 
+#ifdef __cplusplus
 extern "C" {
+#endif
 
 bool certifier_make_a_credential(const char *quote_hash_alg,
                                  int         quote_key_name_size,
@@ -30,4 +36,6 @@ bool certifier_make_a_credential(const char *quote_hash_alg,
                                  uint8_t    *cred_blob_buf,
                                  int        *encrypted_secret_size,
                                  uint8_t    *encrypted_secret_buf);
+#ifdef __cplusplus
 }
+#endif
