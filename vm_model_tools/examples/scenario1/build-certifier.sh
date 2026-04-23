@@ -9,7 +9,7 @@ Me=$(basename "$0")
 
 source ./arg-processing.inc
 
-# ------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
 
 # This script builds the certifier framework, the utilities (for generating keys and policy),
 # the vm_model_tool (in $CERTIFIER_ROOT/vm_model_tools/src), and the key server (cf_key_server)
@@ -142,6 +142,9 @@ function do-compile-certifier() {
 	pushd teelib
 	make
 	popd
+	pushd tpmlib
+	make
+	popd
 
 	go build simpleserver.go
 	popd
@@ -180,3 +183,6 @@ echo "cf_utility.exe built"
 echo "compiling simpleserver"
 do-compile-certifier
 echo "simpleserver built"
+
+# ------------------------------------------------------------------------------------
+

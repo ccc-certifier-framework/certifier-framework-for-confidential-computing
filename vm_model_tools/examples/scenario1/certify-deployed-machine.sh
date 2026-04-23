@@ -20,7 +20,7 @@ source ./arg-processing.inc
 # Certificate are used to open and authenticated secure channel to other
 # certified environments in this security domain.
 
-# ----------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------
 
 echo ""
 echo "certify-deployed-machine.sh"
@@ -94,3 +94,6 @@ echo " "
 
 echo " "
 echo "deployed machine certified"
+
+# --------------------------------------------------------------------------------
+

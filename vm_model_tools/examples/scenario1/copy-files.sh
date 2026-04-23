@@ -12,8 +12,7 @@ source ./arg-processing.inc
 # This script copies file from the provisioning directory to the
 # locations used at run-time.
 
-# ------------------------------------------------------------------------------------------
-
+# -----------------------------------------------------------------------------------
 
 function do-copy-files() {
 	echo " "
@@ -80,3 +79,6 @@ fi
 do-copy-files
 echo "Files copied"
 echo ""
+
+# --------------------------------------------------------------------------------
+

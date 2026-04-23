@@ -9,7 +9,7 @@ Me=$(basename "$0")
 
 source ./arg-processing.inc
 
-# ---------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------
 
 # This script measures the programs that can run under the simulated enclave,
 # namely, cf_utility.exe.  The measurement is a hash for the simulated enclave
@@ -79,3 +79,6 @@ else
 	echo "Unknown operation: $OPERATION"
 fi
 echo " "
+
+# --------------------------------------------------------------------------------
+

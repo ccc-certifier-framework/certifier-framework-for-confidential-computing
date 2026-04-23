@@ -12,7 +12,7 @@ source ./arg-processing.inc
 # This script kills running simpleserver and keyserver processes.  You need to do
 # this to restart the tests or services.
 
-# ------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------
 
 function cleanup-stale-procs() {
 	# Find and kill simpleserver processes that may be running.
@@ -54,3 +54,6 @@ echo "cleaning stale procs"
 cleanup-stale-procs
 echo "cleaned stale procs"
 echo " "
+
+# --------------------------------------------------------------------------------
+

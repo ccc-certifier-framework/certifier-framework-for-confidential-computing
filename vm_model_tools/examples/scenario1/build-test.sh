@@ -9,7 +9,7 @@ Me=$(basename "$0")
 
 source ./arg-processing.inc
 
-# ------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------
 
 
 function do-fresh() {
@@ -49,6 +49,7 @@ function do-run() {
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/graminelib
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/isletlib
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/oelib
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/tpmlib
   echo $LD_LIBRARY_PATH
   sudo ldconfig
 
@@ -169,3 +170,6 @@ fi
 
 echo "This was done in build-certifier.sh in step 0"
 echo " "
+
+# --------------------------------------------------------------------------------
+

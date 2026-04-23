@@ -13,8 +13,7 @@ source ./arg-processing.inc
 # sev-snp-measure tool.
 # This script is currently incomplete and untested.
 
-# ----------------------------------------------------------------------------------------
-
+# -----------------------------------------------------------------------------------
 
 function do-fresh() {
         echo " "
@@ -83,4 +82,6 @@ else
         echo "Unknown operation: $OPERATION"
 fi
 echo " "
+
+# --------------------------------------------------------------------------------
 

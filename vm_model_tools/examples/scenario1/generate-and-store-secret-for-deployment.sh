@@ -14,7 +14,7 @@ source ./arg-processing.inc
 # contacts the key server service (over a secure channel, see the key server description)
 # to store the new key so it can be retrieved by others.
 
-# ------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
 
 echo ""
 echo "generate-and-store-secret staring"
@@ -78,3 +78,6 @@ $CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe --policy_domain_name=$DOMAI
 
 echo "generate-and-store-secret succeeded"
 echo ""
+
+# --------------------------------------------------------------------------------
+

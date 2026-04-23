@@ -40,8 +40,7 @@ DOMAIN_NAME=$1
 REAL_TEST=1
 echo "domain name: $DOMAIN_NAME"
 
-
-# ------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
 
 
 function cleanup-stale-procs() {
@@ -72,6 +71,7 @@ function do-get-quote-cert-and-measurement() {
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/graminelib
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/isletlib
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/oelib
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/tpmlib
   echo $LD_LIBRARY_PATH
   sudo ldconfig
 
@@ -116,8 +116,7 @@ function do-get-quote-cert-and-measurement() {
   cleanup-stale-procs
 }
 
-
-# ------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
 
 function run-first-pass() {
 	echo " "
@@ -132,6 +131,7 @@ function run-first-pass() {
 	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/graminelib
 	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/isletlib
 	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/oelib
+	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/tpmlib
 	echo $LD_LIBRARY_PATH
 	sudo ldconfig
 
@@ -169,3 +169,6 @@ run-policy-server
 echo ""
 echo "policy server running"
 echo ""
+
+# --------------------------------------------------------------------------------
+

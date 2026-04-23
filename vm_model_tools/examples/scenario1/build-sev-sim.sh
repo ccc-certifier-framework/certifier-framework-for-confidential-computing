@@ -13,7 +13,7 @@ source ./arg-processing.inc
 # It produces and installs a loadable driver module (sevnull) and generates the
 # simulated environments signing key.
 
-# ------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------
 
 function compile-sev-programs() {
 	echo " "
@@ -29,7 +29,7 @@ function compile-sev-programs() {
 	echo " "
 }
 
-# -------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------
 
 echo ""
 echo "build-sev-sim.sh"
@@ -48,3 +48,6 @@ if [[ $BUILD_SEV_SIMULATOR -eq 1 ]]; then
 fi
 echo "simulator compiled"
 echo ""
+
+# ----------------------------------------------------------------------------------
+

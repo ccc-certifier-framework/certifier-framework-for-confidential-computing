@@ -13,7 +13,7 @@ source ./arg-processing.inc
 # (in the service directory).  It runs as an http service and waits for
 # requests.
 
-# ------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
 
 function run-policy-server() {
 	echo " "
@@ -28,6 +28,7 @@ function run-policy-server() {
 	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/graminelib
 	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/isletlib
 	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/oelib
+	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/tpmlib
 	echo $LD_LIBRARY_PATH
 	sudo ldconfig
 
@@ -65,3 +66,6 @@ run-policy-server
 echo ""
 echo "policy server running"
 echo ""
+
+# --------------------------------------------------------------------------------
+

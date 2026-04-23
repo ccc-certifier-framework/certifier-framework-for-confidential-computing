@@ -9,7 +9,7 @@ Me=$(basename "$0")
 
 source ./arg-processing.inc
 
-# --------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------
 
 
 function do-fresh() {
@@ -43,6 +43,7 @@ function do-run() {
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/graminelib
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/isletlib
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/oelib
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/tpmlib
   echo $LD_LIBRARY_PATH
   sudo ldconfig
 
@@ -150,7 +151,7 @@ function do-run() {
   echo "do-run done"
 }
 
-# --------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------
 
 echo "Processing arguments"
 process-args
@@ -167,3 +168,6 @@ fi
 if [[ $TT -eq 0 ]]; then
         echo "Nothing to do in simulated environment"
 fi
+
+# --------------------------------------------------------------------------------
+

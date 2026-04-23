@@ -17,7 +17,7 @@ source ./arg-processing.inc
 # and transmit existing secrets. Secrets are stored in the (deployment)
 # cryptstore.
 
-# ----------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------
 
 echo ""
 echo "run-deployment-key-server.sh"
@@ -52,3 +52,6 @@ $CERTIFIER_ROOT/vm_model_tools/src/cf_key_server.exe --policy_domain_name=$DOMAI
 sleep 5
 echo "keyserver running"
 echo ""
+
+# --------------------------------------------------------------------------------
+
