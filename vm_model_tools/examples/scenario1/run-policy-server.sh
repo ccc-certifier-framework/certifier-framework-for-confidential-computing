@@ -60,8 +60,8 @@ fi
 
 echo ""
 echo "running policy server"
-echo ""
 run-policy-server
+
 echo ""
 echo "policy server running"
 echo ""

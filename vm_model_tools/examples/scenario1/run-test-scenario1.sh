@@ -93,35 +93,87 @@ echo "Running consolidated test with $ALLARGS"
 echo ""
 
 if [[ $COMPILE_CF -eq 1 ]]; then
+	echo ""
+	echo "build-certifier.sh"
+	echo ""
 	./build-certifier.sh $ALLARGS		# working
 fi
+
+echo ""
+echo "build-sev-sim.sh"
 ./build-sev-sim.sh $ALLARGS			# working
 if [[ $PROVISION_KEYS -eq 1 ]]; then
+	echo ""
+	echo "provision-keys.sh"
+	echo ""
 	./provision-keys.sh $ALLARGS		# working
 fi
+
+echo ""
+echo "build-vm.sh"
 ./build-vm.sh $ALLARGS				# working
+
 TA="$ALLARGS -op measure"
+
+echo ""
+echo "measure-programs.sh"
+echo ""
 ./measure-programs.sh $TA			# working
+
+echo ""
+echo "measure-vm-programs.sh"
 ./measure-vm-programs.sh $TA			# working
+
 if [[ $DEPLOYED_ENCLAVE_TYPE == "tpm-enclave" ]]; then
+  echo "tpm enclave"
   # ../../../tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
   # ./build-activation-policy.sh $ALLARGS
   # ./run-first-pass.sh $ALLARGS
   # cp measurement ./provisioning
   # cp $QUOTE_CERT_FILE ./provisioning
 fi
+
+echo ""
+echo "build-policy.sh"
 ./build-policy.sh $ALLARGS			# working
+
+echo ""
+echo "copy-files.sh"
 ./copy-files.sh $ALLARGS			# working
+
+echo ""
+echo "copy-vm-files.sh"
 ./copy-vm-files.sh $ALLARGS			# working
+
+echo ""
+echo "run-policy-server.sh"
 ./run-policy-server.sh $ALLARGS			# working
+
+echo ""
+echo "certify-deployment-machine.sh"
 TA="$ALLARGS -op run"
 ./certify-deployment-machine.sh $TA		# working
 # The following command is actually redundant in the simulated
 #   environment
+
+echo ""
+echo "certify-deployed-machine.sh"
 ./certify-deployed-machine.sh $TA		# working
+
+echo ""
+echo "run-deployment-keyserver.sh"
 ./run-deployment-keyserver.sh $ALLARGS         	# working
+
+echo ""
+echo "generate-and-store-secret-for-deployment.sh"
 ./generate-and-store-secret-for-deployment.sh $ALLARGS # working
+
+echo ""
+echo "obtain-application-secrets.sh"
 ./obtain-application-secrets.sh $ALLARGS	#working
+
+echo ""
+echo "cleanup.sh"
 ./cleanup.sh $ALLARGS				# working
 
 echo ""
