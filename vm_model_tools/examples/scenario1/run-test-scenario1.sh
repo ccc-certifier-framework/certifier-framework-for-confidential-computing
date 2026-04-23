@@ -104,9 +104,11 @@ TA="$ALLARGS -op measure"
 ./measure-programs.sh $TA			# working
 ./measure-vm-programs.sh $TA			# working
 if [[ $DEPLOYED_ENCLAVE_TYPE == "tpm-enclave" ]]; then
-  # run first pass
-  cp measurement ./provisioning
-  cp $QUOTE_CERT_FILE ./provisioning
+  # ../../../tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
+  # ./build-activation-policy.sh
+  # ./run-first-pass.sh
+  # cp measurement ./provisioning
+  # cp $QUOTE_CERT_FILE ./provisioning
 fi
 ./build-policy.sh $ALLARGS			# working
 ./copy-files.sh $ALLARGS			# working
@@ -114,8 +116,8 @@ fi
 ./run-policy-server.sh $ALLARGS			# working
 TA="$ALLARGS -op run"
 ./certify-deployment-machine.sh $TA		# working
-#     The following command is actually redundant in the simulated
-#         environment
+# The following command is actually redundant in the simulated
+#   environment
 ./certify-deployed-machine.sh $TA		# working
 ./run-deployment-keyserver.sh $ALLARGS         	# working
 ./generate-and-store-secret-for-deployment.sh $ALLARGS # working
