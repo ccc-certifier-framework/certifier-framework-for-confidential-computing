@@ -290,6 +290,9 @@ function do-compile-certifier() {
     pushd oelib
       make dummy
     popd
+    pushd tpmlib
+      make dummy
+    popd
     pushd isletlib
       make dummy
     popd

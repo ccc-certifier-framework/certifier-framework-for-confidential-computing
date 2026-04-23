@@ -373,6 +373,7 @@ cd $CERTIFIER_PROTOTYPE/certifier_service/certprotos
 
 protoc --go_opt=paths=source_relative --go_out=. --go_opt=M=certifier.proto ./certifier.proto
 ```
+
 Compile the oelib for OE host verification
 ```shell
 cd $CERTIFIER_PROTOTYPE/oelib
@@ -380,6 +381,18 @@ cd $CERTIFIER_PROTOTYPE/oelib
 make
 ```
 If you do not have OE SDK installed or do not want to enable OE:
+
+```shell
+make dummy
+```
+
+Compile the tpmlib for tpm host verification
+```shell
+cd $CERTIFIER_PROTOTYPE/tpmlib
+
+make
+```
+If you do not want to enable the tpm:
 
 ```shell
 make dummy

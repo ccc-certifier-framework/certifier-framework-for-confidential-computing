@@ -256,6 +256,14 @@ Compile the protobuf
 cd $CERTIFIER_ROOT/certifier_service/certprotos
 protoc --go_opt=paths=source_relative --go_out=. --go_opt=M=certifier.proto ./certifier.proto
 ```
+
+  Compile  the tpmlib
+
+```shell
+cd $CERTIFIER_ROOT/certifier_service/tpmlib
+make
+```
+
   Compile the oelib for OE host verification
 
 ```shell

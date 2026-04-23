@@ -1972,6 +1972,14 @@ function build_simple_server() {
     run_cmd make ${make_arg}
 
     make_arg="dummy"
+    if [ "${SampleAppName}" = "simple_app_under_tpm" ]; then
+        make_arg=""
+    fi
+    run_cmd cd "${CERT_PROTO}"/certifier_service/tpmlib
+    # shellcheck disable=SC2086
+    run_cmd make ${make_arg}
+
+    make_arg="dummy"
     if [ "${SampleAppName}" = "simple_app_under_islet" ]; then
         make_arg=""
     fi

@@ -350,6 +350,8 @@ cd $CERTIFIER_PROTOTYPE/certifier_service/graminelib
 make
 cd $CERTIFIER_PROTOTYPE/certifier_service/oelib
 make dummy
+cd $CERTIFIER_PROTOTYPE/certifier_service/tpmlib
+make dummy
 cd $CERTIFIER_PROTOTYPE/certifier_service/isletlib
 make dummy
 cd $CERTIFIER_PROTOTYPE/certifier_service/teelib
