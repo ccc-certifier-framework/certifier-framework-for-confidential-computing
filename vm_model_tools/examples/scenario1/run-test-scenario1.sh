@@ -37,10 +37,7 @@ source ./arg-processing.inc
 # 	The $EXAMPLE_DIR/cf_data directory contains all the application data for
 # 	the application.
 
-
-
-# ------------------------------------------------------------------------------------------
-
+# -----------------------------------------------------------------------------------
 
 function do-fresh() {
   echo " "
@@ -108,7 +105,7 @@ TA="$ALLARGS -op measure"
 ./measure-vm-programs.sh $TA			# working
 if [[ $DEPLOYED_ENCLAVE_TYPE == "tpm-enclave" ]]; then
   # run first pass
-  cp measureent ./provisioning
+  cp measurement ./provisioning
   cp $QUOTE_CERT_FILE ./provisioning
 fi
 ./build-policy.sh $ALLARGS			# working

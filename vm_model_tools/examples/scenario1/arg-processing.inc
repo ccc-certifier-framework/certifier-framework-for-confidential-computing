@@ -1,5 +1,5 @@
 
-# ------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
 
 # Argument proccessing
 ARG_SIZE="$#"
@@ -132,7 +132,7 @@ POLICY_SERVER_ADDRESS="localhost"
 POLICY_SERVER_PORT="8123"
 KEY_SERVER_ADDRESS="localhost"
 KEY_SERVER_PORT="8120"
-OPERATION=""
+OPERATION=\"\"
 CLEAN=0
 VERBOSE=1
 DEPLOYMENT_ENCLAVE_TYPE="simulated-enclave"
@@ -147,8 +147,8 @@ TPM_DEVICE="/dev/tpm0"
 SEAL_STORE="seal_hierarchy.bin"
 QUOTE_STORE="quote_hierarchy.bin"
 QUOTE_CERT_FILE="./quote_cert.crt"
-END_CERT_FILE=""
-END_CERT_CHAIN_FILE=""
+END_CERT_FILE=\"\"
+END_CERT_CHAIN_FILE=\"\"
 ACTIVATE_HOST="localhost"
 ACTIVATE_PORT="8130"
 
@@ -197,7 +197,7 @@ function print-variables() {
         echo "Quote hierarchy file name              $QUOTE_STORE"
         echo "Quote Cert file                        $QUOTE_CERT_FILE"
         echo "Endorsement cert file                  $END_CERT_FILE"
-        echo "Emdorsement cert chain                 $END_CERT_CHAIN_FILE"
+        echo "Endorsement cert chain                 $END_CERT_CHAIN_FILE"
         echo "Activation service IP host             $ACTIVATE_HOST"
         echo "Activation service port                $ACTIVATE_PORT"
         echo ""
@@ -343,6 +343,6 @@ function process-args() {
         fi
 }
 
-# ------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------
 
 
