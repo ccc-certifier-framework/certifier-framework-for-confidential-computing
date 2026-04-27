@@ -257,6 +257,8 @@ function do-all() {
   popd
 
   cp $EXAMPLE_DIR/provisioning/trustedRoots.bin $EXAMPLE_DIR/service
+  cp $EXAMPLE_DIR/provisioning/$POLICY_KEY_FILE_NAME $EXAMPLE_DIR/service
+  cp $EXAMPLE_DIR/provisioning/$POLICY_CERT_FILE_NAME $EXAMPLE_DIR/service
   
   echo " "
   echo "do-all done"

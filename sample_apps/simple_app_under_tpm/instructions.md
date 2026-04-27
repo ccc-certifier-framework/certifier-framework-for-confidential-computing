@@ -119,6 +119,7 @@ Now, run the first pass:
   ./first-pass.sh dom0 1
   cp measurement ./provisioning
   chmod 0777 measurement ./provisioning/measurement
+  chmod 0777 ./provisioning/quote_cert.crt
 ```
 
 This will result in the quoting cert and a measurment, normally obtained by other means,
@@ -150,7 +151,7 @@ admissions certificate for each of the application modes.
 Now, in priviledged window 1, type:
 
 ```shell
-  ./run-server-app.sh run dom0
+  ./run-server-app.sh dom0
 ```
 
 This starts the applicaton in server mode.

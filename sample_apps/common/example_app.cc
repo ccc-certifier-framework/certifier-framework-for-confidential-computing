@@ -581,7 +581,7 @@ int main(int an, char **av) {
   string symmetric_key_alg(FLAGS_symmetric_key_alg);
 
   if (FLAGS_print_all) {
-    printf("public_key_alg='%s', authenticated_symmetric_key_alg='%s\n\n",
+    printf("public_key_alg=%s, authenticated_symmetric_key_alg=%s\n\n",
            public_key_alg.c_str(),
            symmetric_key_alg.c_str());
   }
@@ -799,7 +799,7 @@ int main(int an, char **av) {
   string symmetric_key_alg(FLAGS_symmetric_key_alg);
 
   if (FLAGS_print_all && (FLAGS_operation == "cold-init")) {
-    printf("public_key_alg='%s', authenticated_symmetric_key_alg='%s\n\n",
+    printf("public_key_alg=%s, authenticated_symmetric_key_alg=%s\n\n",
            public_key_alg.c_str(),
            symmetric_key_alg.c_str());
   }
