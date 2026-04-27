@@ -12,6 +12,22 @@ source ./arg-processing.inc
 
 # -------------------------------------------------------------------------------
 
+function make-root-list() {
+
+  echo "root cert in prepare-test"
+  echo ""
+  pushd $EXAMPLE_DIR/provisioning
+    cp /var/lib/swtpm-localca/swtpm-localca-rootca-cert.pem root.pem
+    openssl x509 -inform pem -in root.pem -outform der -out root.der
+    openssl x509 -inform der -in root.der -text
+    $CERTIFIER_ROOT/utilities/make_der_cert_chain.exe \
+        --output="trustedRoots.bin" -init=true \
+        --new_cert_file="root.der" --add_cert=true
+  popd
+  echo ""
+  echo "make-root-list done"
+}
+
 function do-make-activation-policy() {
     echo "do-make-activation-policy"
 
@@ -20,16 +36,18 @@ function do-make-activation-policy() {
     fi
 
     if [[ ! $DEPLOYED_ENCLAVE_TYPE = "tpm-enclave" ]]; then
-        echo " "
+        echo "Can only make policy for tpm activation"
+	exit
     fi
 
-  pushd $EXAMPLE_DIR/provisioning
-  popd
+    make-root-list
+    cp $EXAMPLE_DIR/provisioning/trustedRoots.bin $EXAMPLE_DIR/service
+    cp $EXAMPLE_DIR/provisioning/$POLICY_KEY_FILE_NAME $EXAMPLE_DIR/service
+    cp $EXAMPLE_DIR/provisioning/$POLICY_CERT_FILE_NAME $EXAMPLE_DIR/service
 
   echo ""
   echo "do-make-activation-policy done"
 }
-
 
 # ------------------------------------------------------------------------------
 
@@ -46,6 +64,7 @@ if [[ $VERBOSE -eq 1 ]]; then
 fi
 
 do-make-activation-policy
+
 echo ""
 echo "build-activation-policy.sh done"
 echo ""

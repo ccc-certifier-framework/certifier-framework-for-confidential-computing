@@ -237,6 +237,31 @@ void print_os_model_parameters() {
 
 // --------------------------------------------------------------------------
 
+bool whitespace(char c) {
+  return c == ' ' || c == ',';
+}
+
+bool scan_integer_list(const string &in, string *out) {
+  const char *p = in.c_str();
+  int         b;
+
+  for (;;) {
+    while (whitespace(*p))
+      p++;
+    if (*p == '\0')
+      return true;
+    if (*p <= '0' && *p >= '9') {
+      p++;
+      continue;
+    }
+    sscanf(p, "%d", &b);
+    *out += (char)b;
+    while (*p >= '0' && *p <= '9')
+      p++;
+  }
+  return true;
+}
+
 // Parameters for simulated enclave
 bool get_simulated_enclave_parameters(string **s, int *n) {
   // serialized attest key, measurement, serialized endorsement, in that order
@@ -313,6 +338,37 @@ bool get_sev_enclave_parameters(string **s, int *n) {
     goto err;
   }
   *n = 3;
+  return true;
+
+err:
+  delete[] args;
+  *s = nullptr;
+  return false;
+}
+
+bool get_tpm_enclave_parameters(string **s, int *n) {
+
+  string  pcrs_out;
+  string *args = new string[7];
+  if (args == nullptr) {
+    printf("%s() error, line %d, can't allocate args\n", __func__, __LINE__);
+    goto err;
+  }
+  *s = args;
+
+  args[0] = FLAGS_tpm_device;
+  args[1] = FLAGS_endorsement_cert_file_name;
+  args[2] = FLAGS_endorsement_cert_chain_file;
+  args[3] = FLAGS_seal_hierarchy_file_name;
+  args[4] = FLAGS_quote_hierarchy_file_name;
+  if (!scan_integer_list(FLAGS_pcrs_str, &pcrs_out)) {
+    printf("%s() error, line %d, cant scan_integer_list\n", __func__, __LINE__);
+    goto err;
+  }
+  args[5] = pcrs_out;
+  args[6] = FLAGS_quote_cert_file;
+
+  *n = 6;
   return true;
 
 err:
@@ -815,31 +871,6 @@ bool reinit_domain_and_update(const string &domain_name) {
 
 //---------------------------------------------------------------------------------
 
-bool whitespace(char c) {
-  return c == ' ' || c == ',';
-}
-
-bool scan_integer_list(const string &in, string *out) {
-  const char *p = in.c_str();
-  int         b;
-
-  for (;;) {
-    while (whitespace(*p))
-      p++;
-    if (*p == '\0')
-      return true;
-    if (*p <= '0' && *p >= '9') {
-      p++;
-      continue;
-    }
-    sscanf(p, "%d", &b);
-    *out += (char)b;
-    while (*p >= '0' && *p <= '9')
-      p++;
-  }
-  return true;
-}
-
 int main(int an, char **av) {
   string usage("cf-utility");
   gflags::SetUsageMessage(usage);
@@ -905,6 +936,13 @@ int main(int an, char **av) {
   int     n = 0;
   if (FLAGS_enclave_type == "simulated-enclave") {
     if (!get_simulated_enclave_parameters(&params, &n)) {
+      printf("%s() error, line %d, get enclave parameters\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+  } else if (FLAGS_enclave_type == "tpm-enclave") {
+    if (!get_tpm_enclave_parameters(&params, &n)) {
       printf("%s() error, line %d, get enclave parameters\n",
              __func__,
              __LINE__);

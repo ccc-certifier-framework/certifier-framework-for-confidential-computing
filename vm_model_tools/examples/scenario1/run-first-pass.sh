@@ -38,10 +38,10 @@ fi
 
 DOMAIN_NAME=$1
 REAL_TEST=1
+
 echo "domain name: $DOMAIN_NAME"
 
 # ------------------------------------------------------------------------------------
-
 
 function cleanup-stale-procs() {
   echo " "
@@ -60,60 +60,6 @@ function cleanup-stale-procs() {
   fi
 
   echo "cleanup-stale-procs done"
-}
-
-function do-get-quote-cert-and-measurement() {
-  echo " "
-  echo "do-get-quote-cert-and-measurement"
-
-  export LD_LIBRARY_PATH=/usr/local/lib
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/teelib
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/graminelib
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/isletlib
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/oelib
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/tpmlib
-  echo $LD_LIBRARY_PATH
-  sudo ldconfig
-
-  sleep 5
-
-  pushd $EXAMPLE_DIR
-  echo " "
-  echo "first pass"
-
-  pushd service
-    echo ""
-    echo "starting certifier for first pass"
-    $CERTIFIER_ROOT/certifier_service/simpleserver  \
-      --policy_key_file=$POLICY_KEY_FILE_NAME \
-      --policy_cert_file=$POLICY_CERT_FILE_NAME \
-      --trustedRootsFile="trustedRoots.bin" \
-      --doActivate=true &
-    echo "certifier first pass started"
-    echo ""
-  popd
-
-
-  echo ""
-  echo "getting quote cert"
-  $EXAMPLE_DIR/cf_utility.exe --data_dir=./app1_data/  \
-        --run-firts-pass=true \
-        --domain_name=$DOMAIN_NAME \
-        --tpm_device="/dev/tpmrm1" \
-        --seal_hierarchy_file_name="seal_hierarchy.bin" \
-        --quote_hierarchy_file_name="quote_hierarchy.bin" \
-        --quote_cert_file="./provisioning/quote_cert.crt" \
-        --measurement_file="./provisioning/measurement" \
-        --endorsement_cert_chain_file="" \
-        --endorsement_cert_file_name="" \
-        --policy_store_file=$POLICY_STORE_NAME --print_all=true
-  echo "got quote cert"
-  echo ""
-
-  echo ""
-  echo "first pass done"
-
-  cleanup-stale-procs
 }
 
 # ------------------------------------------------------------------------------------
@@ -135,23 +81,54 @@ function run-first-pass() {
 	echo $LD_LIBRARY_PATH
 	sudo ldconfig
 
-	pushd $EXAMPLE_DIR/service
-	if [[ "$DEPLOYMENT_ENCLAVE_TYPE" == "simulated-enclave" ]] ; then
-		echo "running policy server for simulated-enclave"
-		$CERTIFIER_ROOT/certifier_service/simpleserver \
-		  --policy_key_file=$POLICY_KEY_FILE_NAME --policy_cert_file=$POLICY_CERT_FILE_NAME \
-		  --policyFile=policy.bin --readPolicy=true &
-	fi
-	if [[ "$DEPLOYED_ENCLAVE_TYPE" == "sev-enclave" ]] ; then
-		echo "running policy server for sev"
-		$CERTIFIER_ROOT/certifier_service/simpleserver \
-		  --policy_key_file=$POLICY_KEY_FILE_NAME --policy_cert_file=$POLICY_CERT_FILE_NAME \
-		  --policyFile=sev_policy.bin --readPolicy=true &
-	
-	fi
-	popd
-
 	sleep 3
+
+	  if [[ -v REAL_TEST ]] ; then
+    pushd service
+      echo ""
+      echo "starting certifier for first pass"
+      $CERTIFIER_ROOT/certifier_service/simpleserver  \
+        --policy_key_file=$POLICY_KEY_FILE_NAME \
+        --policy_cert_file=$POLICY_CERT_FILE_NAME \
+        --trustedRootsFile="trustedRoots.bin" \
+        --doActivate=true &
+      echo "certifier first pass started"
+      echo ""
+    popd
+  fi
+
+  echo ""
+  echo "getting quote cert"
+  $EXAMPLE_DIR/cf_utility.exe \
+	--data_dir="$EXAMPLE_DIR/" \
+        --enclave_type=$DEPLOYED_ENCLAVE_TYPE \
+        --policy_domain_name=$DOMAIN_NAME \
+        --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
+        --policy_store_filename=$POLICY_STORE_NAME \
+	--run_first_pass=true \
+        --tpm_device="/dev/tpmrm1" \
+        --seal_hierarchy_file_name="seal_hierarchy.bin" \
+        --quote_hierarchy_file_name="quote_hierarchy.bin" \
+        --endorsement_cert_chain_file="" \
+        --endorsement_cert_file_name="" \
+        --quote_cert_file="quote_cert.crt" \
+        --measurement_file="measurement" \
+        --endorsement_cert_chain_file="" \
+        --endorsement_cert_file_name="" \
+	--generate_symmetric_key=true \
+        --keyname=primary-store-encryption-key \
+        --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
+        --symmetric_key_algorithm=aes-256-gcm  \
+        --public_key_algorithm=rsa-2048 \
+        --certifier_service_URL=$POLICY_SERVER_ADDRESS \
+        --service_port=$POLICY_SERVER_PORT --print_level=1"
+  echo "got quote cert"
+  echo ""
+
+  echo ""
+  echo "first pass done"
+
+  cleanup-stale-procs
 }
 
 echo "Processing arguments"
@@ -163,11 +140,11 @@ if [[ $VERBOSE -eq 1 ]]; then
 fi
 
 echo ""
-echo "running policy server"
+echo "running first-pass"
 echo ""
-run-policy-server
+run-first-pass
 echo ""
-echo "policy server running"
+echo "done"
 echo ""
 
 # --------------------------------------------------------------------------------

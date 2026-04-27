@@ -94,7 +94,8 @@ You can also type:
 
 which, does not regenerate policy keys and certificates.
 
-Since the device driver can only be accessed by root, you should run as root when you type these commands.
+Since the device driver can only be accessed by root, you should run as root
+when you type these commands.
 
 All the subcomands can be called from the command line also, provided you supply the
 needed flags. run-test-scenario1.sh provides ALL the arguments needed by
@@ -110,23 +111,26 @@ by typing:
     ./clean-files.sh
 ```
 
-Once you clean the test data and configuration files, you need not recompile the certifier
-or device driver but you need to do everything else, by typing:
+Once you clean the test data and configuration files, you need not recompile
+the certifier or device driver but you need to do everything else, by typing:
 
 ```shell
     ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0
 ```
 
-If you installed the device driver (sev_null) before running the scripts, you do not need "-bss 1".
+If you installed the device driver (sev_null) before running the scripts, you
+do not need "-bss 1".
 
-One more thing: If you run a test that fails and you want to cleanup, you should run:
+One more thing: If you run a test that fails and you want to cleanup, you
+should run:
 
 ```shell
     ./cleanup.sh
     ./clean-files.sh
 ```
 
-This removes the application files from the last run and kills the server processes used in the
-test.  If you don't do this, subsequent test may not be able to open the ports needed for the tests.
+This removes the application files from the last run and kills the server
+processes used in the test.  If you don't do this, subsequent test may not
+be able to open the ports needed for the tests.
 
 The scripts do not build a VM yet.  Stay tuned for more information on that.
