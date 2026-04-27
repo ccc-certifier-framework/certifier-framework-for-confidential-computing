@@ -51,7 +51,7 @@ a certificate signed by the policy key.  The customary proof protocol used in ot
 enclaves is used to produce an "Admisions Certificate" as is customary.
 
 
-# Running either in SEV or the test environment using the consolidated tests script
+# Running either in SEV, tpm or the test environment using the consolidated tests script
 
 To compile the programs, establish the environment and run the entire test, the
 subordinate scripts employ a number of shell variables.   It's a good idea to
@@ -60,6 +60,12 @@ define the first two in the shell you use by doing the following:
 ```shell
     export CERTIFIER_ROOT=~/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing
     export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
+```
+
+If you are using a tpm enclave and use the simulator for testing, start it:
+
+```shell
+    ./start-tpm-simulator.sh
 ```
 
 Almost all the variables are set within run-test-scenario1.sh.  To run it from scratch,
@@ -77,25 +83,33 @@ The three variable have the following effect:
     "-bss 1" tells the script to actually build and install the driver.
 
 After you run this the first time, you need not re-compile the certifier or install the
-device driver so you can run the test by typing:
+device driver.
+
+If you are not running a tpm enclave, you can run the test by typing:
 
 ```shell
     ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -loud 1
 ```
+If you are running a tpm enclave, you can run the test by typing:
 
-This saves considerable time.  However, you do need to recompile for a "real" sev
+```shell
+    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -loud 1 -et2 tpm-enclave -tpm /dev/tpmrm1
+```
+
+The flags can save a considerable time.
+However, you do need to recompile for a "real" sev
 platform because it will not compile the "SIMULATED_SEV" interface.
 
 You can also type:
 
 ```shell
-    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -pk 0 -loud 1
+    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -pk 0 -loud 1 [-et2 tpm-enclave -tpm /dev/tpmrm1]
 ```
 
 which, does not regenerate policy keys and certificates.
 
 Since the device driver can only be accessed by root, you should run as root
-when you type these commands.
+when you type these commands.  In addition, the tpm simulator must run as root.
 
 All the subcomands can be called from the command line also, provided you supply the
 needed flags. run-test-scenario1.sh provides ALL the arguments needed by
