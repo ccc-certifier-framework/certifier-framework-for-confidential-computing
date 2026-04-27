@@ -227,6 +227,9 @@ function do-compile-certifier() {
     pushd teelib
       make
     popd
+    pushd tpmlib
+      make
+    popd
 
     go build simpleserver.go
 

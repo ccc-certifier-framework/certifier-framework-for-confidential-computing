@@ -82,7 +82,7 @@ the "unprivledged window," type:
 
 ```shell
   cd $EXAMPLE_DIR
-  ./prepare-test.sh all domain-name
+  ./prepare-test.sh all dom0 # dom0 is our domain-name in the test
 ```
 
 This script also coolects the "trusted roots" for the TPM manufacturers and builds
@@ -110,13 +110,15 @@ Next we use the utility in $CERTIFIER_ROOT/src/tpm2 to set pcr 7 (which holds ou
 application measurment).
 
 ```shell
-  ./tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
+  ../../src/tpm2/tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
 ```
 
 Now, run the first pass:
 
 ```shell
-  ./fresh-pass.sh domain-name 1
+  ./first-pass.sh dom0 1
+  cp measurement ./provisioning
+  chmod 0777 measurement ./provisioning/measurement
 ```
 
 This will result in the quoting cert and a measurment, normally obtained by other means,
@@ -127,7 +129,7 @@ producing a "policy.bin" as in the other examples.  To do this,
 Back in the Unpriviledged window:
 
 ```shell
- final-prep.sh domain-name
+  ./final-prep.sh dom0
 ```
 
 Running the tests
@@ -136,19 +138,19 @@ Running the tests
 Next in priviledged window 1:
 
 ```shell
- ./run-init-apps.sh run domain-name
+ ./run-init-apps.sh run dom0
 ```
 
-This starts the certifier with the now complete policy, and as with the other applications,
-initializes the application twice, once for client operations, and once for server
-application and communicates with the certifier service to get them certified (thus
-resulting in a protected policy store and admissions certificate for each of the
-application modes.
+This starts the certifier with the now complete policy, and as with the other
+applications, initializes the application twice, once for client operations,
+and once for server application and communicates with the certifier service
+to get them certified (thus resulting in a protected policy store and
+admissions certificate for each of the application modes.
 
 Now, in priviledged window 1, type:
 
 ```shell
-  ./run-server-app.sh run domain-name
+  ./run-server-app.sh run dom0
 ```
 
 This starts the applicaton in server mode.
@@ -158,7 +160,7 @@ Finally, in a new (third) window, "priviledged window 2",
 ```shell
   cd $EXAMPLE_DIR
   sudo bash
-  ./run-client-app.sh run domain-name
+  ./run-client-app.sh dom0
 ```
 
 This starts the client and will establish a secure policy controlled channel

@@ -24,7 +24,7 @@ ARG_SIZE="$#"
 if [[ $ARG_SIZE != 1 ]] ; then
   echo "Wrong number of arguments"
   echo "Must call, as follows:"
-  echo "  ./run-client-app.sh fresh domain-name"
+  echo "  ./run-server-app.sh domain-name"
   exit
 fi
 DOMAIN_NAME=$1

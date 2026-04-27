@@ -155,7 +155,7 @@ func initActivateService(useStore bool) bool {
 			*policyKeyFile, *policyCertFile)
 		serializedKey, err := os.ReadFile(*policyKeyFile)
 		if err != nil {
-			fmt.Println("initCertifier: can't read key file %s, ", *policyCertFile, err)
+			fmt.Println("initActivateService: can't read key file %s, ", *policyCertFile, err)
 			return false
 		}
 		privatePolicyKey = &certprotos.KeyMessage{}

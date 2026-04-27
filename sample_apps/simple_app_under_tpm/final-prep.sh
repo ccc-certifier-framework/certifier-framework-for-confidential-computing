@@ -77,6 +77,7 @@ function make-cert-chain() {
   #	--output="endorsement_cert_chain.bin" -init=true \
   #	--new_cert_file="root.der" --add_cert=true
   #  popd
+  echo ""
 }
 
 function do-copy-files() {
