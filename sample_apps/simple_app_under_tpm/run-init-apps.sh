@@ -24,20 +24,20 @@ ARG_SIZE="$#"
 ## Please dont name a domain "fresh"
 if [ $ARG_SIZE == 0 ] ; then
   echo "Must call with arguments, as follows:"
-  echo "  ./run-test.sh fresh"
-  echo "  ./run-test.sh fresh domain-name"
-  echo "  ./run-test.sh run"
-  echo "  ./run-test.sh run domain-name"
+  echo "  ./run-init-apps.sh fresh"
+  echo "  ./run-init-apps.sh fresh domain-name"
+  echo "  ./run-init-apps.sh run"
+  echo "  ./run-init-apps.sh run domain-name"
   exit
 fi
 
 if [[ $ARG_SIZE != 1 && $ARG_SIZE != 2 ]] ; then
   echo "Wrong number of arguments"
   echo "Must call, as follows:"
-  echo "  ./run-test.sh fresh"
-  echo "  ./run-test.sh fresh domain-name"
-  echo "  ./run-test.sh run"
-  echo "  ./run-test.sh run domain-name"
+  echo "  ./run-init-apps.sh fresh"
+  echo "  ./run-init-apps.sh fresh domain-name"
+  echo "  ./run-init-apps.sh run"
+  echo "  ./run-init-apps.sh run domain-name"
   exit
 fi
 
