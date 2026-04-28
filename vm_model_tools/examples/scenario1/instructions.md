@@ -62,7 +62,16 @@ define the first two in the shell you use by doing the following:
     export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
 ```
 
-If you are using a tpm enclave and use the simulator for testing, start it:
+If you are using a tpm enclave, you must build the tpm utilities.
+
+```shell
+    pushd $CERTIFIER_ROOT/src/tpm2
+      make clean -f tpm2_support.mak
+      make -f tpm2_support.mak
+    popd
+```
+Once the tpm utilities are built (you only have to do that once),
+to use the simulator for testing, start it:
 
 ```shell
     ./start-tpm-simulator.sh

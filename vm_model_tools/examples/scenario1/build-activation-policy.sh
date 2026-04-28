@@ -9,12 +9,11 @@ Me=$(basename "$0")
 
 source ./arg-processing.inc
 
-
 # -------------------------------------------------------------------------------
 
 function make-root-list() {
 
-  echo "root cert in prepare-test"
+  echo "make-root-list"
   echo ""
   pushd $EXAMPLE_DIR/provisioning
     cp /var/lib/swtpm-localca/swtpm-localca-rootca-cert.pem root.pem

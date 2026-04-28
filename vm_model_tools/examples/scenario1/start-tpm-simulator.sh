@@ -11,7 +11,7 @@ Me=$(basename "$0")
 if [[ -v CERTIFIER_ROOT ]] ; then
   echo "CERTIFIER_ROOT already set."
 else
-  pushd ../..
+  pushd ../../..
   CERTIFIER_ROOT=$(pwd)
   popd
 fi

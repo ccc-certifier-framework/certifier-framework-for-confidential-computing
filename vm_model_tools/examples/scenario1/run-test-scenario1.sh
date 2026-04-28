@@ -125,8 +125,10 @@ echo "measure-vm-programs.sh"
 ./measure-vm-programs.sh $TA			# working
 
 if [[ $DEPLOYED_ENCLAVE_TYPE == "tpm-enclave" ]]; then
+  echo ""
   echo "tpm enclave"
-  ../../../tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
+  TPM_SUPPORT_DIR=$CERTIFIER_ROOT/src/tpm2
+  $TPM_SUPPORT_DIR/tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
   ./build-activation-policy.sh $ALLARGS
   ./run-first-pass.sh $ALLARGS
   cp measurement ./cf_data

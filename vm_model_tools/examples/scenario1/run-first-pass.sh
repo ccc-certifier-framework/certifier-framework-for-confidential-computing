@@ -13,33 +13,14 @@ source ./arg-processing.inc
 # (in the service directory).  It runs as an http service and waits for
 # requests.
 
-if [[ -v CERTIFIER_ROOT ]] ; then
-  echo "CERTIFIER_ROOT already set."
-else
-  pushd ../../..
-  CERTIFIER_ROOT=$(pwd)
-  popd
-fi
-EXAMPLE_DIR=$(pwd)
-
-NO_COMPILE_UTILITIES=1
-
-echo " "
+echo ""
+echo "First pass"
 echo "Certifier root: $CERTIFIER_ROOT"
 echo "Example directory: $EXAMPLE_DIR"
+echo "Domain name: $DOMAIN_NAME"
+echo "Enclave type: $DEPLOYED_ENCLAVE_TYPE"
 
-ARG_SIZE="$#"
-
-if [[ $ARG_SIZE == 0 ]] ; then
-  echo "Must call with arguments, as follows:"
-  echo "  ./first-pass.sh domain_name"
-  exit
-fi
-
-DOMAIN_NAME=$1
 REAL_TEST=1
-
-echo "domain name: $DOMAIN_NAME"
 
 # ------------------------------------------------------------------------------------
 
@@ -65,25 +46,25 @@ function cleanup-stale-procs() {
 # ------------------------------------------------------------------------------------
 
 function run-first-pass() {
-	echo " "
-	echo "run-first-pass"
+  echo " "
+  echo "run-first-pass"
 
-	if [[ $DEPLOYMENT_ENCLAVE_TYPE != "tpm-enclave" ]] ; then
-		echo "Unsupported first pass enclave type"
-	fi
+  if [[ $DEPLOYED_ENCLAVE_TYPE != "tpm-enclave" ]] ; then
+    echo "Unsupported first pass enclave type"
+  fi
 
-	export LD_LIBRARY_PATH=/usr/local/lib
-	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/teelib
-	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/graminelib
-	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/isletlib
-	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/oelib
-	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/tpmlib
-	echo $LD_LIBRARY_PATH
-	sudo ldconfig
+  export LD_LIBRARY_PATH=/usr/local/lib
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/teelib
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/graminelib
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/isletlib
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/oelib
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/tpmlib
+  echo $LD_LIBRARY_PATH
+  sudo ldconfig
 
-	sleep 3
+  sleep 3
 
-	  if [[ -v REAL_TEST ]] ; then
+  if [[ -v REAL_TEST ]] ; then
     pushd service
       echo ""
       echo "starting certifier for first pass"
@@ -99,8 +80,8 @@ function run-first-pass() {
 
   echo ""
   echo "getting quote cert"
-  $EXAMPLE_DIR/cf_utility.exe \
-	--data_dir="$EXAMPLE_DIR/" \
+  $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
+	--data_dir=$DATA_DIR \
         --enclave_type=$DEPLOYED_ENCLAVE_TYPE \
         --policy_domain_name=$DOMAIN_NAME \
         --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
@@ -121,7 +102,7 @@ function run-first-pass() {
         --symmetric_key_algorithm=aes-256-gcm  \
         --public_key_algorithm=rsa-2048 \
         --certifier_service_URL=$POLICY_SERVER_ADDRESS \
-        --service_port=$POLICY_SERVER_PORT --print_level=1"
+        --service_port=$POLICY_SERVER_PORT --print_level=1
   echo "got quote cert"
   echo ""
 
@@ -133,7 +114,7 @@ function run-first-pass() {
 
 echo "Processing arguments"
 process-args
-echo "Arguments processed"
+echo ""
 
 if [[ $VERBOSE -eq 1 ]]; then
         print-variables

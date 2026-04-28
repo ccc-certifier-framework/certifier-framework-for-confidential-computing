@@ -94,17 +94,6 @@ bool first_pass(const string &tpm_device,
   printf("PCR's at first pass entry:\n");
   print_pcrs(g_tpm, num_pcrs, pcrs);
 
-#  if 0
-  // run tpm2_set_pcrs.exe instead
-  if (!extend_pcrs(g_tpm, 7)) {
-    printf("%s() error, line %d, extend_pcrs failed\n", __func__, __LINE__);
-    return false;
-  }
-
-  printf("PCR's at first pass after extend:\n");
-  print_pcrs(g_tpm, num_pcrs, pcrs);
-#  endif
-
   extern string       g_serialized_quote_cert;
   extern string       g_serialized_endorsement_cert;
   extern string       g_serialized_endorsement_cert_chain;
