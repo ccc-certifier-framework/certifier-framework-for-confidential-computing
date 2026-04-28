@@ -106,6 +106,11 @@ function run-first-pass() {
   echo "got quote cert"
   echo ""
 
+  echo "copy measurement"
+  echo ""
+  cp tpm_cf_utility.measurement provisioning
+  chmod 0777 tpm_cf_utility.measurement provisioning/tpm_cf_utility.measurement provisioning
+
   echo ""
   echo "first pass done"
 

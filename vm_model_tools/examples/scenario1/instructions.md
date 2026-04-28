@@ -83,6 +83,11 @@ in the simulated sev environment type:
 ```shell
     ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 1 -loud 1
 ```
+To run it from scratch, in the tpm environment, type:
+
+```shell
+    ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 1 -loud 1  -et2 tpm-enclave -tpm /dev/tpmrm1
+```
 
 The three variable have the following effect:
     "-tt simulated" tells the script that the "deployed enviornment" is the simulated SEV enclave.

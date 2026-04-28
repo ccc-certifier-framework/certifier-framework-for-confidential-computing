@@ -90,8 +90,10 @@ bool first_pass(const string &tpm_device,
 
   extern local_tpm g_tpm;
 
+#ifdef DEBUG
   printf("PCR's at first pass:\n");
   print_pcrs(g_tpm, num_pcrs, pcrs);
+#endif
 
   extern string       g_serialized_quote_cert;
   extern string       g_serialized_endorsement_cert;
@@ -331,7 +333,7 @@ bool first_pass(const string &tpm_device,
   printf("\n");
 #endif
 
-  string measurement_file_name("measurement");
+  string measurement_file_name("tpm_cf_utility.measurement");
   if (!write_file_from_string(measurement_file_name, pcr_digest)) {
     printf("%s(), error, line: %d, can't write measurement\n",
            __func__,

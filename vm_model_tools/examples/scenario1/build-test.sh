@@ -55,7 +55,8 @@ function do-run() {
 
   pushd $EXAMPLE_DIR/service
   $CERTIFIER_ROOT/certifier_service/simpleserver \
-        --policy_key_file=$POLICY_KEY_FILE_NAME --policy_cert_file=$POLICY_CERT_FILE_NAME \
+        --policy_key_file=$POLICY_KEY_FILE_NAME \
+	--policy_cert_file=$POLICY_CERT_FILE_NAME \
         --policyFile=$POLICY_FILE_NAME --readPolicy=true &
   popd
 

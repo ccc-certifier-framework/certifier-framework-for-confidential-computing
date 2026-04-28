@@ -76,7 +76,7 @@ if [[ $TEST_TYPE = "simulated" ]]; then
 	ALLSIMARG1="-tt simulated -pn scenario1-test -dn dom0"
 	ALLSIMARG2="-clean 1 -loud 1 -dd ./ -ccf $COMPILE_CF -bss $BUILD_SEV_SIMULATOR"
 	ALLSIMARG3="-pkn policy_key_file -cfn policy_cert_file -psn policy_store -csn cryptstore"
-	ALLSIMARG4="-pfn policy.bin -psa POLICY_SERVER_ADDRESS -ksa $KEY_SERVER_ADDRESS"
+	ALLSIMARG4="-pfn policy.bin -psa $POLICY_SERVER_ADDRESS -ksa $KEY_SERVER_ADDRESS"
 	ALLSIMARG5="-vmn pauls_vm -et1 $DEPLOYMENT_ENCLAVE_TYPE -et2 $DEPLOYED_ENCLAVE_TYPE"
 	ALLSIMARG6="-psn1 $DEPLOYMENT_POLICY_STORE_NAME -csn1 $DEPLOYMENT_CRYPTSTORE_NAME -csn2 $DEPLOYED_CRYPTSTORE_NAME"
 	ALLSIMARG7="-npcr $NUM_PCR -pcrs $PCRSTR -tpm $TPM_DEVICE -seal $SEAL_STORE -quote $QUOTE_STORE -quote_cert $QUOTE_CERT_FILE"
@@ -131,7 +131,6 @@ if [[ $DEPLOYED_ENCLAVE_TYPE == "tpm-enclave" ]]; then
   $TPM_SUPPORT_DIR/tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
   ./build-activation-policy.sh $ALLARGS
   ./run-first-pass.sh $ALLARGS
-  cp measurement ./cf_data
   cp $QUOTE_CERT_FILE ./cf_data
 fi
 
