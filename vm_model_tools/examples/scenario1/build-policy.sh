@@ -92,6 +92,7 @@ function do-make-policy() {
         echo "For tpm enclave"
 
         $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
+	  --config="$PCRSTR" \
           --key_subject="" \
           --measurement_subject=tpm_cf_utility.measurement \
           --verb="is-trusted" \
