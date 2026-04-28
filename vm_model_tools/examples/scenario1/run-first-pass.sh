@@ -93,7 +93,7 @@ function run-first-pass() {
         --endorsement_cert_chain_file="" \
         --endorsement_cert_file_name="" \
         --quote_cert_file="quote_cert.crt" \
-        --measurement_file="measurement" \
+        --measurement_file="cf_utility.measurement" \
         --endorsement_cert_chain_file="" \
         --endorsement_cert_file_name="" \
 	--generate_symmetric_key=true \
