@@ -524,6 +524,7 @@ func GetTpmMeasurementEntityFromAttestation(serializedAttest []byte) *certprotos
 
 	m, r := tpmverify.TpmGetMeasurementValues(am.TheQuote)
 	if m == nil {
+		fmt.Printf("GetTpmMeasurementEntityFromAttestation: No mesurement returned\n")
 		return nil
 	}
 	return MakeFullMeasurementEntity(m, r)
@@ -535,6 +536,7 @@ func GetRelevantTpmMeasurement(pool *PolicyPool, evp *certprotos.EvidencePackage
 
 	ev_list := evp.FactAssertion
 	if ev_list == nil {
+		fmt.Printf("GetRelevantTpmMeasurement: empty evidence list\n")
 		return nil
 	}
 
@@ -554,8 +556,14 @@ func GetRelevantTpmMeasurement(pool *PolicyPool, evp *certprotos.EvidencePackage
 	}
 
 	if me == nil {
+		fmt.Printf("GetRelevantTpmMeasurement: no measurement entity\n")
 		return nil
 	}
+
+	// Debug
+	fmt.Printf("measurement entity:\n")
+	PrintEntity(me)
+	fmt.Printf("\n")
 
 	// look for policyKey says Measurement[] is-trusted
 	for i := 0; i < len(pool.AllPolicy.Proved); i++ {
