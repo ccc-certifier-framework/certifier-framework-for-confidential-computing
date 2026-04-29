@@ -36,6 +36,7 @@ T= $(CERTIFIER_ROOT)/src/tpm2
 CF_NEW_API = 1
 ENABLE_SEV=1
 TPM=1
+DUMMY_SEV=1
 
 # Newer versions of protobuf require C++17 and dependancies on additional libraries.
 # When this happens, everything must be compiles with C++17 and the linking is a
@@ -63,6 +64,10 @@ endif
 
 ifdef CF_NEW_API
 CFLAGS += -DNEW_API
+endif
+
+ifdef DUMMY_SEV
+CFLAGS += -DSEV_DUMMY_GUEST
 endif
 
 
