@@ -71,10 +71,12 @@ If you are using a tpm enclave, you must build the tpm utilities.
     popd
 ```
 Once the tpm utilities are built (you only have to do that once),
-to use the simulator for testing, start it:
+to use the simulator for testing, start it and set pcr 7 for the test:
 
 ```shell
     ./start-tpm-simulator.sh
+    TPM_SUPPORT_DIR=$CERTIFIER_ROOT/src/tpm2
+    $TPM_SUPPORT_DIR/tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
 ```
 
 Almost all the variables are set within run-test-scenario1.sh.  To run it from scratch,

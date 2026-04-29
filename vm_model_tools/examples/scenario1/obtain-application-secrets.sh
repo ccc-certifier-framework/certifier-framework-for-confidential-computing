@@ -44,7 +44,10 @@ $CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe \
     --output_file=$CLIENT_OUT_FILE \
     --action=retrieve \
     --key_server_url=$KEY_SERVER_ADDRESS \
-    --key_server_port=$KEY_SERVER_PORT
+    --key_server_port=$KEY_SERVER_PORT \
+    --tpm_device="/dev/tpmrm1" \
+    --seal_hierarchy_file_name="seal_hierarchy.bin" \
+    --quote_hierarchy_file_name="quote_hierarchy.bin"
 
 sleep 3
 

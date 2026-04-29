@@ -771,24 +771,29 @@ func FilterTpmPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidenceP
 	to := proto.Clone(from).(*certprotos.VseClause)
 	filtered.Proved = append(filtered.Proved, to)
 
-	// measurement
-	from = policyPool.AllPolicy.Proved[1]
-	to = proto.Clone(from).(*certprotos.VseClause)
-	filtered.Proved = append(filtered.Proved, to)
-/*
-FIX!
-	// policyKey says measurement is-trusted-for-attestation
-	evType := "tpm-evidence"
-	from = GetRelevantMeasurementPolicy(policyPool, evType, evp)
-	if from == nil {
-		fmt.Printf("FilterTpmPolicy: Can't get relavent measurement\n")
+	// just get the measurement not a platform attestation
+	succeeded := false
+	for i := 1; i < len(policyPool.AllPolicy.Proved); i++ {
+		from = policyPool.AllPolicy.Proved[i]
+		if from.Clause.Subject.GetEntityType() != "measurement" {
+			continue
+		}
+		// Todo:  Make sure its the measurement we're interested in
+		// from = GetRelevantMeasurementPolicy(policyPool, evType, evp)
+		// for now:
+		if from.Clause.Subject.GetMeasurement() == nil || from.Clause.Subject.GetRegisters() == nil {
+			continue
+		}
+		to = proto.Clone(from).(*certprotos.VseClause)
+		filtered.Proved = append(filtered.Proved, to)
+		succeeded = true
+	}
+
+	if succeeded {
+		return filtered
+	} else {
 		return nil
 	}
-	to = proto.Clone(from).(*certprotos.VseClause)
-	filtered.Proved = append(filtered.Proved, to)
-	 */
-
-	return filtered
 }
 
 //      ------------------------------------------------------------------------

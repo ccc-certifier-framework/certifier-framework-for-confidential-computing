@@ -50,7 +50,11 @@ echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
         --data_dir="$EXAMPLE_DIR/" \
         --certifier_service_URL=$POLICY_SERVER_ADDRESS \
         --service_port=$POLICY_SERVER_PORT " --print_level=1 \
-	--trust_anchors=$EXAMPLE_DIR/cf_data/my_certs
+	--trust_anchors=$EXAMPLE_DIR/cf_data/my_certs \
+        --tpm_device="/dev/tpmrm1" \
+        --seal_hierarchy_file_name="seal_hierarchy.bin" \
+        --quote_hierarchy_file_name="quote_hierarchy.bin"
+
 echo " "
 
 $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
@@ -66,7 +70,10 @@ $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
         --public_key_algorithm=rsa-2048 \
         --data_dir="$EXAMPLE_DIR/" \
         --certifier_service_URL=$POLICY_SERVER_ADDRESS \
-        --service_port=8123 --print_level=1
+        --service_port=8123 --print_level=1 \
+        --tpm_device="/dev/tpmrm1" \
+        --seal_hierarchy_file_name="seal_hierarchy.bin" \
+        --quote_hierarchy_file_name="quote_hierarchy.bin"
 
 sleep 3
 
@@ -86,7 +93,10 @@ echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
         --public_key_algorithm=rsa-2048 \
         --data_dir="$EXAMPLE_DIR/" \
         --certifier_service_URL=$POLICY_SERVER_ADDRESS \
-        --service_port=$POLICY_SERVER_PORT --print_level=1"
+        --service_port=$POLICY_SERVER_PORT --print_level=1" \
+        --tpm_device="/dev/tpmrm1" \
+        --seal_hierarchy_file_name="seal_hierarchy.bin" \
+        --quote_hierarchy_file_name="quote_hierarchy.bin"
 echo " "
 echo " Alternatively add \
 	--trust_anchors=$EXAMPLE_DIR/cf_data/my_certs"

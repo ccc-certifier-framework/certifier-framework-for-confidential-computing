@@ -132,7 +132,7 @@ DEFINE_string(quote_hierarchy_file_name,
 DEFINE_int32(num_pcrs, 1, "number of pcrs");
 DEFINE_string(pcrs_str, "7", "pcr string");
 DEFINE_string(quote_cert_file,
-              "./provisioning/quote_cert.crt",
+              "./cf_data/quote_cert.crt",
               "quote cert file");
 DEFINE_string(endorsement_cert_file_name, "", "tpm cert file name");
 DEFINE_string(endorsement_cert_chain_file, "", "endorsement cert chain file");
