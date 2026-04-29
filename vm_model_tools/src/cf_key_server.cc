@@ -299,8 +299,6 @@ string            g_serialized_policy_cert;
 key_message       g_my_private_key;
 string            g_serialized_admissions_cert;
 
-#define DEBUG7
-
 bool error_response(key_service_message_response *response,
                     string                       *serialized_response) {
   response->set_status("failed");

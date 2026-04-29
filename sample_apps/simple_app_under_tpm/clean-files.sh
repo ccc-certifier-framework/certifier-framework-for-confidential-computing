@@ -87,9 +87,12 @@ echo "Policy cert file name: $POLICY_CERT_FILE_NAME"
   cleanup-stale-procs
 
   # remove the files
+  rm app1_data/*
+  rm app2_data/*
+  rm service/*
+  echo "rm provisioning/*"
+  rm provisioning/*
   rm seal_hierarchy.bin quote_hierarchy.bin
-  rm app1_data/$POLICY_STORE_FILE_NAME
-  rm app2_data/$POLICY_STORE_FILE_NAME
 
 echo "Done"
 exit

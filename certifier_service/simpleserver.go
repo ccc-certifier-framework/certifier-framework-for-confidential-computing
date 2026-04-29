@@ -114,9 +114,10 @@ func initActivateService(useStore bool) bool {
 	}
 
 	if useStore {
-		// Debug
+		/* Debug
 		fmt.Printf("Initializing ActivateService from store: %s, cert file: %s\n",
 			*policyKeyFile, *policyStoreFile)
+		 */
 
 		if *enclaveType == "simulated-enclave" {
 			blank := ""
@@ -150,9 +151,10 @@ func initActivateService(useStore bool) bool {
 		fmt.Printf("Recovered policy key from store\n")
 	} else {
 
-		// Debug
+		/* Debug
 		fmt.Printf("Initializing ActivateService from file: %s, cert file: %s\n",
 			*policyKeyFile, *policyCertFile)
+		 */
 		serializedKey, err := os.ReadFile(*policyKeyFile)
 		if err != nil {
 			fmt.Println("initActivateService: can't read key file %s, ", *policyCertFile, err)
@@ -180,7 +182,7 @@ func initActivateService(useStore bool) bool {
 		return false
 	}
 	// Debug
-	fmt.Printf("Parsed certificate\n")
+	// fmt.Printf("Parsed certificate\n")
 
 	publicPolicyKey = certlib.InternalPublicFromPrivateKey(privatePolicyKey)
 	if publicPolicyKey == nil {
@@ -508,10 +510,11 @@ func ValidateRequestAndObtainToken(remoteIP string, pubKey *certprotos.KeyMessag
 		sn = sn + 1
 		org := "CertifierUsers"
 
-		// Debug
+		/* Debug
 		fmt.Printf("\nEnclave key is:\n")
 		certlib.PrintKey(toProve.Subject.Key)
 		fmt.Printf("\norg: %s\nappOrgName: %s\n", org, appOrgName)
+		 */
 
 		cert := certlib.ProduceAdmissionCert(remoteIP, privKey, policyCert,
 			toProve.Subject.Key, org, appOrgName, sn, duration)
@@ -520,9 +523,11 @@ func ValidateRequestAndObtainToken(remoteIP string, pubKey *certprotos.KeyMessag
 			return false, nil
 		}
 
-		// Debug
+		/* Debug
 		fmt.Printf("\n\nPrinting cert %d\n", sn);
 		certlib.PrintX509Cert(cert)
+		 */
+
 		artifact = cert.Raw
 		if artifact == nil {
 			fmt.Printf("ValidateRequestAndObtainToken: Asn1 artifact is nil\n")
@@ -687,7 +692,7 @@ func activateServiceThread(conn net.Conn, client string) {
 	}
 
 	// Debug
-	fmt.Printf("Read %d byte request\n", len(b));
+	//fmt.Printf("Read %d byte request\n", len(b));
 
 	var remoteIP string
 	if remoteAddr, ok := conn.RemoteAddr().(*net.TCPAddr); ok {
@@ -732,8 +737,8 @@ func keyServiceThread(conn net.Conn, client string) {
 	}
 
 	// Debug
-	fmt.Printf("keyServiceThread: Key request received:\n")
-	certlib.PrintKeyRequestMessage(request)
+	//fmt.Printf("keyServiceThread: Key request received:\n")
+	//certlib.PrintKeyRequestMessage(request)
 
 	// Prepare response
 	succeeded := "succeeded"
@@ -918,7 +923,7 @@ func ProvisionKeys(serverAddr string) bool {
 	}
 
 	// Debug
-	fmt.Printf("attestation size: %d\n", len(at))
+	//fmt.Printf("attestation size: %d\n", len(at))
 
 	el := certprotos.EvidenceList{}
 	if !FillEvidenceList(*enclaveType, &el) {
@@ -956,8 +961,8 @@ func ProvisionKeys(serverAddr string) bool {
 	krm.Support = ep
 
 	// Debug
-	certlib.PrintKeyRequestMessage(&krm)
-	fmt.Printf("\n")
+	// certlib.PrintKeyRequestMessage(&krm)
+	// fmt.Printf("\n")
 
 	krr := certprotos.KeyResponseMessage{}
 	if !NegotiateProvisionRequest(serverAddr, &krm, &krr) {
@@ -966,8 +971,8 @@ func ProvisionKeys(serverAddr string) bool {
 	}
 
 	// Debug
-	certlib.PrintKeyResponseMessage(&krr)
-	fmt.Printf("\n")
+	// certlib.PrintKeyResponseMessage(&krr)
+	// fmt.Printf("\n")
 
 	if *krr.Status != "succeeded" || krr.Artifact == nil {
 		fmt.Printf("ProvisionKeys: Key request failed\n")

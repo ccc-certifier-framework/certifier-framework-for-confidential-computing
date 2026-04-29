@@ -112,8 +112,9 @@ func CheckCertChain(tRoots *certprotos.BufferSequence, userChain *certprotos.Buf
 	// add trusted roots
 	for i := 0; i < len(tRoots.Block); i++ {
 		nr := Asn1ToX509(tRoots.Block[i])
-		// Debug
+		/* Debug
 		fmt.Printf("Adding root:\n")
+		 */
 		PrintX509Cert(nr)
 		roots.AddCert(nr)
 	}
@@ -314,9 +315,10 @@ func ProcessActivationRequest(serializedRequest []byte, remoteIP string, roots *
                 return false, fillAndSerializeQuoteFailure(response)
         }
 
-	// Debug
+	/* Debug
 	fmt.Printf("Unencrypted cert, %d bytes\n", len(serializedQuoteCert))
 	fmt.Printf("Encrypted cert, %d bytes\n", len(encryptedCert))
+	 */
 
 	*response.Status = "succeeded"
 	*response.HashAlg= *request.QuoteHashAlg

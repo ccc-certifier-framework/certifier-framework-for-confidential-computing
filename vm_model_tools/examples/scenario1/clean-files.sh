@@ -13,15 +13,15 @@
 echo "Removing runtime data files"
 rm policy_store.dom0* cryptstore.dom0*
 pushd provisioning
-rm ./*
+  rm ./*
 popd
-pushd service
-rm ./*
+ pushd service
+ rm ./*
 popd
 pushd cf_data
-rm ./*
+ rm ./*
 popd
-rm cf_utility.measurement sev_cf_utility.measurement
+ rm measurement cf_utility.measurement sev_cf_utility.measurement
 echo "Removed runtime data files"
 
 # --------------------------------------------------------------------------------

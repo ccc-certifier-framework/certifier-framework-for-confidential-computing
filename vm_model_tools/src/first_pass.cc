@@ -327,7 +327,7 @@ bool first_pass(const string &tpm_device,
   print_pcrs(g_tpm, new_num_pcrs, new_pcrs);
   printf("\n");
 #endif
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("Measurement digest: ");
   print_bytes(pcr_digest.size(), (byte_t *)pcr_digest.data());
   printf("\n");

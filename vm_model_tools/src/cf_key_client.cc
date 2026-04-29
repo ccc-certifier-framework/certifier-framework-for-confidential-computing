@@ -379,8 +379,6 @@ void print_help() {
   }
 }
 
-#define DEBUG7
-
 // -------------------------------------------------------------------------------------
 
 cc_trust_manager *trust_mgr = nullptr;

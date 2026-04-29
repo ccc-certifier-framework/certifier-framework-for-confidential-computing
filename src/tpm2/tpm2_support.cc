@@ -1753,7 +1753,7 @@ bool tpm_Init(const string &device_name,
               int           num_pcrs,
               byte_t       *pcrs) {
 
-#ifdef DEBUG
+#ifdef DEBUG2
   printf("tpm_Init, device: %s\n", device_name.c_str());
   printf("tpm_Init, endorsement cert: %s\n",
          endorsement_cert_file_name.c_str());
