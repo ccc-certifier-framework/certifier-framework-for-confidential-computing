@@ -361,9 +361,11 @@ func GetVseMeasurementFromAttestation(evBuf []byte) []byte {
 		fmt.Printf("GetVseMeasurementFromAttestation: Can't unmarshal info\n")
 		return nil
 	}
-fmt.Printf("returning info.VerifiedMeasurement\n")
-PrintVseAttestationReportInfo(&info)
-fmt.Printf("\n")
+	/*
+	fmt.Printf("returning info.VerifiedMeasurement\n")
+	PrintVseAttestationReportInfo(&info)
+	fmt.Printf("\n")
+	 */
 	return info.VerifiedMeasurement
 }
 
@@ -374,6 +376,8 @@ func GetTpmMeasurementFromAttestation(evBuf []byte) []byte {
 		fmt.Printf("GetTpmSevMeasurementFromAttestation: Can't unmarshal TpmSevAttestationMessage\n")
 		return nil
 	}
+	// extract the quote, decode it, get pcr_digest and pcrSelect
+	// need new interface in tpmlib
 	return GetMeasurementFromTpmAttest(am.TheQuote)
 }
 
@@ -779,6 +783,7 @@ func FilterTpmPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidenceP
 			continue
 		}
 		// Todo:  Make sure its the measurement we're interested in
+		// from = GetRelevantPlatformKeyPolicy(policyPool, evType, evp)
 		// from = GetRelevantMeasurementPolicy(policyPool, evType, evp)
 		// for now:
 		if from.Clause.Subject.GetMeasurement() == nil || from.Clause.Subject.GetRegisters() == nil {
