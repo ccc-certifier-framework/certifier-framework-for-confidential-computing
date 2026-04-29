@@ -521,10 +521,12 @@ func GetTpmMeasurementEntityFromAttestation(serializedAttest []byte) *certprotos
 		fmt.Printf("GetTpmMeasurementEntityFromAttestation: Can't unmarshal TpmAttestationMessage\n")
 		return nil
 	}
-	// extract the quote, decode it, get pcr_digest and pcrSelect
-	// need new interface in tpmlib
-	// return MakeFullMeasurementEntity(m, r)
-	return nil
+
+	m, r := tpmverify.TpmGetMeasurementValues(am.TheQuote)
+	if m == nil {
+		return nil
+	}
+	return MakeFullMeasurementEntity(m, r)
 }
 
 // Returns the single policy statement naming the relevant measurement policy
