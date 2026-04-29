@@ -59,9 +59,9 @@ bool tpm_get_measurement_from_attest(int      size_quote,
                                      uint8_t *pcr_out) {
 
   return get_measurement_from_attest(size_quote,
-                                 quote,
-                                 measurement_size,
-                                 measurement_out,
-                                 pcr_size,
-                                 pcr_out);
+                                     quote,
+                                     measurement_size,
+                                     measurement_out,
+                                     pcr_size,
+                                     pcr_out);
 }
