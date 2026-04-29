@@ -2610,6 +2610,53 @@ bool get_data_from_attest(int       size,
   return true;
 }
 
+bool get_measurement_from_attest(int      size_quote,
+                                 uint8_t *quote,
+                                 int     *measurement_size,
+                                 uint8_t *measurement_out,
+                                 int     *pcr_size,
+                                 uint8_t *pcr_out) {
+  uint32_t magic;
+  uint16_t type;
+  string   signer;
+  string   extra_data;
+  int      num_pcrs = 32;
+  byte_t   pcrs[num_pcrs];
+  string   digest;
+
+  TPML_PCR_SELECTION local_pcrSelect;
+  if (!decode_quoted(size_quote,
+                     quote,
+                     &magic,
+                     &type,
+                     &signer,
+                     &extra_data,
+                     &local_pcrSelect,
+                     &digest)) {
+    printf("%s() error, line %d, can't decode quote\n", __func__, __LINE__);
+    return false;
+  }
+  if (!get_pcr_from_select(&local_pcrSelect, &num_pcrs, pcrs)) {
+    printf("%s() error, line %d, can't get_pcr_from_select\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if (*measurement_size < (int)digest.size()) {
+    printf("%s() error, line %d, output size too small\n", __func__, __LINE__);
+    return false;
+  }
+  *measurement_out = digest.size();
+  memcpy(measurement_out, (byte_t *)digest.data(), *measurement_out);
+  if (*pcr_size < num_pcrs) {
+    printf("%s() error, line %d, output size too small\n", __func__, __LINE__);
+    return false;
+  }
+  *pcr_size = num_pcrs;
+  memcpy(pcr_out, (byte_t *)pcrs, *pcr_size);
+  return true;
+}
+
 bool tpm_verify_attest(const key_message &quote_key,
                        const string      &serialized_tpm_msg) {
 

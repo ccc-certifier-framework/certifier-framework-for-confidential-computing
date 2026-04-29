@@ -144,7 +144,12 @@ bool get_data_from_attest(int       size,
                           int      *num_pcrs,
                           byte_t   *pcrs,
                           string   *digest);
-
+bool get_measurement_from_attest(int      size_quote,
+                                 uint8_t *quote,
+                                 int     *measurement_size,
+                                 uint8_t *measurement_out,
+                                 int     *pcr_size,
+                                 uint8_t *pcr_out);
 bool do_quote(local_tpm    &tpm,
               TPM_HANDLE   &srk_handle,
               int           num_pcrs,
