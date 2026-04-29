@@ -100,3 +100,35 @@ func TpmMakeCredential(hash_alg string,
 		C.int(encryptedSecretSize))
 	return true, outCredBlob, outEncryptedSecret
 }
+
+func TpmGetMeasurementValues(quote [] byte) ([] byte, [] byte) {
+
+	c_quote_ptr := C.CBytes(quote)
+        defer C.free(c_quote_ptr)
+
+	mSize := C.int(256)
+	mBlob := C.malloc(C.ulong(mSize))
+	defer C.free(unsafe.Pointer(mBlob))
+
+	rSize := C.int(256)
+	rBlob := C.malloc(C.ulong(rSize))
+	defer C.free(unsafe.Pointer(rBlob))
+
+	ret := C.tpm_get_measurement_from_attest(
+		(C.int)(len(quote)),
+		(*C.uchar)(c_quote_ptr),
+		(*C.int)(&mSize),
+		(*C.uchar)(mBlob),
+		(*C.int)(&rSize),
+		(*C.uchar)(rBlob));
+	if (!ret) {
+		return nil, nil
+	}
+
+	mOut := C.GoBytes(unsafe.Pointer(mBlob),
+		C.int(mSize))
+	rOut := C.GoBytes(unsafe.Pointer(rBlob),
+		C.int(rSize))
+	return mOut, rOut
+}
+

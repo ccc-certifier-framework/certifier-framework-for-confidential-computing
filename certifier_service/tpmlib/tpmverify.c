@@ -50,3 +50,12 @@ bool certifier_make_a_credential(const char *quote_hash_alg,
                                         encrypted_secret_size,
                                         encrypted_secret_buf);
 }
+
+bool tpm_get_measurement_from_attest(int      size_quote,
+                                     uint8_t *quote,
+                                     int     *measurement_size,
+                                     uint8_t *measurement_out,
+                                     int     *pcr_size,
+                                     uint8_t *pcr_out) {
+  return false;
+}

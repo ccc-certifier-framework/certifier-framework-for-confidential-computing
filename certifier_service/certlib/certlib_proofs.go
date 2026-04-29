@@ -299,7 +299,7 @@ func GetRelevantPlatformKeyPolicy(pool *PolicyPool, evType string,
 				continue
 			}
 
-			fmt.Printf("GetRelevantPlatformKeyPolicy in cert\n")
+			// fmt.Printf("GetRelevantPlatformKeyPolicy in cert\n")
 			platKey := GetSubjectKey(platCert)
 			if platKey == nil {
 				fmt.Printf("GetRelevantPlatformKeyPolicy: cant get subject key from cert\n")
@@ -367,18 +367,6 @@ func GetVseMeasurementFromAttestation(evBuf []byte) []byte {
 	fmt.Printf("\n")
 	 */
 	return info.VerifiedMeasurement
-}
-
-func GetTpmMeasurementFromAttestation(evBuf []byte) []byte {
-	var am certprotos.TpmAttestationMessage
-	err := proto.Unmarshal(evBuf, &am)
-	if err != nil {
-		fmt.Printf("GetTpmSevMeasurementFromAttestation: Can't unmarshal TpmSevAttestationMessage\n")
-		return nil
-	}
-	// extract the quote, decode it, get pcr_digest and pcrSelect
-	// need new interface in tpmlib
-	return GetMeasurementFromTpmAttest(am.TheQuote)
 }
 
 func GetSevMeasurementFromAttestation(evBuf []byte) []byte {
@@ -479,8 +467,7 @@ func GetRelevantMeasurementPolicy(pool *PolicyPool, evType string,
 			measurement = GetSevMeasurementFromAttestation(ev.SerializedEvidence)
 			break
 		} else if ev.GetEvidenceType() == "tpm-attestation" {
-			measurement = GetTpmMeasurementFromAttestation(ev.SerializedEvidence)
-			break
+			continue
 		} else if ev.GetEvidenceType() == "islet-attestation" {
 			measurement = GetIsletMeasurementFromAttestation(ev.SerializedEvidence)
 			break
@@ -520,6 +507,68 @@ func GetRelevantMeasurementPolicy(pool *PolicyPool, evType string,
 			continue
 		}
 		if bytes.Equal(measurement, cl.Subject.Measurement) {
+			return s
+		}
+	}
+
+	return nil
+}
+
+func GetTpmMeasurementEntityFromAttestation(serializedAttest []byte) *certprotos.EntityMessage {
+	var am certprotos.TpmAttestationMessage
+	err := proto.Unmarshal(serializedAttest, &am)
+	if err != nil {
+		fmt.Printf("GetTpmMeasurementEntityFromAttestation: Can't unmarshal TpmAttestationMessage\n")
+		return nil
+	}
+	// extract the quote, decode it, get pcr_digest and pcrSelect
+	// need new interface in tpmlib
+	// return MakeFullMeasurementEntity(m, r)
+	return nil
+}
+
+// Returns the single policy statement naming the relevant measurement policy
+// statement for a this evidence package
+func GetRelevantTpmMeasurement(pool *PolicyPool, evp *certprotos.EvidencePackage) *certprotos.VseClause {
+
+	ev_list := evp.FactAssertion
+	if ev_list == nil {
+		return nil
+	}
+
+	// find attestation and get measurement
+	var me  *certprotos.EntityMessage= nil
+	for i := 0; i < len(ev_list); i++ {
+		ev := ev_list[i]
+		if ev == nil {
+			continue
+		}
+
+		if ev.GetEvidenceType() == "tpm-attestation" {
+		  me = GetTpmMeasurementEntityFromAttestation(ev.SerializedEvidence)
+		} else {
+			continue
+		}
+	}
+
+	if me == nil {
+		return nil
+	}
+
+	// look for policyKey says Measurement[] is-trusted
+	for i := 0; i < len(pool.AllPolicy.Proved); i++ {
+		s := pool.AllPolicy.Proved[i]
+		if s == nil || s.Verb == nil || s.GetVerb() != "says" {
+			continue
+		}
+		cl := s.Clause
+		if cl == nil || cl.Subject == nil || cl.Verb == nil {
+			continue
+		}
+		if cl.Subject.GetEntityType() != "measurement" || cl.GetVerb() != "is-trusted" {
+			continue
+		}
+		if SameEntity(me, cl.Subject) {
 			return s
 		}
 	}
@@ -775,6 +824,7 @@ func FilterTpmPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidenceP
 	to := proto.Clone(from).(*certprotos.VseClause)
 	filtered.Proved = append(filtered.Proved, to)
 
+	// ------------------Replace the following with below
 	// just get the measurement not a platform attestation
 	succeeded := false
 	for i := 1; i < len(policyPool.AllPolicy.Proved); i++ {
@@ -799,6 +849,16 @@ func FilterTpmPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidenceP
 	} else {
 		return nil
 	}
+
+	// ----------------------------Replacement-------
+
+	from = GetRelevantTpmMeasurement(policyPool, evp)
+	if from == nil {
+		return nil
+	}
+	to = proto.Clone(from).(*certprotos.VseClause)
+	filtered.Proved = append(filtered.Proved, to)
+	return filtered
 }
 
 //      ------------------------------------------------------------------------
@@ -1888,16 +1948,8 @@ func GetPlatformFromSevAttest(binSevAttest []byte) *certprotos.Platform {
 	return MakePlatform(t1, nil, props)
 }
 
-func GetMeasurementFromTpmAttest(binTpmAttest []byte) []byte {
-	return []byte(binTpmAttest[0x90:0xc0])
-}
-
 func GetMeasurementFromSevAttest(binSevAttest []byte) []byte {
 	return []byte(binSevAttest[0x90:0xc0])
-}
-
-func GetMeasurementEntityFromTpmAttest(binTpmAttest []byte) *certprotos.EntityMessage {
-	return MakeMeasurementEntity(GetMeasurementFromTpmAttest(binTpmAttest))
 }
 
 func GetMeasurementEntityFromSevAttest(binSevAttest []byte) *certprotos.EntityMessage {
