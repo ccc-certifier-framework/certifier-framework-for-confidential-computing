@@ -569,7 +569,7 @@ func GetRelevantTpmMeasurement(pool *PolicyPool, evp *certprotos.EvidencePackage
 	// look for policyKey says Measurement[] is-trusted
 	for i := 0; i < len(pool.AllPolicy.Proved); i++ {
 		s := pool.AllPolicy.Proved[i]
-		if s == nil || s.Verb == nil || s.GetVerb() != "says" {
+		if s == nil || s.Subject == nil || s.Verb == nil || s.GetVerb() != "says" {
 			continue
 		}
 		cl := s.Clause
@@ -834,34 +834,6 @@ func FilterTpmPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidenceP
 	from := policyPool.AllPolicy.Proved[0]
 	to := proto.Clone(from).(*certprotos.VseClause)
 	filtered.Proved = append(filtered.Proved, to)
-
-	// ------------------Replace the following with below
-	// just get the measurement not a platform attestation
-	succeeded := false
-	for i := 1; i < len(policyPool.AllPolicy.Proved); i++ {
-		from = policyPool.AllPolicy.Proved[i]
-		if from.Clause.Subject.GetEntityType() != "measurement" {
-			continue
-		}
-		// Todo:  Make sure its the measurement we're interested in
-		// from = GetRelevantPlatformKeyPolicy(policyPool, evType, evp)
-		// from = GetRelevantMeasurementPolicy(policyPool, evType, evp)
-		// for now:
-		if from.Clause.Subject.GetMeasurement() == nil || from.Clause.Subject.GetRegisters() == nil {
-			continue
-		}
-		to = proto.Clone(from).(*certprotos.VseClause)
-		filtered.Proved = append(filtered.Proved, to)
-		succeeded = true
-	}
-
-	if succeeded {
-		return filtered
-	} else {
-		return nil
-	}
-
-	// ----------------------------Replacement-------
 
 	from = GetRelevantTpmMeasurement(policyPool, evp)
 	if from == nil {

@@ -21,7 +21,9 @@ popd
 pushd cf_data
  rm ./*
 popd
- rm measurement cf_utility.measurement sev_cf_utility.measurement
+
+rm measurement cf_utility.measurement sev_cf_utility.measurement
+
 echo "Removed runtime data files"
 
 # --------------------------------------------------------------------------------

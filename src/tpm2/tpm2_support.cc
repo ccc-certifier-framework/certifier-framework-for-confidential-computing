@@ -2646,8 +2646,8 @@ bool get_measurement_from_attest(int      size_quote,
     printf("%s() error, line %d, output size too small\n", __func__, __LINE__);
     return false;
   }
-  *measurement_out = digest.size();
-  memcpy(measurement_out, (byte_t *)digest.data(), *measurement_out);
+  *measurement_size = digest.size();
+  memcpy(measurement_out, (byte_t *)digest.data(), *measurement_size);
   if (*pcr_size < num_pcrs) {
     printf("%s() error, line %d, output size too small\n", __func__, __LINE__);
     return false;
