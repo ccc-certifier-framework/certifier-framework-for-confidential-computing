@@ -13,6 +13,14 @@ source ./arg-processing.inc
 # (in the service directory).  It runs as an http service and waits for
 # requests.
 
+echo "Processing arguments"
+process-args
+echo "Arguments processed"
+
+if [[ $VERBOSE -eq 1 ]]; then            
+        print-variables 
+fi
+
 echo ""
 echo "First pass"
 echo "Certifier root: $CERTIFIER_ROOT"
@@ -22,7 +30,7 @@ echo "Enclave type: $DEPLOYED_ENCLAVE_TYPE"
 
 REAL_TEST=1
 
-# ------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 function cleanup-stale-procs() {
   echo " "
@@ -90,11 +98,9 @@ function run-first-pass() {
         --tpm_device="/dev/tpmrm1" \
         --seal_hierarchy_file_name="seal_hierarchy.bin" \
         --quote_hierarchy_file_name="quote_hierarchy.bin" \
-        --endorsement_cert_chain_file="" \
-        --endorsement_cert_file_name="" \
         --quote_cert_file="quote_cert.crt" \
         --measurement_file="cf_utility.measurement" \
-        --endorsement_cert_chain_file="" \
+        --endorsement_cert_chain_file=$END_CERT_CHAIN_FILE \
         --endorsement_cert_file_name="" \
 	--generate_symmetric_key=true \
         --keyname=primary-store-encryption-key \

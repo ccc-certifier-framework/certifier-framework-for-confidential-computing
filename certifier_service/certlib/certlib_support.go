@@ -2145,8 +2145,8 @@ func PrintX509Cert(cert *x509.Certificate) {
 	if cert.IsCA {
 		fmt.Printf("\tRoot cert\n")
 	} else {
+		fmt.Printf("\tSubordinate cert\n")
 	}
-	fmt.Printf("\tSubordinate cert\n")
 	fmt.Printf("\tDNS Names: %+v\n", cert.DNSNames)
 	fmt.Printf("\tEmailAddresses: %+v\n", cert.EmailAddresses)
 	fmt.Printf("\tIPAddresses: %+v\n", cert.IPAddresses)

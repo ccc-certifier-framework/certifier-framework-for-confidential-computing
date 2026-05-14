@@ -69,6 +69,7 @@ function do-run-real() {
 
 echo "Processing arguments"
 process-args
+print-variables
 echo "Arguments processed"
 
 ALLARGS=""
@@ -128,6 +129,8 @@ if [[ $DEPLOYED_ENCLAVE_TYPE == "tpm-enclave" ]]; then
   echo ""
   echo "tpm enclave"
   ./build-activation-policy.sh $ALLARGS
+  cp ./provisioning/$END_CERT_CHAIN_FILE ./cf_data
+  cp ./provisioning/$END_CERT_CHAIN_FILE .
   ./run-first-pass.sh $ALLARGS
   cp $QUOTE_CERT_FILE ./cf_data
 fi

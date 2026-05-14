@@ -86,6 +86,7 @@ function do-run() {
           --symmetric_key_algorithm=aes-256-gcm  \
           --public_key_algorithm=rsa-2048 \
           --data_dir='$EXAMPLE_DIR/' \
+	  --endorsement_cert_file_name="ekchain.bin" \
           --certifier_service_URL=$POLICY_SERVER_ADDRESS \
           --service_port=$POLICY_SERVER_PORT --print_level=1"
 

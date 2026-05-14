@@ -20,7 +20,7 @@ source ./arg-processing.inc
 # Certificate are used to open and authenticated secure channel to other
 # certified environments in this security domain.
 
-# -----------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 echo ""
 echo "certify-deployed-machine.sh"
@@ -52,6 +52,7 @@ echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
         --service_port=$POLICY_SERVER_PORT " --print_level=1 \
 	--trust_anchors=$EXAMPLE_DIR/cf_data/my_certs \
         --tpm_device="/dev/tpmrm1" \
+	--endorsement_cert_file_name="ekchain.bin" \
         --seal_hierarchy_file_name="seal_hierarchy.bin" \
         --quote_hierarchy_file_name="quote_hierarchy.bin"
 

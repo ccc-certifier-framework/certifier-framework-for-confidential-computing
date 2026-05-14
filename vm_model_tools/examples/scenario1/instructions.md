@@ -1,4 +1,5 @@
-# Instructions for running scenario1
+#
+Instructions for running scenario1
 
 This document gives detailed instructions for running scenario1
 in both test and full SEV environment.  The basic certifier utility
@@ -29,26 +30,29 @@ in Sevprovisioning.
 ### Special note for tpms:
 The TPM enclave introduces an additional policy step for cefrtification.  For
 enclaves like SEV, the public key for the quote or attestation, is part of
-platform provisioning.  If the certifier "trusts" the manufacturer root certificate,
-the elements of the certification can be provided in one pass.  By contrast, the
-TPM employs a "first pass" in which the quoting key established trust with the
-certifier using a protocol.  This protocol uses the "ActivateCredential"
-functionality of the TPM.
+platform provisioning.  If the certifier "trusts" the manufacturer root
+certificate, the elements of the certification can be provided in one pass.
+By contrast, the TPM employs a "first pass" in which the quoting key
+established trust with the certifier using a protocol.  This protocol
+uses the "ActivateCredential" functionality of the TPM.
 
-To implement this.  The certifier opens a new protocol channel that accepts a certificate
-chain from the TPM manufacturers that offers evidence to support the security of the
-TPM "endorsement cert."  The deployed program packages this along with unforgeable information
-about the ultimate "quoting key," produces a cert for the quoting key, encrypts the cert with
-a random key (a "credential") and encrypts the the credential to the endorsement key.  The
-credential can only be decrypted by the TPM with the trusted endorsement cert which verifies
-properties of the quoting key and unlocks the credential which, in turn, is used to
-decrypt the quoting key certificate.  This certificate can then be used in the same way
+To implement this.  The certifier opens a new protocol channel that
+accepts a certificate chain from the TPM manufacturers that offers evidence
+to support the security of the TPM "endorsement cert."  The deployed
+program packages this along with unforgeable information about the
+ultimate "quoting key," produces a cert for the quoting key, encrypts
+the cert with a random key (a "credential") and encrypts the the credential
+to the endorsement key.  The credential can only be decrypted by the TPM
+with the trusted endorsement cert which verifies properties of the quoting
+key and unlocks the credential which, in turn, is used to decrypt the quoting
+key certificate.  This certificate can then be used in the same way
 an authenticated vcek key is  used in SEV.
 
-The upshot is that the certifier is first called with the "first pass" tag that implements
-the new step to approve the quote key.  After the quote key is validated, resulting in
-a certificate signed by the policy key.  The customary proof protocol used in other
-enclaves is used to produce an "Admisions Certificate" as is customary.
+The upshot is that the certifier is first called with the "first pass" tag
+that implements the new step to approve the quote key.  After the quote key
+is validated, resulting in a certificate signed by the policy key.  The
+customary proof protocol used in other enclaves is used to produce an
+"Admisions Certificate" as is customary.
 
 
 # Running either in SEV, tpm or the test environment using the consolidated tests script
@@ -75,12 +79,12 @@ to use the simulator for testing, start it and set pcr 7 for the test:
 
 ```shell
     ./start-tpm-simulator.sh
-    TPM_SUPPORT_DIR=$CERTIFIER_ROOT/src/tpm2
+    export TPM_SUPPORT_DIR=$CERTIFIER_ROOT/src/tpm2
     $TPM_SUPPORT_DIR/tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
 ```
 
-Almost all the variables are set within run-test-scenario1.sh.  To run it from scratch,
-in the simulated sev environment type:
+Almost all the variables are set within run-test-scenario1.sh.  To run it from
+scratch, in the simulated sev environment type:
 
 ```shell
     ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 1 -loud 1
@@ -88,7 +92,7 @@ in the simulated sev environment type:
 To run it from scratch, in the tpm environment, type:
 
 ```shell
-    ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 1 -loud 1  -et2 tpm-enclave -tpm /dev/tpmrm1
+    ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 1 -loud 1  -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin
 ```
 
 The three variable have the following effect:
@@ -109,7 +113,7 @@ If you are not running a tpm enclave, you can run the test by typing:
 If you are running a tpm enclave, you can run the test by typing:
 
 ```shell
-    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -loud 1 -et2 tpm-enclave -tpm /dev/tpmrm1
+    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -loud 1 -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin
 ```
 
 The flags can save a considerable time.
@@ -119,7 +123,8 @@ platform because it will not compile the "SIMULATED_SEV" interface.
 You can also type:
 
 ```shell
-    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -pk 0 -loud 1 [-et2 tpm-enclave -tpm /dev/tpmrm1]
+    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -pk 0 -loud 1 -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin
+
 ```
 
 which, does not regenerate policy keys and certificates.

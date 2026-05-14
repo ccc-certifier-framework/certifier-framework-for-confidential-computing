@@ -112,16 +112,19 @@ func CheckCertChain(tRoots *certprotos.BufferSequence, userChain *certprotos.Buf
 	// add trusted roots
 	for i := 0; i < len(tRoots.Block); i++ {
 		nr := Asn1ToX509(tRoots.Block[i])
-		/* Debug
-		fmt.Printf("Adding root:\n")
-		 */
+		fmt.Printf("\nRoot:\n")
 		PrintX509Cert(nr)
 		roots.AddCert(nr)
 	}
 
+	// Debug
+	fmt.Printf("%d intermediates\n", len(userChain.Block))
+
 	// add intermediates
 	for i := 0; i < len(userChain.Block); i++ {
-		ni := Asn1ToX509(tRoots.Block[i])
+		fmt.Printf("\nIntermediate:\n")
+		ni := Asn1ToX509(userChain.Block[i])
+		PrintX509Cert(ni)
 		intermediates.AddCert(ni)
 	}
 
@@ -146,26 +149,7 @@ func CheckCertChain(tRoots *certprotos.BufferSequence, userChain *certprotos.Buf
 	_, err := ec.Verify(opts)
 	if err != nil {
 		fmt.Printf("Verification failed: %v\n", err)
-		fmt.Printf("Apparently the wrong root cert\n")
 		// return false, nil
-	}
-
-	// Debug: Why doesnt cert verify?  Probably the root cert isn't right.
-	nt := Asn1ToX509(tRoots.Block[0])
-	err = nt.CheckSignatureFrom(nt)
-	if err != nil {
-		fmt.Printf("Check Signature failed: %v\n", err)
-		// return false, nil
-	} else {
-		fmt.Printf("Check Signature succeeded\n")
-	}
-
-	_, err = nt.Verify(opts)
-        if err != nil {
-		fmt.Printf("Root verification failed: %v\n", err)
-		// return false, nil
-	} else {
-		fmt.Printf("Root verification succeeded\n")
 	}
 
 	return true, ec
