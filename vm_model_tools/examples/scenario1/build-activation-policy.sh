@@ -25,6 +25,9 @@ function make-root-list() {
     $CERTIFIER_ROOT/utilities/make_der_cert_chain.exe \
         --output="trustedRoots.bin" -init=true \
         --new_cert_file="root.der" --add_cert=true
+    $CERTIFIER_ROOT/utilities/make_der_cert_chain.exe \
+        --output="ekchain.bin" -init=true \
+        --new_cert_file="issuercert.der" --add_cert=true
   popd
   echo ""
   echo "make-root-list done"
