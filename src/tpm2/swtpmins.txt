@@ -97,7 +97,6 @@ tpm2_nvread -T swtpm:port=2321 -C o 0x01c00002 -o tool_ek_rsa_cert.bin
 
 --------------------------------------------------------------------------------
 
-
 To decode error messages:
   tpm2_rc_decode 0x921
     tpm:warn(2.0): authorizations for objects subject to DA protection are not allowed at this time because the TPM is in DA lockout mode
@@ -140,3 +139,16 @@ Old tests
 ./tpm2_util.exe --tpm_device="/dev/tpm1" --command=NvTest
 ./tpm2_util.exe --tpm_device="/dev/tpm1" --pcr_num=7 --command=QuoteTest
 ./tpm2_test.exe --operation=NvTest --tpm_device=/dev/tpm1
+
+--------------------------------------------------------------------------------
+
+Tpm Cert chain test
+
+after ./tpm2_test.exe --operation=GetCert --tpm_device=/dev/tpmrm1
+
+openssl x509 -inform der -in ek-rsa2048.crt -outform pem -out ekcert.pem
+openssl verify -verbose -CAfile  /var/lib/swtpm-localca/swtpm-localca-rootca-cert.pem -untrusted /var/lib/swtpm-localca/issuercert.pem ekcert.pem
+
+
+--------------------------------------------------------------------------------
+

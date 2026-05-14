@@ -17,8 +17,11 @@ function make-root-list() {
   echo ""
   pushd $EXAMPLE_DIR/provisioning
     cp /var/lib/swtpm-localca/swtpm-localca-rootca-cert.pem root.pem
+    cp /var/lib/swtpm-localca/issuercert.pem issuercert.pem
     openssl x509 -inform pem -in root.pem -outform der -out root.der
     openssl x509 -inform der -in root.der -text
+    openssl x509 -inform pem -in issuercert.pem -outform der -out issuercert.der
+    openssl x509 -inform der -in issuercert.der -text
     $CERTIFIER_ROOT/utilities/make_der_cert_chain.exe \
         --output="trustedRoots.bin" -init=true \
         --new_cert_file="root.der" --add_cert=true
