@@ -110,7 +110,7 @@ function do-get-quote-cert-and-measurement() {
         --policy_key_file="./provisioning/policy_key_file.$DOMAIN_NAME" \
         --quote_cert_file="./provisioning/quote_cert.crt" \
         --measurement_file="./provisioning/measurement" \
-	--endorsement_cert_chain_file="" \
+	--endorsement_cert_chain_file="ekchain.bin" \
 	--endorsement_cert_file_name="" \
         --policy_store_file=$POLICY_STORE_NAME --print_all=true
   echo "got quote cert"

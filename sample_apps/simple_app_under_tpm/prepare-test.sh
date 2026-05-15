@@ -202,6 +202,7 @@ function make-root-list() {
     $CERTIFIER_ROOT/utilities/make_der_cert_chain.exe \
         --output="ekchain.bin" -init=true \
         --new_cert_file="issuercert.der" --add_cert=true
+    cp ekchain.bin ..
   popd
   echo ""
   echo "make-root-list done"

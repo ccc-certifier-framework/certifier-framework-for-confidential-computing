@@ -1433,13 +1433,15 @@ void print_globals() {
     printf("\n");
 
     X509 *x = X509_new();
-    if (!asn1_to_x509(g_serialized_endorsement_cert, x)) {
-      printf("%s() error, line %d, can't convert to x509\n",
-             __func__,
-             __LINE__);
+    if (x != nullptr) {
+      if (!asn1_to_x509(g_serialized_endorsement_cert, x)) {
+        printf("%s() error, line %d, can't convert to x509\n",
+              __func__,
+              __LINE__);
+      }
+      X509_print_fp(stdout, x);
+      X509_free(x);
     }
-    X509_print_fp(stdout, x);
-    X509_free(x);
   }
   if (g_serialized_endorsement_cert_chain.size() > 0) {
     printf("\nendorsement cert chain :\n");

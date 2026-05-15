@@ -104,6 +104,10 @@ function do-copy-files() {
     cp -p $POLICY_CERT_FILE_NAME attest_key_file.bin platform_key_file.bin $EXAMPLE_DIR/app1_data
     cp -p $POLICY_CERT_FILE_NAME attest_key_file.bin platform_key_file.bin $EXAMPLE_DIR/app2_data
     cp -p quote_cert.crt $EXAMPLE_DIR/service
+    cp -p quote_cert.crt $EXAMPLE_DIR/app1_data
+    cp -p quote_cert.crt $EXAMPLE_DIR/app2_data
+    cp -p ekchain.bin $EXAMPLE_DIR/app1_data
+    cp -p ekchain.bin $EXAMPLE_DIR/app2_data
   popd
   echo "do-copy-files done"
 }

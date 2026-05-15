@@ -90,17 +90,20 @@ a database for them.
 
 Next, we'll start the simulator.  As described in the instructions for the
 TPM utilities, you should change the directoy set by the variable
-XDG_CONFIG_HOME to the location of your tpm state in the shell script start-tpm-simulator.sh.
-I recommend using the full pathname.  In a new window, "priviledged window 1," type:
+XDG_CONFIG_HOME to the location of your tpm state in the shell script
+start-tpm-simulator.sh.  I recommend using the full pathname.
+In a new window, "priviledged window 1," type:
 
 ```shell
    cd $EXAMPLE_DIR$
    sudo bash
    password
    ./start-tpm-simulator.sh
+```
 
-When your done, or hit an error, you can restore the pristine state of the TPM, kill zombied processes,
-and delete application files by typeing into priviledged window 1:
+When your done, or hit an error, you can restore the pristine state of the TPM,
+kill zombied processes, and delete application files by typing into priviledged
+window 1:
 
 ```shell
   ./clean-tpm-simulator.sh

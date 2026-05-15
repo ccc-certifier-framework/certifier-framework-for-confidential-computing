@@ -172,6 +172,7 @@ function do-run() {
         --domain_name=$DOMAIN_NAME \
         --operation=fresh-start  \
         --tpm_device="/dev/tpmrm1" \
+	--endorsement_cert_chain_file="ekchain.bin" \
         --seal_hierarchy_file_name="seal_hierarchy.bin" \
         --quote_hierarchy_file_name="quote_hierarchy.bin" \
         --policy_store_file=$POLICY_STORE_NAME --print_all=true
@@ -180,7 +181,7 @@ function do-run() {
         --domain_name=$DOMAIN_NAME \
         --operation=get-certified \
         --tpm_device="/dev/tpmrm1" \
-	--endorsement_cert_file_name="ekchain.bin" \
+	--endorsement_cert_chain_file="ekchain.bin" \
         --seal_hierarchy_file_name="seal_hierarchy.bin" \
         --quote_hierarchy_file_name="quote_hierarchy.bin" \
         --policy_store_file=$POLICY_STORE_NAME --print_all=true
@@ -193,6 +194,7 @@ function do-run() {
         --domain_name=$DOMAIN_NAME \
         --operation=fresh-start \
         --tpm_device="/dev/tpmrm1" \
+	--endorsement_cert_chain_file="ekchain.bin" \
         --seal_hierarchy_file_name="seal_hierarchy.bin" \
         --quote_hierarchy_file_name="quote_hierarchy.bin" \
         --policy_store_file=$POLICY_STORE_NAME --print_all=true
@@ -201,7 +203,7 @@ function do-run() {
         --domain_name=$DOMAIN_NAME \
         --operation=get-certified  \
         --tpm_device="/dev/tpmrm1" \
-	--endorsement_cert_file_name="ekchain.bin" \
+	--endorsement_cert_chain_file="ekchain.bin" \
         --seal_hierarchy_file_name="seal_hierarchy.bin" \
         --quote_hierarchy_file_name="quote_hierarchy.bin" \
         --policy_store_file=$POLICY_STORE_NAME --print_all=true
