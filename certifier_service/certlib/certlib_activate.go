@@ -138,7 +138,7 @@ func CheckCertChain(tRoots *certprotos.BufferSequence, userChain *certprotos.Buf
 	fmt.Printf("Calling verify for cert chain\n")
 	fmt.Printf("Endorsement :\n")
 	PrintX509Cert(ec)
-	fmt.Printf("\n*****FIX ME\n\n")
+	//fmt.Printf("\n*****FIX ME\n\n")
 
 	opts := x509.VerifyOptions {
 		Roots:	 roots,
@@ -147,9 +147,12 @@ func CheckCertChain(tRoots *certprotos.BufferSequence, userChain *certprotos.Buf
 	}
 
 	_, err := ec.Verify(opts)
-	if err != nil {
+	if err != nil && err.Error() == "x509: unhandled critical extension" {
+		fmt.Printf("Ignoring unhandled critical extension\n")
+	}
+	if err != nil && err.Error() != "x509: unhandled critical extension" {
 		fmt.Printf("Verification failed: %v\n", err)
-		// return false, nil
+		return false, nil
 	}
 
 	return true, ec

@@ -80,6 +80,7 @@ to use the simulator for testing, start it and set pcr 7 for the test:
 ```shell
     ./start-tpm-simulator.sh
     export TPM_SUPPORT_DIR=$CERTIFIER_ROOT/src/tpm2
+    sleep 2
     $TPM_SUPPORT_DIR/tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
 ```
 
