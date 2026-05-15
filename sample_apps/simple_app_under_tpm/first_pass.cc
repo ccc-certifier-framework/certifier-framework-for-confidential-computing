@@ -293,8 +293,6 @@ bool first_pass(const string &tpm_device,
   string             signer;
   TPML_PCR_SELECTION pcrSelect;
   string             pcr_digest;
-  int                new_num_pcrs = 10;
-  byte_t             new_pcrs[num_pcrs];
 
   if (!decode_quoted((int)att.the_quote().size(),
                      (byte_t *)att.the_quote().data(),
@@ -309,6 +307,10 @@ bool first_pass(const string &tpm_device,
     return false;
   }
 
+#  ifdef DEBUG
+  int                new_num_pcrs = 10;
+  byte_t             new_pcrs[num_pcrs];
+
   if (!get_pcr_from_select(&pcrSelect, &new_num_pcrs, new_pcrs)) {
     printf("%s, %d, get_pcr_from_select failed\n", __func__, __LINE__);
     tpm_close();
@@ -318,7 +320,6 @@ bool first_pass(const string &tpm_device,
   string conf;
   conf.assign((char *)new_pcrs, new_num_pcrs);
 
-#  ifdef DEBUG3
   printf("PCR's after attest\n");
   for (int i = 0; i < new_num_pcrs; i++)
     printf("%d ", new_pcrs[i]);
@@ -326,6 +327,7 @@ bool first_pass(const string &tpm_device,
   print_pcrs(g_tpm, new_num_pcrs, new_pcrs);
   printf("\n");
 #  endif
+
 #  ifdef DEBUG
   printf("Measurement digest: ");
   print_bytes(pcr_digest.size(), (byte_t *)pcr_digest.data());

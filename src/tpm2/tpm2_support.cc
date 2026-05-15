@@ -1346,7 +1346,7 @@ bool do_quote(local_tpm    &tpm,
   quoted->assign((char *)quoted_buf, quote_size);
   signature->assign((char *)sig, sig_size);
 
-#ifdef DEBUG2
+#ifdef DEBUG3
   printf("\nQuote succeeded, quoted (%d): ", quote_size);
   print_bytes(quote_size, quoted_buf);
   printf("\n");
