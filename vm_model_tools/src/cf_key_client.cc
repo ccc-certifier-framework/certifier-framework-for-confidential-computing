@@ -632,7 +632,9 @@ int main(int an, char **av) {
     print_help();
     return ret;
   }
+#ifdef DEBUG
   print_parameters();
+#endif
 
   // Get parameters
   string *params = nullptr;

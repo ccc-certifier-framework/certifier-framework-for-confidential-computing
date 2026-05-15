@@ -11,7 +11,7 @@
 # --------------------------------------------------------------------------------
 
 echo "Removing runtime data files"
-rm policy_store.dom0* cryptstore.dom0*
+rm policy_store.dom0* cryptstore.dom0* quote_cert.crt ekchain.bin
 pushd provisioning
   rm ./*
 popd

@@ -39,7 +39,7 @@
 
 #define MAX_SIZE_PARAMS 16384
 
-#define DEBUG
+// #define DEBUG
 
 // ------------------------------------------------------------------------
 
@@ -1436,8 +1436,8 @@ void print_globals() {
     if (x != nullptr) {
       if (!asn1_to_x509(g_serialized_endorsement_cert, x)) {
         printf("%s() error, line %d, can't convert to x509\n",
-              __func__,
-              __LINE__);
+               __func__,
+               __LINE__);
       }
       X509_print_fp(stdout, x);
       X509_free(x);

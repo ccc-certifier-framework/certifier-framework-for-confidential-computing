@@ -884,7 +884,7 @@ int main(int an, char **av) {
     return ret;
   }
 
-  if (FLAGS_print_level > 0) {
+  if (FLAGS_print_level > 1) {
     print_os_model_parameters();
   }
 

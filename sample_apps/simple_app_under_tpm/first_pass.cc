@@ -308,8 +308,8 @@ bool first_pass(const string &tpm_device,
   }
 
 #  ifdef DEBUG
-  int                new_num_pcrs = 10;
-  byte_t             new_pcrs[num_pcrs];
+  int    new_num_pcrs = 10;
+  byte_t new_pcrs[num_pcrs];
 
   if (!get_pcr_from_select(&pcrSelect, &new_num_pcrs, new_pcrs)) {
     printf("%s, %d, get_pcr_from_select failed\n", __func__, __LINE__);

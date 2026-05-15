@@ -88,12 +88,12 @@ Almost all the variables are set within run-test-scenario1.sh.  To run it from
 scratch, in the simulated sev environment type:
 
 ```shell
-    ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 1 -loud 1
+    ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 1 -loud 1 -dn dom0 -pn cf-utility
 ```
 To run it from scratch, in the tpm environment, type:
 
 ```shell
-    ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 1 -loud 1  -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin -pk 1
+    ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 1 -loud 1  -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin -pk 1 -pn cf-utility
 ```
 
 The three variable have the following effect:
@@ -109,12 +109,12 @@ device driver.
 If you are not running a tpm enclave, you can run the test by typing:
 
 ```shell
-    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -loud 1
+    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -loud 1 -dn dom0 -pn cf-utility
 ```
 If you are running a tpm enclave, you can run the test by typing:
 
 ```shell
-    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -loud 1 -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin -pk 1
+    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -loud 0 -dn dom0 -et1 simulated-enclave -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin -pk 1 -pn cf-utility
 ```
 
 The flags can save a considerable time.
@@ -124,7 +124,7 @@ platform because it will not compile the "SIMULATED_SEV" interface.
 You can also type:
 
 ```shell
-    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -pk 0 -loud 1 -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin
+    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -pk 0 -dn dom0 -loud 1 -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin
 
 ```
 

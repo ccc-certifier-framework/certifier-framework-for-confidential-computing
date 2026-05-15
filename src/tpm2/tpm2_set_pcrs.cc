@@ -59,7 +59,7 @@ DEFINE_int32(num_pcrs, 1, "number of pcrs");
 #  define GFLAGS_NS google
 #endif
 
-#define DEBUG
+// #define DEBUG
 
 // ----------------------------------------------------------
 
