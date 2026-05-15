@@ -104,6 +104,13 @@ func getKeyFromCert(cert *x509.Certificate) (bool, *rsa.PublicKey) {
 	return true, PK
 }
 
+func printOIDS(cert *x509.Certificate) {
+	fmt.Printf("OIDS:\n")
+	for i, oid := range cert.UnhandledCriticalExtensions {
+		fmt.Printf("  OID %d: %s\n", i, oid.String())
+    }
+}
+
 func CheckCertChain(tRoots *certprotos.BufferSequence, userChain *certprotos.BufferSequence, serializedEndorsementCert []byte) (bool, *x509.Certificate) {
 
         roots := x509.NewCertPool()
@@ -112,9 +119,11 @@ func CheckCertChain(tRoots *certprotos.BufferSequence, userChain *certprotos.Buf
 	// add trusted roots
 	for i := 0; i < len(tRoots.Block); i++ {
 		nr := Asn1ToX509(tRoots.Block[i])
-		fmt.Printf("\nRoot:\n")
-		PrintX509Cert(nr)
 		roots.AddCert(nr)
+		// DEBUG
+		// fmt.Printf("\nRoot:\n")
+		// PrintX509Cert(nr)
+		// printOIDS(nr)
 	}
 
 	// Debug
@@ -122,24 +131,27 @@ func CheckCertChain(tRoots *certprotos.BufferSequence, userChain *certprotos.Buf
 
 	// add intermediates
 	for i := 0; i < len(userChain.Block); i++ {
-		fmt.Printf("\nIntermediate:\n")
 		ni := Asn1ToX509(userChain.Block[i])
-		PrintX509Cert(ni)
+		ni.UnhandledCriticalExtensions = nil
 		intermediates.AddCert(ni)
+		// DEBUG
+		// fmt.Printf("\nIntermediate:\n")
+		// PrintX509Cert(ni)
+		// printOIDS(ni)
 	}
 
 	ec := Asn1ToX509(serializedEndorsementCert)
+	ec.UnhandledCriticalExtensions = nil
 	if ec == nil {
                 fmt.Printf("Can't deserialize endorsement\n");
 		return false, nil
 	}
 
 	// Debug
-	fmt.Printf("Calling verify for cert chain\n")
-	fmt.Printf("Endorsement :\n")
-	PrintX509Cert(ec)
-	//fmt.Printf("\n*****FIX ME\n\n")
-
+	// fmt.Printf("Calling verify for cert chain\n")
+	// fmt.Printf("Endorsement :\n")
+	// PrintX509Cert(ec)
+	// printOIDS(ec)
 	opts := x509.VerifyOptions {
 		Roots:	 roots,
 		Intermediates: intermediates,
@@ -147,10 +159,7 @@ func CheckCertChain(tRoots *certprotos.BufferSequence, userChain *certprotos.Buf
 	}
 
 	_, err := ec.Verify(opts)
-	if err != nil && err.Error() == "x509: unhandled critical extension" {
-		fmt.Printf("Ignoring unhandled critical extension\n")
-	}
-	if err != nil && err.Error() != "x509: unhandled critical extension" {
+	if err != nil {
 		fmt.Printf("Verification failed: %v\n", err)
 		return false, nil
 	}

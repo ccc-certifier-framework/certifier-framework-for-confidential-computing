@@ -93,7 +93,7 @@ scratch, in the simulated sev environment type:
 To run it from scratch, in the tpm environment, type:
 
 ```shell
-    ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 1 -loud 1  -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin
+    ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 1 -loud 1  -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin -pk 1
 ```
 
 The three variable have the following effect:
@@ -114,7 +114,7 @@ If you are not running a tpm enclave, you can run the test by typing:
 If you are running a tpm enclave, you can run the test by typing:
 
 ```shell
-    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -loud 1 -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin
+    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -loud 1 -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin -pk 1
 ```
 
 The flags can save a considerable time.
