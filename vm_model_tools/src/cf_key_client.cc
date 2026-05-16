@@ -553,8 +553,8 @@ bool client_application(secure_authenticated_channel &channel) {
     return false;
   }
 
-  if (FLAGS_print_level > 1) {
-    printf("\nkey_client: Response entry:\n");
+  if (FLAGS_print_level > 0) {
+    printf("\nkey_client response entry:\n");
     print_cryptstore_entry(ce);
   }
 
@@ -878,7 +878,7 @@ int main(int an, char **av) {
     } else {
       printf("%s() error, line %d, no root cert\n", __func__, __LINE__);
     }
-    if (channel.asn1_my_cert_.size() > 0) {
+    if (channel.asn1_my_cert_.size() > 1) {
       X509 *x = X509_new();
       if (asn1_to_x509(channel.asn1_my_cert_, x)) {
         printf("\nAdmissions cert:\n");

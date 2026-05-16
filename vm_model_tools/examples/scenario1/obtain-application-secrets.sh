@@ -34,7 +34,6 @@ echo "Calling keyclient"
 $CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe \
     --policy_domain_name=$DOMAIN_NAME \
     --encrypted_cryptstore_filename=$DEPLOYED_CRYPTSTORE_NAME \
-    --print_level=5 \
     --enclave_type=$DEPLOYED_ENCLAVE_TYPE \
     --policy_store_filename=$DEPLOYED_POLICY_STORE_NAME \
     --policy_key_cert_file=$POLICY_CERT_FILE_NAME \

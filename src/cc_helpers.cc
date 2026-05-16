@@ -104,7 +104,7 @@ extern string gramine_platform_cert;
 //  You may want to augment these or write replacements if your needs are
 //  fancier.
 
-#define DEBUG6
+// #define DEBUG6
 
 // ------------------------------------------------------------------------
 

@@ -311,7 +311,7 @@ void server_application(secure_authenticated_channel &channel) {
   key_service_message_response response;
   string                       serialized_response;
 
-  if (FLAGS_print_level > 2) {
+  if (FLAGS_print_level > 1) {
     printf("key_server: Server peer id is %s\n", channel.peer_id_.c_str());
     if (channel.peer_cert_ != nullptr) {
       printf("Server peer cert is:\n");
@@ -327,7 +327,7 @@ void server_application(secure_authenticated_channel &channel) {
     } else {
       printf("%s() error, line %d, no root cert\n", __func__, __LINE__);
     }
-    if (channel.asn1_my_cert_.size() > 0) {
+    if (channel.asn1_my_cert_.size() > 1) {
       X509 *x = X509_new();
       if (asn1_to_x509(channel.asn1_my_cert_, x)) {
         printf("\nAdmissions cert:\n");
@@ -446,7 +446,7 @@ void server_application(secure_authenticated_channel &channel) {
       return;
     }
 
-    if (FLAGS_print_level > 2) {
+    if (FLAGS_print_level > 0) {
       printf("\nkey_server: put_cryptstore_item_entry succeeded\n");
       print_cryptstore_entry(rce);
       printf("\n");

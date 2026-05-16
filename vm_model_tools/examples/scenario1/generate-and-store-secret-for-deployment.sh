@@ -37,7 +37,6 @@ echo "01234567890123456789012345678901" > $CLIENT_IN_FILE
 echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe \
     --policy_domain_name=$DOMAIN_NAME \
     --encrypted_cryptstore_filename=$DEPLOYMENT_CRYPTSTORE_NAME \
-    --print_level=5 \
     --enclave_type=$DEPLOYMENT_ENCLAVE_TYPE \
     --policy_store_filename=$DEPLOYMENT_POLICY_STORE_NAME \
     --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
@@ -53,7 +52,6 @@ echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe \
 $CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe \
     --policy_domain_name=$DOMAIN_NAME \
     --encrypted_cryptstore_filename=$DEPLOYMENT_CRYPTSTORE_NAME \
-    --print_level=5 \
     --enclave_type=$DEPLOYMENT_ENCLAVE_TYPE \
     --policy_store_filename=$DEPLOYMENT_POLICY_STORE_NAME \
     --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
@@ -71,7 +69,6 @@ echo "key-client: retrieving"
 echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe \
     --policy_domain_name=$DOMAIN_NAME \
     --encrypted_cryptstore_filename=$DEPLOYMENT_CRYPTSTORE_NAME \
-    --print_level=5 \
     --enclave_type=$DEPLOYMENT_ENCLAVE_TYPE \
     --policy_store_filename=$DEPLOYMENT_POLICY_STORE_NAME \
     --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
@@ -87,7 +84,6 @@ echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe \
 $CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe \
     --policy_domain_name=$DOMAIN_NAME \
     --encrypted_cryptstore_filename=$DEPLOYMENT_CRYPTSTORE_NAME \
-    --print_level=5 \
     --enclave_type=$DEPLOYMENT_ENCLAVE_TYPE \
     --policy_store_filename=$DEPLOYMENT_POLICY_STORE_NAME \
     --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
