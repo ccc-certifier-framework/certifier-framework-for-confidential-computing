@@ -150,7 +150,7 @@ int main(int an, char **av) {
   }
 
   if (FLAGS_print_level > 0) {
-    printf("Claim: ");
+    printf("Claim:\n");
     print_claim(cm_out);
     printf("\n");
   }

@@ -58,7 +58,7 @@ echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
 
 echo " "
 
-$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
+  $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
         --cf_utility_help=false \
         --init_trust=true \
         --print_cryptstore=true \

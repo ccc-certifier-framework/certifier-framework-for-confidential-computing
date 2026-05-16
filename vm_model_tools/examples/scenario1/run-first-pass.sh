@@ -76,39 +76,47 @@ function run-first-pass() {
     pushd service
       echo ""
       echo "starting certifier for first pass"
-      $CERTIFIER_ROOT/certifier_service/simpleserver  \
-        --policy_key_file=$POLICY_KEY_FILE_NAME \
-        --policy_cert_file=$POLICY_CERT_FILE_NAME \
-        --trustedRootsFile="trustedRoots.bin" \
-        --doActivate=true &
+      if [[ $VERBOSE -eq 1 ]]; then
+        $CERTIFIER_ROOT/certifier_service/simpleserver  \
+          --policy_key_file=$POLICY_KEY_FILE_NAME \
+          --policy_cert_file=$POLICY_CERT_FILE_NAME \
+          --trustedRootsFile="trustedRoots.bin" \
+          --doActivate=true &
+      else
+        $CERTIFIER_ROOT/certifier_service/simpleserver  \
+          --policy_key_file=$POLICY_KEY_FILE_NAME \
+          --policy_cert_file=$POLICY_CERT_FILE_NAME \
+          --trustedRootsFile="trustedRoots.bin" \
+          --doActivate=true > certout0.txt &
+      fi
       echo "certifier first pass started"
-      echo ""
     popd
   fi
 
   echo ""
-  echo "getting quote cert"
+
   $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
-	--data_dir=$DATA_DIR \
-        --enclave_type=$DEPLOYED_ENCLAVE_TYPE \
-        --policy_domain_name=$DOMAIN_NAME \
-        --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
-        --policy_store_filename=$POLICY_STORE_NAME \
-	--run_first_pass=true \
-        --tpm_device="/dev/tpmrm1" \
-        --seal_hierarchy_file_name="seal_hierarchy.bin" \
-        --quote_hierarchy_file_name="quote_hierarchy.bin" \
-        --quote_cert_file="quote_cert.crt" \
-        --measurement_file="cf_utility.measurement" \
-        --endorsement_cert_chain_file=$END_CERT_CHAIN_FILE \
-        --endorsement_cert_file_name="" \
-	--generate_symmetric_key=true \
-        --keyname=primary-store-encryption-key \
-        --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
-        --symmetric_key_algorithm=aes-256-gcm  \
-        --public_key_algorithm=rsa-2048 \
-        --certifier_service_URL=$POLICY_SERVER_ADDRESS \
-        --service_port=$POLICY_SERVER_PORT --print_level=1
+    --data_dir=$DATA_DIR \
+    --enclave_type=$DEPLOYED_ENCLAVE_TYPE \
+    --policy_domain_name=$DOMAIN_NAME \
+    --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
+    --policy_store_filename=$POLICY_STORE_NAME \
+    --run_first_pass=true \
+    --tpm_device="/dev/tpmrm1" \
+    --seal_hierarchy_file_name="seal_hierarchy.bin" \
+    --quote_hierarchy_file_name="quote_hierarchy.bin" \
+    --quote_cert_file="quote_cert.crt" \
+    --measurement_file="cf_utility.measurement" \
+    --endorsement_cert_chain_file=$END_CERT_CHAIN_FILE \
+    --endorsement_cert_file_name="" \
+    --generate_symmetric_key=true \
+    --keyname=primary-store-encryption-key \
+    --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
+    --symmetric_key_algorithm=aes-256-gcm  \
+    --public_key_algorithm=rsa-2048 \
+    --certifier_service_URL=$POLICY_SERVER_ADDRESS \
+    --service_port=$POLICY_SERVER_PORT --print_level=1
+
   echo "got quote cert"
   echo ""
 
@@ -132,12 +140,9 @@ if [[ $VERBOSE -eq 1 ]]; then
 fi
 
 echo ""
-echo "running first-pass"
-echo ""
 run-first-pass
 echo ""
 echo "done"
-echo ""
 
 # --------------------------------------------------------------------------------
 
