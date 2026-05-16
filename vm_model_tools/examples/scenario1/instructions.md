@@ -129,10 +129,10 @@ install the device driver. To rerun the tests again, first clean the app files:
     ./clean-files.sh
 ```
 
-Then, you can rerun the test by typing:
+Then, for the simulated-sev environment, you can rerun the test by typing:
 
 ```shell
-    ./run-test-scenario1.sh -tt simulated -bss 0 -ccf 0 -loud 1 -dn dom0 -pn cf-utility
+    ./run-test-scenario1.sh -tt simulated -bss 0 -ccf 0 -loud 1 -dn dom0 -pn cf-utility-pk 1
 ```
 
 If you are running a tpm enclave, initially, you can rerun the test (after
@@ -141,7 +141,6 @@ cleaning the application files as above) by typing:
 ```shell
     ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -pk 1 -dn dom0 -loud 0 -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin
 ```
-
 This does not regenerate policy keys and certificates or recompile the utilities and
 is much faster..
 
