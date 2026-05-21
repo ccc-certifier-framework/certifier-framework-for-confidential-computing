@@ -14,7 +14,7 @@ it as follows:
 ```shell
   sudo apt-get update
   sudo apt install swtpm swtpm-tools apparmor -y
-``
+```
 You only need to do thsi once/machine.
 
 ## Build utility and tests
