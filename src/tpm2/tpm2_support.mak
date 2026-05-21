@@ -87,7 +87,7 @@ $(EXE_DIR)/tpm2_set_pcrs.exe: $(dobj_tpm2) $(O)/tpm2_set_pcrs.o
 	@echo "linking tpm2_set_pcrs"
 	$(LINK) -o $(EXE_DIR)/tpm2_set_pcrs.exe $(dobj_tpm2) $(O)/tpm2_set_pcrs.o $(LDFLAGS)
 
-$(O)/certifier.pb.o: $(S)/certifier.pb.cc $(CI)/certifier.pb.h
+$(O)/certifier.pb.o: $(S)/certifier.pb.cc $(CI)/certifier.pb.h $(S)/tpm2.pb.cc $(S)/tpm2.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
