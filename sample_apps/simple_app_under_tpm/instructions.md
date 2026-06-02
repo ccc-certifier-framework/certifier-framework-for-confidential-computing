@@ -11,9 +11,9 @@ This example embeds the policy key in the application using the
 
 We also support a TPM simulator (swtpm) which can be configured and installed
 on any Linux host.  This is done using the script start-tpm-simulator.sh.
-You should follow the instructions in $CERTIFIER_PROTOTYPE/src/tpm2 to install the
-simulator and build the pcr utility.  If you use a "real" tpm, you should change
-the device name in the scripts.
+You should follow the instructions in $CERTIFIER_PROTOTYPE/src/tpm2 to install
+the simulator and build the pcr utility.  If you use a "real" tpm, you should
+change the device name in the scripts.
 
 ----
 
@@ -33,26 +33,28 @@ The shell scripts use the new API.
 
 The TPM enclave introduces an additional policy step for cefrtification.  For
 enclaves like SEV, the public key for the quote or attestation, is part of
-platform provisioning.  If the certifier "trusts" the manufacturer root certificate,
-the elements of the certification can be provided in one pass.  By contrast, the
-TPM employs a "first pass" in which the quoting key established trust with the
-certifier using a protocol.  This protocol uses the "ActivateCredential"
-functionality of the TPM.
+platform provisioning.  If the certifier "trusts" the manufacturer root
+certificate, the elements of the certification can be provided in one pass.
+By contrast, the TPM employs a "first pass" in which the quoting key established
+trust with the certifier using a protocol.  This protocol uses the
+"ActivateCredential" functionality of the TPM.
 
-To implement this.  The certifier opens a new protocol channel that accepts a certificate
-chain from the TPM manufacturers that offers evidence to support the security of the
-TPM "endorsement cert."  The deployed program packages this along with unforgeable information
-about the ultimate "quoting key," produces a cert for the quoting key, encrypts the cert with
-a random key (a "credential") and encrypts the the credential to the endorsement key.  The
-credential can only be decrypted by the TPM with the trusted endorsement cert which verifies
-properties of the quoting key and unlocks the credential which, in turn, is used to
-decrypt the quoting key certificate.  This certificate can then be used in the same way
-an authenticated vcek key is  used in SEV.
+To implement this.  The certifier opens a new protocol channel that accepts
+a certificate chain from the TPM manufacturers that offers evidence to support
+the security of the TPM "endorsement cert."  The deployed program packages this
+along with unforgeable information about the ultimate "quoting key," produces a
+cert for the quoting key, encrypts the cert with a random key (a "credential")
+and encrypts the the credential to the endorsement key.  The credential can
+only be decrypted by the TPM with the trusted endorsement cert which verifies
+properties of the quoting key and unlocks the credential which, in turn, is
+used to decrypt the quoting key certificate.  This certificate can then be
+used in the same way an authenticated vcek key is  used in SEV.
 
-The upshot is that the certifier is first called with the "first pass" tag that implements
-the new step to approve the quote key.  After the quote key is validated, resulting in
-a certificate signed by the policy key.  The customary proof protocol used in other
-enclaves is used to produce an "Admisions Certificate" as is customary.
+The upshot is that the certifier is first called with the "first pass" tag that
+implements the new step to approve the quote key.  After the quote key is
+validated, resulting in a certificate signed by the policy key.  The
+proof protocol used in other enclaves is used to produce an "Admisions
+Certificate" as is customary.
 
 
 Set up environment
@@ -85,21 +87,43 @@ the "unprivledged window," type:
   ./prepare-test.sh all dom0 # dom0 is our domain-name in the test
 ```
 
-This script also coolects the "trusted roots" for the TPM manufacturers and builds
-a database for them.
+This script also coolects the "trusted roots" for the TPM manufacturers and
+builds a database for them.
 
 Next, we'll start the simulator.  As described in the instructions for the
 TPM utilities, you should change the directoy set by the variable
 XDG_CONFIG_HOME to the location of your tpm state in the shell script
 start-tpm-simulator.sh.  I recommend using the full pathname.
-In a new window, "priviledged window 1," type:
+
+First, we need a "priviledged window" where we run as root.  We will
+use this window later.  If you have not already provisioned such a window,
+in a new window, "priviledged window 1," type:
 
 ```shell
-   cd $EXAMPLE_DIR$
+   cd $EXAMPLE_DIR
    sudo bash
    password
+   # In the next command, use the full path name of your certifier
+   # root directory.
+   export CERTIFIER_PROTOTYPE=/home/jlm/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing
+   export EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_apps/simple_app_under_tpm
+```
+
+Even if you've already started a tpm simulator, if it is in a bad state,
+after a previous run, you may want to reinitialize it:
+
+```shell
+  ./clean-tpm-simulator.sh
+```
+
+In any case, now start the tpm simulator:
+
+```shell
    ./start-tpm-simulator.sh
 ```
+
+Even if you've already started a tpm simulator, if it is in a bad state,
+you may want to reinitialize it:
 
 When your done, or hit an error, you can restore the pristine state of the TPM,
 kill zombied processes, and delete application files by typing into priviledged
@@ -110,13 +134,13 @@ window 1:
 ```
 
 Next we use the utility in $CERTIFIER_ROOT/src/tpm2 to set pcr 7 (which holds our
-application measurment).
+application measurment).  In the "priviledged window," type:
 
 ```shell
   ../../src/tpm2/tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
 ```
 
-Now, run the first pass:
+Now, run the first pass.  In the "priviledged window," type:
 
 ```shell
   ./first-pass.sh dom0 1
@@ -125,11 +149,11 @@ Now, run the first pass:
   chmod 0777 ./provisioning/quote_cert.crt
 ```
 
-This will result in the quoting cert and a measurment, normally obtained by other means,
-specifying the measurement of a trusted application.
+This will result in the quoting cert and a measurment, normally obtained
+by other means, specifying the measurement of a trusted application.
 
-Next, now that we have the measuerment and quote cert, we complete building the policy,
-producing a "policy.bin" as in the other examples.  To do this,
+Next, now that we have the measuerment and quote cert, we complete building the
+policy, producing a "policy.bin" as in the other examples.  To do this,
 Back in the Unpriviledged window:
 
 ```shell
