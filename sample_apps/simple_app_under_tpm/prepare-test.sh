@@ -249,7 +249,7 @@ function do-all() {
   echo " "
   echo "do-all"
 
-  # do-compile-utilities
+  do-compile-utilities
   do-make-keys
   do-compile-program
   do-compile-certifier
