@@ -59,7 +59,7 @@ DEFINE_int32(num_pcrs, 1, "number of pcrs");
 #  define GFLAGS_NS google
 #endif
 
-// #define DEBUG
+#define DEBUG
 
 // ----------------------------------------------------------
 
@@ -80,13 +80,22 @@ int main(int an, char **av) {
   printf("PCR's at entry:\n");
   print_pcrs(g_tpm, num_pcrs, pcrs);
 
-  if (!extend_pcrs(g_tpm, 7)) {
+  if (!extend_pcrs(g_tpm, FLAGS_pcr_num)) {
     printf("%s() error, line %d, extend_pcrs failed\n", __func__, __LINE__);
     return false;
   }
 
   printf("PCR's at exit:\n");
   print_pcrs(g_tpm, num_pcrs, pcrs);
+
+#if 0
+  // print all the pcrs
+  pcrs[0] = 0xff;
+  pcrs[1] = 0xff;
+  pcrs[2] = 0xff;
+  printf("All pcrs:\n");
+  print_pcrs(g_tpm, 8, pcrs);
+#endif
 
   close_tpm();
   return 0;
