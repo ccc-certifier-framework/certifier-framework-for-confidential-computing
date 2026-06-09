@@ -424,12 +424,6 @@ bool seal_test(local_tpm &tpm, int pcr_num, const string &seal_file) {
 #if 0
   printf("PCR's at seal test entry:\n");
   print_pcrs(tpm, num_pcrs, pcrs);
-
-  // tpm2_set_pcrs.exe instead
-  if (!extend_pcrs(tpm, 7)) {
-    printf("%s() error, line %d, extend_pcrs failed\n", __func__, __LINE__);
-    return false;
-  }
 #endif
 
   if (!create_seal_hierarchy_and_secret(tpm, num_pcrs, pcrs, seal_file)) {
@@ -457,6 +451,8 @@ bool seal_test(local_tpm &tpm, int pcr_num, const string &seal_file) {
   printf("Recovered seal secret: ");
   print_bytes(seal_secret.size(), (byte_t *)seal_secret.data());
   printf("\n");
+
+  // TODO: Now change the pcr and make sure it fails
 
   return true;
 }
