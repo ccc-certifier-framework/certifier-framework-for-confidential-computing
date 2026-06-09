@@ -91,11 +91,6 @@ int  Tpm2_Set_OwnerAuthData(int size, byte_t *buf);
 
 TPM_HANDLE GetNvHandle(uint32_t slot);
 
-
-bool fill_pcr_data(local_tpm         &tpm,
-                   TPMS_PCR_SELECTION pcrSelection,
-                   int               *size,
-                   byte_t            *buf);
 bool compute_pcr_digest(TPM_ALG_ID hash,
                         int        size_in,
                         byte_t    *in_buf,

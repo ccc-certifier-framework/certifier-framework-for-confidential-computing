@@ -185,43 +185,6 @@ struct TPM_RESPONSE {
 };
 #pragma pack(pop)
 
-bool fill_pcr_data(local_tpm         &tpm,
-                   TPMS_PCR_SELECTION pcrSelection,
-                   int               *size,
-                   byte_t            *buf) {
-  TPML_PCR_SELECTION pcrSelect;
-  uint32_t           updateCounter = 0;
-  TPML_PCR_SELECTION pcrSelectOut;
-  TPML_DIGEST        digest;
-
-  pcrSelect.count = 1;
-  pcrSelect.pcrSelections[0] = pcrSelection;
-
-  if (!Tpm2_ReadPcrs(tpm, pcrSelect, &updateCounter, &pcrSelectOut, &digest)) {
-    printf("%s() error, line %d, fill_pcr_data: Tpm2_ReadPcrs fails\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-  int total_size = 0;
-  // change_endian32(&digest.count, (uint32_t*)&buf[total_size]);
-  // total_size += sizeof(uint32_t);
-  for (int i = 0; i < (int)digest.count; i++) {
-    if ((int)(total_size + digest.digests[i].size + sizeof(uint16_t)) > *size) {
-      printf("%s() error, line %d, fill_pcr_data: buffer too small\n",
-             __func__,
-             __LINE__);
-      return false;
-    }
-    // change_endian16(&digest.digests[i].size, (uint16_t*)&buf[total_size]);
-    // total_size += sizeof(uint16_t);
-    memcpy(&buf[total_size], digest.digests[i].buffer, digest.digests[i].size);
-    total_size += digest.digests[i].size;
-  }
-  *size = total_size;
-  return true;
-}
-
 bool compute_pcr_digest(TPM_ALG_ID hash,
                         int        size_in,
                         byte_t    *in_buf,

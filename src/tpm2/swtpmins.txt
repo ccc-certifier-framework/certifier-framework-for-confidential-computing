@@ -62,30 +62,6 @@ accept commands immediately upon startup without requiring an explicit
 INIT signal via swtpm_ioctl
 
 -------------------------------------------------------------
-CRAP
-
-openssl x509 -inform pem -in /var/lib/swtpm-localca/swtpm-localca-rootca-cert.pem -text
-tpm2_getcap handles-transient
-#tpm2_getcap handles-nv-index
-#tpm2_getcap -l 0x01c00002
-export TPM_INTERFACE_TYPE=dev TPM_DEVICE=/dev/tpmrm0
-tssgetcapability -cap 1 -pr 0x01c00000
-tssnvread -hia o -ha 0x01c00002 -of ekcert.der
-tpm2_nvread 0x01c00002
-
-The Platform certificate can be found at index 0x01c08000.
-All certificates are in DER format [2, 3].
-
-tpm2_createek -c - -G rsa -u myek.tpm2 -c ekcontext.bin
-tpm2_readpublic -c ekcontext.bin -f pem -o myek.pem
-swtpm_cert --type ek --pubkey myek.pem --tpm2 --out-cert ekgen.cert
-openssl rsa -pubin -in myek.pem -text -noout
-openssl x509 -inform der -in ekcert.der -pubkey  -noout | openssl rsa -pubin -text -noout
-
-tpm2_getekcertificate -T swtpm:port=2321
-tpm2_nvread -T swtpm:port=2321 -C o 0x01c00002 -o tool_ek_rsa_cert.bin
-
---------------------------------------------------------------------------------
 
 ./tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
 ./tpm2_test.exe --operation=MiscTest --tpm_device=/dev/tpmrm1
