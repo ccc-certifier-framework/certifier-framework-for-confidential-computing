@@ -3060,7 +3060,7 @@ void print_claim(const claim_message &claim) {
     return;
   }
   printf("format: %s\n", claim.claim_format().c_str());
-  if (claim.has_claim_descriptor() ) {
+  if (claim.has_claim_descriptor()) {
     if (claim.claim_descriptor() != "") {
       printf("%s\n", claim.claim_descriptor().c_str());
     }

@@ -645,19 +645,17 @@ bool get_pcr_value(int                 size,
 void add_pcr_selection(int                 pcrNum,
                        TPM_ALG_ID          hash,
                        TPML_PCR_SELECTION *pcrSelect) {
-  int n = pcrSelect->count;
-  pcrSelect->count++;
-  pcrSelect->pcrSelections[n].hash = hash;
-  pcrSelect->pcrSelections[n].sizeofSelect = 3;
-  for (int i = 0; i < 3; i++)
-    pcrSelect->pcrSelections[n].pcrSelect[i] = 0;
-  if (pcrNum != 0)
-    setPcrBit(pcrNum, pcrSelect->pcrSelections[n].pcrSelect);
+  if (pcrNum > 23)
+    return;
+  int n = pcrSelect->count - 1;
+  setPcrBit(pcrNum, pcrSelect->pcrSelections[n].pcrSelect);
 }
 
 void init_single_pcr_selection(int                 pcrNum,
                                TPM_ALG_ID          hash,
                                TPML_PCR_SELECTION *pcrSelect) {
+  if (pcrNum > 23)
+    return;
   if (pcrNum == -1) {
     pcrSelect->count = 0;
     return;
@@ -667,8 +665,7 @@ void init_single_pcr_selection(int                 pcrNum,
   pcrSelect->pcrSelections[0].sizeofSelect = 3;
   for (int i = 0; i < 3; i++)
     pcrSelect->pcrSelections[0].pcrSelect[i] = 0;
-  if (pcrNum != 0)
-    setPcrBit(pcrNum, pcrSelect->pcrSelections[0].pcrSelect);
+  setPcrBit(pcrNum, pcrSelect->pcrSelections[0].pcrSelect);
 }
 
 bool Tpm2_ReadPcrs(local_tpm          &tpm,

@@ -88,13 +88,13 @@ int main(int an, char **av) {
   printf("PCR's at exit:\n");
   print_pcrs(g_tpm, num_pcrs, pcrs);
 
-#if 0
-  // print all the pcrs
-  pcrs[0] = 0xff;
-  pcrs[1] = 0xff;
-  pcrs[2] = 0xff;
-  printf("All pcrs:\n");
-  print_pcrs(g_tpm, 8, pcrs);
+#ifdef DEBUG
+  pcrs[0] = FLAGS_pcr_num;
+  pcrs[1] = 0;
+  pcrs[2] = 14;
+  pcrs[3] = 20;
+  printf("Sample pcrs:\n");
+  print_pcrs(g_tpm, 4, pcrs);
 #endif
 
   close_tpm();

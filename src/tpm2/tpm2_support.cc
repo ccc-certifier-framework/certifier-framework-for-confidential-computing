@@ -40,6 +40,7 @@
 #define MAX_SIZE_PARAMS 16384
 
 // #define DEBUG
+#define DEBUG1
 
 // ------------------------------------------------------------------------
 
@@ -62,6 +63,18 @@ bool print_pcrs(local_tpm &tpm, int num_pcrs, byte *pcrs) {
     add_pcr_selection(pcrs[i], TPM_ALG_SHA256, &pcrSelect);
   }
 
+#ifdef DEBUG1
+  printf("pcrSelect in, %d selected:\n", (int)pcrSelect.count);
+  for (int i = 0; i < (int)pcrSelect.count; i++) {
+    printf("  hash: %04x, size: %d, ",
+           pcrSelect.pcrSelections[i].hash,
+           pcrSelect.pcrSelections[i].sizeofSelect);
+    printf("mask: ");
+    print_mask(3, pcrSelect.pcrSelections[i].pcrSelect);
+    printf("\n");
+  }
+#endif
+
   uint32_t           upCounters = 0;
   TPML_PCR_SELECTION pcrSelectOut;
   memset((void *)&pcrSelectOut, 0, sizeof(TPML_PCR_SELECTION));
@@ -75,16 +88,21 @@ bool print_pcrs(local_tpm &tpm, int num_pcrs, byte *pcrs) {
     printf("%s() error, line %d, Tpm2_ReadPcrs failed\n", __func__, __LINE__);
     return false;
   }
-  printf("Tpm2_ReadPcrs succeeded %d entries\n", pcrSelectOut.count);
+  printf("Tpm2_ReadPcrs succeeded %d entries, upCounter: %d\n",
+         pcrSelectOut.count,
+         (int)upCounters);
   for (int i = 0; i < (int)pcrSelectOut.count; i++) {
     printf("  hash: %04x, size: %d, ",
            pcrSelectOut.pcrSelections[i].hash,
            pcrSelectOut.pcrSelections[i].sizeofSelect);
     printf("mask: ");
     print_mask(5, pcrSelectOut.pcrSelections[i].pcrSelect);
-    printf(", value: ");
-    print_bytes(the_digests.digests[i].size, the_digests.digests[i].buffer);
     printf("\n");
+    for (int j = 0; j < (int)the_digests.count; j++) {
+      printf("    value: ");
+      print_bytes(the_digests.digests[j].size, the_digests.digests[j].buffer);
+      printf("\n");
+    }
   }
   printf("\n");
   return true;
