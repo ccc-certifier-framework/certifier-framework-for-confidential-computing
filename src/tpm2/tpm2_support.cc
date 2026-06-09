@@ -50,6 +50,18 @@ void print_mask(int n, byte_t *m) {
     printf("%02x", *(m++));
 }
 
+void print_pcr_selection(TPML_PCR_SELECTION &pcr) {
+ printf("pcr selection, %d:\n", (int)pcr.count);
+  for (int i = 0; i < (int)pcr.count; i++) {
+    printf("  hash: %04x, size: %d, ",
+           pcr.pcrSelections[i].hash,
+           pcr.pcrSelections[i].sizeofSelect);
+    printf("mask: ");
+    print_mask(3, pcr.pcrSelections[i].pcrSelect);
+    printf("\n");
+  }
+}
+
 bool print_pcrs(local_tpm &tpm, int num_pcrs, byte *pcrs) {
   TPML_PCR_SELECTION pcrSelect;
   memset((void *)&pcrSelect, 0, sizeof(TPML_PCR_SELECTION));
@@ -64,15 +76,7 @@ bool print_pcrs(local_tpm &tpm, int num_pcrs, byte *pcrs) {
   }
 
 #ifdef DEBUG1
-  printf("pcrSelect in, %d selected:\n", (int)pcrSelect.count);
-  for (int i = 0; i < (int)pcrSelect.count; i++) {
-    printf("  hash: %04x, size: %d, ",
-           pcrSelect.pcrSelections[i].hash,
-           pcrSelect.pcrSelections[i].sizeofSelect);
-    printf("mask: ");
-    print_mask(3, pcrSelect.pcrSelections[i].pcrSelect);
-    printf("\n");
-  }
+  print_pcr_selection(pcrSelect);
 #endif
 
   uint32_t           upCounters = 0;
@@ -96,7 +100,7 @@ bool print_pcrs(local_tpm &tpm, int num_pcrs, byte *pcrs) {
            pcrSelectOut.pcrSelections[i].hash,
            pcrSelectOut.pcrSelections[i].sizeofSelect);
     printf("mask: ");
-    print_mask(5, pcrSelectOut.pcrSelections[i].pcrSelect);
+    print_mask(3, pcrSelectOut.pcrSelections[i].pcrSelect);
     printf("\n");
     for (int j = 0; j < (int)the_digests.count; j++) {
       printf("    value: ");

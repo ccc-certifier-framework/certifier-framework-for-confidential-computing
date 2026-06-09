@@ -597,6 +597,7 @@ bool get_pcr_value(int                 size,
   current_in += sizeof(uint32_t);
   for (int i = 0; i < static_cast<int>(values->count); i++) {
     change_endian16((uint16_t *)current_in, &values->digests[i].size);
+    change_endian16((uint16_t *)current_in, &values->digests[i].size);
     current_in += sizeof(uint16_t);
     memcpy(values->digests[i].buffer, current_in, values->digests[i].size);
     current_in += values->digests[i].size;
@@ -1883,7 +1884,7 @@ bool Tpm2_PolicyPcr(local_tpm          &tpm,
                                 commandBuf,
                                 total_size,
                                 params);
-#ifdef DEBUG
+#ifdef DEBUG1
   print_command("PolicyPcr", in_size, commandBuf);
 #endif
   if (!tpm.send_command(in_size, commandBuf)) {
