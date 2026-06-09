@@ -200,6 +200,5 @@ Control c to stop the server in priviledged window 1.
 The script clean-tpm-simulator.sh will stop the tpm simulator and clean-up
 the files and processes it created.
 
-
 ----------------------------------------------------------------------------------
 
