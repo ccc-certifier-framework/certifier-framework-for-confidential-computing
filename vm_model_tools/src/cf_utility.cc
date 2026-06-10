@@ -1,6 +1,5 @@
 //  Copyright (c) 2021-23, VMware Inc, and the Certifier Authors.  All rights
-//  reserved.  Copyright (c), 2025, John Manferdelli, Paul England and
-//  Datica Researdh.
+//  reserved.  Copyright (c), 2025, John Manferdelli
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
