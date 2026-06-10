@@ -25,6 +25,7 @@ using std::string;
 
 //
 // Copyright 2015 Google Corporation, All Rights Reserved.
+// Copyright 2026 John L Manferdelli, All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
