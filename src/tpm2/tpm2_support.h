@@ -125,6 +125,8 @@ bool recover_and_load_quote_hierarchy(local_tpm    &tpm,
                                       TPM_HANDLE   *quote_handle);
 
 void print_mask(int n, byte_t *m);
+void print_pcr_selection(TPML_PCR_SELECTION &pcr);
+
 bool decode_quoted(int                 size_buf,
                    byte_t             *buf,
                    uint32_t           *magic,
