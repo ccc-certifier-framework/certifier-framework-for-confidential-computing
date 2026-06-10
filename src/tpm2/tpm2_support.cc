@@ -51,7 +51,7 @@ void print_mask(int n, byte_t *m) {
 }
 
 void print_pcr_selection(TPML_PCR_SELECTION &pcr) {
- printf("pcr selection, %d:\n", (int)pcr.count);
+  printf("pcr selection, %d:\n", (int)pcr.count);
   for (int i = 0; i < (int)pcr.count; i++) {
     printf("  hash: %04x, size: %d, ",
            pcr.pcrSelections[i].hash,

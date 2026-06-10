@@ -421,7 +421,7 @@ bool seal_test(local_tpm &tpm, int pcr_num, const string &seal_file) {
   int    num_pcrs = 1;
   byte_t pcrs[1] = {7};
 
-#if 0
+#if 1
   printf("PCR's at seal test entry:\n");
   print_pcrs(tpm, num_pcrs, pcrs);
 #endif
@@ -452,7 +452,25 @@ bool seal_test(local_tpm &tpm, int pcr_num, const string &seal_file) {
   print_bytes(seal_secret.size(), (byte_t *)seal_secret.data());
   printf("\n");
 
-  // TODO: Now change the pcr and make sure it fails
+  // Now change the pcr and make sure it fails
+  if (!extend_pcrs(tpm, pcrs[0])) {
+    printf("%s() error, line %d, extend failed\n", __func__, __LINE__);
+    return false;
+  }
+#if 1
+  printf("PCR's after extend:\n");
+  print_pcrs(tpm, num_pcrs, pcrs);
+#endif
+  if (recover_sealing_secret(tpm,
+                             num_pcrs,
+                             pcrs,
+                             FLAGS_seal_hierarchy_name,
+                             &seal_secret)) {
+    printf("%s() error, line %d, recovered when it shouldn't\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
 
   return true;
 }
