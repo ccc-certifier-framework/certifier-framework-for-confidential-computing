@@ -341,6 +341,7 @@ bool Tpm2_Startup(local_tpm &tpm) {
   return true;
 }
 
+// Not used
 bool Tpm2_Shutdown(local_tpm &tpm) {
   return true;
 }
@@ -506,6 +507,7 @@ bool Tpm2_GetRandom(local_tpm &tpm, int numBytes, byte_t *buf) {
   return true;
 }
 
+// Not used
 bool Tpm2_ReadClock(local_tpm &tpm,
                     uint64_t  *current_time,
                     uint64_t  *current_clock) {
@@ -2425,6 +2427,7 @@ bool Tpm2_ReadPublic(local_tpm    &tpm,
   return true;
 }
 
+// Not used
 bool Tpm2_Certify(local_tpm      &tpm,
                   TPM_HANDLE      signedKey,
                   TPM_HANDLE      signingKey,
@@ -3898,6 +3901,7 @@ bool Tpm2_Flushall(local_tpm &tpm, uint32_t start) {
   return true;
 }
 
+// Not used yet
 bool Tpm2_Rsa_Encrypt(local_tpm            &tpm,
                       TPM_HANDLE            handle,
                       string               &authString,
@@ -3984,6 +3988,7 @@ bool Tpm2_Rsa_Encrypt(local_tpm            &tpm,
   return true;
 }
 
+// Not used
 bool Tpm2_EvictControl(local_tpm         &tpm,
                        TPMI_RH_PROVISION  owner,
                        TPM_HANDLE         handle,
@@ -4055,11 +4060,6 @@ bool Tpm2_EvictControl(local_tpm         &tpm,
 #endif
   if (responseCode != TPM_RC_SUCCESS)
     return false;
-#if 0
-  byte* out = resp_buf +  sizeof(TPM_RESPONSE);
-  change_endian32((uint32_t*)out, &persistantHandle);
-  out += sizeof(uint32_t);
-#endif
   return true;
 }
 
@@ -4069,18 +4069,11 @@ bool Tpm2_EvictControl(local_tpm         &tpm,
 /*
  *  The following code is for an encrypted session. Later we should fix the
  *  original functions so they allow bound sessions initiated with encrypted
- * salts.
+ *  salts.
  *
  *  This code works for HMAC sessions only with password authorization.
  */
 
-// Name =  nameAlg || Hash(nvPublicArea)
-// nvPublicArea
-//   TPMI_RH_NV_INDEX nvIndex;
-//   TPMI_ALG_HASH    nameAlg;
-//   TPMA_NV          attributes;
-//   TPM2B_DIGEST     authPolicy;
-//   uint16_t         dataSize;
 bool CalculateNvName(ProtectedSessionAuthInfo &in,
                      TPM_HANDLE                nv_handle,
                      uint16_t                  nv_hash_alg,
@@ -4149,6 +4142,7 @@ bool CalculateNvName(ProtectedSessionAuthInfo &in,
   return true;
 }
 
+// Not used
 bool CalculateBindName(local_tpm                &tpm,
                        TPM_HANDLE                bind_obj,
                        ProtectedSessionAuthInfo &authInfo) {
@@ -4326,8 +4320,7 @@ bool CalculateSessionHmac(ProtectedSessionAuthInfo &in,
   return true;
 }
 
-// sessionKey = KDFa(sessionAlg, bind.authValue||salt, ATH,
-//                   in.newNonce_.buffer, in.oldNonce_.buffer, bits)
+// Not used
 bool CalculateSessionKey(ProtectedSessionAuthInfo &in, TPM2B_DIGEST &rawSalt) {
   int sizeKey = SizeHash(in.hash_alg_);
   in.sessionKeySize_ = sizeKey;
@@ -4578,6 +4571,7 @@ bool GetandVerifyProtectedAuth(ProtectedSessionAuthInfo &authInfo,
   return true;
 }
 
+// Not used
 bool Tpm2_StartProtectedAuthSession(local_tpm                &tpm,
                                     TPM_RH                    tpm_obj,
                                     TPM_RH                    bind_obj,
@@ -4653,6 +4647,7 @@ bool Tpm2_StartProtectedAuthSession(local_tpm                &tpm,
   return true;
 }
 
+// Not used
 bool Tpm2_DefineProtectedSpace(local_tpm                &tpm,
                                TPM_HANDLE                owner,
                                TPMI_RH_NV_INDEX          index,
@@ -4938,6 +4933,7 @@ bool Tpm2_IncrementProtectedNv(local_tpm                &tpm,
   return true;
 }
 
+// Not used
 bool Tpm2_ReadProtectedNv(local_tpm                &tpm,
                           TPMI_RH_NV_INDEX          index,
                           ProtectedSessionAuthInfo &authInfo,
