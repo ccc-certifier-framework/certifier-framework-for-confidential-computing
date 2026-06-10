@@ -40,7 +40,7 @@
 #define MAX_SIZE_PARAMS 16384
 
 // #define DEBUG
-#define DEBUG1
+// #define DEBUG1
 
 // ------------------------------------------------------------------------
 

@@ -421,7 +421,7 @@ bool seal_test(local_tpm &tpm, int pcr_num, const string &seal_file) {
   int    num_pcrs = 1;
   byte_t pcrs[1] = {7};
 
-#if 1
+#ifdef DEBUG
   printf("PCR's at seal test entry:\n");
   print_pcrs(tpm, num_pcrs, pcrs);
 #endif
@@ -457,7 +457,7 @@ bool seal_test(local_tpm &tpm, int pcr_num, const string &seal_file) {
     printf("%s() error, line %d, extend failed\n", __func__, __LINE__);
     return false;
   }
-#if 1
+#ifdef DEBUG
   printf("PCR's after extend:\n");
   print_pcrs(tpm, num_pcrs, pcrs);
 #endif

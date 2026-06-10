@@ -330,7 +330,6 @@ bool Tpm2_Startup(local_tpm &tpm) {
                          &responseCode);
 #ifdef DEBUG
   print_response("Tpm2_Startup", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -448,7 +447,6 @@ bool Tpm2_GetCapability(local_tpm &tpm,
                          &responseCode);
 #ifdef DEBUG
   print_response("GetCapability", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -497,7 +495,6 @@ bool Tpm2_GetRandom(local_tpm &tpm, int numBytes, byte_t *buf) {
                          &responseCode);
 #ifdef DEBUG
   print_response("GetRandom", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -546,7 +543,6 @@ bool Tpm2_ReadClock(local_tpm &tpm,
                          &responseCode);
 #ifdef DEBUG
   print_response("ReadClock", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -693,7 +689,6 @@ bool Tpm2_ReadPcrs(local_tpm          &tpm,
                          &responseCode);
 #ifdef DEBUG
   print_response("ReadPcr", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -973,7 +968,6 @@ bool Tpm2_PCR_Event(local_tpm &tpm,
                          &responseCode);
 #ifdef DEBUG
   print_response("PCR_Event", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -1536,7 +1530,6 @@ bool Tpm2_CreatePrimary(local_tpm          &tpm,
                          &responseCode);
 #ifdef DEBUG
   print_response("CreatePrimary", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -1675,7 +1668,6 @@ bool Tpm2_PolicySecret(local_tpm     &tpm,
                          &responseCode);
 #ifdef DEBUG
   print_response("PolicySecret", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -1723,7 +1715,6 @@ bool Tpm2_PolicyPassword(local_tpm &tpm, TPM_HANDLE handle) {
                          &responseCode);
 #ifdef DEBUG
   print_response("PolicyPassword", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -1772,7 +1763,6 @@ bool Tpm2_PolicyGetDigest(local_tpm    &tpm,
                          &responseCode);
 #ifdef DEBUG
   print_response("PolicyGetDigest", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -1841,7 +1831,6 @@ bool Tpm2_StartAuthSession(local_tpm              &tpm,
                          &responseCode);
 #ifdef DEBUG
   print_response("StartAuthSession", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -1905,7 +1894,6 @@ bool Tpm2_PolicyPcr(local_tpm          &tpm,
                          &responseCode);
 #ifdef DEBUG
   print_response("PolicyPcr", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -1977,7 +1965,6 @@ bool Tpm2_MakeCredential(local_tpm              &tpm,
                          &responseCode);
 #ifdef DEBUG
   print_response("MakeCredential", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -2101,7 +2088,6 @@ bool Tpm2_ActivateCredential(local_tpm              &tpm,
                  responseSize,
                  responseCode,
                  resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -2196,7 +2182,6 @@ bool Tpm2_Load(local_tpm  &tpm,
                          &responseCode);
 #ifdef DEBUG
   print_response("Load", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -2313,7 +2298,6 @@ bool Tpm2_ReadNvPublic(local_tpm  &tpm,
                          &responseCode);
 #ifdef DEBUG
   print_response("ReadNvPublic", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -2404,7 +2388,6 @@ bool Tpm2_ReadPublic(local_tpm    &tpm,
                          &responseCode);
 #ifdef DEBUG
   print_response("ReadPublic", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -2557,7 +2540,6 @@ bool Tpm2_Certify(local_tpm      &tpm,
                          &responseCode);
 #ifdef DEBUG
   print_response("Certify", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -2771,7 +2753,6 @@ bool Tpm2_CreateKey(local_tpm           &tpm,
                          &responseCode);
 #ifdef DEBUG
   print_response("CreateKey", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -2905,7 +2886,6 @@ bool Tpm2_CreateSealed(local_tpm           &tpm,
                          &responseCode);
 #ifdef DEBUG
   print_response("CreateSealed", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -3023,7 +3003,6 @@ bool Tpm2_Unseal(local_tpm    &tpm,
                          &responseCode);
 #ifdef DEBUG
   print_response("Unseal", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -3133,7 +3112,6 @@ bool Tpm2_Quote(local_tpm          &tpm,
                          &responseCode);
 #ifdef DEBUG
   print_response("Quote", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -3205,7 +3183,6 @@ bool Tpm2_LoadContext(local_tpm  &tpm,
                          &responseCode);
 #ifdef DEBUG
   print_response("ContextLoad", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -3261,7 +3238,6 @@ bool Tpm2_SaveContext(local_tpm &tpm,
                          &responseCode);
 #ifdef DEBUG
   print_response("SaveContext", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -3308,7 +3284,6 @@ bool Tpm2_FlushContext(local_tpm &tpm, TPM_HANDLE handle) {
                          &responseCode);
 #ifdef DEBUG
   print_response("FlushContext", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -3377,7 +3352,6 @@ bool Tpm2_IncrementNv(local_tpm       &tpm,
                          &responseCode);
 #ifdef DEBUG
   print_response("IncrementNv", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -3455,7 +3429,6 @@ bool Tpm2_ReadNv(local_tpm       &tpm,
                          &responseCode);
 #ifdef DEBUG
   print_response("ReadNv", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -3540,7 +3513,6 @@ bool Tpm2_WriteNv(local_tpm       &tpm,
                          &responseCode);
 #ifdef DEBUG
   print_response("WriteNv", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -3648,7 +3620,6 @@ bool Tpm2_DefineSpace(local_tpm    &tpm,
                          &responseCode);
 #ifdef DEBUG1
   print_response("Definespace", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -3760,7 +3731,6 @@ bool Tpm2_DefineSpace(local_tpm       &tpm,
                          &responseCode);
 #ifdef DEBUG
   print_response("Definespace", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -3827,7 +3797,6 @@ bool Tpm2_UndefineSpace(local_tpm       &tpm,
                          &responseCode);
 #ifdef DEBUG
   print_response("UndefineSpace", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -3881,7 +3850,6 @@ bool Tpm2_DictionaryAttackLockReset(local_tpm &tpm) {
                  responseSize,
                  responseCode,
                  resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -4003,7 +3971,6 @@ bool Tpm2_Rsa_Encrypt(local_tpm            &tpm,
                          &responseCode);
 #ifdef DEBUG
   print_response("TPM_RSA_Encrypt", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
@@ -4671,7 +4638,6 @@ bool Tpm2_StartProtectedAuthSession(local_tpm                &tpm,
                          &responseCode);
 #ifdef DEBUG
   print_response("StartAuthSession", cap, responseSize, responseCode, resp_buf);
-#else
   if (responseCode != 0)
     printf("Response code: %x\n", responseCode);
 #endif
