@@ -109,7 +109,7 @@ You may want to just compile the framework and vm_model_tools executables,
 without being root.  To do this:
 
 ```shell
-    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 -just-compile 1
+    ./run-test-scenario1.sh  -bss 0 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 -just-compile 1
 ```
 If you do this, you can use the -ccf 0 flag when you run run-test-scenario1.sh as
 root.
@@ -117,14 +117,13 @@ root.
 To run run-test-scenario1.sh from scratch, in the tpm environment, type:
 
 ```shell
-    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 1 -loud 1 -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin -pk 1 -pn cf-utility
+    ./run-test-scenario1.sh  -bss 0 -ccf 1 -loud 1 -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin -pk 1 -pn cf-utility
 ```
 or, if you previously did a "compile only":
 
 ```shell
-    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -loud 1 -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin -pk 1 -pn cf-utility
+    ./run-test-scenario1.sh  -bss 0 -ccf 0 -loud 1 -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin -pk 1 -pn cf-utility
 ```
-
 Some important variable have the following effect:
 
     "-tt simulated" tells the script that the "deployed enviornment" is the
@@ -155,7 +154,7 @@ If you are running a tpm enclave, initially, you can rerun the test (after
 cleaning the application files as above) by typing:
 
 ```shell
-    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -pk 1 -dn dom0 -loud 0 -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin
+    ./run-test-scenario1.sh  -bss 0 -ccf 0 -pk 1 -dn dom0 -loud 0 -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin
 ```
 This does not regenerate policy keys and certificates or recompile the utilities and
 is much faster..
