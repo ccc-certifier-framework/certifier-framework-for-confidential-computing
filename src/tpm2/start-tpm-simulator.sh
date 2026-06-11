@@ -21,28 +21,35 @@ echo " "
 echo "Certifier root: $CERTIFIER_ROOT"
 echo "TPM support directory: $TPM_SUPPORT_DIR"
 
+if [[ ! -v XDG_CONFIG_HOME ]]; then
+  echo "Using export XDG_CONFIG_HOME=/home/jlm/.config"
+  export XDG_CONFIG_HOME="/home/jlm/.config"
+fi
+if [[ ! -e $XDG_CONFIG_HOME ]]; then
+  echo "$XDG_CONFIG_HOME does not exist"
+  exit
+fi
+
 pushd $TPM_SUPPORT_DIR
   echo " "
   echo "start-tpm-simulator"
 
-  export XDG_CONFIG_HOME="/home/jlm/.config"
-  echo $XDG_CONFIG_HOME
-  echo $(pwd)
-
-  pushd $XDG_CONFIG_HOME/mytpm1
-    rm ./*
-    rm ./.lock
-  popd
-
-  modprobe tpm_vtpm_proxy
+  echo "Tpm simulator state in $XDG_CONFIG_HOME"
+  echo "Current directory: $(pwd)"
 
   swtpm_setup --tpmstate ${XDG_CONFIG_HOME}/mytpm1 --create-ek-cert \
     --create-platform-cert --tpm2 --write-ek-cert-files .
 
-  chmod 0777 *.crt
+  modprobe tpm_vtpm_proxy
+  if [[ $? -eq 0 ]] ; then
+    swtpm chardev --vtpm-proxy --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 \
+      --tpm2 --ctrl type=tcp,port=2322 --flags not-need-init,startup-clear &
+  else
+    swtpm socket --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1--tpm2 --ctrl type=tcp,port=2322 --server type=tcp,port=2321 --flags not-need-init,startup-clear --log level=20 &
+    socat PTY,link=/dev/tpmrm1,raw,echo=0 TCP4:127.0.0.1:2321 &
+  fi
 
-  swtpm chardev --vtpm-proxy --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 \
-    --tpm2 --ctrl type=tcp,port=2322 --flags not-need-init,startup-clear &
+  chmod 0777 *.crt || true
 popd
 #endif
 

@@ -40,6 +40,15 @@ echo " "
 echo "Certifier root: $CERTIFIER_ROOT"
 echo "TPM support directory: $TPM_SUPPORT_DIR"
 
+if [[ ! -v XDG_CONFIG_HOME ]]; then
+  echo "Using export XDG_CONFIG_HOME=/home/jlm/.config"
+  export XDG_CONFIG_HOME="/home/jlm/.config"
+fi
+if [[ ! -e $XDG_CONFIG_HOME ]]; then
+  echo "$XDG_CONFIG_HOME does not exist"
+  exit
+fi
+
 pushd $TPM_SUPPORT_DIR
   echo " "
   echo "cleanup-tpm-simulator"
@@ -48,7 +57,12 @@ pushd $TPM_SUPPORT_DIR
   cleanup-stale-procs
 
   # remove the files
-  rm seal_hierarchy.bin quote_hierarchy.bin
+  rm seal_hierarchy.bin quote_hierarchy.bin || true
+popd
+
+pushd $XDG_CONFIG_HOME/mytpm1
+  rm ./*
+  rm ./.lock
 popd
 
 echo "Done"

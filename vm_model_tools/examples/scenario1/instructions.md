@@ -84,14 +84,22 @@ and you don't need to be root to do it.
 Except as noted, the following commands, which run the tests, must run as root
 (see note above about path variables).
 
-First, you may want to clean up files and simulator state from previous runs.
+If you want to use the tpm simulator, first install it (see
+$CERTIFIER_ROOT/src/tpm2/swtpmins.txt, for instructions).
+
+First set the location of the simulated tpm state:
+
+```shell
+    export XDG_CONFIG_HOME=full directory name (/home/jlm/.config in my case)
+```
+
+You may want to clean up files and simulator state from previous runs.
 To do this:
 
 ```shell
     ./clean-tpm-simulator.sh
     ./clean-files.sh
 ```
-
 As root, start the tpm simulator for testing, and set pcr 7:
 
 ```shell
@@ -101,7 +109,8 @@ As root, start the tpm simulator for testing, and set pcr 7:
     $TPM_SUPPORT_DIR/tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
 ```
 
-Next can run the test.
+If you are using a "real" tpm, make sure you set the correct device name
+(-tpm /dev/tpmrm1, below).
 
 You may want to just compile the framework and vm_model_tools executables,
 without being root.  To do this:
