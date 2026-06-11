@@ -69,6 +69,7 @@ INIT signal via swtpm_ioctl
 ./tpm2_test.exe --operation=EndorsementTest --tpm_device=/dev/tpmrm1
 ./tpm2_test.exe --operation=SealTest --tpm_device=/dev/tpmrm1
 ./tpm2_test.exe --operation=QuoteTest --tpm_device=/dev/tpmrm1
+clean the simulator and restart to get the right measurement
 ./tpm2_test.exe --operation=CertifierTest --tpm_device=/dev/tpmrm1
 
 --------------------------------------------------------------------------------

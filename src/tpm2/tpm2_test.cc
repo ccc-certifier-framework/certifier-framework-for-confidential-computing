@@ -482,15 +482,9 @@ bool quote_test(local_tpm &tpm, const string &quote_file) {
   TPM_HANDLE srk_handle;
   TPM_HANDLE quote_handle;
 
-#if 0
+#ifdef DEBUG
   printf("PCR's at quote test entry:\n");
   print_pcrs(tpm, num_pcrs, pcrs);
-
-  // run tpm2_set_pcrs instead
-  if (!extend_pcrs(tpm, 7)) {
-    printf("%s() error, line %d, extend_pcrs failed\n", __func__, __LINE__);
-    return false;
-  }
 #endif
 
   if (!create_quote_hierarchy(tpm, num_pcrs, pcrs, quote_file)) {

@@ -95,6 +95,16 @@ echo ""
 echo "Running consolidated test with $ALLARGS"
 echo ""
 
+if [[ ! -e "$EXAMPLE_DIR/provisioning" ]] ; then
+  mkdir $EXAMPLE_DIR/provisioning
+fi
+if [[ ! -e "$EXAMPLE_DIR/service" ]] ; then
+  mkdir $EXAMPLE_DIR/service
+fi
+if [[ ! -e "$EXAMPLE_DIR/cf_data" ]] ; then
+  mkdir $EXAMPLE_DIR/cf_data
+fi
+
 if [[ $COMPILE_CF -eq 1 ]]; then
 	echo ""
 	echo "build-certifier.sh"
