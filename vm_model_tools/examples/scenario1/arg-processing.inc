@@ -62,6 +62,7 @@ fi
 #       END_CERT_CHAIN_FILE                     -end_chain      ""
 #       ACTIVATE_HOST                           -act_host       "localhost"
 #       ACTIVATE_PORT                           -act_port       "8130"
+#       COMPILE_ONLY                            -just-compile   0
 
 
 function print-options() {
@@ -107,6 +108,7 @@ function print-options() {
         echo "END_CERT_CHAIN_FILE               -end_chain      file name of endorsement cert"
         echo "ACTIVATE_HOST                     -act_host       IP for activation"
         echo "ACTIVATE_PORT                     -act_port       port number of activation"
+        echo "COMPILE_ONLY                      -just-compile   don't do root required stuff"
         echo "-----------------------------------------------------------------"
         echo ""
 }
@@ -151,6 +153,7 @@ END_CERT_FILE=\"\"
 END_CERT_CHAIN_FILE=\"\"
 ACTIVATE_HOST="localhost"
 ACTIVATE_PORT="8130"
+COMPILE_ONLY=0
 
 
 function print-variables() {
@@ -200,6 +203,7 @@ function print-variables() {
         echo "Endorsement cert chain                 $END_CERT_CHAIN_FILE"
         echo "Activation service IP host             $ACTIVATE_HOST"
         echo "Activation service port                $ACTIVATE_PORT"
+        echo "Compile only                           $COMPILE_ONLY"
         echo ""
 }
 
@@ -324,6 +328,9 @@ function process-args() {
                 fi
                 if [[ ${array[i]} = "-act_port" ]]; then
                         ACTIVATE_PORT="${array[i+1]}"
+                fi
+                if [[ ${array[i]} = "-just-compile" ]]; then
+                        COMPILE_ONLY="${array[i+1]}"
                 fi
         done
 

@@ -76,7 +76,7 @@ echo "Arguments processed"
 
 ALLARGS=""
 if [[ $TEST_TYPE = "simulated" ]]; then
-	ALLSIMARG1="-tt $TEST_TYPE -pn scenario1-test -dn dom0 -clean $CLEAN -loud $VERBOSE"
+	ALLSIMARG1="-tt $TEST_TYPE -pn scenario1-test -dn dom0 -clean $CLEAN -loud $VERBOSE -just_compile $COMPILE_ONLY"
 	ALLSIMARG2="-dd $DATA_DIR -ccf $COMPILE_CF -bss $BUILD_SEV_SIMULATOR -pkn $POLICY_KEY_FILE_NAME"
 	ALLSIMARG3="-pkn policy_key_file -cfn policy_cert_file -psn policy_store -csn cryptstore"
 	ALLSIMARG4="-pfn $POLICY_FILE_NAME -psa $POLICY_SERVER_ADDRESS -ksa $KEY_SERVER_ADDRESS"
@@ -110,6 +110,11 @@ if [[ $COMPILE_CF -eq 1 ]]; then
 	echo "build-certifier.sh"
 	echo ""
 	./build-certifier.sh $ALLARGS		# working
+fi
+
+if [[ $COMPILE_ONLY -eq 1 ]]; then
+	echo "Just compiling, you can now call with -ccf 0"
+	exit
 fi
 
 echo ""

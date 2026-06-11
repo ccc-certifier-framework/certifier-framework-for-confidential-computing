@@ -68,7 +68,8 @@ define the first two in the shell you use by doing the following:
 When running in a "sudo" window, you should use the full path and not use the
 "~" shortcut.
 
-You must build the tpm utilities as follows (you only need to do this once).
+You must build the tpm utilities as follows (you only need to do this once),
+and you don't need to be root to do it.
 
 ```shell
     pushd $CERTIFIER_ROOT/src/tpm2
@@ -104,11 +105,26 @@ scratch, in the simulated sev environment, type:
     ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1
 ```
 
+You may want to just compile the framework and vm_model_tools executables,
+without being root.  To do this:
+
+```shell
+    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 -just-compile 1
+```
+If you do this, you can use the -ccf 0 flag when you run run-test-scenario1.sh as
+root.
+
 To run run-test-scenario1.sh from scratch, in the tpm environment, type:
 
 ```shell
-    ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 1 -loud 1 -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin -pk 1 -pn cf-utility
+    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 1 -loud 1 -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin -pk 1 -pn cf-utility
 ```
+or, if you previously did a "compile only":
+
+```shell
+    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -loud 1 -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin -pk 1 -pn cf-utility
+```
+
 Some important variable have the following effect:
 
     "-tt simulated" tells the script that the "deployed enviornment" is the
