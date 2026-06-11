@@ -1,8 +1,9 @@
-#
-Instructions for running scenario1
+# Instructions for running scenario1
 
 This document gives detailed instructions for running scenario1
-in both test and full SEV environment.  The basic certifier utility
+in both simulated or full SEV environment (in the case of an sev
+"deployed enclave") or a simulated or real tpm environment
+(in the case of tpm "deployed enclave") .  The basic vm utility
 used is cf_utility.exe, cf_utility.exe is described in
 cf_utility_usage_notes.md.
 
@@ -17,15 +18,12 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
 $EXAMPLE_DIR is this directory containing the example application.  Again, a
 shell variable is useful, if you run the detailed steps below.
 
-This document has corresponds to the "SevProvisioning" document, in 
-$(CERTIFIER_ROOT)/Doc, which should be read in conjunction with this.
-
 
 ## Overview
 
 Running the tests is considerably simplified by a consolidated script,
-run-test-scenario1.sh.  It runs all the subordinate scripts described
-in Sevprovisioning.
+run-test-scenario1.sh.  It runs all the subordinate scripts.
+
 
 ### Special note for tpms:
 The TPM enclave introduces an additional policy step for cefrtification.  For
@@ -69,6 +67,8 @@ When running in a "sudo" window, you should use the full path and not use the
 "~" shortcut.
 
 
+# Running the tests
+
 ## Running the tpm tests
 
 You must build the tpm utilities as follows (you only need to do this once),
@@ -92,7 +92,7 @@ To do this:
     ./clean-files.sh
 ```
 
-As root, start the simulator for testing, and set pcr 7 for the test:
+As root, start the tpm simulator for testing, and set pcr 7:
 
 ```shell
     ./start-tpm-simulator.sh
@@ -100,6 +100,8 @@ As root, start the simulator for testing, and set pcr 7 for the test:
     sleep 2
     $TPM_SUPPORT_DIR/tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
 ```
+
+Next can run the test.
 
 You may want to just compile the framework and vm_model_tools executables,
 without being root.  To do this:
@@ -150,15 +152,16 @@ the relevant arguments.  Some scripts are easy.  For example, ./cleanup.sh can
 be called with no arguments.  It kills running simpleserver instances and keyserver
 instances so it is useful if the script aborts.
 
-Reminder: If you run a test that fails and you want to cleanup, you
-should run:
+Reminder: If you run a test that fails and you want to cleanup, you should run:
 
 ```shell
     ./cleanup.sh
     ./clean-files.sh
 ```
 This removes the application files from the last run and kills the server
-processes used in the test.  If you don't do this, the test won't work.
+processes used in the test.  If you don't do this, the test won't work. You
+may also want to clean and restart the tpm simulator but you usually need
+not do so.
 
 
 ## Running the sev tests
@@ -194,10 +197,6 @@ There is a new flag:
         keys for the simulated environment are built.
     "-bss 1" tells the script to build and install the driver for the
         simulated sev.
-
-
-If you installed the device driver (sev_null) before running the scripts, you
-do not need "-bss 1" and you shouldn't set it.
 
 After you run the test the first time, you need not re-compile the certifier or
 install the device driver. To rerun the tests again, first clean the app files:
