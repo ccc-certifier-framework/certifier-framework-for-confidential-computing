@@ -1829,6 +1829,7 @@ bool tpm_Init(const string &device_name,
       printf("%s() error, line %d, can't read endorsement cert\n",
              __func__,
              __LINE__);
+      tpm_close();
       return false;
     }
   } else {
@@ -1836,6 +1837,7 @@ bool tpm_Init(const string &device_name,
       printf("%s() error, line %d, can't get endorsement cert from tpm\n",
              __func__,
              __LINE__);
+      tpm_close();
       return false;
     }
   }
@@ -1847,6 +1849,7 @@ bool tpm_Init(const string &device_name,
       printf("%s() error, line %d, can't init endorsement cert chain\n",
              __func__,
              __LINE__);
+      tpm_close();
       return false;
     }
   } else {
@@ -1860,6 +1863,7 @@ bool tpm_Init(const string &device_name,
     printf("%s() error, line %d, can't get password auth\n",
            __func__,
            __LINE__);
+    tpm_close();
     return false;
   }
   string policyString;
@@ -1867,12 +1871,14 @@ bool tpm_Init(const string &device_name,
     printf("%s() error, line %d, get_endorsement_policy failed\n",
            __func__,
            __LINE__);
+    tpm_close();
     return false;
   }
   if (!get_endorsement_key(g_tpm, authString, policyString, &g_ek_handle)) {
     printf("%s() error, line %d, get_endorsement_key failed\n",
            __func__,
            __LINE__);
+    tpm_close();
     return false;
   }
 
@@ -1881,6 +1887,7 @@ bool tpm_Init(const string &device_name,
     printf("%s() error, line %d, can't init seal environment\n",
            __func__,
            __LINE__);
+    tpm_close();
     return false;
   }
 
@@ -1889,6 +1896,7 @@ bool tpm_Init(const string &device_name,
     printf("%s() error, line %d, can't init quote environment\n",
            __func__,
            __LINE__);
+    tpm_close();
     return false;
   }
 #ifdef DEBUG2
