@@ -56,7 +56,7 @@ echo "cleanup-tpm-simulator"
 cleanup-stale-procs
 
 # remove the files
-rm seal_hierarchy.bin quote_hierarchy.bin
+rm seal_hierarchy.bin quote_hierarchy.bin || true
 
 # clear tpm state
 pushd $XDG_CONFIG_HOME/mytpm1

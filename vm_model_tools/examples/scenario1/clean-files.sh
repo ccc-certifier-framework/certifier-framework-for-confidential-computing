@@ -25,21 +25,21 @@ pushd $EXAMPLE_DIR
     exit
   fi
   pushd provisioning
-    rm ./*
+    rm ./* || true
   popd
   if [[ ! -e "./service" ]] ; then
     echo "service directory missing or not set"
     exit
   fi
   pushd service
-   rm ./*
+   rm ./* || true
   popd
   if [[ ! -e "./cf_data" ]] ; then
     echo "cf_data directory missing or not set"
     exit
   fi
   pushd cf_data
-    rm ./*
+    rm ./* || true
   popd
 popd
 
