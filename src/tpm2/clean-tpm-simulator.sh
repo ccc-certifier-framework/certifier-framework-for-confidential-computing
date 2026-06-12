@@ -41,8 +41,8 @@ echo "Certifier root: $CERTIFIER_ROOT"
 echo "TPM support directory: $TPM_SUPPORT_DIR"
 
 if [[ ! -v XDG_CONFIG_HOME ]]; then
-  echo "Using export XDG_CONFIG_HOME=/home/jlm/.config"
-  export XDG_CONFIG_HOME="/home/jlm/.config"
+  echo "Using export XDG_CONFIG_HOME=~/.config"
+  export XDG_CONFIG_HOME="$HOME/.config"
 fi
 if [[ ! -e $XDG_CONFIG_HOME ]]; then
   echo "$XDG_CONFIG_HOME does not exist"
