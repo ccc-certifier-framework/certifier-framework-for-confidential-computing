@@ -44,10 +44,12 @@ pushd $TPM_SUPPORT_DIR
   modprobe tpm_vtpm_proxy
   if [[ $? -eq 0 ]] ; then
     echo "Using chardev"
+    set -e
     swtpm chardev --vtpm-proxy --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 \
       --tpm2 --ctrl type=tcp,port=2322 --flags not-need-init,startup-clear &
   else
     echo "chardev unavailable, using socket"
+    set -e
     swtpm socket --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --ctrl type=tcp,port=2322 --server type=tcp,port=2321 --flags not-need-init,startup-clear --log level=20 &
     sleep 2
     socat PTY,link=/dev/tpmrm1,raw,echo=0 TCP4:127.0.0.1:2321 &
