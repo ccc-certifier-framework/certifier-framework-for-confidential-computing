@@ -17,8 +17,8 @@ if [[ ! -e "$EXAMPLE_DIR" ]] ; then
 fi
 
 pushd $EXAMPLE_DIR
-  rm policy_store.dom0* cryptstore.dom0* quote_cert.crt ekchain.bin
-  rm measurement cf_utility.measurement sev_cf_utility.measurement
+  rm policy_store.dom0* cryptstore.dom0* quote_cert.crt ekchain.bin || true
+  rm measurement cf_utility.measurement sev_cf_utility.measurement || true
 
   if [[ ! -e "./provisioning" ]] ; then
     echo "provisioning directory missing or not set"
