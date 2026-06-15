@@ -1543,6 +1543,7 @@ int main(int an, char **av) {
 
 done:
   trust_mgr->clear_sensitive_data();
+  trust_mgr->close_enclave();
   if (trust_mgr != nullptr) {
     delete trust_mgr;
   }
