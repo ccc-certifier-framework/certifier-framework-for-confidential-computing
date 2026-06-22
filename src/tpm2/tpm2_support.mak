@@ -74,14 +74,16 @@ all:	$(EXE_DIR)/tpm2_test.exe  $(EXE_DIR)/tpm2_set_pcrs.exe
 
 clean:
 	@echo "removing object files"
-	rm $(O)/*.o
+	rm $(O)/*.o || true
 	@echo "removing executable file"
-	rm $(EXE_DIR)/tpm2_test.exe
+	rm $(EXE_DIR)/tpm2_test.exe || true
 	@echo "removing executable file"
-	rm $(EXE_DIR)/tpm2_set_pcrs.exe
+	rm $(EXE_DIR)/tpm2_set_pcrs.exe || true
 	@echo "removing protobuf files"
-	rm $(CI)/certifier.pb.h
-	rm $(s)/certifier.pb.cc
+	rm $(CI)/certifier.pb.h || true
+	rm $(S)/certifier.pb.cc || true
+	rm $(S)/tpm2.pb.cc || true
+	rm $(S)/tpm2.pb.h || true
 
 $(EXE_DIR)/tpm2_test.exe: $(dobj_tpm2) $(O)/tpm2_test.o
 	@echo "linking tpm2_test"

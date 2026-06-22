@@ -158,13 +158,13 @@ swigpytestssharedlib: $(CL)/$(SWIGPYTEST_SHARED_LIB)
 
 clean:
 	@echo "removing generated files"
-	rm -rf $(S)/certifier.pb.h $(I)/certifier.pb.h $(S)/certifier.pb.cc $(S)/$(SWIG_CERT_INTERFACE)_wrap.cc
+	rm -rf $(S)/certifier.pb.h $(I)/certifier.pb.h $(S)/certifier.pb.cc $(S)/$(SWIG_CERT_INTERFACE)_wrap.cc || true
 	@echo "removing generated Python files"
-	rm -rf $(CERTIFIER_ROOT)/$(SWIG_CERT_INTERFACE).py $(CERTIFIER_ROOT)/$(SWIG_PYTEST_INTERFACE).py $(CERTIFIER_ROOT)/$(PROTOC_PB2_PY)
+	rm -rf $(CERTIFIER_ROOT)/$(SWIG_CERT_INTERFACE).py $(CERTIFIER_ROOT)/$(SWIG_PYTEST_INTERFACE).py $(CERTIFIER_ROOT)/$(PROTOC_PB2_PY) || true
 	@echo "removing object files"
-	rm -rf $(O)/*.o
+	rm -rf $(O)/*.o || true
 	@echo "removing shared libraries"
-	rm -rf $(CL)/$(CERTIFIER_LIB) $(CL)/$(CERTIFIER_SHARED_LIB)  $(CL)/$(SWIGPYTEST_SHARED_LIB)
+	rm -rf $(CL)/$(CERTIFIER_LIB) $(CL)/$(CERTIFIER_SHARED_LIB)  $(CL)/$(SWIGPYTEST_SHARED_LIB) || true
 
 $(CL)/$(CERTIFIER_LIB): $(dobj)
 	@echo "\nLinking certifier library $@"
@@ -197,7 +197,7 @@ $(O)/certifier.pb.o: $(S)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -Wno-array-bounds -o $(@D)/$@ -c $<
 
-$(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
+$(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h $(T)/tpm2.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
@@ -215,7 +215,7 @@ $(O)/$(SWIG_CERT_INTERFACE)_wrap.o: $(S)/$(SWIG_CERT_INTERFACE)_wrap.cc $(I)/cer
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) $(PY_INCLUDE) -fpermissive -o $(@D)/$@ -c $<
 
-$(O)/certifier_proofs.o: $(S)/certifier_proofs.cc $(I)/certifier.pb.h $(I)/certifier.h
+$(O)/certifier_proofs.o: $(S)/certifier_proofs.cc $(I)/certifier.pb.h $(I)/certifier.h $(T)/tpm2.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
@@ -231,7 +231,7 @@ $(O)/application_enclave.o: $(AE)/application_enclave.cc $(I)/application_enclav
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
-$(O)/cc_helpers.o: $(S)/cc_helpers.cc $(I)/cc_helpers.h
+$(O)/cc_helpers.o: $(S)/cc_helpers.cc $(I)/cc_helpers.h $(T)/tpm2.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
