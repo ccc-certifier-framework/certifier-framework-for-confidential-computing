@@ -43,7 +43,7 @@ COMMON_SRC = $(CERTIFIER_ROOT)/sample_apps/common
 SE = $(S)/simulated-enclave
 AE= $(S)/application-enclave
 T=$(SRC_DIR)/src/tpm2
-EXAMPLE_DIR= $(CERTIFIER_ROOT)/sample_apps//simple_app_under_tpm
+EXAMPLE_DIR= $(CERTIFIER_ROOT)/sample_apps/simple_app_under_tpm
 
 # Inherit -D<flags> provided externally
 CFLAGS := $(CFLAGS)
