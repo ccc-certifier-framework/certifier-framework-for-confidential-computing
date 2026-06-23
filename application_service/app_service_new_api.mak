@@ -31,6 +31,7 @@ endif
 # is done below.  Comment it out for older protobuf usage.
 NEWPROTOBUF=1
 CF_NEW_API=1
+TPM=1
 
 CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
 LIBSRC= $(SRC_DIR)/src
@@ -38,9 +39,10 @@ S= $(SRC_DIR)/application_service
 US= $(S)
 O= $(OBJ_DIR)
 I= $(SRC_DIR)/include
-INCLUDE= -I$(I) -I$(LIBSRC)/sev-snp -I/usr/local/opt/openssl@1.1/include/ -I/usr/include
+INCLUDE= -I$(I) -I$(LIBSRC)/sev-snp -I/usr/local/opt/openssl@1.1/include/ -I/usr/include -I$(T)
 SE= $(LIBSRC)/simulated-enclave
 AE=$(LIBSRC)/application-enclave
+T=$(LIBSRC)/tpm2
 
 ifndef NEWPROTOBUF
 CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
@@ -76,6 +78,11 @@ dobj = $(O)/app_service.o $(O)/certifier.pb.o $(O)/certifier.o \
 user_dobj = $(O)/test_user.o $(O)/certifier.pb.o $(O)/certifier.o \
             $(O)/certifier_proofs.o $(O)/support.o $(O)/simulated_enclave.o \
             $(O)/application_enclave.o $(O)/cc_helpers.o $(O)/cc_useful.o
+
+ifdef TPM
+dobj += $(O)/tpm2_lib.o $(O)/tpm2.pb.o $(O)/convert.o $(O)/openssl_help.o \
+        $(O)/tpm2_support.o
+endif
 
 send_req_dobj = $(O)/send_request.o $(O)/certifier.pb.o $(O)/certifier.o \
                 $(O)/support.o $(O)/application_enclave.o \
@@ -126,11 +133,11 @@ $(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
-$(O)/certifier.o: $(LIBSRC)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
+$(O)/certifier.o: $(LIBSRC)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h $(T)/tpm2.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
-$(O)/certifier_proofs.o: $(LIBSRC)/certifier_proofs.cc $(I)/certifier.pb.h $(I)/certifier.h
+$(O)/certifier_proofs.o: $(LIBSRC)/certifier_proofs.cc $(I)/certifier.pb.h $(I)/certifier.h $(T)/tpm2.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
@@ -138,7 +145,7 @@ $(O)/support.o: $(LIBSRC)/support.cc $(I)/support.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
-$(O)/cc_helpers.o: $(LIBSRC)/cc_helpers.cc $(I)/cc_helpers.h
+$(O)/cc_helpers.o: $(LIBSRC)/cc_helpers.cc $(I)/cc_helpers.h $(T)/tpm2.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
@@ -178,3 +185,29 @@ $(O)/sev_report.o: $(SEV_S)/sev_report.cc \
                    $(SEV_S)/sev_guest.h $(SEV_S)/snp_derive_key.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+ifdef TPM
+$(T)/tpm2.pb.cc $(T)/tpm2.pb.h: $(T)/tpm2.proto
+	@echo "creating protobuf files"
+	$(PROTO) -I=$(T) --cpp_out=$(T) $(T)/tpm2.proto
+
+$(O)/tpm2.pb.o: $(T)/tpm2.pb.cc
+	@echo "compiling tpm2.pb.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/tpm2.pb.o $(T)/tpm2.pb.cc
+
+$(O)/convert.o: $(T)/convert.cc
+	@echo "compiling convert.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/convert.o $(T)/convert.cc
+
+$(O)/tpm2_lib.o: $(T)/tpm2_lib.cc
+	@echo "compiling tpm2_lib.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/tpm2_lib.o $(T)/tpm2_lib.cc
+
+$(O)/openssl_help.o: $(T)/openssl_help.cc
+	@echo "compiling openssl_help.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/openssl_help.o $(T)/openssl_help.cc
+
+$(O)/tpm2_support.o: $(T)/tpm2_support.cc $(T)/tpm2.pb.cc
+	@echo "compiling tpm2_support.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/tpm2_support.o $(T)/tpm2_support.cc
+endif
