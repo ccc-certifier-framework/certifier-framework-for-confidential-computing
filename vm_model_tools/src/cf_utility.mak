@@ -135,17 +135,20 @@ endif
 all:	cf_utility.exe cf_support_test.exe cf_key_client.exe cf_key_server.exe
 clean:
 	@echo "removing generated files"
-	rm -rf $(US)/certifier.pb.cc $(US)/certifier.pb.h $(I)/certifier.pb.h
+	rm -rf $(US)/certifier.pb.cc $(US)/certifier.pb.h $(I)/certifier.pb.h || true
 	@echo "removing object files"
-	rm -rf $(O)/*.o
+	rm -rf $(O)/*.o || true
 	@echo "removing executable file"
-	rm -rf $(EXE_DIR)/cf_utility.exe
+	rm -rf $(EXE_DIR)/cf_utility.exe || true
 	@echo "removing executable file"
-	rm -rf $(EXE_DIR)/cf_support_test.exe
+	rm -rf $(EXE_DIR)/cf_support_test.exe || true
 	@echo "removing executable file"
-	rm -rf $(EXE_DIR)/cf_key_client.exe
+	rm -rf $(EXE_DIR)/cf_key_client.exe || true
 	@echo "removing executable file"
-	rm -rf $(EXE_DIR)/cf_key_server.exe
+	rm -rf $(EXE_DIR)/cf_key_server.exe || true
+	@echo "removing proto files"
+	rm -rf $(CF_UTILITY_SRC)/cryptstore.pb.h
+	rm -rf $(CF_UTILITY_SRC)/cryptstore.pb.cc
 
 $(EXE_DIR)/cf_utility.exe: $(dobj)
 	@echo "\nlinking executable $@"
@@ -163,8 +166,7 @@ $(EXE_DIR)/cf_key_server.exe: $(ksobj)
 	@echo "\nlinking executable $@"
 	$(LINK) $(ksobj) $(LDFLAGS) -o $(@D)/$@
 
-$(I)/certifier.pb.h: $(US)/certifier.pb.cc
-$(US)/certifier.pb.cc: $(CP)/certifier.proto
+$(US)/certifier.pb.cc $(I)/certifier.pb.h: $(CP)/certifier.proto
 	$(PROTO) --proto_path=$(<D) --cpp_out=$(@D) $<
 	mv $(@D)/certifier.pb.h $(I)
 
@@ -270,7 +272,7 @@ $(O)/openssl_help.o: $(T)/openssl_help.cc
 	@echo "compiling openssl_help.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/openssl_help.o $(T)/openssl_help.cc
 
-$(O)/tpm2_support.o: $(T)/tpm2_support.cc $(T)/certifier.pb.cc $(T)/tpm2.pb.cc
+$(O)/tpm2_support.o: $(T)/tpm2_support.cc $(US)/certifier.pb.cc $(T)/tpm2.pb.cc
 	@echo "compiling tpm2_support.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/tpm2_support.o $(T)/tpm2_support.cc
 
