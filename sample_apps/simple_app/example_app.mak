@@ -101,7 +101,7 @@ $(EXE_DIR)/example_key_rotation.exe: $(robj)
 	@echo "\nlinking executable $@"
 	$(LINK) $(robj) $(LDFLAGS) -o $(@D)/$@
 
-$(I)/certifier.pb.h: $(CP)/certifier.proto
+$(I)/certifier.pb.h $(US)/certifier.pb.cc: $(CP)/certifier.proto
 	$(PROTO) --proto_path=$(<D) --cpp_out=$(@D) $<
 	mv $(@D)/certifier.pb.h $(I)
 
