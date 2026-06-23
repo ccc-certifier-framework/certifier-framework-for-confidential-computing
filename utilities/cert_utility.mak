@@ -42,10 +42,11 @@ CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
 S= $(SRC_DIR)
 O= $(OBJ_DIR)
 I= $(INC_DIR)
-T=$(SRC_DIR)/tpm2
 US= .
 SE = $(S)/simulated-enclave
 AE=$(S)/application-enclave
+T=$(SRC_DIR)/tpm2
+
 INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/ -I$(S)/tpm2/
 
 # Compilation of protobuf files could run into some errors, so avoid using
@@ -94,9 +95,9 @@ endif
 all:	cert_utility.exe measurement_init.exe key_utility.exe combine_policy_certs.exe
 clean:
 	@echo "removing object and generated files"
-	rm -rf $(O)/*.o $(US)/certifier.pb.cc $(US)/certifier.pb.h $(I)/certifier.pb.h
+	rm -rf $(O)/*.o $(US)/certifier.pb.cc $(US)/certifier.pb.h $(I)/certifier.pb.h || true
 	@echo "removing executable file"
-	rm -rf $(EXE_DIR)/cert_utility.exe
+	rm -rf $(EXE_DIR)/cert_utility.exe || true
 
 cert_utility.exe: $(dobj)
 	@echo "\nlinking executable $@"
@@ -130,10 +131,9 @@ $(O)/key_utility.o: $(US)/key_utility.cc $(I)/support.h $(I)/certifier.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
-$(I)/certifier.pb.h: $(US)/certifier.pb.cc
-$(US)/certifier.pb.cc: $(CP)/certifier.proto
+$(I)/certifier.pb.h $(US)/certifier.pb.cc: $(CP)/certifier.proto
 	$(PROTO) --cpp_out=$(US) --proto_path $(<D) $<
-	mv $(@D)/certifier.pb.h $(I)
+	mv $(US)/certifier.pb.h $(I)
 
 $(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "\ncompiling $<"
@@ -143,11 +143,11 @@ $(O)/support.o: $(S)/support.cc $(I)/support.h $(I)/certifier.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
-$(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
+$(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h $(T)/tpm2.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
-$(O)/certifier_proofs.o: $(S)/certifier_proofs.cc $(I)/certifier.pb.h $(I)/certifier.h
+$(O)/certifier_proofs.o: $(S)/certifier_proofs.cc $(I)/certifier.pb.h $(I)/certifier.h $(T)/tpm2.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
