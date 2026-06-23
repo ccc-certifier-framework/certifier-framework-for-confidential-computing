@@ -41,7 +41,7 @@ SE = $(S)/simulated-enclave
 AE= $(S)/application-enclave
 T= $(S)/tpm2
 
-INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/ -I($T)/
+INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/ -I$(T)
 
 ifndef NEWPROTOBUF
 CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
@@ -97,8 +97,8 @@ $(EXE_DIR)/service_example_app.exe: $(dobj)
 	$(LINK) $(dobj) $(LDFLAGS) -o $(@D)/$@
 
 $(I)/certifier.pb.h $(US)/certifier.pb.cc: $(CP)/certifier.proto
-	$(PROTO) --proto_path=$(<D) --cpp_out=$(@D) $<
-	mv $(@D)/certifier.pb.h $(I)
+	$(PROTO) --proto_path=$(CP) --cpp_out=$(US) $<
+	mv $(US)/certifier.pb.h $(I)
 
 $(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "\ncompiling $<"
@@ -112,9 +112,9 @@ $(O)/start_program.o: start_program.cc
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
-$(O)/service_example_app.o: $(US)/service_example_app.cc $(I)/certifier.h $(US)/certifier.pb.cc
+$(O)/service_example_app.o: $(US)/service_example_app.cc $(I)/certifier.h $(I)/certifier.pb.h
 	@echo "\ncompiling $<"
-	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+	$(CC) $(CFLAGS) -o $(O)/service_example_app.o -c service_example_app.cc
 
 $(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h $(T)/tpm2.pb.h
 	@echo "\ncompiling $<"
@@ -150,7 +150,7 @@ $(O)/tpm2_lib.o: $(T)/tpm2_lib.cc
 
 $(T)/tpm2.pb.cc $(T)/tpm2.pb.h: $(T)/tpm2.proto
 	@echo "creating protobuf files"
-	$(PROTO) -I=$(T) --cpp_out=$(T) $(T)/tpm2.proto
+	$(PROTO) --proto_path=$(T) --cpp_out=$(T) $(T)/tpm2.proto
 
 $(O)/convert.o: $(T)/convert.cc
 	@echo "compiling convert.cc"
