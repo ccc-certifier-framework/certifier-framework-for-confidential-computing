@@ -13,8 +13,11 @@ source ./arg-processing.inc
 # used to build the VM.
 # This script is currently incomplete and untested.
 
-# ------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------
 
+echo ""
+echo "copy-vm-files.sh"
+echo ""
 
 function do-copy-vm-files() {
 	echo " "
@@ -39,16 +42,17 @@ function do-copy-vm-files() {
 	popd
 
 	pushd $EXAMPLE_DIR/cf_data
-	$CERTIFIER_ROOT/utilities/combine_policy_certs.exe \
-	  --init=true --new_cert_file=$POLICY_CERT_FILE_NAME \
-	  --output=my_certs
+	  $CERTIFIER_ROOT/utilities/combine_policy_certs.exe \
+	    --init=true \
+            --new_cert_file=$POLICY_CERT_FILE_NAME \
+	    --output=my_certs
 	popd
 
 	echo "do-copy-vm-files done"
 	echo " "
 }
 
-# --------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------
 
 echo "Processing arguments"
 process-args
@@ -65,3 +69,6 @@ fi
 
 echo "John need =s help with this"
 echo ""
+
+# --------------------------------------------------------------------------------
+

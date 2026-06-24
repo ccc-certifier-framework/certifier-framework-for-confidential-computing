@@ -39,7 +39,7 @@ I= $(INC_DIR)
 US= .
 SE = $(S)/simulated-enclave
 AE=$(S)/application-enclave
-INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/
+INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/ -I$(S)/tpm2/
 
 # Newer versions of protobuf require C++17 and dependancies on additional libraries.
 # When this happens, everything must be compiles with C++17 and the linking is a

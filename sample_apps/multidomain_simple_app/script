@@ -277,6 +277,9 @@ cp -p ./* $MULTIDOMAIN_EXAMPLE_DIR/app2_data
 cd $CERTIFIER_PROTOTYPE/certifier_service/oelib
 make dummy
 
+cd $CERTIFIER_PROTOTYPE/certifier_service/tpmlib
+make dummy
+
 cd $CERTIFIER_PROTOTYPE/certifier_service/graminelib
 make dummy
 

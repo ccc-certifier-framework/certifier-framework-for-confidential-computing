@@ -438,6 +438,10 @@ done:
   return res;
 }
 
+#ifdef TPM_CERTIFIER
+#  include <tpm2_support.h>
+#endif
+
 #ifdef SEV_SNP
 extern bool sev_Init(const string &platform_certs_file);
 extern bool sev_GetParentEvidence(string *out);
@@ -540,6 +544,11 @@ bool certifier::framework::Seal(const string &enclave_type,
     return islet_Seal(in_size, in, size_out, out);
   }
 #endif
+#ifdef TPM_CERTIFIER
+  if (enclave_type == "tpm-enclave") {
+    return tpm_Seal(in_size, in, size_out, out);
+  }
+#endif
   if (enclave_type == "application-enclave") {
     return application_Seal(in_size, in, size_out, out);
   }
@@ -594,6 +603,11 @@ bool certifier::framework::Unseal(const string &enclave_type,
     return islet_Unseal(in_size, in, size_out, out);
   }
 #endif  // ISLET_CERTIFIER
+#ifdef TPM_CERTIFIER
+  if (enclave_type == "tpm-enclave") {
+    return tpm_Unseal(in_size, in, size_out, out);
+  }
+#endif
   if (enclave_type == "application-enclave") {
     return application_Unseal(in_size, in, size_out, out);
   }
@@ -730,6 +744,11 @@ bool certifier::framework::Attest(const string &enclave_type,
     return true;
   }
 #endif  // ISLET_CERTIFIER
+#ifdef TPM_CERTIFIER
+  if (enclave_type == "tpm-enclave") {
+    return tpm_Attest(what_to_say_size, what_to_say, size_out, out);
+  }
+#endif
   if (enclave_type == "application-enclave") {
     return application_Attest(what_to_say_size, what_to_say, size_out, out);
   }
@@ -767,6 +786,11 @@ bool GetParentEvidence(const string &enclave_type,
 #endif
 #ifdef ISLET_CERTIFIER
   if (enclave_type == "islet-enclave") {
+    return false;
+  }
+#endif
+#ifdef TPM_CERTIFIER
+  if (enclave_type == "tpm-enclave") {
     return false;
   }
 #endif
@@ -1114,6 +1138,11 @@ void print_evidence(const evidence &ev) {
                   (byte *)ev.serialized_evidence().data());
       printf("\n");
     }
+    if (ev.evidence_type() == "tpm-attestation") {
+      print_bytes(ev.serialized_evidence().size(),
+                  (byte *)ev.serialized_evidence().data());
+      printf("\n");
+    }
   }
 }
 
@@ -1123,6 +1152,73 @@ void print_evidence_package(const evidence_package &evp) {
     printf("%02d: \n", i);
     print_evidence(evp.fact_assertion(i));
     printf("\n");
+  }
+}
+
+void print_quote_certification_request(quote_certification_request &m) {
+  printf("requesting_enclave_tag: %s\n", m.requesting_enclave_tag().c_str());
+  printf("providing_enclave_tag: %s\n", m.providing_enclave_tag().c_str());
+  printf("quote_hash_alg: %s\n", m.quote_hash_alg().c_str());
+  if (m.has_endorsement_cert()) {
+    printf("Endorsement cert:\n");
+    print_bytes(m.endorsement_cert().size(),
+                (byte *)m.endorsement_cert().data());
+    printf("\n");
+  } else {
+    printf("No endorsement cert\n");
+  }
+  if (m.has_endorsement_cert_chain()) {
+    printf("Endorsement cert chain:\n");
+    print_bytes(m.endorsement_cert_chain().size(),
+                (byte *)m.endorsement_cert_chain().data());
+    printf("\n");
+  } else {
+    printf("No endorsement cert\n");
+  }
+  if (m.has_quote_key_name()) {
+    printf("Quote key name:\n");
+    print_bytes(m.quote_key_name().size(), (byte *)m.quote_key_name().data());
+    printf("\n");
+  } else {
+    printf("No Quote key name\n");
+  }
+  if (m.has_quote_key()) {
+    printf("Quote key:\n");
+    print_key(m.quote_key());
+    printf("\n");
+  } else {
+    printf("No quote key\n");
+  }
+}
+
+void print_quote_certification_response(quote_certification_response &m) {
+  printf("status: %s\n", m.status().c_str());
+  printf("hash_alg: %s\n", m.hash_alg().c_str());
+  printf("encrypting_alg: %s\n", m.encrypting_alg().c_str());
+
+  if (m.has_cred_blob()) {
+    printf("Cred blob (%d):\n", (int)m.cred_blob().size());
+    print_bytes(m.cred_blob().size(), (byte *)m.cred_blob().data());
+    printf("\n");
+  } else {
+    printf("No cred blob\n");
+  }
+  if (m.has_encrypted_secret()) {
+    printf("Encrypted secret (%d):\n", (int)m.encrypted_secret().size());
+    print_bytes(m.encrypted_secret().size(),
+                (byte *)m.encrypted_secret().data());
+    printf("\n");
+  } else {
+    printf("No encrypted secret\n");
+  }
+  if (m.has_encrypted_quote_cert()) {
+    printf("Encrypted quote cert (%d):\n",
+           (int)m.encrypted_quote_cert().size());
+    print_bytes(m.encrypted_quote_cert().size(),
+                (byte *)m.encrypted_quote_cert().data());
+    printf("\n");
+  } else {
+    printf("No encrypted quote cert\n");
   }
 }
 

@@ -9,7 +9,7 @@ Me=$(basename "$0")
 
 source ./arg-processing.inc
 
-# ------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------
 
 
 function do-fresh() {
@@ -43,6 +43,7 @@ function do-run() {
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/graminelib
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/isletlib
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/oelib
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/tpmlib
   echo $LD_LIBRARY_PATH
   sudo ldconfig
 
@@ -50,14 +51,16 @@ function do-run() {
     if [[ "$ENCLAVE_TYPE" == "simulated-enclave" ]] ; then
       echo "running policy server for simulated-enclave"
       $CERTIFIER_ROOT/certifier_service/simpleserver \
-        --policy_key_file=$POLICY_KEY_FILE_NAME --policy_cert_file=$POLICY_CERT_FILE_NAME \
+        --policy_key_file=$POLICY_KEY_FILE_NAME \
+	--policy_cert_file=$POLICY_CERT_FILE_NAME \
         --policyFile=policy.bin --readPolicy=true &
     fi
     if [[ "$ENCLAVE_TYPE" == "sev" ]] ; then
       echo "running policy server for sev"
       $CERTIFIER_ROOT/certifier_service/simpleserver \
-        --policy_key_file=$POLICY_KEY_FILE_NAME --policy_cert_file=$POLICY_CERT_FILE_NAME \
-          --policyFile=sev_policy.bin --readPolicy=true &
+        --policy_key_file=$POLICY_KEY_FILE_NAME \
+	--policy_cert_file=$POLICY_CERT_FILE_NAME \
+        --policyFile=sev_policy.bin --readPolicy=true &
     fi
   popd
 
@@ -150,7 +153,7 @@ function do-run() {
   echo "do-run done"
 }
 
-# -----------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------
 
 echo "Processing arguments"
 process-args
@@ -167,3 +170,6 @@ fi
 if [[ $TT -eq 0 ]]; then
         echo "Nothing to do in simulated environment"
 fi
+
+# --------------------------------------------------------------------------------
+

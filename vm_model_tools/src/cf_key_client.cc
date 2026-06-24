@@ -1,6 +1,6 @@
 //  Copyright (c) 2021-23, VMware Inc, and the Certifier Authors.  All rights
 //  reserved.  Copyright (c), 2025, John Manferdelli, Paul England and
-//  Datica Researdh.
+//  Datica Research.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ DEFINE_string(symmetric_key_algorithm,
               Enc_method_aes_256_cbc_hmac_sha256,
               "symmetric algorithm");
 
-DEFINE_string(data_dir, "./cf_data", "supporting file directory");
+DEFINE_string(data_dir, "./", "supporting file directory");
 DEFINE_string(input_format, "cryptstore-entry", "input format");
 DEFINE_string(output_format, "cryptstore-entry", "output format");
 DEFINE_string(input_file, "client.in", "input file");
@@ -83,25 +83,45 @@ DEFINE_string(action, "retrieve", "retrieve or store");
 DEFINE_int32(print_level, 1, "print level");
 
 DEFINE_string(ark_cert_file,
-              "./service/ark_cert.der",
+              "ark_cert.der",
               "machine ark certificate location");
 DEFINE_string(ask_cert_file,
-              "./service/ask_cert.der",
+              "ask_cert.der",
               "machine ask certificate location");
 DEFINE_string(vcek_cert_file,
-              "./service/vcek_cert.der",
+              "vcek_cert.der",
               "machine vcek certificate location");
 
 // For simulated-enclave
 DEFINE_string(attest_key_file,
-              "./cf_data/attest_key_file.bin",
+              "attest_key_file.bin",
               "simulated attestation key");
 DEFINE_string(measurement_file,
-              "./cf_data/cf_utility.measurement",
+              "cf_utility.measurement",
               "simulated enclave measurement");
 DEFINE_string(platform_attest_endorsement_file,
-              "./cf_data/platform_attest_endorsement.bin",
+              "platform_attest_endorsement.bin",
               "platform endorsement");
+
+const string sub_directory_name("cf_data/");
+
+// For TPM enclave
+DEFINE_bool(run_first_pass, false, "run first pass");
+DEFINE_int32(pcr_num, -1, "integer parameter");
+DEFINE_string(tpm_device, "/dev/tpm0", "tpm device");
+DEFINE_string(seal_hierarchy_file_name,
+              "seal_hierarchy.bin",
+              "seal hierarchy save file name");
+DEFINE_string(quote_hierarchy_file_name,
+              "quote_hierarchy.bin",
+              "quote hierarchy save file name");
+DEFINE_int32(num_pcrs, 1, "number of pcrs");
+DEFINE_string(pcrs_str, "7", "pcr string");
+DEFINE_string(quote_cert_file, "./cf_data/quote_cert.crt", "quote cert file");
+DEFINE_string(endorsement_cert_file_name, "", "tpm cert file name");
+DEFINE_string(endorsement_cert_chain_file, "", "endorsement cert chain file");
+DEFINE_string(activate_service_host, "localhost", "activate service host IP");
+DEFINE_string(activate_service_port, "8130", "activate service port");
 
 // -------------------------------------------------------------------------
 
@@ -153,19 +173,24 @@ bool get_simulated_enclave_parameters(string **s, int *n) {
   }
   *s = args;
 
-  if (!read_file_into_string(FLAGS_attest_key_file, &args[0])) {
+  if (!read_file_into_string(
+          FLAGS_data_dir + sub_directory_name + FLAGS_attest_key_file,
+          &args[0])) {
     printf("%s() error, line %d, Can't read attest file\n", __func__, __LINE__);
     goto err;
   }
 
-  if (!read_file_into_string(FLAGS_measurement_file, &args[1])) {
+  if (!read_file_into_string(
+          FLAGS_data_dir + sub_directory_name + FLAGS_measurement_file,
+          &args[1])) {
     printf("%s() error, line %d, Can't read measurement file\n",
            __func__,
            __LINE__);
     goto err;
   }
 
-  if (!read_file_into_string(FLAGS_platform_attest_endorsement_file,
+  if (!read_file_into_string(FLAGS_data_dir + sub_directory_name
+                                 + FLAGS_platform_attest_endorsement_file,
                              &args[2])) {
     printf("%s() error, line %d, Can't read endorsement file\n",
            __func__,
@@ -190,25 +215,88 @@ bool get_sev_enclave_parameters(string **s, int *n) {
   }
   *s = args;
 
-  if (!read_file_into_string(FLAGS_data_dir + FLAGS_ark_cert_file, &args[0])) {
+  if (!read_file_into_string(
+          FLAGS_data_dir + sub_directory_name + FLAGS_ark_cert_file,
+          &args[0])) {
     printf("%s() error, line %d, Can't read attest file\n", __func__, __LINE__);
     goto err;
   }
 
-  if (!read_file_into_string(FLAGS_data_dir + FLAGS_ask_cert_file, &args[1])) {
+  if (!read_file_into_string(
+          FLAGS_data_dir + sub_directory_name + FLAGS_ask_cert_file,
+          &args[1])) {
     printf("%s() error, line %d, Can't read measurement file\n",
            __func__,
            __LINE__);
     goto err;
   }
 
-  if (!read_file_into_string(FLAGS_data_dir + FLAGS_vcek_cert_file, &args[2])) {
+  if (!read_file_into_string(
+          FLAGS_data_dir + sub_directory_name + FLAGS_vcek_cert_file,
+          &args[2])) {
     printf("%s() error, line %d, Can't read endorsement file\n",
            __func__,
            __LINE__);
     goto err;
   }
   *n = 3;
+  return true;
+
+err:
+  delete[] args;
+  *s = nullptr;
+  return false;
+}
+
+
+bool whitespace(char c) {
+  return c == ' ' || c == ',';
+}
+
+bool scan_integer_list(const string &in, string *out) {
+  const char *p = in.c_str();
+  int         b;
+
+  for (;;) {
+    while (whitespace(*p))
+      p++;
+    if (*p == '\0')
+      return true;
+    if (*p <= '0' && *p >= '9') {
+      p++;
+      continue;
+    }
+    sscanf(p, "%d", &b);
+    *out += (char)b;
+    while (*p >= '0' && *p <= '9')
+      p++;
+  }
+  return true;
+}
+
+bool get_tpm_enclave_parameters(string **s, int *n) {
+
+  string  pcrs_out;
+  string *args = new string[7];
+  if (args == nullptr) {
+    printf("%s() error, line %d, can't allocate args\n", __func__, __LINE__);
+    goto err;
+  }
+  *s = args;
+
+  args[0] = FLAGS_tpm_device;
+  args[1] = FLAGS_endorsement_cert_file_name;
+  args[2] = FLAGS_endorsement_cert_chain_file;
+  args[3] = FLAGS_seal_hierarchy_file_name;
+  args[4] = FLAGS_quote_hierarchy_file_name;
+  if (!scan_integer_list(FLAGS_pcrs_str, &pcrs_out)) {
+    printf("%s() error, line %d, cant scan_integer_list\n", __func__, __LINE__);
+    goto err;
+  }
+  args[5] = pcrs_out;
+  args[6] = FLAGS_quote_cert_file;
+
+  *n = 6;
   return true;
 
 err:
@@ -290,8 +378,6 @@ void print_help() {
     printf("    %s\n", Enc_authenticated_symmetric_key_algorithms[i]);
   }
 }
-
-#define DEBUG7
 
 // -------------------------------------------------------------------------------------
 
@@ -467,8 +553,8 @@ bool client_application(secure_authenticated_channel &channel) {
     return false;
   }
 
-  if (FLAGS_print_level > 1) {
-    printf("\nkey_client: Response entry:\n");
+  if (FLAGS_print_level > 0) {
+    printf("\nkey_client response entry:\n");
     print_cryptstore_entry(ce);
   }
 
@@ -521,6 +607,7 @@ bool client_application(secure_authenticated_channel &channel) {
   return true;
 }
 
+// ------------------------------------------------------------------------
 
 int main(int an, char **av) {
   string usage("cf_key_client");
@@ -545,7 +632,9 @@ int main(int an, char **av) {
     print_help();
     return ret;
   }
+#ifdef DEBUG
   print_parameters();
+#endif
 
   // Get parameters
   string *params = nullptr;
@@ -559,6 +648,13 @@ int main(int an, char **av) {
     }
   } else if (FLAGS_enclave_type == "sev-enclave") {
     if (!get_sev_enclave_parameters(&params, &n)) {
+      printf("%s() error, line %d, get enclave parameters\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+  } else if (FLAGS_enclave_type == "tpm-enclave") {
+    if (!get_tpm_enclave_parameters(&params, &n)) {
       printf("%s() error, line %d, get enclave parameters\n",
              __func__,
              __LINE__);
@@ -664,8 +760,12 @@ int main(int an, char **av) {
   // read policy cert
   if (FLAGS_trust_anchors == "") {
     string der_policy_cert_file_name(FLAGS_data_dir);
-    der_policy_cert_file_name.append("cf_data/");
-    der_policy_cert_file_name.append(FLAGS_policy_key_cert_file);
+    if (*FLAGS_policy_key_cert_file.c_str() == '/') {
+      der_policy_cert_file_name = FLAGS_policy_key_cert_file;
+    } else {
+      der_policy_cert_file_name.append(sub_directory_name);
+      der_policy_cert_file_name.append(FLAGS_policy_key_cert_file);
+    }
     if (!read_file_into_string(der_policy_cert_file_name,
                                &g_serialized_policy_cert)) {
       printf("%s() error, line %d, couldn't read policy domain cert in %s\n",
@@ -778,7 +878,7 @@ int main(int an, char **av) {
     } else {
       printf("%s() error, line %d, no root cert\n", __func__, __LINE__);
     }
-    if (channel.asn1_my_cert_.size() > 0) {
+    if (channel.asn1_my_cert_.size() > 1) {
       X509 *x = X509_new();
       if (asn1_to_x509(channel.asn1_my_cert_, x)) {
         printf("\nAdmissions cert:\n");
@@ -804,6 +904,7 @@ int main(int an, char **av) {
 
 done:
   trust_mgr->clear_sensitive_data();
+  trust_mgr->close_enclave();
   if (trust_mgr != nullptr) {
     delete trust_mgr;
   }

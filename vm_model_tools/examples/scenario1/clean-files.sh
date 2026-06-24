@@ -8,18 +8,42 @@
 # and service data used by the tests.  Run this first if you
 # want to restart tests.
 
+# --------------------------------------------------------------------------------
+
 echo "Removing runtime data files"
-rm policy_store.dom0* cryptstore.dom0*
-pushd provisioning
-rm ./*
+if [[ ! -e "$EXAMPLE_DIR" ]] ; then
+  echo "EXAMPLE_DIR missing or not set"
+  exit
+fi
+
+pushd $EXAMPLE_DIR
+  rm policy_store.dom0* cryptstore.dom0* quote_cert.crt ekchain.bin || true
+  rm measurement cf_utility.measurement sev_cf_utility.measurement || true
+
+  if [[ ! -e "./provisioning" ]] ; then
+    echo "provisioning directory missing or not set"
+    exit
+  fi
+  pushd provisioning
+    rm ./* || true
+  popd
+  if [[ ! -e "./service" ]] ; then
+    echo "service directory missing or not set"
+    exit
+  fi
+  pushd service
+   rm ./* || true
+  popd
+  if [[ ! -e "./cf_data" ]] ; then
+    echo "cf_data directory missing or not set"
+    exit
+  fi
+  pushd cf_data
+    rm ./* || true
+  popd
 popd
-pushd service
-rm ./*
-popd
-pushd cf_data
-rm ./*
-popd
-rm cf_utility.measurement sev_cf_utility.measurement
+
 echo "Removed runtime data files"
 
+# --------------------------------------------------------------------------------
 

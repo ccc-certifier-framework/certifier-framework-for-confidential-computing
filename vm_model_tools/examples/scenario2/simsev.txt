@@ -1,0 +1,11 @@
+if [[ -v SIMULATED_SEV ]] ; then
+      CFLAGS='-DSEV_DUMMY_GUEST' make -f sev_example_app_new_api.mak
+    else 
+      make -f sev_example_app_new_api.mak
+fi 
+
+$CERTIFIER_ROOT/utilities/measurement_init.exe \
+        --mrenclave=010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708 \
+        --out_file=sev-example-app.measurement
+
+

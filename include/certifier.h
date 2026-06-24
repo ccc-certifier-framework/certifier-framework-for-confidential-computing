@@ -87,6 +87,8 @@ void print_proof_step(const proof_step &ps);
 void print_proof(proof &pf);
 void print_trust_response_message(trust_response_message &m);
 void print_trust_request_message(trust_request_message &m);
+void print_quote_certification_request(quote_certification_request &m);
+void print_quote_certification_response(quote_certification_response &m);
 bool read_signed_vse_statements(const string &in, signed_claim_sequence *s);
 
 class predicate_dominance {
@@ -181,6 +183,11 @@ bool add_new_facts_for_abbreviatedplatformattestation(
     signed_claim_sequence &trusted_platforms,
     signed_claim_sequence &trusted_measurements,
     proved_statements     *already_proved);
+bool construct_proof_from_tpm_evidence(key_message       &policy_pk,
+                                       const string      &purpose,
+                                       proved_statements *already_proved,
+                                       vse_clause        *to_prove,
+                                       proof             *pf);
 bool construct_proof_from_sev_evidence(key_message       &policy_pk,
                                        const string      &purpose,
                                        proved_statements *already_proved,

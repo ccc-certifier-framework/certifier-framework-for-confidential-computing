@@ -30,6 +30,7 @@
 #include "simulated_enclave.h"
 #include "application_enclave.h"
 #include "cc_helpers.h"
+
 #ifdef GRAMINE_CERTIFIER
 #  include "gramine_api.h"
 #endif
@@ -46,6 +47,10 @@
 #ifdef SEV_SNP
 #  include "sev_support.h"
 #endif  // SEV_SNP
+
+#ifdef TPM_CERTIFIER
+#  include "tpm2_support.h"
+#endif
 
 using namespace certifier::framework;
 using namespace certifier::utilities;
@@ -66,6 +71,21 @@ extern bool   oe_Init(const string &pem_cert_chain_file);
 extern string pem_cert_chain;
 #endif
 
+#if TPM_CERTIFIER
+bool tpm_Init(const string &device_name,
+              const string &endorsement_cert_file_name,
+              const string &endorsement_cert_chain_file_name,
+              const string &seal_hierarchy_file_name,
+              const string &quote_hierarchy_file_name,
+              int           num_pcrs,
+              byte_t       *pcrs);
+
+bool          g_tpm_plat_certs_initialized = false;
+extern string g_serialized_quote_cert;
+extern string g_serialized_endorsement_cert;
+extern string g_serialized_endorsement_cert_chain;
+#endif
+
 #ifdef GRAMINE_CERTIFIER
 extern bool   gramine_platform_cert_initialized;
 extern string gramine_platform_cert;
@@ -84,7 +104,7 @@ extern string gramine_platform_cert;
 //  You may want to augment these or write replacements if your needs are
 //  fancier.
 
-// #define DEBUG
+// #define DEBUG6
 
 // ------------------------------------------------------------------------
 
@@ -172,31 +192,40 @@ bool certifier::framework::cc_trust_manager::initialize_enclave(
       return false;
     }
     return initialize_simulated_enclave(params[0], params[1], params[2]);
+#ifdef SEV_SNP
   } else if (enclave_type_ == "sev-enclave") {
 
+    string ark, ask, vcek;
     if (n == 0) {
-#ifdef SEV_SNP
-      // Fetch platform certificates using extended guest request
-      string ark, ask, vcek;
       if (sev_get_platform_certs(&vcek, &ask, &ark) != EXIT_SUCCESS) {
         printf("%s() error, line %d, Failed to fetch platform certs\n",
                __func__,
                __LINE__);
       }
-      return initialize_sev_enclave(ark, ask, vcek);
-#else
-      printf("%s() error, line %d, Wrong number of sev parameters\n",
-             __func__,
-             __LINE__);
-      return false;
-#endif  // SEV_SNP
-    } else if (n < 3) {
+    } else {
       printf("%s() error, line %d, Wrong number of sev parameters\n",
              __func__,
              __LINE__);
       return false;
     }
-    return initialize_sev_enclave(params[0], params[1], params[2]);
+    return initialize_sev_enclave(ark, ask, vcek);
+#endif
+#ifdef TPM_CERTIFIER
+  } else if (enclave_type_ == "tpm-enclave") {
+    if (!initialize_tpm_enclave(params[0],     // device name
+                                params[1],     // endorsement cert file
+                                params[2],     // endorsement cert chain
+                                params[3],     // seal hierarchy file name
+                                params[4],     // quote hierarchy file name
+                                params[5],     // pcr string
+                                params[6])) {  // quote_file
+      printf("%s() error, line %d, can't initialize tpm enclave\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+    return true;
+#endif
   } else if (enclave_type_ == "oe-enclave") {
     return initialize_oe_enclave(params[0]);
   } else if (enclave_type_ == "gramine-enclave") {
@@ -234,9 +263,10 @@ bool certifier::framework::cc_trust_manager::initialize_enclave(
   } else if (enclave_type_ == "islet-enclave") {
     return initialize_islet_enclave();
   } else {
-    printf("%s() error, line %d, unsupported enclave type\n",
+    printf("%s() error, line %d, unsupported enclave type: %s\n",
            __func__,
-           __LINE__);
+           __LINE__,
+           enclave_type_.c_str());
     return false;
   }
 }
@@ -842,6 +872,56 @@ bool certifier::framework::cc_trust_manager::certify(
 }
 #endif  // NEW_API
 
+bool certifier::framework::cc_trust_manager::initialize_tpm_enclave(
+    const string &device_name,
+    const string &endorsement_cert_file_name,
+    const string &endorsement_cert_chain_file_name,
+    const string &seal_hierarchy_file_name,
+    const string &quote_hierarchy_file_name,
+    const string &tpm_pcr_list,
+    const string &quote_cert_file_name) {
+
+#ifdef TPM_CERTIFIER
+#  ifdef OLD_API
+  if (!cc_policy_info_initialized_) {
+    printf("%s() error, line %d, Policy key must be initialized first\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+#  endif
+
+  if (enclave_type_ != "tpm-enclave") {
+    printf("%s() error, line %d, Not a tpm enclave\n", __func__, __LINE__);
+    return false;
+  }
+
+  if (!tpm_Init(device_name,
+                endorsement_cert_file_name,
+                endorsement_cert_chain_file_name,
+                seal_hierarchy_file_name,
+                quote_hierarchy_file_name,
+                (int)tpm_pcr_list.size(),
+                (byte_t *)tpm_pcr_list.data())) {
+    printf("%s() error, line %d, Can't init tpm-enclave\n", __func__, __LINE__);
+    return false;
+  }
+
+  if (!init_quote_cert_from_file(quote_cert_file_name)) {
+    printf("%s() error, line %d, Can't init quote from file\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  g_tpm_plat_certs_initialized = true;
+
+  cc_provider_provisioned_ = true;
+  return true;
+#else
+  return false;
+#endif
+}
+
 bool certifier::framework::cc_trust_manager::initialize_application_enclave(
     const string &parent_enclave_type,
     int           in_fd,
@@ -1052,6 +1132,13 @@ bool certifier::framework::cc_trust_manager::initialize_islet_enclave() {
 #endif
 }
 
+bool certifier::framework::cc_trust_manager::close_enclave() {
+#ifdef TPM_CERTIFIER
+  if (enclave_type_ == "tpm-enclave")
+    tpm_close();
+#endif
+  return true;
+}
 
 void certifier::framework::cc_trust_manager::print_trust_data() {
   printf("\n--------------Start of Trust Data ------------------\n");
@@ -1743,7 +1830,8 @@ bool certifier::framework::cc_trust_manager::generate_symmetric_key(
   symmetric_key_.set_key_name("app-symmetric-key");
   symmetric_key_.set_key_type(symmetric_key_algorithm_);
   symmetric_key_.set_key_format("vse-key");
-  symmetric_key_.set_secret_key_bits(symmetric_key_bytes_, 8 * num_key_bytes);
+  symmetric_key_.set_secret_key_bits(symmetric_key_bytes_,
+                                     num_key_bytes);  // Changed
 
   return true;
 }
@@ -2271,6 +2359,30 @@ bool certifier::framework::certifiers::certify_domain(const string &purpose) {
     ev->set_evidence_type("cert");
     ev->set_serialized_evidence(serialized_vcek_cert);
 #endif
+#ifdef TPM_CERTIFIER
+  } else if (owner_->enclave_type_ == "tpm-enclave") {
+    if (!g_tpm_plat_certs_initialized) {
+      printf("%s() error, line: %d, sev certs not initialized\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+    evidence *ev = platform_evidence.add_assertion();
+    if (ev == nullptr) {
+      printf("%s() error, line: %d, Can't add to platform evidence\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+    ev->set_evidence_type("cert");
+    ev->set_serialized_evidence(g_serialized_quote_cert);
+    if (ev == nullptr) {
+      printf("%s() error, line: %d, Can't add to platform evidence\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+#endif
 #ifdef OE_CERTIFIER
   } else if (owner_->enclave_type_ == "oe-enclave") {
     if (!owner_->cc_provider_provisioned_) {
@@ -2382,6 +2494,8 @@ bool certifier::framework::certifiers::certify_domain(const string &purpose) {
     request.set_submitted_evidence_type("vse-attestation-package");
   } else if (owner_->enclave_type_ == "sev-enclave") {
     request.set_submitted_evidence_type("sev-platform-package");
+  } else if (owner_->enclave_type_ == "tpm-enclave") {
+    request.set_submitted_evidence_type("tpm-platform-package");
   } else if (owner_->enclave_type_ == "gramine-enclave") {
     request.set_submitted_evidence_type("gramine-evidence");
   } else if (owner_->enclave_type_ == "keystone-enclave") {
@@ -2526,7 +2640,10 @@ bool construct_platform_evidence_package(string        &attesting_enclave_type,
                                          evidence_list &platform_assertions,
                                          string        &serialized_attestation,
                                          evidence_package *ep) {
-
+#ifdef DEBUG6
+  printf("construct_platform_evidence_package with %d assertions\n",
+         platform_assertions.assertion_size());
+#endif
   string pt("vse-verifier");
   string et("signed-claim");
   ep->set_prover_type(pt);
@@ -2562,16 +2679,18 @@ bool construct_platform_evidence_package(string        &attesting_enclave_type,
   } else if ("islet-enclave" == attesting_enclave_type) {
     string et2("islet-attestation");
     ev2->set_evidence_type(et2);
+  } else if ("tpm-enclave" == attesting_enclave_type) {
+    string et2("tpm-attestation");
+    ev2->set_evidence_type(et2);
   } else {
     printf("error %s(), line %d: - can't add attestation\n",
            __func__,
            __LINE__);
     return false;
   }
-
   ev2->set_serialized_evidence(serialized_attestation);
 
-#ifdef DEBUG3
+#ifdef DEBUG6
   printf("Evidence package %d\n", ep->fact_assertion_size());
   for (int i = 0; i < ep->fact_assertion_size(); i++) {
     print_evidence(ep->fact_assertion(i));

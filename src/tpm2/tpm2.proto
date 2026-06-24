@@ -1,0 +1,22 @@
+// To compile: protoc -I=. --cpp_out=. tpm2.proto
+
+// Definition of protobufs for tpm2 applications
+syntax = "proto2";
+
+// Used to restore keys with tpm2_load
+message tpm_load_key_info {
+  optional string hierarchy_name             = 1;
+  optional bytes pub_key                     = 2;
+  optional bytes priv_key                    = 3;
+}
+
+message quote_certification_information {
+  optional bytes magic                        = 1;
+  optional bytes type                         = 2;
+  optional bytes qualifiedsigner              = 3;
+  optional bytes extraData                    = 4;
+  optional bytes clockinfo                    = 5;
+  optional int64 firmwareversion              = 6;
+  optional bytes pcr_selection                = 7;
+  optional bytes digest                       = 8;
+}

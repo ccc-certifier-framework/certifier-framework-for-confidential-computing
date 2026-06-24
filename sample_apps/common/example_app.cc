@@ -1,5 +1,6 @@
 //  Copyright (c) 2021-23, VMware Inc, and the Certifier Authors.  All rights
 //  reserved.
+//  Portions Copyright (c) 2026, John L Manferdelli.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -72,6 +73,30 @@ DEFINE_string(vcek_cert_file, "vcek_cert.der", "vcek cert file name");
 
 // For Gramine enclave
 DEFINE_string(gramine_cert_file, "sgx.cert.der", "certificate file name");
+
+// For TPM enclave
+DEFINE_int32(pcr_num, -1, "integer parameter");
+DEFINE_string(tpm_device, "/dev/tpm0", "tpm device");
+DEFINE_string(seal_hierarchy_file_name,
+              "seal_hierarchy.bin",
+              "seal hierarchy save file name");
+DEFINE_string(quote_hierarchy_file_name,
+              "quote_hierarchy.bin",
+              "quote hierarchy save file name");
+DEFINE_int32(num_pcrs, 1, "number of pcrs");
+DEFINE_string(pcrs_str, "7", "pcr string");
+DEFINE_string(quote_cert_file,
+              "./provisioning/quote_cert.crt",
+              "quote cert file");
+DEFINE_string(endorsement_cert_file_name, "", "tpm cert file name");
+DEFINE_string(endorsement_cert_chain_file, "", "endorsement cert chain file");
+DEFINE_string(activate_service_host, "localhost", "activate service host IP");
+DEFINE_string(activate_service_port, "8130", "activate service port");
+
+// for fake init
+DEFINE_string(policy_key_file,
+              "./provisioning/policy_key_file.bin",
+              "policy key file");
 
 // ----------------------------------------------------------------------
 // Fetch parameters for enclave initialization
@@ -190,6 +215,66 @@ err:
   return false;
 }
 #endif  // SEV_SIMPLE_APP
+
+#ifdef TPM_SIMPLE_APP
+static string enclave_type("tpm-enclave");
+
+bool whitespace(char c) {
+  return c == ' ' || c == ',';
+}
+
+bool scan_integer_list(const string &in, string *out) {
+  const char *p = in.c_str();
+  int         b;
+
+  for (;;) {
+    while (whitespace(*p))
+      p++;
+    if (*p == '\0')
+      return true;
+    if (*p <= '0' && *p >= '9') {
+      p++;
+      continue;
+    }
+    sscanf(p, "%d", &b);
+    *out += (char)b;
+    while (*p >= '0' && *p <= '9')
+      p++;
+  }
+  return true;
+}
+
+bool get_enclave_parameters(string **s, int *n) {
+
+  string  pcrs_out;
+  string *args = new string[7];
+  if (args == nullptr) {
+    printf("%s() error, line %d, can't allocate args\n", __func__, __LINE__);
+    goto err;
+  }
+  *s = args;
+
+  args[0] = FLAGS_tpm_device;
+  args[1] = FLAGS_endorsement_cert_file_name;
+  args[2] = FLAGS_endorsement_cert_chain_file;
+  args[3] = FLAGS_seal_hierarchy_file_name;
+  args[4] = FLAGS_quote_hierarchy_file_name;
+  if (!scan_integer_list(FLAGS_pcrs_str, &pcrs_out)) {
+    printf("%s() error, line %d, cant scan_integer_list\n", __func__, __LINE__);
+    goto err;
+  }
+  args[5] = pcrs_out;
+  args[6] = FLAGS_quote_cert_file;
+
+  *n = 6;
+  return true;
+
+err:
+  delete[] args;
+  *s = nullptr;
+  return false;
+}
+#endif  // TPM_SIMPLE_APP
 
 #ifdef ISLET_SIMPLE_APP
 static string enclave_type("islet-enclave");
@@ -317,7 +402,7 @@ void print_options(const char *op) {
                  --ask_cert_file=./service/milan_ask_cert.der \n\
                  --vcek_cert_file=./service/milan_vcek_cert.der ");
 #endif  // SEV_SIMPLE_APP
-	//
+        //
 #ifdef GRAMINE_SIMPLE_APP
    printf("\nCompiled for Gramine\
                  --gramine_cert_file=sgx.cert.der");
@@ -363,6 +448,85 @@ int main(int an, char **av) {
   string store_file(FLAGS_data_dir);
   store_file.append(FLAGS_policy_store_file);
 
+#  ifdef FIRST_PASS_ON
+
+#    ifdef ACTIVATE_CREDENTIAL
+  extern bool first_pass(const string &tpm_device,
+                         const string &endorsement_cert_file_name,
+                         const string &endorsement_cert_chain_file_name,
+                         const string &seal_hierarchy_file_name,
+                         const string &quote_hierarchy_file_name,
+                         int           num_pcrs,
+                         byte         *pcrs,
+                         const string &service_host,
+                         const string &service_port,
+                         const string &quote_cert_file_name,
+                         string       *cert_obtained);
+#    else
+  // first pass is an optional initial pass procedure
+  extern bool first_pass(const string &tpm_device,
+                         const string &policy_key_file_name,
+                         const string &endorsement_cert_file_name,
+                         const string &endorsement_cert_chain_file_name,
+                         const string &seal_hierarchy_file_name,
+                         const string &quote_hierarchy_file_name,
+                         const string &quote_cert_file,
+                         const string &measurement_file,
+                         int           num_pcrs,
+                         byte         *pcrs);
+#    endif  // ACTIVATE_CREDENTIAL
+
+  // skip the inits
+  if (FLAGS_operation == "first-pass") {
+
+    string pcrs_out;
+    if (!scan_integer_list(FLAGS_pcrs_str, &pcrs_out)) {
+      printf("%s() error, line %d, first_pass failed\n", __func__, __LINE__);
+      return 1;
+    }
+
+#    ifdef ACTIVATE_CREDENTIAL
+    string cert_obtained;
+    if (!first_pass(FLAGS_tpm_device,
+                    FLAGS_endorsement_cert_file_name,
+                    FLAGS_endorsement_cert_chain_file,
+                    FLAGS_seal_hierarchy_file_name,
+                    FLAGS_quote_hierarchy_file_name,
+                    (int)pcrs_out.size(),
+                    (byte *)pcrs_out.data(),
+                    FLAGS_activate_service_host,
+                    FLAGS_activate_service_port,
+                    FLAGS_quote_cert_file,
+                    &cert_obtained)) {
+      printf("%s() error, line %d, first_pass failed\n", __func__, __LINE__);
+      return 1;
+    } else {
+      printf("first_pass succeeded\n");
+      return 0;
+    }
+#    else
+    string cert_chain;
+    if (!first_pass(FLAGS_tpm_device,
+                    FLAGS_policy_key_file,
+                    FLAGS_endorsement_cert_file_name,
+                    cert_chain,
+                    FLAGS_seal_hierarchy_file_name,
+                    FLAGS_quote_hierarchy_file_name,
+                    FLAGS_quote_cert_file,
+                    FLAGS_measurement_file,
+                    (int)pcrs_out.size(),
+                    (byte *)pcrs_out.data())) {
+      printf("%s() error, line %d, first_pass failed\n", __func__, __LINE__);
+      return 1;
+    } else {
+      printf("first_pass succeeded\n");
+      return 0;
+    }
+#    endif  // ACTIVATE_CREDENTIAL
+  }
+
+#  endif  // FIRST_PASS_ON
+
 #  ifdef DEBUG3
   printf("New API\n");
 #  endif  // DEBUG3
@@ -387,7 +551,7 @@ int main(int an, char **av) {
     return 1;
   }
 
-  // Init simulated enclave
+  // Init enclave
   if (!trust_mgr->initialize_enclave(n, params)) {
     printf("%s() error, line %d, Can't init enclave\n", __func__, __LINE__);
     return 1;
@@ -407,19 +571,18 @@ int main(int an, char **av) {
   }
 #  ifdef DEBUG3
   printf("\n\nStore initialized\n");
-#  endif  // DEBUG3
-#  ifdef DEBUG4
   printf("\ntrust data at initialization\n");
   trust_mgr->print_trust_data();
   printf("\nStore\n");
   trust_mgr->store_.print();
 #  endif  // DEBUG4
+
   // See note above about defaults
   string public_key_alg(FLAGS_public_key_alg);
   string symmetric_key_alg(FLAGS_symmetric_key_alg);
 
   if (FLAGS_print_all) {
-    printf("public_key_alg='%s', authenticated_symmetric_key_alg='%s\n",
+    printf("public_key_alg=%s, authenticated_symmetric_key_alg=%s\n\n",
            public_key_alg.c_str(),
            symmetric_key_alg.c_str());
   }
@@ -566,6 +729,7 @@ done:
   trust_mgr->print_trust_data();
   printf("\n\nDone\n");
 #  endif  // DEBUG3
+  trust_mgr->close_enclave();
   trust_mgr->clear_sensitive_data();
   if (trust_mgr != nullptr) {
     delete trust_mgr;
@@ -636,7 +800,7 @@ int main(int an, char **av) {
   string symmetric_key_alg(FLAGS_symmetric_key_alg);
 
   if (FLAGS_print_all && (FLAGS_operation == "cold-init")) {
-    printf("public_key_alg='%s', authenticated_symmetric_key_alg='%s\n",
+    printf("public_key_alg=%s, authenticated_symmetric_key_alg=%s\n\n",
            public_key_alg.c_str(),
            symmetric_key_alg.c_str());
   }

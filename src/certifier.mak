@@ -4,6 +4,7 @@
 ifndef NO_ENABLE_SEV
     ENABLE_SEV=1
 endif
+TPM=1
 
 # CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
 ifndef CERTIFIER_ROOT
@@ -47,8 +48,10 @@ O= $(OBJ_DIR)
 I= $(INC_DIR)
 SE= $(SRC_DIR)/simulated-enclave
 AE= $(SRC_DIR)/application-enclave
+T= $(SRC_DIR)/tpm2
 CL=..
-INCLUDE=-I$(INC_DIR) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp -I/usr/include
+INCLUDE=-I$(INC_DIR) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp -I/usr/include \
+	-I$(S)/tpm2
 
 ifndef NEWPROTOBUF
 CFLAGS_COMMON = $(INCLUDE) -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
@@ -124,6 +127,11 @@ ifdef ENABLE_SEV
 dobj += $(O)/sev_support.o $(O)/sev_report.o $(O)/sev_cert_table.o
 endif
 
+ifdef TPM
+dobj += $(O)/tpm2_lib.o $(O)/tpm2.pb.o $(O)/convert.o $(O)/openssl_help.o \
+        $(O)/tpm2_support.o
+endif
+
 # Objs needed to build Certifer Framework shared lib for use by Python module
 cfsl_dobj := $(dobj) $(O)/$(SWIG_CERT_INTERFACE)_wrap.o
 
@@ -150,13 +158,13 @@ swigpytestssharedlib: $(CL)/$(SWIGPYTEST_SHARED_LIB)
 
 clean:
 	@echo "removing generated files"
-	rm -rf $(S)/certifier.pb.h $(I)/certifier.pb.h $(S)/certifier.pb.cc $(S)/$(SWIG_CERT_INTERFACE)_wrap.cc
+	rm -rf $(S)/certifier.pb.h $(I)/certifier.pb.h $(S)/certifier.pb.cc $(S)/$(SWIG_CERT_INTERFACE)_wrap.cc || true
 	@echo "removing generated Python files"
-	rm -rf $(CERTIFIER_ROOT)/$(SWIG_CERT_INTERFACE).py $(CERTIFIER_ROOT)/$(SWIG_PYTEST_INTERFACE).py $(CERTIFIER_ROOT)/$(PROTOC_PB2_PY)
+	rm -rf $(CERTIFIER_ROOT)/$(SWIG_CERT_INTERFACE).py $(CERTIFIER_ROOT)/$(SWIG_PYTEST_INTERFACE).py $(CERTIFIER_ROOT)/$(PROTOC_PB2_PY) || true
 	@echo "removing object files"
-	rm -rf $(O)/*.o
+	rm -rf $(O)/*.o || true
 	@echo "removing shared libraries"
-	rm -rf $(CL)/$(CERTIFIER_LIB) $(CL)/$(CERTIFIER_SHARED_LIB)  $(CL)/$(SWIGPYTEST_SHARED_LIB)
+	rm -rf $(CL)/$(CERTIFIER_LIB) $(CL)/$(CERTIFIER_SHARED_LIB)  $(CL)/$(SWIGPYTEST_SHARED_LIB) || true
 
 $(CL)/$(CERTIFIER_LIB): $(dobj)
 	@echo "\nLinking certifier library $@"
@@ -189,7 +197,7 @@ $(O)/certifier.pb.o: $(S)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -Wno-array-bounds -o $(@D)/$@ -c $<
 
-$(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
+$(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h $(T)/tpm2.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
@@ -207,7 +215,7 @@ $(O)/$(SWIG_CERT_INTERFACE)_wrap.o: $(S)/$(SWIG_CERT_INTERFACE)_wrap.cc $(I)/cer
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) $(PY_INCLUDE) -fpermissive -o $(@D)/$@ -c $<
 
-$(O)/certifier_proofs.o: $(S)/certifier_proofs.cc $(I)/certifier.pb.h $(I)/certifier.h
+$(O)/certifier_proofs.o: $(S)/certifier_proofs.cc $(I)/certifier.pb.h $(I)/certifier.h $(T)/tpm2.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
@@ -223,7 +231,7 @@ $(O)/application_enclave.o: $(AE)/application_enclave.cc $(I)/application_enclav
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
-$(O)/cc_helpers.o: $(S)/cc_helpers.cc $(I)/cc_helpers.h
+$(O)/cc_helpers.o: $(S)/cc_helpers.cc $(I)/cc_helpers.h $(T)/tpm2.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
@@ -234,6 +242,32 @@ $(O)/cc_useful.o: $(S)/cc_useful.cc $(I)/cc_useful.h
 $(O)/keystone_shim.o: $(S)/keystone/keystone_shim.cc $(S)/keystone/keystone_api.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+ifdef TPM
+$(T)/tpm2.pb.cc $(T)/tpm2.pb.h: $(T)/tpm2.proto
+	@echo "creating protobuf files"
+	$(PROTO) -I=$(T) --cpp_out=$(T) $(T)/tpm2.proto
+
+$(O)/tpm2.pb.o: $(T)/tpm2.pb.cc
+	@echo "compiling tpm2.pb.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/tpm2.pb.o $(T)/tpm2.pb.cc
+
+$(O)/convert.o: $(T)/convert.cc
+	@echo "compiling convert.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/convert.o $(T)/convert.cc
+
+$(O)/tpm2_lib.o: $(T)/tpm2_lib.cc
+	@echo "compiling tpm2_lib.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/tpm2_lib.o $(T)/tpm2_lib.cc
+
+$(O)/openssl_help.o: $(T)/openssl_help.cc
+	@echo "compiling openssl_help.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/openssl_help.o $(T)/openssl_help.cc
+
+$(O)/tpm2_support.o: $(T)/tpm2_support.cc $(T)/tpm2.pb.cc
+	@echo "compiling tpm2_support.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/tpm2_support.o $(T)/tpm2_support.cc
+endif
 
 ifdef ENABLE_SEV
 SEV_S=$(S)/sev-snp

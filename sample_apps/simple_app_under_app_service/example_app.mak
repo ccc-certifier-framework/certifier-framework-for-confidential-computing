@@ -37,9 +37,11 @@ S= $(SRC_DIR)/src
 O= $(OBJ_DIR)
 US=.
 I= $(SRC_DIR)/include
-INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/
 SE = $(S)/simulated-enclave
 AE= $(S)/application-enclave
+T= $(S)/tpm2
+
+INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/ -I$(T)
 
 ifndef NEWPROTOBUF
 CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
@@ -49,6 +51,7 @@ endif
 ifdef CF_NEW_API
 CFLAGS += -DNEW_API
 endif
+CFLAGS += -Wno-error=strict-aliasing
 
 CC=g++
 LINK=g++
@@ -74,23 +77,28 @@ sp_dobj = $(O)/start_program.o $(O)/certifier.pb.o $(O)/certifier.o \
           $(O)/certifier_proofs.o $(O)/support.o $(O)/simulated_enclave.o \
           $(O)/application_enclave.o $(O)/cc_helpers.o $(O)/cc_useful.o
 
+tpm_obj = $(O)/tpm2.pb.o $(O)/tpm2_lib.o $(O)/openssl_help.o \
+        $(O)/convert.o $(O)/tpm2_support.o
+dobj += $(tpm_obj)
+sp_dobj += $(tpm_obj)
+
+
 all:	service_example_app.exe start_program.exe
 clean:
 	@echo "removing generated files"
-	rm -rf $(US)/certifier.pb.cc $(US)/certifier.pb.h $(I)/certifier.pb.h
+	rm -rf $(US)/certifier.pb.cc $(US)/certifier.pb.h $(I)/certifier.pb.h || true
 	@echo "removing object files"
-	rm -rf $(O)/*.o
+	rm -rf $(O)/*.o || true
 	@echo "removing executable file"
-	rm -rf $(EXE_DIR)/service_example_app.exe
+	rm -rf $(EXE_DIR)/service_example_app.exe || true
 
 $(EXE_DIR)/service_example_app.exe: $(dobj)
 	@echo "\nlinking executable $@"
 	$(LINK) $(dobj) $(LDFLAGS) -o $(@D)/$@
 
-$(I)/certifier.pb.h: $(US)/certifier.pb.cc
-$(US)/certifier.pb.cc: $(CP)/certifier.proto
-	$(PROTO) --proto_path=$(<D) --cpp_out=$(@D) $<
-	mv $(@D)/certifier.pb.h $(I)
+$(I)/certifier.pb.h $(US)/certifier.pb.cc: $(CP)/certifier.proto
+	$(PROTO) --proto_path=$(CP) --cpp_out=$(US) $<
+	mv $(US)/certifier.pb.h $(I)
 
 $(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "\ncompiling $<"
@@ -104,15 +112,15 @@ $(O)/start_program.o: start_program.cc
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
-$(O)/service_example_app.o: $(US)/service_example_app.cc $(I)/certifier.h $(US)/certifier.pb.cc
+$(O)/service_example_app.o: $(US)/service_example_app.cc $(I)/certifier.h $(I)/certifier.pb.h
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(O)/service_example_app.o -c service_example_app.cc
+
+$(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h $(T)/tpm2.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
-$(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
-	@echo "\ncompiling $<"
-	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
-
-$(O)/certifier_proofs.o: $(S)/certifier_proofs.cc $(I)/certifier.pb.h $(I)/certifier.h
+$(O)/certifier_proofs.o: $(S)/certifier_proofs.cc $(I)/certifier.pb.h $(I)/certifier.h $(T)/tpm2.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
@@ -128,10 +136,35 @@ $(O)/application_enclave.o: $(AE)/application_enclave.cc $(I)/application_enclav
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
-$(O)/cc_helpers.o: $(S)/cc_helpers.cc $(I)/certifier.h $(US)/certifier.pb.cc
+$(O)/cc_helpers.o: $(S)/cc_helpers.cc $(I)/certifier.h $(US)/certifier.pb.cc $(T)/tpm2.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(O)/cc_useful.o: $(S)/cc_useful.cc $(I)/cc_useful.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(O)/tpm2_lib.o: $(T)/tpm2_lib.cc
+	@echo "compiling tpm2_lib.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/tpm2_lib.o $(T)/tpm2_lib.cc
+
+$(T)/tpm2.pb.cc $(T)/tpm2.pb.h: $(T)/tpm2.proto
+	@echo "creating protobuf files"
+	$(PROTO) --proto_path=$(T) --cpp_out=$(T) $(T)/tpm2.proto
+
+$(O)/convert.o: $(T)/convert.cc
+	@echo "compiling convert.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/convert.o $(T)/convert.cc
+
+$(O)/openssl_help.o: $(T)/openssl_help.cc
+	@echo "compiling openssl_help.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/openssl_help.o $(T)/openssl_help.cc
+
+$(O)/tpm2_support.o: $(T)/tpm2_support.cc $(T)/tpm2.pb.cc $(I)/certifier.pb.h
+	@echo "compiling tpm2_support.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/tpm2_support.o $(T)/tpm2_support.cc
+
+$(O)/tpm2.pb.o: $(T)/tpm2.pb.cc $(T)/tpm2.pb.h
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+

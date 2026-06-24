@@ -26,7 +26,7 @@ import (
 	"net"
 	"os"
 	"strconv"
-	"time"
+	// "time"
 
 	certlib "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/certlib"
 	certprotos "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/certprotos"
@@ -43,6 +43,7 @@ var enclaveType = flag.String("enclave_type", "simulated-enclave", "enclave type
 var getPolicyKeyFromSecureStore = flag.Bool("get_key_from_secure_store", false, "get policy private key from store")
 
 var serverHost = flag.String("host", "localhost", "address for client/server")
+
 var serverPort = flag.String("port", "8123", "port for client/server")
 
 var keyServerHost = flag.String("key_service_host", "localhost", "address for client/server")
@@ -51,17 +52,27 @@ var keyServerPort = flag.String("key_service_port", "8127", "port for client/ser
 var policyStoreFile = flag.String("policy_store", "store", "policy store")
 
 var policyKeyFile = flag.String("policy_key_file", "policy_key_file.bin", "key file name")
+
 var policyCertFile = flag.String("policy_cert_file", "policy_cert_file.bin", "cert file name")
+
 var readPolicy = flag.Bool("readPolicy", true, "read policy")
+
 var policyFile = flag.String("policyFile", "./certlib/policy.bin", "policy file name")
 
 var attestKeyFile = flag.String("attest_key_file", "attest_key_file.bin", "attest key file name")
+
 var measurementFile = flag.String("measurement_file", "certifier_measurement_file.bin", "measurement key file name")
+
 var attestEndorsementFile = flag.String("endorsement_file", "platform_attest_endorsement.bin", "endorsement file name")
 
 var arkFile = flag.String("ark_file", "ark_cert.der", "ARK cert file name")
 var askFile = flag.String("ask_file", "ask_cert.der", "ASK cert file name")
 var vcekFile = flag.String("vcek_file", "vcek_cert.der", "VCEK cert file name")
+
+var trustedRootsFile = flag.String("trustedRootsFile", "./provisioning/trustedRoots.bin", "trusted roots file name")
+var doActivate = flag.Bool("doActivate", false, "run activation")
+var activateServerHost = flag.String("activate_service_host", "localhost", "address for client/server")
+var activateServerPort = flag.String("activate_service_port", "8130", "port for activate")
 
 var loggingSequenceNumber = *flag.Int("loggingSequenceNumber", 1, "sequence number for logging")
 var enableLog = flag.Bool("enableLog", false, "enable logging")
@@ -73,7 +84,7 @@ var publicPolicyKey *certprotos.KeyMessage = nil
 var serializedPolicyCert []byte
 var policyCert *x509.Certificate = nil
 
-var sn uint64 = uint64(time.Now().UnixNano())
+var sn uint64 = 10
 var duration float64 = 365.0 * 86400
 
 var logging bool = false
@@ -92,6 +103,118 @@ func initLog() bool {
 	logger = log.New(logFiled, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
 	logger.Println("Starting simpleserver")
 	return true
+}
+
+var trustedRoots *certprotos.BufferSequence = &certprotos.BufferSequence {}
+
+func initActivateService(useStore bool) bool {
+
+	if *enableLog {
+		logging = initLog()
+	}
+
+	if useStore {
+		/* Debug
+		fmt.Printf("Initializing ActivateService from store: %s, cert file: %s\n",
+			*policyKeyFile, *policyStoreFile)
+		 */
+
+		if *enclaveType == "simulated-enclave" {
+			blank := ""
+			err := certlib.TEESimulatedInit(blank, *attestKeyFile, *measurementFile, *attestEndorsementFile)
+			if err != nil {
+				fmt.Printf("main: failed to initialize simulated enclave\n")
+				os.Exit(1)
+			}
+		}
+
+		ps := certlib.NewPolicyStore(100)
+		if ps == nil {
+			fmt.Printf("initActivateService: can't init policy store\n")
+			return false
+		}
+		if !certlib.RecoverPolicyStore(*enclaveType, *policyStoreFile, ps) {
+			fmt.Printf("initActivateService: can't recover policy store\n")
+			return false
+		}
+		ent := certlib.FindPolicyStoreEntry(ps, "policy-key", "key")
+		if ent < 0 {
+			fmt.Printf("initActivateService: can't find policy key in store\n")
+			return false
+		}
+		privatePolicyKey = &certprotos.KeyMessage{}
+		err := proto.Unmarshal(ps.Entries[ent].Value, privatePolicyKey)
+		if err != nil {
+			fmt.Printf("initActivateService: Can't unmarshal policy keyfrom store\n")
+			return false
+		}
+		fmt.Printf("Recovered policy key from store\n")
+	} else {
+
+		/* Debug
+		fmt.Printf("Initializing ActivateService from file: %s, cert file: %s\n",
+			*policyKeyFile, *policyCertFile)
+		 */
+		serializedKey, err := os.ReadFile(*policyKeyFile)
+		if err != nil {
+			fmt.Println("initActivateService: can't read key file %s, ", *policyCertFile, err)
+			return false
+		}
+		privatePolicyKey = &certprotos.KeyMessage{}
+		err = proto.Unmarshal(serializedKey, privatePolicyKey)
+		if err != nil {
+			fmt.Printf("initActivateService: Can't unmarshal serialized policy key\n")
+			return false
+		}
+		// Debug
+		//fmt.Printf("Read policy key file\n")
+	}
+
+	serializedPolicyCert, err := os.ReadFile(*policyCertFile)
+	if err != nil {
+		fmt.Printf("initActivateService: can't read policy cert file %s, ", *policyCertFile)
+		fmt.Println(err)
+		return false
+	}
+	policyCert, err = x509.ParseCertificate(serializedPolicyCert)
+	if err != nil {
+		fmt.Println("initActivateService: Can't Parse policy cert, ", err)
+		return false
+	}
+	// Debug
+	// fmt.Printf("Parsed certificate\n")
+
+	publicPolicyKey = certlib.InternalPublicFromPrivateKey(privatePolicyKey)
+	if publicPolicyKey == nil {
+		fmt.Printf("initActivateService: Can't get public policy key\n")
+		return false
+	}
+
+	if trustedRootsFile == nil {
+		fmt.Printf("initActivateService: No policy file\n")
+		return false
+	}
+
+	// Debug
+	fmt.Printf("\nTrusted roots file: %s\n", *trustedRootsFile)
+
+	serializedTrustedRoots, err := os.ReadFile(*trustedRootsFile)
+	if err != nil {
+		fmt.Printf("initActivateService: Can't read policy\n")
+		return false
+	}
+	// DEBUG
+	fmt.Printf("Read trusted roots\n")
+
+	err = proto.Unmarshal(serializedTrustedRoots, trustedRoots)
+	if err != nil {
+		fmt.Printf("initActivateService: Can't unmarshal trusted roots\n")
+		return false
+	}
+	// DEBUG
+	fmt.Printf("Deserialized trusted roots\n")
+
+	return true;
 }
 
 var signedPolicy *certprotos.SignedClaimSequence = &certprotos.SignedClaimSequence{}
@@ -142,11 +265,11 @@ func initCertifierService(useStore bool) bool {
 	} else {
 
 		// Debug
-		fmt.Printf("Initializing CertifierService from file: %s, cert file: %s\n",
-			*policyKeyFile, *policyCertFile)
+		//fmt.Printf("Initializing CertifierService from file: %s, cert file: %s\n",
+		//	*policyKeyFile, *policyCertFile)
 		serializedKey, err := os.ReadFile(*policyKeyFile)
 		if err != nil {
-			fmt.Println("initCertifier: can't read key file, ", err)
+			fmt.Println("initCertifier: can't read key file %s, ", *policyCertFile, err)
 			return false
 		}
 		privatePolicyKey = &certprotos.KeyMessage{}
@@ -155,12 +278,14 @@ func initCertifierService(useStore bool) bool {
 			fmt.Printf("initCertifier: Can't unmarshal serialized policy key\n")
 			return false
 		}
-		fmt.Printf("Read policy key file\n")
+		// Debug
+		//fmt.Printf("Read policy key file\n")
 	}
 
 	serializedPolicyCert, err := os.ReadFile(*policyCertFile)
 	if err != nil {
-		fmt.Println("initCertifier: can't read policy cert file, ", err)
+		fmt.Printf("initCertifier: can't read policy cert file %s, ", *policyCertFile)
+		fmt.Println(err)
 		return false
 	}
 	policyCert, err = x509.ParseCertificate(serializedPolicyCert)
@@ -168,7 +293,8 @@ func initCertifierService(useStore bool) bool {
 		fmt.Println("initCertifier: Can't Parse policy cert, ", err)
 		return false
 	}
-	fmt.Printf("Parsed certificate\n")
+	// Debug
+	//fmt.Printf("Parsed certificate\n")
 
 	publicPolicyKey = certlib.InternalPublicFromPrivateKey(privatePolicyKey)
 	if publicPolicyKey == nil {
@@ -184,51 +310,57 @@ func initCertifierService(useStore bool) bool {
 	// Read policy
 
 	// Debug
-	fmt.Printf("Getting Policy file: %s\n", *policyFile)
+	fmt.Printf("\nGetting Policy file: %s\n", *policyFile)
 
 	serializedPolicy, err := os.ReadFile(*policyFile)
 	if err != nil {
 		fmt.Printf("initCertifier: Can't read policy\n")
 		return false
 	}
-	fmt.Printf("Read Policy\n")
+	// DEBUG
+	// fmt.Printf("Read Policy\n")
 
 	err = proto.Unmarshal(serializedPolicy, signedPolicy)
 	if err != nil {
 		fmt.Printf("initCertifier: Can't unmarshal signed policy\n")
 		return false
 	}
-	fmt.Printf("Deserialized Policy\n")
+	// DEBUG
+	//fmt.Printf("Deserialized Policy\n")
 
 	var originalPolicy *certprotos.ProvedStatements = &certprotos.ProvedStatements{}
 	if !certlib.InitAxiom(*publicPolicyKey, originalPolicy) {
 		fmt.Printf("initCertifier: Can't InitAxiom\n")
 		return false
 	}
-	fmt.Printf("InitAxiom succeeded\n")
+	// DEBUG
+	//fmt.Printf("InitAxiom succeeded\n")
 
 	if !certlib.InitPolicy(publicPolicyKey, signedPolicy, originalPolicy) {
 		fmt.Printf("initCertifier: Couldn't initialize policy\n")
 		return false
 	}
-	fmt.Printf("InitPolicy succeeded\n")
+	// DEBUG
+	// fmt.Printf("InitPolicy succeeded\n")
 
 	if !certlib.InitPolicyPool(&policyPool, originalPolicy) {
 		fmt.Printf("initCertifier: Can't init policy pool\n")
 		return false
 	}
-	fmt.Printf("InitPolicyPool succeeded\n")
+	// DEBUG
+	//fmt.Printf("InitPolicyPool succeeded\n")
 
 	if !certlib.InitSimulatedEnclave() {
 		fmt.Printf("initCertifier: Can't init simulated enclave\n")
 		return false
 	}
-	fmt.Printf("InitSimulatedEnclave succeeded, all initialized\n")
+	// Debug
+	// fmt.Printf("InitSimulatedEnclave succeeded, all initialized\n")
 
 	return true
 }
 
-//	--------------------------------------------------------------------------------------
+//	------------------------------------------------------------------------
 
 func logRequest(b []byte) *string {
 	if b == nil {
@@ -297,6 +429,12 @@ func ValidateRequestAndObtainToken(remoteIP string, pubKey *certprotos.KeyMessag
 		success, toProve, measurement = certlib.ValidateSevEvidence(pubKey, ep, policyPool, purpose)
 		if !success {
 			fmt.Printf("ValidateRequestAndObtainToken: ValidateSevEvidence failed\n")
+			return false, nil
+		}
+	} else if evType == "tpm-platform-package" {
+		success, toProve, measurement = certlib.ValidateTpmEvidence(pubKey, ep, policyPool, purpose)
+		if !success {
+			fmt.Printf("ValidateRequestAndObtainToken: ValidateTpmEvidence failed\n")
 			return false, nil
 		}
 	} else if evType == "oe-evidence" {
@@ -372,10 +510,11 @@ func ValidateRequestAndObtainToken(remoteIP string, pubKey *certprotos.KeyMessag
 		sn = sn + 1
 		org := "CertifierUsers"
 
-		// Debug
-		fmt.Printf("Enclave key is:\n")
+		/* Debug
+		fmt.Printf("\nEnclave key is:\n")
 		certlib.PrintKey(toProve.Subject.Key)
-		fmt.Printf("\norg: %s, appOrgName: %s\n", org, appOrgName)
+		fmt.Printf("\norg: %s\nappOrgName: %s\n", org, appOrgName)
+		 */
 
 		cert := certlib.ProduceAdmissionCert(remoteIP, privKey, policyCert,
 			toProve.Subject.Key, org, appOrgName, sn, duration)
@@ -384,8 +523,11 @@ func ValidateRequestAndObtainToken(remoteIP string, pubKey *certprotos.KeyMessag
 			return false, nil
 		}
 
-		// Debug
+		/* Debug
+		fmt.Printf("\n\nPrinting cert %d\n", sn);
 		certlib.PrintX509Cert(cert)
+		 */
+
 		artifact = cert.Raw
 		if artifact == nil {
 			fmt.Printf("ValidateRequestAndObtainToken: Asn1 artifact is nil\n")
@@ -397,7 +539,7 @@ func ValidateRequestAndObtainToken(remoteIP string, pubKey *certprotos.KeyMessag
 	if artifact == nil {
 		fmt.Printf("ValidateRequestAndObtainToken: why is the artifact nil?\n")
 	}
-	fmt.Printf("Artifact:\n")
+	fmt.Printf("\nArtifact:\n")
 	certlib.PrintBytes(artifact)
 	fmt.Printf("\n")
 
@@ -485,7 +627,7 @@ func certifierServiceThread(conn net.Conn, client string) {
 	}
 
 	// Debug
-	fmt.Printf("certifierServiceThread: Trust request received:\n")
+	fmt.Printf("certifierServiceThread: Trust request received.\n")
 	certlib.PrintTrustRequest(request)
 
 	// Prepare response
@@ -534,6 +676,50 @@ func certifierServiceThread(conn net.Conn, client string) {
 	return
 }
 
+// Procedure is:
+//
+//	read a message
+//      call ProcessActivationRequest
+//	if it fails
+//	      save net infor for forensics
+//	if logging is enabled, log event, request and response
+func activateServiceThread(conn net.Conn, client string) {
+
+	b := certlib.SizedSocketRead(conn)
+	if b == nil {
+		logEvent("Can't read request", nil, nil)
+		return
+	}
+
+	// Debug
+	//fmt.Printf("Read %d byte request\n", len(b));
+
+	var remoteIP string
+	if remoteAddr, ok := conn.RemoteAddr().(*net.TCPAddr); ok {
+		remoteIP = remoteAddr.IP.String()
+	}
+
+	outcome, serializedResponse := certlib.ProcessActivationRequest(b, remoteIP, trustedRoots, publicPolicyKey, policyCert, privatePolicyKey)
+	if !outcome {
+		fmt.Printf("ProcessActivate failed (2)\n")
+		return
+	}
+
+	// Debug
+	fmt.Printf("ProcessActivationRequest succeeded, writing %d bytes\n", len(serializedResponse));
+
+	if !certlib.SizedSocketWrite(conn, serializedResponse) {
+		fmt.Printf("SizedSocketWrite failed (2)\n")
+		return
+	}
+	if outcome {
+		logEvent("Successful request", b, serializedResponse)
+	} else {
+		logEvent("Failed request", b, serializedResponse)
+	}
+	return
+}
+
 func keyServiceThread(conn net.Conn, client string) {
 
 	b := certlib.SizedSocketRead(conn)
@@ -551,8 +737,8 @@ func keyServiceThread(conn net.Conn, client string) {
 	}
 
 	// Debug
-	fmt.Printf("keyServiceThread: Key request received:\n")
-	certlib.PrintKeyRequestMessage(request)
+	//fmt.Printf("keyServiceThread: Key request received:\n")
+	//certlib.PrintKeyRequestMessage(request)
 
 	// Prepare response
 	succeeded := "succeeded"
@@ -596,7 +782,7 @@ func keyServiceThread(conn net.Conn, client string) {
 	return
 }
 
-//	------------------------------------------------------------------------------------
+//	------------------------------------------------------------------------
 
 func ProcessRequest(serverAddr string, req []byte) []byte {
 
@@ -737,7 +923,7 @@ func ProvisionKeys(serverAddr string) bool {
 	}
 
 	// Debug
-	fmt.Printf("attestation size: %d\n", len(at))
+	//fmt.Printf("attestation size: %d\n", len(at))
 
 	el := certprotos.EvidenceList{}
 	if !FillEvidenceList(*enclaveType, &el) {
@@ -775,8 +961,8 @@ func ProvisionKeys(serverAddr string) bool {
 	krm.Support = ep
 
 	// Debug
-	certlib.PrintKeyRequestMessage(&krm)
-	fmt.Printf("\n")
+	// certlib.PrintKeyRequestMessage(&krm)
+	// fmt.Printf("\n")
 
 	krr := certprotos.KeyResponseMessage{}
 	if !NegotiateProvisionRequest(serverAddr, &krm, &krr) {
@@ -785,8 +971,8 @@ func ProvisionKeys(serverAddr string) bool {
 	}
 
 	// Debug
-	certlib.PrintKeyResponseMessage(&krr)
-	fmt.Printf("\n")
+	// certlib.PrintKeyResponseMessage(&krr)
+	// fmt.Printf("\n")
 
 	if *krr.Status != "succeeded" || krr.Artifact == nil {
 		fmt.Printf("ProvisionKeys: Key request failed\n")
@@ -940,13 +1126,55 @@ func certifierServer(serverAddr string) {
 	}
 }
 
+func activateServer(serverAddr string) {
+
+	var sock net.Listener
+	var err error
+	var conn net.Conn
+
+	// Listen for clients.
+	fmt.Printf("activate server: listening\n")
+	sock, err = net.Listen("tcp", serverAddr)
+	if err != nil {
+		fmt.Printf("ActivateService server, listen error: ", err, "\n")
+		return
+	}
+
+	// Service client connections.
+	for {
+		fmt.Printf("ActivateService server: at accept\n")
+		conn, err = sock.Accept()
+		if err != nil {
+			fmt.Printf("ActivateService server: can't accept connection: %s\n", err.Error())
+			continue
+		}
+		// Todo: maybe get client name and client IP for logging.
+		var clientName string = "blah"
+		go activateServiceThread(conn, clientName)
+	}
+}
+
+// ----------------------------------------------------------------------------
+
 func main() {
 
 	flag.Parse()
-
 	var serverAddr string
 
-	if *operation == "certifier-service" {
+	fmt.Printf("Policy key file: %s\n", *policyKeyFile)
+	fmt.Printf("Policy cert file: %s\n", *policyCertFile)
+
+	if *doActivate {
+		// later this may turn into a TLS connection, we'll see
+		if !initActivateService(*getPolicyKeyFromSecureStore) {
+			fmt.Printf("main: failed to initialize activate server\n")
+			os.Exit(1)
+		}
+		activateServerAddr := *activateServerHost + ":" + *activateServerPort
+		activateServer(activateServerAddr)
+		fmt.Printf("Certifier server done\n")
+		os.Exit(0)
+	} else if *operation == "certifier-service" {
 		// later this may turn into a TLS connection, we'll see
 		if !initCertifierService(*getPolicyKeyFromSecureStore) {
 			fmt.Printf("main: failed to initialize server\n")

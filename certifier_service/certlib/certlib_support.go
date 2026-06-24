@@ -35,6 +35,7 @@ import (
 	"net"
 	"strings"
 	"time"
+	// "os"
 
 	certprotos "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/certprotos"
 	"google.golang.org/protobuf/proto"
@@ -716,19 +717,18 @@ func GeneralAuthenticatedEncrypt(alg string, in []byte, key []byte, iv []byte) [
 		return AuthenticatedEncrypt(in, key, iv)
 	}
 	if alg == "aes-256-gcm" {
-		tagLen := 12
-
 		k, err := aes.NewCipher(key)
 		if err != nil {
 			fmt.Printf("GeneralAuthenticatedEncrypt: can't aes NewCipher\n")
 			return nil
 		}
+		// tagLen is 16
 		gcm, err := cipher.NewGCM(k)
 		if err != nil {
 			fmt.Printf("GeneralAuthenticatedEncrypt: can't aes NewGCM\n")
 			return nil
 		}
-		out := gcm.Seal(nil, iv[0:tagLen], in, nil)
+		out := gcm.Seal(nil, iv[0:gcm.NonceSize()], in, nil)
 		return append(iv, out...)
 	}
 	return nil
@@ -739,20 +739,19 @@ func GeneralAuthenticatedDecrypt(alg string, in []byte, key []byte) []byte {
 		return AuthenticatedDecrypt(in, key)
 	}
 	if alg == "aes-256-gcm" {
-		tagLen := 12
-
 		k, err := aes.NewCipher(key)
 		if err != nil {
 			fmt.Printf("GeneralAuthenticatedEncrypt: can't aes NewCipher\n")
 			return nil
 		}
+		// tagLen is 16
 		gcm, err := cipher.NewGCM(k)
 		if err != nil {
 			fmt.Printf("GeneralAuthenticatedEncrypt: can't aes NewGCM\n")
 			return nil
 		}
 
-		iv := in[0:tagLen]
+		iv := in[0:gcm.NonceSize()]
 		out, err := gcm.Open(nil, iv, in[aes.BlockSize:], nil)
 		if err != nil {
 			fmt.Printf("GeneralAuthenticatedEncrypt: can't aes NewGCM\n")
@@ -761,6 +760,21 @@ func GeneralAuthenticatedDecrypt(alg string, in []byte, key []byte) []byte {
 		return out
 	}
 	return nil
+}
+
+func SameMeasurementEntity(e1 *certprotos.EntityMessage, e2 *certprotos.EntityMessage) bool {
+	if e1.GetRegisters() == nil && e2.GetRegisters() != nil {
+		return false;
+	} 
+	if e1.GetRegisters() != nil && e2.GetRegisters() == nil {
+		return false;
+	}
+	if e1.GetRegisters() != nil {
+		if !bytes.Equal(e1.GetRegisters(), e2.GetRegisters()) {
+			return false;
+		}
+	}
+	return bytes.Equal(e1.GetMeasurement(), e2.GetMeasurement())
 }
 
 func SameMeasurement(m1 []byte, m2 []byte) bool {
@@ -804,7 +818,7 @@ func SameEntity(e1 *certprotos.EntityMessage, e2 *certprotos.EntityMessage) bool
 		return false
 	}
 	if e1.GetEntityType() == "measurement" {
-		return SameMeasurement(e1.GetMeasurement(), e2.GetMeasurement())
+		return SameMeasurementEntity(e1, e2)
 	}
 	if e1.GetEntityType() == "key" {
 		return SameKey(e1.GetKey(), e2.GetKey())
@@ -853,6 +867,15 @@ func MakeKeyEntity(k *certprotos.KeyMessage) *certprotos.EntityMessage {
 	keye.EntityType = &kn
 	keye.Key = k
 	return &keye
+}
+
+func MakeFullMeasurementEntity(m []byte, r []byte) *certprotos.EntityMessage {
+	me := certprotos.EntityMessage{}
+	measName := "measurement"
+	me.EntityType = &measName
+	me.Measurement = m
+	me.Registers = r
+	return &me
 }
 
 func MakeMeasurementEntity(m []byte) *certprotos.EntityMessage {
@@ -1050,6 +1073,13 @@ func PrintEntityDescriptor(e *certprotos.EntityMessage) {
 	if e.GetEntityType() == "measurement" {
 		fmt.Printf("Measurement[")
 		PrintBytes(e.GetMeasurement())
+		if e.GetRegisters() != nil {
+			fmt.Printf("( ")
+			for i := 0; i < len(e.GetRegisters()); i++ {
+				fmt.Printf("%d ", e.GetRegisters()[i])
+			}
+			fmt.Printf(")")
+		}
 		fmt.Printf("]\n")
 	}
 	if e.GetEntityType() == "key" {
@@ -1192,6 +1222,14 @@ func PrintEntity(e *certprotos.EntityMessage) {
 	}
 	if e.GetEntityType() == "measurement" {
 		PrintBytes(e.GetMeasurement())
+		if e.GetRegisters() != nil {
+                        fmt.Printf("( ")
+                        for i := 0; i < len(e.GetRegisters()); i++ {
+                                fmt.Printf("%d ", e.GetRegisters()[i])
+                        }
+                        fmt.Printf(")")
+                }
+                fmt.Printf("]\n")
 	}
 	if e.GetEntityType() == "environment" {
 		PrintEnvironment(e.EnvironmentEnt)
@@ -1753,6 +1791,9 @@ func Asn1ToX509(in []byte) *x509.Certificate {
 func X509ToAsn1(cert *x509.Certificate) []byte {
 	out, err := asn1.Marshal(cert)
 	if err != nil {
+		if cert.Raw != nil {
+			return cert.Raw
+		}
 		fmt.Printf("X509ToAsn1 error: %s\n", err.Error())
 		return nil
 	}
@@ -1787,6 +1828,19 @@ func LittleToBigEndian(in []byte) []byte {
 func ProduceAdmissionCert(remoteIP string, issuerKey *certprotos.KeyMessage, issuerCert *x509.Certificate,
 	subjKey *certprotos.KeyMessage, subjName string, subjOrg string,
 	serialNumber uint64, durationSeconds float64) *x509.Certificate {
+
+	/*
+	// DEBUG
+	fmt.Printf("\nProduceAdmissionCert, sn: %d, duration: %f\n", serialNumber, durationSeconds)
+	fmt.Printf("subjName: %s\n", subjName)
+	fmt.Printf("subjOrg: %s\n", subjOrg)
+	fmt.Printf("\nIssuer Private Key: \n")
+	PrintKey(issuerKey)
+	fmt.Printf("\n")
+	fmt.Printf("Subject Public Key: \n")
+	PrintKey(subjKey)
+	fmt.Printf("\n")
+	 */
 
 	dur := int64(durationSeconds * 1000 * 1000 * 1000)
 	cert := x509.Certificate{
@@ -1824,6 +1878,15 @@ func ProduceAdmissionCert(remoteIP string, issuerKey *certprotos.KeyMessage, iss
 		fmt.Printf("ProduceAdmissionCert: Can't Create Certificate\n")
 		return nil
 	}
+
+	/*
+	// Debug
+	fileName := "test_quote.der"
+	if os.WriteFile(fileName, derBytes, 0666) != nil {
+		fmt.Printf("ProduceAdmissionCert: Can't write %s\n", fileName)
+	}
+	 */
+
 	newCert, err := x509.ParseCertificate(derBytes)
 	if err != nil {
 		fmt.Printf("ProduceAdmissionCert: Can't Parse Certificate\n")
@@ -1987,11 +2050,16 @@ func PrintEvidence(ev *certprotos.Evidence) {
 		PrintBytes(ev.SerializedEvidence)
 	} else if ev.GetEvidenceType() == "gramine-attestation" {
 		PrintBytes(ev.SerializedEvidence)
+	} else if ev.GetEvidenceType() == "tpm-attestation" {
+		PrintBytes(ev.SerializedEvidence)
 	} else if ev.GetEvidenceType() == "cert" {
-		cx509 := Asn1ToX509(ev.SerializedEvidence)
-		fmt.Printf("Issuer: %s, Subject: %s\n", GetIssuerNameFromCert(cx509), *GetSubjectNameFromCert(cx509))
+		fmt.Printf("Serialized cert:\n")
 		PrintBytes(ev.SerializedEvidence)
 		fmt.Printf("\n")
+		cx509 := Asn1ToX509(ev.SerializedEvidence)
+		if cx509 != nil {
+			fmt.Printf("Issuer: %s, Subject: %s\n", GetIssuerNameFromCert(cx509), *GetSubjectNameFromCert(cx509))
+		}
 	} else {
 		return
 	}
@@ -2000,10 +2068,14 @@ func PrintEvidence(ev *certprotos.Evidence) {
 func PrintEvidencePackage(evp *certprotos.EvidencePackage, printAll bool) {
 	fmt.Printf("\nProver type: %s\n", evp.GetProverType())
 	for i := 0; i < len(evp.FactAssertion); i++ {
+		fmt.Printf("\nEvidence statement %d:\n", i)
 		ev := evp.FactAssertion[i]
+		if ev == nil {
+			continue
+		}
 		if printAll {
 			PrintEvidence(ev)
-			fmt.Printf("\n\n")
+			fmt.Printf("\n")
 		} else {
 			fmt.Printf("    Evidence type: %s\n", ev.GetEvidenceType())
 		}
@@ -2073,8 +2145,8 @@ func PrintX509Cert(cert *x509.Certificate) {
 	if cert.IsCA {
 		fmt.Printf("\tRoot cert\n")
 	} else {
+		fmt.Printf("\tSubordinate cert\n")
 	}
-	fmt.Printf("\tSubordinate cert\n")
 	fmt.Printf("\tDNS Names: %+v\n", cert.DNSNames)
 	fmt.Printf("\tEmailAddresses: %+v\n", cert.EmailAddresses)
 	fmt.Printf("\tIPAddresses: %+v\n", cert.IPAddresses)

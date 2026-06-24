@@ -1,7 +1,9 @@
 # Instructions for running scenario1
 
 This document gives detailed instructions for running scenario1
-in both test and full SEV environment.  The basic certifier utility
+in both simulated or full SEV environment (in the case of an sev
+"deployed enclave") or a simulated or real tpm environment
+(in the case of tpm "deployed enclave") .  The basic vm utility
 used is cf_utility.exe, cf_utility.exe is described in
 cf_utility_usage_notes.md.
 
@@ -16,61 +18,141 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
 $EXAMPLE_DIR is this directory containing the example application.  Again, a
 shell variable is useful, if you run the detailed steps below.
 
-This document has corresponds to the "SevProvisioning" document, in 
-$(CERTIFIER_ROOT)/Doc, which should be read in conjunction with this.
-
 
 ## Overview
 
 Running the tests is considerably simplified by a consolidated script,
-run-test-scenario1.sh.  It runs all the subordinate scripts described
-in Sevprovisioning.
+run-test-scenario1.sh.  It runs all the subordinate scripts.
 
 
-# Running either in SEV or the test environment using the consolidated tests script
+### Special note for tpms:
+The TPM enclave introduces an additional policy step for cefrtification.  For
+enclaves like SEV, the public key for the quote or attestation, is part of
+platform provisioning.  If the certifier "trusts" the manufacturer root
+certificate, the elements of the certification can be provided in one pass.
+By contrast, the TPM employs a "first pass" in which the quoting key
+established trust with the certifier using a protocol.  This protocol
+uses the "ActivateCredential" functionality of the TPM.
+
+To implement this.  The certifier opens a new protocol channel that
+accepts a certificate chain from the TPM manufacturers that offers evidence
+to support the security of the TPM "endorsement cert."  The deployed
+program packages this along with unforgeable information about the
+ultimate "quoting key," produces a cert for the quoting key, encrypts
+the cert with a random key (a "credential") and encrypts the the credential
+to the endorsement key.  The credential can only be decrypted by the TPM
+with the trusted endorsement cert which verifies properties of the quoting
+key and unlocks the credential which, in turn, is used to decrypt the quoting
+key certificate.  This certificate can then be used in the same way
+an authenticated vcek key is  used in SEV.
+
+The upshot is that the certifier is first called with the "first pass" tag
+that implements the new step to approve the quote key.  After the quote key
+is validated, resulting in a certificate signed by the policy key.  The
+customary proof protocol used in other enclaves is used to produce an
+"Admisions Certificate" as is customary.
+
+# Running either in SEV, tpm or the test environment using the consolidated tests script
 
 To compile the programs, establish the environment and run the entire test, the
 subordinate scripts employ a number of shell variables.   It's a good idea to
 define the first two in the shell you use by doing the following:
 
 ```shell
-    export CERTIFIER_ROOT=~/src/github.com//ccc-certifier-framework/certifier-framework-for-confidential-computing
+    export CERTIFIER_ROOT=~/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing
     export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
 ```
 
-Almost all the variables are set within run-test-scenario1.sh.  To run it from scratch,
-in the simulated sev environment type:
+When running in a "sudo" window, you should use the full path and not use the
+"~" shortcut.
+
+
+# Running the tests
+
+## Running the tpm tests
+
+You must build the tpm utilities as follows (you only need to do this once),
+and you don't need to be root to do it.
 
 ```shell
-    ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 1 -loud 1
+    pushd $CERTIFIER_ROOT/src/tpm2
+      make clean -f tpm2_support.mak
+      make -f tpm2_support.mak
+    popd
 ```
 
-The three variable have the following effect:
-    "-tt simulated" tells the script that the "deployed enviornment" is the simulated SEV enclave.
-        As a result, the simulating SEV device driver will be build and installed and no
-        VM is needed and simulated keys and certificates are built.
-    "-ccf 1" tells the script that it should compile all the certifier utilities and programs.
-    "-bss 1" tells the script to actually build and install the driver.
+Except as noted, the following commands, which run the tests, must run as root
+(see note above about path variables).
 
-After you run this the first time, you need not re-compile the certifier or install the
-device driver so you can run the test by typing:
+If you want to use the tpm simulator, first install it (see
+$CERTIFIER_ROOT/src/tpm2/swtpmins.txt, for instructions).
+
+First set the location of the simulated tpm state:
 
 ```shell
-    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -loud 1
+    export XDG_CONFIG_HOME=full directory name (/home/jlm/.config in my case)
 ```
 
-This saves considerable time.  However, you do need to recompile for a "real" sev
-platform because it will not compile the "SIMULATED_SEV" interface.
-
-You can also type:
+You may want to clean up files and simulator state from previous runs.
+To do this:
 
 ```shell
-    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -pk 0 -loud 1
+    ./clean-tpm-simulator.sh
+    ./clean-files.sh
+```
+As root, start the tpm simulator for testing, and set pcr 7:
+
+```shell
+    ./start-tpm-simulator.sh
+    export TPM_SUPPORT_DIR=$CERTIFIER_ROOT/src/tpm2
+    sleep 2
+    $TPM_SUPPORT_DIR/tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
 ```
 
-which, does not regenerate policy keys and certificates.
+If you are using a "real" tpm, make sure you set the correct device name
+(-tpm /dev/tpmrm1, below).
 
-Since the device driver can only be accessed by root, you should run as root when you type these commands.
+You may want to just compile the framework and vm_model_tools executables,
+without being root.  To do this:
+
+```shell
+    ./run-test-scenario1.sh  -bss 0 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 -just-compile 1
+```
+
+If you do this, you can use the -ccf 0 flag when you run run-test-scenario1.sh as root.
+
+To run run-test-scenario1.sh from scratch, in the tpm environment, as root, type:
+
+```shell
+    ./run-test-scenario1.sh  -bss 0 -ccf 1 -loud 1 -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin -pk 1 -pn cf-utility
+```
+
+or, if you previously did a "compile only", as root:
+
+```shell
+    ./run-test-scenario1.sh  -bss 0 -ccf 0 -loud 1 -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin -pk 1 -pn cf-utility
+```
+
+Some important variable have the following effect:
+
+    "-ccf 1" tells the script that it should compile all the certifier utilities
+        and programs.
+    "-bss 0" tells the script NOT to build and install the driver for the
+        simulated sev.
+    "-pk 1" tells the script to generate keys and certificates for the domain.
+    "-loud 1" tells the script to print a lot of debug output.
+    "-just-compile 1" tells the script to just compile stuff (you need not be root to do this)
+
+
+If you have already set pcr 7, you need not and should not reset it.
+You do not need "-bss 1" and you shouldn't set it.
+You can rerun the test by typing:
+
+```shell
+    ./clean-files.sh
+    ./run-test-scenario1.sh  -bss 0 -ccf 0 -pk 1 -dn dom0 -loud 0 -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin
+```
+This does not recompile the utilities and is much faster..
 
 All the subcomands can be called from the command line also, provided you supply the
 needed flags. run-test-scenario1.sh provides ALL the arguments needed by
@@ -79,30 +161,64 @@ the relevant arguments.  Some scripts are easy.  For example, ./cleanup.sh can
 be called with no arguments.  It kills running simpleserver instances and keyserver
 instances so it is useful if the script aborts.
 
-You can clean all the test data and configuration files generated in a run
-by typing:
-
-```shell
-    ./clean-files.sh
-```
-
-Once you clean the test data and configuration files, you need not recompile the certifier
-or device driver but you need to do everything else, by typing:
-
-```shell
-    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0
-```
-
-If you installed the device driver (sev_null) before running the scripts, you do not need "-bss 1".
-
-One more thing: If you run a test that fails and you want to cleanup, you should run:
+Reminder: If you run a test that fails and you want to cleanup, you should run:
 
 ```shell
     ./cleanup.sh
     ./clean-files.sh
 ```
+This removes the application files from the last run and kills the server
+processes used in the test.  If you don't do this, the test won't work. You
+may also want to clean and restart the tpm simulator but you usually need
+not do so.
 
-This removes the application files from the last run and kills the server processes used in the
-test.  If you don't do this, subsequent test may not be able to open the ports needed for the tests.
+
+## Running the sev tests
+
+Again, almost all the variables are set within run-test-scenario1.sh.
+
+You may want to just compile the framework and vm_model_tools executables,
+without being root.  To do this:
+
+```shell
+    ./run-test-scenario1.sh  -bss 0 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 -just-compile 1
+```
+
+If you do this, you can use the -ccf 0 flag when you run run-test-scenario1.sh as
+root.
+
+To run the test from scratch, in the simulated sev environment, as root, type:
+
+```shell
+    ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1
+```
+
+or, if you already compiled as above:
+
+```shell
+    ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 0 -loud 1 -dn dom0 -pn cf-utility -pk 1
+```
+
+There is a new flag:
+    "-tt simulated" tells the script that the "deployed enviornment" is the
+        simulated SEV enclave.  As a result, the simulating SEV device driver
+        will be build and installed and no VM is needed and simulated keys and
+        keys for the simulated environment are built.
+    "-bss 1" tells the script to build and install the driver for the
+        simulated sev.
+
+After you run the test the first time, you need not re-compile the certifier or
+install the device driver. To rerun the tests again, first clean the app files:
+
+```shell
+    ./clean-files.sh
+
+Then, as root, you can rerun the test by typing:
+
+```shell
+    ./run-test-scenario1.sh -tt simulated -bss 0 -ccf 0 -loud 1 -dn dom0 -pn cf-utility-pk 1
+```
+
+# Note
 
 The scripts do not build a VM yet.  Stay tuned for more information on that.

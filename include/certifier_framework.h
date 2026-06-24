@@ -301,6 +301,13 @@ class cc_trust_manager {
   bool initialize_sev_enclave(const string &ark_der_cert,
                               const string &ask_der_cert,
                               const string &vcek_der_cert);
+  bool initialize_tpm_enclave(const string &device_name,
+                              const string &endorsement_cert_file_name,
+                              const string &endorsement_cert_chain_file_name,
+                              const string &seal_hierarchy_file_name,
+                              const string &quote_hierarchy_file_name,
+                              const string &tpm_pcr_list,
+                              const string &quote_cert_file_name);
   bool initialize_gramine_enclave(const int size, byte *cert);
   bool initialize_oe_enclave(const string &cert);
   bool initialize_application_enclave(const string &parent_enclave_type,
@@ -308,6 +315,7 @@ class cc_trust_manager {
                                       int           out_fd);
   bool initialize_keystone_enclave();
   bool initialize_islet_enclave();
+  bool close_enclave();
 
   // If n == 0, systems should be able to find parameters
   // by default, for example, sev and sgx.

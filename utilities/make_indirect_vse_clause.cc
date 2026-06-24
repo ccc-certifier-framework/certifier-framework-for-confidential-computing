@@ -31,6 +31,7 @@ DEFINE_string(platform_subject, "", "platform subject file");
 DEFINE_string(environment_subject, "", "environment subject file");
 DEFINE_string(verb, "verb", "verb to use");
 DEFINE_string(clause, "", "clause file");
+DEFINE_string(config, "", "registers");
 
 // --------------------------------------------------------------------------
 
@@ -129,6 +130,31 @@ bool get_measurement_entity_from_file(const string &in, entity_message *em) {
   return true;
 }
 
+bool whitespace(char c) {
+  return c == ' ' || c == ',';
+}
+
+bool scan_integer_list(const string &in, string *out) {
+  const char *p = in.c_str();
+  int         b;
+
+  for (;;) {
+    while (whitespace(*p))
+      p++;
+    if (*p == '\0')
+      return true;
+    if (*p <= '0' && *p >= '9') {
+      p++;
+      continue;
+    }
+    sscanf(p, "%d", &b);
+    *out += (char)b;
+    while (*p >= '0' && *p <= '9')
+      p++;
+  }
+  return true;
+}
+
 int main(int an, char **av) {
   string usage("Generate certificate keys in different formats to output file");
   gflags::SetUsageMessage(usage);
@@ -183,6 +209,16 @@ int main(int an, char **av) {
              __func__,
              __LINE__);
       return 1;
+    }
+    if (FLAGS_config != "") {
+      string out;
+      if (!scan_integer_list(FLAGS_config.c_str(), &out)) {
+        printf("%s() error, line %d, can't scan integer list\n",
+               __func__,
+               __LINE__);
+        return 1;
+      }
+      sub_ent.set_registers(out);
     }
   }
 

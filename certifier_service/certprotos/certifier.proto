@@ -114,6 +114,12 @@ message environment {
   optional bytes the_measurement            = 2;
 };
 
+// digest and registers
+message measurement_value {
+  optional bytes registers                  = 1;
+  optional bytes the_measurement            = 2;
+};
+
 // entity types: key, measurement, platform, environment
 message entity_message {
   optional string entity_type               = 1;
@@ -121,6 +127,7 @@ message entity_message {
   optional bytes measurement                = 3;
   optional platform platform_ent            = 4;
   optional environment environment_ent      = 5;
+  optional bytes registers                  = 6;
 };
 
 // Example 1:  PK "speaks-for" measurement
@@ -148,7 +155,8 @@ message claim_message {
 //  The claims are in "vse-clause.  Time is
 //  the time the attestation was signed.
 //  Enclave types are "simulated-enclave", "oe-enclave",
-//  "asylo-enclave", "application-enclave" and "sev-enclave"
+//  "asylo-enclave", "application-enclave"
+//  "tpm-enclave"  and "sev-enclave"
 message attestation_user_data {
   optional string enclave_type              = 1;
   optional string time                      = 2;
@@ -191,7 +199,8 @@ message cert_chain {
 // Current evidence types: "signed-claim",
 //   "signed-vse-attestation"
 //   "oe-attestation-report", "gramine-attestation"
-//   "sev-attestation", "cert", cert-chain
+//   "sev-attestation", tpm-attestation,
+//   "cert", cert-chain
 message evidence {
   optional string evidence_type             = 1;
   optional bytes serialized_evidence        = 2;
@@ -210,6 +219,13 @@ message islet_attestation_message {
 message keystone_attestation_message {
   optional bytes what_was_said              = 1;
   optional bytes reported_attestation       = 2;
+};
+
+message tpm_attestation_message {
+  optional bytes what_was_said              = 1;
+  optional bytes the_quote                  = 2;
+  optional string signing_algorithm         = 3;
+  optional bytes signature                  = 4;
 };
 
 message sev_attestation_message {
@@ -260,6 +276,7 @@ message accelerator_group {
 
 // submitted_evidence_type is "full-vse-support"
 //  "platform-attestation-only" or "oe-evidence"
+//  "tpm-evidence"
 message trust_request_message {
   optional string requesting_enclave_tag    = 1;
   optional string providing_enclave_tag     = 2;
@@ -368,3 +385,34 @@ message full_cert_chain {
   optional key_message final_private_key     = 2;
 };
 
+message tpm_activate_request {
+  optional bytes quote_cert                  = 1;
+  optional bytes endorsement_cert            = 2;
+  optional full_cert_chain endorsement_chain = 3;
+  optional bytes measurement		     = 4;
+  optional bytes pcrs        	     	     = 5;
+};
+message tpm_activate_response {
+  optional string status                    = 1; // "succeeded" or "failed"
+  optional bytes credential_blob            = 2;
+  optional bytes encrypted_secret           = 3;
+};
+
+message quote_certification_request {
+  optional string requesting_enclave_tag  = 1;
+  optional string providing_enclave_tag   = 2;
+  optional bytes endorsement_cert         = 3;
+  optional bytes endorsement_cert_chain   = 4;
+  optional key_message quote_key          = 5;
+  optional bytes quote_key_name           = 6;
+  optional string quote_hash_alg          = 7;
+};
+
+message quote_certification_response {
+  optional string status                  = 1; // "succeeded" or "failed"
+  optional string hash_alg                = 2;
+  optional bytes cred_blob                = 3;
+  optional bytes encrypted_secret         = 4;
+  optional string encrypting_alg          = 5;
+  optional bytes encrypted_quote_cert     = 6;
+};

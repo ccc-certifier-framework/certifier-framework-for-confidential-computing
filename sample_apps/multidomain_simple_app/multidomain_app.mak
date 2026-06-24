@@ -28,6 +28,7 @@ endif
 # little more complicated.  To use newer protobuf libraries, define NEWPROROBUF as
 # is done below.  Comment it out for older protobuf usage.
 NEWPROTOBUF=1
+TPM=1
 #CF_NEW_API=1
 
 CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
@@ -35,9 +36,11 @@ S= $(CERTIFIER_ROOT)/src
 O= $(OBJ_DIR)
 US=.
 I= $(CERTIFIER_ROOT)/include
-INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/
 SE = $(S)/simulated-enclave
 AE= $(S)/application-enclave
+T= $(S)/tpm2
+
+INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/ -I$(T)
 
 # Compilation of protobuf files could run into some errors, so avoid using
 # # -Werror for those targets
@@ -52,6 +55,7 @@ CFLAGS = $(CFLAGS_NOERROR) -Werror
 ifdef CF_NEW_API
 CFLAGS += -DNEW_API
 endif
+CFLAGS += -Wno-error=strict-aliasing
 
 CC=g++
 LINK=g++
@@ -75,14 +79,21 @@ server_dobj = $(O)/multidomain_server_app.o $(O)/certifier.pb.o $(O)/certifier.o
        $(O)/support.o $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o \
        $(O)/cc_useful.o
 
+tpm_obj = $(O)/tpm2.pb.o $(O)/tpm2_lib.o $(O)/openssl_help.o \
+        $(O)/convert.o $(O)/tpm2_support.o
+
+client_dobj += $(tpm_obj)
+server_dobj += $(tpm_obj)
+
+
 all:	multidomain_server_app.exe multidomain_client_app.exe
 clean:
 	@echo "removing generated files"
-	rm -rf $(US)/certifier.pb.cc $(US)/certifier.pb.h $(I)/certifier.pb.h
+	rm -rf $(US)/certifier.pb.cc $(US)/certifier.pb.h $(I)/certifier.pb.h || true
 	@echo "removing object files"
-	rm -rf $(O)/*.o
+	rm -rf $(O)/*.o || true
 	@echo "removing executable file"
-	rm -rf $(EXE_DIR)/example_app.exe
+	rm -rf $(EXE_DIR)/example_app.exe || true
 
 $(EXE_DIR)/multidomain_client_app.exe: $(client_dobj)
 	@echo "\nlinking executable $@"
@@ -136,3 +147,28 @@ $(O)/cc_helpers.o: $(S)/cc_helpers.cc $(I)/certifier.h $(US)/certifier.pb.cc
 $(O)/cc_useful.o: $(S)/cc_useful.cc $(I)/cc_useful.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(O)/tpm2_lib.o: $(T)/tpm2_lib.cc
+	@echo "compiling tpm2_lib.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/tpm2_lib.o $(T)/tpm2_lib.cc
+
+$(T)/tpm2.pb.cc $(T)/tpm2.pb.h: $(T)/tpm2.proto
+	@echo "creating protobuf files"
+	$(PROTO) -I=$(T) --cpp_out=$(T) $(T)/tpm2.proto
+
+$(O)/convert.o: $(T)/convert.cc
+	@echo "compiling convert.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/convert.o $(T)/convert.cc
+
+$(O)/openssl_help.o: $(T)/openssl_help.cc
+	@echo "compiling openssl_help.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/openssl_help.o $(T)/openssl_help.cc
+
+$(O)/tpm2_support.o: $(T)/tpm2_support.cc $(T)/tpm2.pb.cc $(I)/certifier.pb.h
+	@echo "compiling tpm2_support.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/tpm2_support.o $(T)/tpm2_support.cc
+
+$(O)/tpm2.pb.o: $(T)/tpm2.pb.cc $(T)/tpm2.pb.h
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+

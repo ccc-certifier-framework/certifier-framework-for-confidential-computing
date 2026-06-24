@@ -96,6 +96,7 @@ name_size cipher_key_byte_name_size[] = {
 };
 
 name_size digest_byte_name_size[] = {
+    { Digest_method_sha1     , 20 },
     { Digest_method_sha256   , 32 },
     { Digest_method_sha_256  , 32 },
     { Digest_method_sha_384  , 48 },
@@ -741,6 +742,8 @@ bool certifier::utilities::digest_message(const char  *alg,
   return true;
 }
 
+const int aes_256_cbc_sha256_overhead = 64;
+
 bool aes_256_cbc_sha256_encrypt(byte *in,
                                 int   in_len,
                                 byte *key,
@@ -751,6 +754,13 @@ bool aes_256_cbc_sha256_encrypt(byte *in,
   int key_size = cipher_key_byte_size(Enc_method_aes_256_cbc_hmac_sha256);
   int mac_size = mac_output_byte_size(Enc_method_aes_256_cbc_hmac_sha256);
   int cipher_size = *out_size - blk_size;
+
+  if (*out_size < (in_len + aes_256_cbc_sha256_overhead)) {
+    printf("%s() error, line: %d, output buffer too small\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
 
   memset(out, 0, *out_size);
 
@@ -788,6 +798,13 @@ bool aes_256_cbc_sha256_decrypt(byte *in,
   int          plain_size = *out_size - blk_size - mac_size;
   int          msg_with_iv_size = in_len - mac_size;
   unsigned int hmac_size = mac_size;
+
+  if (*out_size < in_len) {
+    printf("%s() error, line: %d, output buffer too small\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
 
   byte hmac_out[hmac_size];
   HMAC(EVP_sha256(),
@@ -897,6 +914,8 @@ bool aes_256_cbc_sha384_decrypt(byte *in,
   return (memcmp(hmac_out, in + msg_with_iv_size, mac_size) == 0);
 }
 
+const int gcm_overhead = 28;
+
 // We use 128 bit tag
 bool aes_256_gcm_encrypt(byte *in,
                          int   in_len,
@@ -909,12 +928,19 @@ bool aes_256_gcm_encrypt(byte *in,
   int             ciphertext_len;
   int             blk_size = cipher_block_byte_size(Enc_method_aes_256);
   int             key_size = cipher_key_byte_size(Enc_method_aes_256);
+  int             iv_size = 12;
   int             tag_len = 0;
   byte            tag[16];
   int             aad_len = 0;
   byte           *aad = nullptr;
   bool            ret = true;
 
+  if (*out_size < (in_len + gcm_overhead)) {
+    printf("%s() error, line: %d, output buffer too small\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
   if (!(ctx = EVP_CIPHER_CTX_new())) {
     printf("%s() error, line: %d, EVP_CIPHER_CTX_new failed\n",
            __func__,
@@ -936,8 +962,7 @@ bool aes_256_gcm_encrypt(byte *in,
   }
 
   // set IV length
-  if (1
-      != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, blk_size, nullptr)) {
+  if (1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, iv_size, nullptr)) {
     printf("%s() error, line: %d, EVP_CIPHER_CTX_ctrl failed\n",
            __func__,
            __LINE__);
@@ -952,7 +977,7 @@ bool aes_256_gcm_encrypt(byte *in,
     goto done;
   }
 
-  memcpy(out, iv, blk_size);
+  memcpy(out, iv, iv_size);
 
   if (1 != EVP_EncryptUpdate(ctx, nullptr, &len, aad, aad_len)) {
     printf("%s() error, line: %d, EVP_EncryptUpdate failed\n",
@@ -961,14 +986,14 @@ bool aes_256_gcm_encrypt(byte *in,
     ret = false;
     goto done;
   }
-  if (1 != EVP_EncryptUpdate(ctx, out + blk_size, &len, in, in_len)) {
+  if (1 != EVP_EncryptUpdate(ctx, out + iv_size, &len, in, in_len)) {
     printf("%s() error, line: %d, EVP_EncryptUpdate failed\n",
            __func__,
            __LINE__);
     ret = false;
     goto done;
   }
-  ciphertext_len = len + blk_size;
+  ciphertext_len = len + iv_size;
 
   // Finalize
   if (1 != EVP_EncryptFinal_ex(ctx, out + len, &len)) {
@@ -980,8 +1005,7 @@ bool aes_256_gcm_encrypt(byte *in,
   }
   ciphertext_len += len;
 
-  tag_len = EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, blk_size, tag);
-  if (tag_len <= 0) {
+  if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, blk_size, tag) <= 0) {
     printf("%s() error, line: %d, EVP_CIPHER_CTX_ctrl failed\n",
            __func__,
            __LINE__);
@@ -1010,6 +1034,7 @@ bool aes_256_gcm_decrypt(byte *in,
   EVP_CIPHER_CTX *ctx = nullptr;
   int             blk_size = cipher_block_byte_size(Enc_method_aes_256);
   int             key_size = cipher_key_byte_size(Enc_method_aes_256);
+  int             iv_size = 12;
   byte           *iv = in;
   bool            ret = true;
   byte           *tag = in + in_len - blk_size;
@@ -1017,9 +1042,15 @@ bool aes_256_gcm_decrypt(byte *in,
   byte           *aad = nullptr;
   int             len;
   int             plaintext_len;
-  int             stream_len = in_len - 2 * blk_size;
+  int             stream_len = in_len - blk_size - iv_size;
   int             err = 0;
 
+  if (*out_size < in_len) {
+    printf("%s() error, line: %d, output buffer too small\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
   if (!(ctx = EVP_CIPHER_CTX_new())) {
     printf("%s() error, line: %d, EVP_CIPHER_CTX_new failed\n",
            __func__,
@@ -1033,7 +1064,7 @@ bool aes_256_gcm_decrypt(byte *in,
     ret = false;
     goto done;
   }
-  if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, blk_size, nullptr)) {
+  if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, iv_size, nullptr)) {
     printf("%s() error, line: %d, EVP_CIPHER_CTX_ctrl failed\n",
            __func__,
            __LINE__);
@@ -1055,7 +1086,7 @@ bool aes_256_gcm_decrypt(byte *in,
     ret = false;
     goto done;
   }
-  if (!EVP_DecryptUpdate(ctx, out, &len, in + blk_size, stream_len)) {
+  if (!EVP_DecryptUpdate(ctx, out, &len, in + iv_size, stream_len)) {
     printf("%s() error, line: %d, EVP_DecryptUpdate failed\n",
            __func__,
            __LINE__);
@@ -1113,7 +1144,7 @@ bool certifier::utilities::authenticated_encrypt(const char *alg_name,
   if (in_len <= 0)
     return true;
 
-  if (strcmp(alg_name, "aes-256-cbc-hmac-sha256") == 0) {
+  if (strcmp(alg_name, Enc_method_aes_256_cbc_hmac_sha256) == 0) {
     return aes_256_cbc_sha256_encrypt(in, in_len, key, iv, out, out_size);
   } else if (strcmp(alg_name, Enc_method_aes_256_cbc_hmac_sha384) == 0) {
     return aes_256_cbc_sha384_encrypt(in, in_len, key, iv, out, out_size);
@@ -2487,6 +2518,29 @@ bool same_key(const key_message &k1, const key_message &k2) {
   return true;
 }
 
+bool same_measurement_entity(const entity_message &m1,
+                             const entity_message &m2) {
+  if (m1.measurement().size() != m2.measurement().size())
+    return false;
+  if (memcmp((byte *)m1.measurement().data(),
+             (byte *)m2.measurement().data(),
+             m1.measurement().size())
+      != 0)
+    return false;
+  if (m1.has_registers() != m2.has_registers())
+    return false;
+  if (m1.has_registers()) {
+    if (m1.registers().size() != m2.registers().size())
+      return false;
+    if (memcmp((byte *)m1.registers().data(),
+               (byte *)m2.registers().data(),
+               m1.registers().size())
+        != 0)
+      return false;
+  }
+  return true;
+}
+
 bool same_measurement(const string &m1, const string &m2) {
   if (m1.size() != m2.size())
     return false;
@@ -2600,11 +2654,7 @@ bool same_entity(const entity_message &e1, const entity_message &e2) {
     return same_key(e1.key(), e2.key());
 
   if (e1.entity_type() == "measurement") {
-    string s1;
-    string s2;
-    s1.assign((char *)e1.measurement().data(), e1.measurement().size());
-    s2.assign((char *)e2.measurement().data(), e2.measurement().size());
-    return same_measurement(s1, s2);
+    return same_measurement_entity(e1, e2);
   }
 
   if (e1.entity_type() == "platform")
@@ -2647,6 +2697,17 @@ bool make_key_entity(const key_message &key, entity_message *ent) {
   key_message *k = new (key_message);
   k->CopyFrom(key);
   ent->set_allocated_key(k);
+  return true;
+}
+
+bool make_measurement_entity(const string   &measurement,
+                             const string   &config,
+                             entity_message *ent) {
+  ent->set_entity_type("measurement");
+  string *m = new string(measurement);
+  ent->set_allocated_measurement(m);
+  string *r = new string(config);
+  ent->set_allocated_registers(r);
   return true;
 }
 
@@ -2959,6 +3020,14 @@ void print_entity_descriptor(const entity_message &e) {
     printf("Measurement[");
     print_bytes((int)e.measurement().size(), (byte *)e.measurement().data());
     printf("] ");
+    if (e.has_registers() && e.registers().size() >= 1) {
+      byte *p = (byte *)e.registers().data();
+      printf("using (%d", p[0]);
+      for (int i = 1; i < (int)e.registers().size(); i++) {
+        printf(", %d", p[i]);
+      }
+      printf(")");
+    }
   } else if (e.entity_type() == "platform" && e.has_platform_ent()) {
     print_platform_descriptor(e.platform_ent());
   } else if (e.entity_type() == "environment" && e.has_environment_ent()) {
@@ -2992,7 +3061,9 @@ void print_claim(const claim_message &claim) {
   }
   printf("format: %s\n", claim.claim_format().c_str());
   if (claim.has_claim_descriptor()) {
-    printf("%s\n", claim.claim_descriptor().c_str());
+    if (claim.claim_descriptor() != "") {
+      printf("%s\n", claim.claim_descriptor().c_str());
+    }
   }
   if (claim.has_not_before()) {
     printf("not before: %s\n", claim.not_before().c_str());
@@ -3058,6 +3129,14 @@ void certifier::utilities::print_entity(const entity_message &em) {
     printf("Measurement[");
     print_bytes((int)em.measurement().size(), (byte *)em.measurement().data());
     printf("] ");
+    if (em.has_registers() && em.registers().size() >= 1) {
+      byte *p = (byte *)em.registers().data();
+      printf("using (%d", p[0]);
+      for (int i = 1; i < (int)em.registers().size(); i++) {
+        printf(", %d", p[i]);
+      }
+      printf(")\n");
+    }
   } else {
     return;
   }

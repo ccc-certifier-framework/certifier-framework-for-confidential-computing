@@ -1,0 +1,149 @@
+export XDG_CONFIG_HOME="/home/jlm/.config"
+echo $XDG_CONFIG_HOME
+
+-------------------------------------------------------------------------------
+
+OLD
+
+XDG_CONFIG_HOME="/home/jlm/.config"
+swtpm_setup --tpm2 --tpmstate ${XDG_CONFIG_HOME}/mytpm1 --create-ek-cert --create-platform-cert --lock-nvram
+echo $XDG_CONFIG_HOME
+/home/jlm/.config
+export TPM2TOOLS_TCTI="swtpm:port=2321"
+swtpm socket --tpmstate dir=<swtpm_path> --tpm2 --server type=tcp,port=2321 --ctrl type=tcp,port=2322 --flags not-need-init,startup-clear
+
+export XDG_CONFIG_HOME="/home/jlm/.config"
+sudo swtpm_setup --tpm2 --tpmstate ${XDG_CONFIG_HOME}/mytpm1 --create-ek-cert --create-platform-cert --lock-nvram
+sudo swtpm chardev -c /dev/vtpm --vtpm-proxy --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --ctrl type=tcp,port=2322
+
+sudo swtpm chardev --vtpm-proxy --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --ctrl type=unixio
+/usr/bin/echo "capability sys_admin," > /etc/apparmor.d/local/usr.bin.swtpm
+/usr/bin/echo "capability sys_admin," > /etc/apparmor.d/local/usr.bin.swtpm
+aa-enforce /usr/bin/swtpm
+
+modprobe tpm_vtpm_proxy
+swtpm chardev --vtpm-proxy --tpmstate dir=... --tpm2 ...
+
+mkdir -p /tmp/my_swtpm_dir
+swtpm_setup --tpm2 --tpmstate ${XDG_CONFIG_HOME}/mytpm1 --create-ek-cert --create-platform-cert --lock-nvram
+
+sudo apt update
+sudo apt install swtpm swtpm-tools apparmor -y
+
+---------------------------
+
+NEW
+
+To run the simulator and tests:
+
+sudo bash
+# You should use a full path name here, use the location you
+want the tpm simulator state files in:
+export XDG_CONFIG_HOME="/home/jlm/.config"
+if [[ ! -v XDG_CONFIG_HOME ]]; then
+  echo "XDG_CONFIG_HOME not defined"
+fi
+echo $XDG_CONFIG_HOME
+
+if [[ ! -v XDG_CONFIG_HOME ]]; then
+  echo "XDG_CONFIG_HOME not defined"
+  exit
+fi
+if [[ ! -e $XDG_CONFIG_HOME ]]; then
+  echo "$XDG_CONFIG_HOME does not exist"
+  exit
+fi
+
+pushd $XDG_CONFIG_HOME/mytpm1
+  rm ./*
+  rm ./.lock
+popd
+
+swtpm_setup --tpmstate ${XDG_CONFIG_HOME}/mytpm1 --create-ek-cert --create-platform-cert --tpm2 --write-ek-cert-files . --create-platform-cert .
+
+We want a character device interface to the tpm.  There are two options:
+
+If you kernel accepts the first command below, use:
+  modprobe tpm_vtpm_proxy
+  swtpm chardev --vtpm-proxy --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --ctrl type=tcp,port=2322 --flags not-need-init,startup-clear &
+
+Otherwise:
+  swtpm socket --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1--tpm2 --ctrl type=tcp,port=2322 --server type=tcp,port=2321 --flags not-need-init,startup-clear --log level=20 &
+  socat PTY,link=/dev/tpmrm1,raw,echo=0 TCP4:127.0.0.1:2321 &
+
+
+If you use the tcp utility
+  swtpm socket --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --server type=tcp,port=2321 --ctrl type=tcp,port=2322 --flags not-need-init,startup-clear &
+
+The swtpm flag --flags not-need-init allows a TPM 2.0 emulator to
+accept commands immediately upon startup without requiring an explicit
+INIT signal via swtpm_ioctl
+
+-------------------------------------------------------------
+
+./tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
+./tpm2_test.exe --operation=MiscTest --tpm_device=/dev/tpmrm1
+./tpm2_test.exe --operation=GetCert --tpm_device=/dev/tpmrm1
+./tpm2_test.exe --operation=EndorsementTest --tpm_device=/dev/tpmrm1
+./tpm2_test.exe --operation=SealTest --tpm_device=/dev/tpmrm1
+./tpm2_test.exe --operation=QuoteTest --tpm_device=/dev/tpmrm1
+clean the simulator and restart to get the right measurement
+./tpm2_test.exe --operation=CertifierTest --tpm_device=/dev/tpmrm1
+
+--------------------------------------------------------------------------------
+
+To decode error messages:
+  tpm2_rc_decode 0x921
+    tpm:warn(2.0): authorizations for objects subject to DA protection are not allowed at this time because the TPM is in DA lockout mode
+  tpm2_rc_decode 0x905
+    tpm:warn(2.0): out of session handles
+  tpm2_rc_decode 0x902
+    tpm:warn(2.0): out of memory for object contexts
+  tpm2_rc_decode 0x1c4
+     tpm:parameter(1):value is out of range or is not correct for the context
+  tpm2_rc_decode 0x01df
+     tpm:parameter(1):integrity check failed
+  tpm2_rc_decode 0x2c4
+     tpm:parameter(2):value is out of range or is not correct for the context
+  tpm2_rc_decode 0x14a
+     tpm:error(2.0): an NV Index is used before being initialized or
+     the state saved by TPM2_ShutdownSTATE could not be restored
+
+  tpm2_rc_decode 0x284
+  tpm2_rc_decode 0x1c4
+  tpm2_rc_decode 0x1cb
+  tpm2_rc_decode 0x18b
+   tpm:handle(1):the handle is not correct for the use
+  tpm2_rc_decode 0x2d5
+   tpm:parameter(2):structure is the wrong size
+  tpm2_rc_decode 14c
+    tpm:error(1.2): unknown version 1.2 error code
+  tpm2_rc_decode 149
+  tpm2_rc_decode 0x984
+    tpm:session(1):value is out of range or is not correct for the context
+
+----------------------------
+Old tests
+
+
+./tpm2_util.exe --tpm_device="/dev/tpm1" --command=GetRandom --numbytes=32
+./tpm2_util.exe --tpm_device="/dev/tpm1" --pcr_num=7 --command=EndorsementTest
+./tpm2_util.exe --tpm_device="/dev/tpm1" --command=ContextTest
+./tpm2_util.exe --tpm_device="/dev/tpm1" --pcr_num=7 --command=SealTest
+.d/tpm2_util.exe --tpm_device="/dev/tpm1" --command=KeyTest
+./tpm2_util.exe --tpm_device="/dev/tpm1" --command=NvTest
+./tpm2_util.exe --tpm_device="/dev/tpm1" --pcr_num=7 --command=QuoteTest
+./tpm2_test.exe --operation=NvTest --tpm_device=/dev/tpm1
+
+--------------------------------------------------------------------------------
+
+Tpm Cert chain test
+
+after ./tpm2_test.exe --operation=GetCert --tpm_device=/dev/tpmrm1
+
+openssl x509 -inform der -in ek-rsa2048.crt -outform pem -out ekcert.pem
+openssl verify -verbose -CAfile  /var/lib/swtpm-localca/swtpm-localca-rootca-cert.pem -untrusted /var/lib/swtpm-localca/issuercert.pem ekcert.pem
+
+
+--------------------------------------------------------------------------------
+

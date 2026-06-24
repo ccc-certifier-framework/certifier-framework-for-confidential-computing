@@ -215,6 +215,9 @@ make dummy
 cd $CERTIFIER_PROTOTYPE/certifier_service/graminelib
 make dummy
 
+cd $CERTIFIER_PROTOTYPE/certifier_service/tpmlib
+make dummy
+
 cd $CERTIFIER_PROTOTYPE/certifier_service/isletlib
 make
 

@@ -31,9 +31,12 @@ INCLUDE= -I. -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/
 CF_UTILITY_SRC= $(CERTIFIER_ROOT)/vm_model_tools/src
 SE= $(S)/simulated-enclave
 AE= $(S)/application-enclave
+T= $(CERTIFIER_ROOT)/src/tpm2
 
 CF_NEW_API = 1
 ENABLE_SEV=1
+TPM=1
+DUMMY_SEV=1
 
 # Newer versions of protobuf require C++17 and dependancies on additional libraries.
 # When this happens, everything must be compiles with C++17 and the linking is a
@@ -42,20 +45,29 @@ ENABLE_SEV=1
 NEWPROTOBUF=1
 
 ifndef NEWPROTOBUF
-CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
-CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations -Wno-error
+CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations -Wno-error=strict-aliasing
 else
-CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
-CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations -Wno-error
+CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations -Wno-error=strict-aliasing
 endif
-CFLAGS=$(CFLAGS_NOERROR) -Werror -fPIC
+CFLAGS=$(CFLAGS_NOERROR) -fPIC
 
-#ifdef ENABLE_SEV
+ifdef ENABLE_SEV
 CFLAGS  += -D SEV_SNP -D SEV_DUMMY_GUEST
-#endif
+endif
+
+ifdef TPM
+CFLAGS  += -D TPM_CERTIFIER
+INCLUDE += -I$(T)
+endif
 
 ifdef CF_NEW_API
 CFLAGS += -DNEW_API
+endif
+
+ifdef DUMMY_SEV
+CFLAGS += -DSEV_DUMMY_GUEST
 endif
 
 
@@ -76,13 +88,23 @@ endif
 #  if you link in the certifier library certifier.a.
 #
 ifdef CF_NEW_API
+
 dobj = $(O)/cf_utility.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
        $(O)/support.o $(O)/simulated_enclave.o $(O)/cc_helpers.o \
        $(O)/application_enclave.o $(O)/cc_useful.o $(O)/cryptstore.pb.o $(O)/cf_support.o
+tpm_obj = $(O)/tpm2.pb.o $(O)/tpm2_lib.o $(O)/openssl_help.o \
+	$(O)/convert.o $(O)/tpm2_support.o $(O)/first_pass.o
+
+ifdef TPM
+dobj += $(tpm_obj)
+endif
+
 else
+
 dobj = $(O)/cf_utility_old_api.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
        $(O)/support.o $(O)/simulated_enclave.o $(O)/cc_helpers.o \
        $(O)/application_enclave.o $(O)/cc_useful.o $(O)/cryptstore.pb.o $(O)/cf_support.o
+
 endif
 
 sobj = $(O)/cf_support_test.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
@@ -97,6 +119,11 @@ kcobj = $(O)/cf_key_client.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier
        $(O)/support.o $(O)/simulated_enclave.o $(O)/cc_helpers.o \
        $(O)/application_enclave.o $(O)/cc_useful.o $(O)/cryptstore.pb.o $(O)/cf_support.o
 
+ifdef TPM
+ksobj += $(tpm_obj)
+kcobj += $(tpm_obj)
+sobj += $(tpm_obj)
+endif
 ifdef ENABLE_SEV
 dobj += $(O)/sev_support.o $(O)/sev_report.o $(O)/sev_cert_table.o
 sobj += $(O)/sev_support.o $(O)/sev_report.o $(O)/sev_cert_table.o
@@ -108,17 +135,20 @@ endif
 all:	cf_utility.exe cf_support_test.exe cf_key_client.exe cf_key_server.exe
 clean:
 	@echo "removing generated files"
-	rm -rf $(US)/certifier.pb.cc $(US)/certifier.pb.h $(I)/certifier.pb.h
+	rm -rf $(US)/certifier.pb.cc $(US)/certifier.pb.h $(I)/certifier.pb.h || true
 	@echo "removing object files"
-	rm -rf $(O)/*.o
+	rm -rf $(O)/*.o || true
 	@echo "removing executable file"
-	rm -rf $(EXE_DIR)/cf_utility.exe
+	rm -rf $(EXE_DIR)/cf_utility.exe || true
 	@echo "removing executable file"
-	rm -rf $(EXE_DIR)/cf_support_test.exe
+	rm -rf $(EXE_DIR)/cf_support_test.exe || true
 	@echo "removing executable file"
-	rm -rf $(EXE_DIR)/cf_key_client.exe
+	rm -rf $(EXE_DIR)/cf_key_client.exe || true
 	@echo "removing executable file"
-	rm -rf $(EXE_DIR)/cf_key_server.exe
+	rm -rf $(EXE_DIR)/cf_key_server.exe || true
+	@echo "removing proto files"
+	rm -rf $(CF_UTILITY_SRC)/cryptstore.pb.h
+	rm -rf $(CF_UTILITY_SRC)/cryptstore.pb.cc
 
 $(EXE_DIR)/cf_utility.exe: $(dobj)
 	@echo "\nlinking executable $@"
@@ -136,8 +166,7 @@ $(EXE_DIR)/cf_key_server.exe: $(ksobj)
 	@echo "\nlinking executable $@"
 	$(LINK) $(ksobj) $(LDFLAGS) -o $(@D)/$@
 
-$(I)/certifier.pb.h: $(US)/certifier.pb.cc
-$(US)/certifier.pb.cc: $(CP)/certifier.proto
+$(US)/certifier.pb.cc $(I)/certifier.pb.h: $(CP)/certifier.proto
 	$(PROTO) --proto_path=$(<D) --cpp_out=$(@D) $<
 	mv $(@D)/certifier.pb.h $(I)
 
@@ -220,4 +249,34 @@ $(O)/sev_report.o: $(S)/sev-snp/sev_report.cc
 $(O)/sev_cert_table.o: $(S)/sev-snp/sev_cert_table.cc
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(O)/sev_cert_table.o -c $(S)/sev-snp/sev_cert_table.cc
+endif
+
+ifdef TPM
+$(O)/tpm2_lib.o: $(T)/tpm2_lib.cc
+	@echo "compiling tpm2_lib.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/tpm2_lib.o $(T)/tpm2_lib.cc
+
+$(T)/tpm2.pb.cc $(T)/tpm2.pb.h: $(T)/tpm2.proto
+	@echo "creating protobuf files"
+	$(PROTO) -I=$(T) --cpp_out=$(T) $(T)/tpm2.proto
+
+$(O)/tpm2.pb.o: $(T)/tpm2.pb.cc $(T)/tpm2.pb.h
+	@echo "compiling $(T)/tpm2.pb.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/tpm2.pb.o $(T)/tpm2.pb.cc
+
+$(O)/convert.o: $(T)/convert.cc
+	@echo "compiling convert.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/convert.o $(T)/convert.cc
+
+$(O)/openssl_help.o: $(T)/openssl_help.cc
+	@echo "compiling openssl_help.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/openssl_help.o $(T)/openssl_help.cc
+
+$(O)/tpm2_support.o: $(T)/tpm2_support.cc $(US)/certifier.pb.cc $(T)/tpm2.pb.cc
+	@echo "compiling tpm2_support.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/tpm2_support.o $(T)/tpm2_support.cc
+
+$(O)/first_pass.o: $(CF_UTILITY_SRC)/first_pass.cc $(I)/certifier.h $(US)/certifier.pb.cc $(CF_UTILITY_SRC)/cryptstore.pb.h
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 endif

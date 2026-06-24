@@ -42,7 +42,7 @@ CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
 S= $(SRC_DIR)
 O= $(OBJ_DIR)
 I= $(INC_DIR)
-INCLUDE= -I$(INC_DIR) -I/usr/local/opt/openssl@1.1/include/ -I$(CERT_SRC)/sev-snp/
+INCLUDE= -I$(INC_DIR) -I/usr/local/opt/openssl@1.1/include/ -I$(CERT_SRC)/sev-snp/ -I$(CERT_SRC)/tpm2
 SE = $(CERT_SRC)/simulated-enclave
 AE=$(CERT_SRC)/application-enclave
 
@@ -96,6 +96,8 @@ package_claims_obj = $(O)/package_claims.o $(common_objs)
 
 print_packaged_claims_obj = $(O)/print_packaged_claims.o $(common_objs)
 
+make_der_cert_chain_obj= $(O)/make_der_cert_chain.o $(common_objs)
+
 embed_policy_key_obj=$(O)/embed_policy_key.o
 
 make_platform_obj = $(O)/make_platform.o $(common_objs)
@@ -129,7 +131,8 @@ all:	$(EXE_DIR)/measurement_utility.exe \
 	    $(EXE_DIR)/simulated_sev_key_generation.exe \
 	    $(EXE_DIR)/print_vse_clause.exe \
 	    $(EXE_DIR)/print_signed_claim.exe \
-	    $(EXE_DIR)/print_packaged_claims.exe
+	    $(EXE_DIR)/print_packaged_claims.exe \
+	    $(EXE_DIR)/make_der_cert_chain.exe
 
 clean:
 	@echo "removing generated files"
@@ -178,6 +181,10 @@ $(O)/application_enclave.o: $(AE)/application_enclave.cc $(INC_DIR)/application_
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(O)/measurement_init.o: $(S)/measurement_init.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(O)/make_der_cert_chain.o: $(S)/make_der_cert_chain.cc
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
@@ -244,6 +251,10 @@ $(EXE_DIR)/print_packaged_claims.exe: $(print_packaged_claims_obj)
 print_packaged_claims.o: $(S)/print_packaged_claims.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(EXE_DIR)/make_der_cert_chain.exe: $(make_der_cert_chain_obj)
+	@echo "\nlinking executable $@"
+	$(LINK) -o $(EXE_DIR)/make_der_cert_chain.exe $(make_der_cert_chain_obj) $(LDFLAGS)
 
 $(EXE_DIR)/embed_policy_key.exe: $(embed_policy_key_obj)
 	@echo "\nlinking executable $@"

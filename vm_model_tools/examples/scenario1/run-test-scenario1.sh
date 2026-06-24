@@ -37,10 +37,7 @@ source ./arg-processing.inc
 # 	The $EXAMPLE_DIR/cf_data directory contains all the application data for
 # 	the application.
 
-
-
-# ------------------------------------------------------------------------------------------
-
+# -----------------------------------------------------------------------------------
 
 function do-fresh() {
   echo " "
@@ -70,22 +67,27 @@ function do-run-real() {
 	echo " "
 }
 
+# -----------------------------------------------------------------------------------
+
 echo "Processing arguments"
 process-args
+print-variables
 echo "Arguments processed"
 
 ALLARGS=""
 if [[ $TEST_TYPE = "simulated" ]]; then
-	ALLSIMARG1="-tt simulated -pn scenario1-test -dn dom0"
-	ALLSIMARG2="-clean 1 -loud 1 -dd ./ -ccf $COMPILE_CF -bss $BUILD_SEV_SIMULATOR"
+	ALLSIMARG1="-tt $TEST_TYPE -pn scenario1-test -dn dom0 -clean $CLEAN -loud $VERBOSE -just_compile $COMPILE_ONLY"
+	ALLSIMARG2="-dd $DATA_DIR -ccf $COMPILE_CF -bss $BUILD_SEV_SIMULATOR -pkn $POLICY_KEY_FILE_NAME"
 	ALLSIMARG3="-pkn policy_key_file -cfn policy_cert_file -psn policy_store -csn cryptstore"
-	ALLSIMARG4="-pfn policy.bin -psa localhost -ksa localhost"
-	ALLSIMARG5="-vmn pauls_vm -et1 simulated-enclave -et2 sev-enclave"
-	ALLSIMARG6="-psn1 $DEPLOYMENT_POLICY_STORE_NAME $DEPLOYED_POLICY_STORE_NAME -csn1 $DEPLOYMENT_CRYPTSTORE_NAME -csn2 $DEPLOYED_CRYPTSTORE_NAME"
+	ALLSIMARG4="-pfn $POLICY_FILE_NAME -psa $POLICY_SERVER_ADDRESS -ksa $KEY_SERVER_ADDRESS"
+	ALLSIMARG5="-vmn $VM_NAME -et1 $DEPLOYMENT_ENCLAVE_TYPE -et2 $DEPLOYED_ENCLAVE_TYPE"
+	ALLSIMARG6="-psn1 $DEPLOYMENT_POLICY_STORE_NAME -csn1 $DEPLOYMENT_CRYPTSTORE_NAME -csn2 $DEPLOYED_CRYPTSTORE_NAME"
+	ALLSIMARG7="-npcr $NUM_PCR -pcrs $PCRSTR -tpm $TPM_DEVICE -seal $SEAL_STORE -quote $QUOTE_STORE -quote_cert $QUOTE_CERT_FILE"
+	ALLSIMARG8="-end_cert $END_CERT_FILE -end_chain $END_CERT_CHAIN_FILE -act_host $ACTIVATE_HOST -act_port $ACTIVATE_PORT"
 
-	ALLARGS="$ALLSIMARG1 $ALLSIMARG2 $ALLSIMARG3 $ALLSIMARG4 $ALLSIMARG5 ALLSIMARG6"
+	ALLARGS="$ALLSIMARG1 $ALLSIMARG2 $ALLSIMARG3 $ALLSIMARG4 $ALLSIMARG5 $ALLSIMARG6 $ALLSIMARG7 $ALLSIMARG8"
 else
-	echo ""real" sev test not working yet"
+	echo "\"real\" sev test not working yet"
 	exit
 fi
 
@@ -93,31 +95,109 @@ echo ""
 echo "Running consolidated test with $ALLARGS"
 echo ""
 
+if [[ ! -e "$EXAMPLE_DIR/provisioning" ]] ; then
+  mkdir $EXAMPLE_DIR/provisioning
+fi
+if [[ ! -e "$EXAMPLE_DIR/service" ]] ; then
+  mkdir $EXAMPLE_DIR/service
+fi
+if [[ ! -e "$EXAMPLE_DIR/cf_data" ]] ; then
+  mkdir $EXAMPLE_DIR/cf_data
+fi
+
 if [[ $COMPILE_CF -eq 1 ]]; then
+	echo ""
+	echo "build-certifier.sh"
+	echo ""
 	./build-certifier.sh $ALLARGS		# working
 fi
+
+if [[ $COMPILE_ONLY -eq 1 ]]; then
+	echo "Just compiling, you can now call with -ccf 0"
+	exit
+fi
+
+echo ""
+echo "build-sev-sim.sh"
 ./build-sev-sim.sh $ALLARGS			# working
 if [[ $PROVISION_KEYS -eq 1 ]]; then
+	echo ""
+	echo "provision-keys.sh"
+	echo ""
 	./provision-keys.sh $ALLARGS		# working
 fi
+
+echo ""
+echo "build-vm.sh"
 ./build-vm.sh $ALLARGS				# working
+
 TA="$ALLARGS -op measure"
+
+echo ""
+echo "measure-programs.sh"
+echo ""
 ./measure-programs.sh $TA			# working
+
+echo ""
+echo "measure-vm-programs.sh"
 ./measure-vm-programs.sh $TA			# working
+
+if [[ $DEPLOYED_ENCLAVE_TYPE == "tpm-enclave" ]]; then
+  echo ""
+  echo "tpm enclave"
+  ./build-activation-policy.sh $ALLARGS
+  cp ./provisioning/$END_CERT_CHAIN_FILE ./cf_data
+  cp ./provisioning/$END_CERT_CHAIN_FILE .
+  ./run-first-pass.sh $ALLARGS
+  cp $QUOTE_CERT_FILE ./cf_data
+fi
+
+echo ""
+echo "build-policy.sh"
 ./build-policy.sh $ALLARGS			# working
+
+echo ""
+echo "copy-files.sh"
 ./copy-files.sh $ALLARGS			# working
+
+echo ""
+echo "copy-vm-files.sh"
 ./copy-vm-files.sh $ALLARGS			# working
+
+echo ""
+echo "run-policy-server.sh"
 ./run-policy-server.sh $ALLARGS			# working
+
+echo ""
+echo "certify-deployment-machine.sh"
 TA="$ALLARGS -op run"
 ./certify-deployment-machine.sh $TA		# working
-#     The following command is actually redundant in the simulated
-#         environment
+# The following command is actually redundant in the simulated
+#   environment
+
+echo ""
+echo "certify-deployed-machine.sh"
 ./certify-deployed-machine.sh $TA		# working
+
+echo ""
+echo "run-deployment-keyserver.sh"
 ./run-deployment-keyserver.sh $ALLARGS         	# working
+
+echo ""
+echo "generate-and-store-secret-for-deployment.sh"
 ./generate-and-store-secret-for-deployment.sh $ALLARGS # working
+
+echo ""
+echo "obtain-application-secrets.sh"
 ./obtain-application-secrets.sh $ALLARGS	#working
+
+echo ""
+echo "cleanup.sh"
 ./cleanup.sh $ALLARGS				# working
 
 echo ""
 echo "Consolidated test complete"
 echo ""
+
+# --------------------------------------------------------------------------------
+
