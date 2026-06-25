@@ -152,11 +152,10 @@ function provision-keys() {
 
 function cleanup-stale-procs() {
   echo " "
-  echo "cleanup-stale-procs"
-
   # Find and kill simpleserver processes that may be running.
   echo " "
   set +e
+
   certifier_pid=$(ps -ef | grep -E "simpleserver" | grep -v -w -E 'grep|vi|vim' | awk '{print $2}')
   set -e
   if [[ $certifier_pid != "" ]] ; then
@@ -165,31 +164,84 @@ function cleanup-stale-procs() {
   else
     echo "no certifier_service running"
   fi
-
-  echo "cleanup-stale-procs done"
 }
 
 function clear-keys() {
-  echo "clear-keys"
+  pushd $TEST_DIR
+    if [[ ! -e "./service" ]] ; then
+      rm ./service/*
+    fi
+    if [[ ! -e "./cf_data" ]] ; then
+      rm ./cf_data/*
+    fi
+  popd
 }
 
 function clean-run-time-files() {
-  echo "clean-run-time-files"
+  pushd $TEST_DIR
+    # remove policy store and key store
+    if [[ ! -e "./service" ]] ; then
+      rm ./service/*
+    fi
+    if [[ ! -e "./cf_data" ]] ; then
+      rm ./cf_data/*
+    fi
+  popd
 }
 
 function copy-files() {
   echo "copy-files"
   make-directories
+  exit
+
+  pushd $TEST_DIR
+     if [[ ! -e "./provisioning" ]] ; then
+            mkdir ./provisioning
+    fi
+    if [[ ! -e "./service" ]] ; then
+            mkdir ./service
+    fi
+    if [[ ! -e "./cf_data" ]] ; then
+            mkdir ./cf_data
+    fi
+
+    cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME policy.bin ./service
+    cp -p $POLICY_CERT_FILE_NAME ./cf_data
+
+    if [[ -f cf_utility.measurement ]]; then
+        cp -p cf_utility.measurement ./cf_data
+    fi
+    if [[ -f platform_attest_endorsement.bin ]]; then
+        cp -p platform_key_file.bin attest_key_file.bin \
+              platform_attest_endorsement.bin ./cf_data
+    fi
+
+    $CERTIFIER_ROOT/utilities/combine_policy_certs.exe \
+          --init=true \
+          --new_cert_file=$POLICY_CERT_FILE_NAME \
+          --output=my_certs
+  popd
 }
 
 function measure-program() {
-  echo "measure-program"
+  if [[ ! -e "$TEST_DIR/provisioning" ]] ; then
+    mkdir $TEST_DIR/provisioning
+  fi
+
+  pushd $TEST_DIR/provisioning
+    $CERTIFIER_ROOT/utilities/measurement_utility.exe \
+       --type=hash \
+       --input=$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
+       --output=$TEST_DIR/provisioning/cf_utility.measurement
+  popd
 }
 
 function build-policy() {
   echo "build-policy"
   make-directories
   exit
+
+  measure-program
 
   COMBINED_STATEMENTS=""
 
@@ -268,6 +320,7 @@ function build-policy() {
           --verb="says" \
           --clause=tpm_ts2.bin \
           --output=tpm_vse_policy2.bin
+
 
       $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
           --vse_file=tpm_vse_policy2.bin \
