@@ -23,25 +23,6 @@ fi
 #echo ""
 #echo "Starting"
 
-# Variables to find
-#       Variable NAME                           Flag            Values
-#       SRC_DIR                                 -sd             source directory
-#       TEST_DIR                                -td             test directory
-#       DOMAIN_NAME                             -dn             name
-#       ENCLAVE_TYPE                            -et             "simulated-enclave"
-#       COMPILE_UTIL                            -cu             1 or 0
-#
-#       POLICY_KEY_FILE_NAME                    -pkn            name
-#       POLICY_CERT_FILE_NAME                   -cfn            name
-#       POLICY_STORE_NAME                       -psn            name
-#       CRYPTSTORE_NAME                         -csn            name
-#       SYMMETRIC_ENCRYPTION_ALGORITHM          -sea            alg name (see certifier)
-#       ASYMMETRIC_ENCRYPTION_ALGORITHM         -aen            alg name (see certifier)
-#       POLICY_FILE_NAME                        -pfn            name
-#       POLICY_SERVER_ADDRESS                   -psa            ip address or localhost
-#       POLICY_SERVER_PORT                      -psp            port number
-
-
 function print-options() {
 
         echo ""
@@ -59,15 +40,17 @@ function print-options() {
 	echo "Compile certifier utilities flag: -cu"
 	echo "Compile program flag: -cp"
         echo ""
+	echo "Run gtests flag: -rgt"
 	echo "Run test flag: -rt"
+	echo "Recertify flag: -recertify"
 	echo "Provision keys flag: -pk"
+        echo ""
 	echo "Policy key file flag: -pkn"
 	echo "Policy cert file flag: -cfn"
 	echo "Cryptstore name flag:  -csn"
 	echo "Policy file name flag:  -pfn"
 	echo "Policy server IP flag:  -psa"
 	echo "Policy port: flag -psp"
-	echo "Cryptstore name flag:  -csn"
         echo ""
 	echo "Symmetric algorithm flag: -sea"
 	echo "Asymmetric algorithm flag: -aen"
@@ -85,9 +68,11 @@ ENCLAVE_TYPE="simulated-enclave"
 PROVISION_KEYS=1
 COMPILE_UTIL=1
 COMPILE_PROGRAM=1
+RUN_GTESTS=1
 RUN_TEST=1
 VERBOSE=1
 CLEAN=1
+RECERTIFY=1
 POLICY_KEY_FILE_NAME="policy_key_file"
 POLICY_CERT_FILE_NAME="policy_cert_file"
 POLICY_FILE_NAME="policy.bin"
@@ -114,13 +99,16 @@ function print-variables() {
 	echo "Data directory: $DATA_DIR"
 	echo "Domain Name: $DOMAIN_NAME"
 	echo "Enclave type: $ENCLAVE_TYPE"
-	echo "Run test: $RUN_TEST"
         echo ""
-	echo "Provision keys: $PROVISION_KEYS"
 	echo "Compile certifier utilities flag: $COMPILE_UTIL"
 	echo "Compile program flag: $COMPILE_PROGRAM"
 	echo "Clean flag: $CLEAN"
 	echo "Loud flag: $VERBOSE"
+        echo ""
+	echo "Run gtests: $RUN_GTESTS"
+	echo "Run tests: $RUN_TEST"
+	echo "Recertify: $RECERTIFY"
+	echo "Provision keys: $PROVISION_KEYS"
         echo ""
 	echo "Policy key file: $POLICY_KEY_FILE_NAME"
 	echo "Policy cert file: $POLICY_CERT_FILE_NAME"
@@ -166,6 +154,9 @@ function process-args() {
                 if [[ ${array[i]} = "-pk" ]]; then
                         PROVISION_KEYS="${array[i+1]}"
                 fi
+                if [[ ${array[i]} = "-recertify" ]]; then
+                        RECERTIFY="${array[i+1]}"
+                fi
                 if [[ ${array[i]} = "-psn" ]]; then
                         POLICY_STORE_NAME="${array[i+1]}"
                 fi
@@ -198,6 +189,9 @@ function process-args() {
                 fi
                 if [[ ${array[i]} = "-rt" ]]; then
                         RUN_TEST="${array[i+1]}"
+                fi
+                if [[ ${array[i]} = "-rgt" ]]; then
+                        RUN_GTESTS="${array[i+1]}"
                 fi
         done
 }

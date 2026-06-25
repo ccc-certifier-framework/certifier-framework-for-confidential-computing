@@ -169,22 +169,201 @@ function cleanup-stale-procs() {
   echo "cleanup-stale-procs done"
 }
 
+function clear-keys() {
+  echo "clear-keys"
+}
+
+function clean-run-time-files() {
+  echo "clean-run-time-files"
+}
+
+function copy-files() {
+  echo "copy-files"
+  make-directories
+}
+
+function measure-program() {
+  echo "measure-program"
+}
+
+function build-policy() {
+  echo "build-policy"
+  make-directories
+  exit
+
+  COMBINED_STATEMENTS=""
+
+  pushd $TEST_DIR/provisioning 
+    if [[ $ENCLAVE_TYPE = "simulated-enclave" ]]; then
+      $CERTIFIER_ROOT/utilities/measurement_utility.exe \
+        --type=hash \
+        --input=$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
+        --output=cf_utility.measurement
+  
+      $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
+        --key_subject="platform_key_file.bin" \
+        --verb="is-trusted-for-attestation" \
+        --output=ts1.bin
+
+      $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
+        --key_subject=$POLICY_KEY_FILE_NAME \
+        --verb="says" \
+        --clause=ts1.bin \
+        --output=vse_policy1.bin
+
+      $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
+        --vse_file=vse_policy1.bin \
+        --duration=9000 \
+        --private_key_file=$POLICY_KEY_FILE_NAME \
+        --output=signed_claim_1.bin
+
+      $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
+        --measurement_subject="cf_utility.measurement" \
+        --verb="is-trusted" \
+        --output=ts2.bin
+
+      $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
+        --key_subject=$POLICY_KEY_FILE_NAME \
+        --verb="says" \
+        --clause=ts2.bin \
+        --output=vse_policy2.bin
+
+      $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
+        --vse_file=vse_policy2.bin  \
+        --duration=9000  \
+        --private_key_file=$POLICY_KEY_FILE_NAME \
+        --output=signed_claim_2.bin
+
+      $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
+        --key_subject=attest_key_file.bin \
+        --verb="is-trusted-for-attestation" \
+        --output=tsc1.bin
+
+      $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
+        --key_subject=platform_key_file.bin \
+        --verb="says" \
+        --clause=tsc1.bin \
+        --output=vse_policy3.bin
+
+      $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
+        --vse_file=vse_policy3.bin \
+        --duration=9000 \
+        --private_key_file=platform_key_file.bin \
+        --output=platform_attest_endorsement.bin
+
+      COMBINED_STATEMENTS="signed_claim_1.bin,signed_claim_2.bin"
+    fi
+
+    if [[ $ENCLAVE_TYPE = "tpm-enclave" ]]; then
+
+      $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
+         --config="$PCRSTR" \
+         --key_subject="" \
+         --measurement_subject=tpm_cf_utility.measurement \
+         --verb="is-trusted" \
+          --output=tpm_ts2.bin
+
+      $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
+          --key_subject=$POLICY_KEY_FILE_NAME \
+          --verb="says" \
+          --clause=tpm_ts2.bin \
+          --output=tpm_vse_policy2.bin
+
+      $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
+          --vse_file=tpm_vse_policy2.bin \
+          --duration=9000 \
+          --private_key_file=$POLICY_KEY_FILE_NAME \
+          --output=tpm_signed_claim_2.bin
+
+      COMBINED_STATEMENTS="$COMBINED_STATEMENTS,tpm_signed_claim_2.bin"
+    fi
+
+    echo ""
+    echo "Final policy"
+    echo ""
+    $CERTIFIER_ROOT/utilities/print_packaged_claims.exe \
+      --input=$POLICY_FILE_NAME
+  popd
+}
+
 function certify-programs() {
   echo "certify-programs"
+  make-directories
 }
+
+# cf_utility.exe
+#    --cf_utility_help=false
+#    --init_trust=false
+#    --reinit_trust=false
+#    --generate_symmetric_key=false
+#    --generate_public_key=false
+#    --get_item=false
+#    --put_item=false
+#    --print_cryptstore=true
+
+#    --enclave_type="sev-enclave"
+#    --data_dir=./cf_data
+#    --policy_domain_name=datica_file_share_1
+#    --policy_key_file=policy_cert_file.policy_domain_name
+#    --policy_store_filename=MUST-SPECIFY-IF-NEEDED
+#    --encrypted_cryptstore_filename=MUST-SPECIFY
+#    --keyname="store_encryption_key_1"
+#    --symmetric_algorithm=aes-256-gcm
+#    --public_key_algorithm=rsa_2048
+
+#    --tag=MUST-SPECIFY-IF-NEEDED
+#    --entry_version=MUST-SPECIFY-IF-NEEDED
+#    --type=MUST-SPECIFY-IF-NEEDED
+
+#    --certifier_service_URL=MUST-BE-SPECIFIED-IF-NEEDED
+#    --service_port=port-for-certifier-service, MUST-BE-SPECIFIED-IF-NEEDED
+
+#    --output_format=key-message-serialized-protobuf
+#    --input_format=key-message-serialized-protobuf
+#    --input_file=in_1
+#    --output_file=out_1
 
 function run-tests() {
   echo "run tests"
+
+  pushd TEST_DIR
+    # Check help
+    $SRC_DIR/cf_utility.exe --cf_utility_help=true
+
+    # make symmetric key
+    # store symmetric key
+    # retrieve symmetric key
+
+    # make asymmetric key
+    # store asymmetric key
+    # retrieve asymmetric key
+    
+    # print cryptstore
+  popd
+}
+
+function run-support-test() {
+  pushd $SRC_DIR
+    if [[ $VERBOSE -eq 1 ]]; then
+    ./cf_support_test.exe --print_all=true
+    else
+    ./cf_support_test.exe
+    fi
+  popd
 }
 
 if [[ $VERBOSE -eq 1 ]]; then
   print-variables
 fi
-if [[ $COMPILE_UTIL -eq 1 ]]; then
-  compile-certifier-utilities
-fi
 if [[ $COMPILE_PROGRAM -eq 1 ]]; then
   compile-program
+fi
+if [[ $RUN_GTESTS -eq 1 ]]; then
+  run-support-test
+fi
+exit
+if [[ $COMPILE_UTIL -eq 1 ]]; then
+  compile-certifier-utilities
 fi
 if [[ $PROVISION_KEYS -eq 1 ]]; then
   provision-keys
