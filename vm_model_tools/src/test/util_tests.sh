@@ -339,57 +339,235 @@ function build-policy() {
   popd
 }
 
+function run-policy-server() {
+  exit
+
+  if [[ $ENCLAVE_TYPE != "simulated-enclave" ]] ; then
+
+   export LD_LIBRARY_PATH=/usr/local/lib
+   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/teelib
+   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/graminelib
+   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/isletlib
+   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/oelib
+   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/tpmlib
+   echo $LD_LIBRARY_PATH
+   sudo ldconfig
+
+   pushd $TEST_DIR/service
+   if [[ $VERBOSE -eq 1 ]]; then
+     if [[ "$ENCLAVE_TYPE" == "simulated-enclave" ]] ; then
+       echo "running policy server for simulated-enclave"
+       $CERTIFIER_ROOT/certifier_service/simpleserver \
+            --policy_key_file=$POLICY_KEY_FILE_NAME \
+            --policy_cert_file=$POLICY_CERT_FILE_NAME \
+            --policyFile=$POLICY_STORE_NAME \
+            --readPolicy=true &
+        fi
+    fi
+    popd
+    sleep 3
+  fi
+}
+
 function certify-programs() {
   echo "certify-programs"
   make-directories
+  exit
+
+  pushd $TEST_DIR
+    $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
+        --cf_utility_help=false \
+        --init_trust=true \
+        --print_cryptstore=true \
+        --enclave_type=$ENCLAVE_TYPE \
+        --policy_domain_name=$DOMAIN_NAME \
+        --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
+        --policy_store_filename=$POLICY_STORE_NAME \
+        --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
+        --symmetric_key_algorithm=aes-256-gcm  \
+        --public_key_algorithm=rsa-2048 \
+        --data_dir="$TEST_DIR/" \
+        --certifier_service_URL=$POLICY_SERVER_ADDRESS \
+        --service_port=8123 --print_level=1 \
+  popd
 }
-
-# cf_utility.exe
-#    --cf_utility_help=false
-#    --init_trust=false
-#    --reinit_trust=false
-#    --generate_symmetric_key=false
-#    --generate_public_key=false
-#    --get_item=false
-#    --put_item=false
-#    --print_cryptstore=true
-
-#    --enclave_type="sev-enclave"
-#    --data_dir=./cf_data
-#    --policy_domain_name=datica_file_share_1
-#    --policy_key_file=policy_cert_file.policy_domain_name
-#    --policy_store_filename=MUST-SPECIFY-IF-NEEDED
-#    --encrypted_cryptstore_filename=MUST-SPECIFY
-#    --keyname="store_encryption_key_1"
-#    --symmetric_algorithm=aes-256-gcm
-#    --public_key_algorithm=rsa_2048
-
-#    --tag=MUST-SPECIFY-IF-NEEDED
-#    --entry_version=MUST-SPECIFY-IF-NEEDED
-#    --type=MUST-SPECIFY-IF-NEEDED
-
-#    --certifier_service_URL=MUST-BE-SPECIFIED-IF-NEEDED
-#    --service_port=port-for-certifier-service, MUST-BE-SPECIFIED-IF-NEEDED
-
-#    --output_format=key-message-serialized-protobuf
-#    --input_format=key-message-serialized-protobuf
-#    --input_file=in_1
-#    --output_file=out_1
 
 function run-tests() {
   echo "run tests"
+  exit
 
-  pushd TEST_DIR
+  pushd $TEST_DIR
+    if [[ $RECERTIFY -eq 1 ]]; then
+       clean-run-time-files
+       build-policy
+       run-policy-server
+       certify-programs
+    fi
+
     # Check help
     $SRC_DIR/cf_utility.exe --cf_utility_help=true
 
-    # make symmetric key
-    # store symmetric key
+    # make symmetric key as protobuf and store it
+    $SRC_DIR/cf_utility.exe \
+      --cf_utility_help=false \
+      --init_trust=false \
+      --reinit_trust=false \
+      --generate_symmetric_key=true \
+      --generate_public_key=false \
+      --get_item=false \
+      --put_item=false \
+      --print_cryptstore=true \
+      --enclave_type="simulated-enclave" \
+      --data_dir=$DATA_DIR \
+      --policy_domain_name=$DOMAIN_NAME \
+      --policy_key_file=policy_cert_file.$DOMAIN_NAME \
+      --policy_store_filename=$POLICY_STORE_NAME \
+      --encrypted_cryptstore_filename= $CRYPTSTORE_NAME \
+      --keyname="encryption_key_1" \
+      --symmetric_algorithm=aes-256-gcm \
+      --public_key_algorithm=rsa_2048 \
+      --tag=test-key-1 \
+      --entry_version=0 \
+      --type="key-message-serialized-protobuf" \
+      --output_format="key-message-serialized-protobuf" \
+      --input_format="key-message-serialized-protobuf" \
+      --input_file="in_1" \
+      --output_file="out_1"
+
     # retrieve symmetric key
+    $SRC_DIR/cf_utility.exe \
+      --cf_utility_help=false \
+      --init_trust=false \
+      --reinit_trust=false \
+      --generate_symmetric_key=false \
+      --generate_public_key=false \
+      --get_item=true \
+      --put_item=false \
+      --print_cryptstore=true \
+      --enclave_type="simulated-enclave" \
+      --data_dir=$DATA_DIR \
+      --policy_domain_name=$DOMAIN_NAME \
+      --policy_key_file=policy_cert_file.$DOMAIN_NAME \
+      --policy_store_filename=$POLICY_STORE_NAME \
+      --encrypted_cryptstore_filename= $CRYPTSTORE_NAME \
+      --keyname="encryption_key_1" \
+      --symmetric_algorithm=aes-256-gcm \
+      --public_key_algorithm=rsa_2048 \
+      --tag=test-key-1 \
+      --entry_version=0 \
+      --type="key-message-serialized-protobuf" \
+      --output_format="key-message-serialized-protobuf" \
+      --input_format="key-message-serialized-protobuf" \
+      --input_file="in_1" \
+      --output_file="out_1"
 
     # make asymmetric key
-    # store asymmetric key
+    $SRC_DIR/cf_utility.exe \
+      --cf_utility_help=false \
+      --init_trust=false \
+      --reinit_trust=false \
+      --generate_symmetric_key=false \
+      --generate_public_key=true \
+      --get_item=false \
+      --put_item=false \
+      --print_cryptstore=true \
+      --enclave_type="simulated-enclave" \
+      --data_dir=$DATA_DIR \
+      --policy_domain_name=$DOMAIN_NAME \
+      --policy_key_file=policy_cert_file.$DOMAIN_NAME \
+      --policy_store_filename=$POLICY_STORE_NAME \
+      --encrypted_cryptstore_filename= $CRYPTSTORE_NAME \
+      --keyname="encryption_key_2" \
+      --symmetric_algorithm=aes-256-gcm \
+      --public_key_algorithm=rsa_2048 \
+      --tag=test-key-2 \
+      --entry_version=0 \
+      --type="key-message-serialized-protobuf" \
+      --output_format="key-message-serialized-protobuf" \
+      --input_format="key-message-serialized-protobuf" \
+      --input_file="in_1" \
+      --output_file="out_1"
+
     # retrieve asymmetric key
+    $SRC_DIR/cf_utility.exe \
+      --cf_utility_help=false \
+      --init_trust=false \
+      --reinit_trust=false \
+      --generate_symmetric_key=false \
+      --generate_public_key=false \
+      --get_item=true \
+      --put_item=false \
+      --print_cryptstore=true \
+      --enclave_type="simulated-enclave" \
+      --data_dir=$DATA_DIR \
+      --policy_domain_name=$DOMAIN_NAME \
+      --policy_key_file=policy_cert_file.$DOMAIN_NAME \
+      --policy_store_filename=$POLICY_STORE_NAME \
+      --encrypted_cryptstore_filename= $CRYPTSTORE_NAME \
+      --keyname="encryption_key_2" \
+      --symmetric_algorithm=aes-256-gcm \
+      --public_key_algorithm=rsa_2048 \
+      --tag=test-key-2 \
+      --entry_version=0 \
+      --type="key-message-serialized-protobuf" \
+      --output_format="key-message-serialized-protobuf" \
+      --input_format="key-message-serialized-protobuf" \
+      --input_file="in_1" \
+      --output_file="out_1"
+
+    # make symmetric key as binary-blob and store it
+    $SRC_DIR/cf_utility.exe \
+      --cf_utility_help=false \
+      --init_trust=false \
+      --reinit_trust=false \
+      --generate_symmetric_key=true \
+      --generate_public_key=false \
+      --get_item=false \
+      --put_item=false \
+      --print_cryptstore=true \
+      --enclave_type="simulated-enclave" \
+      --data_dir=$DATA_DIR \
+      --policy_domain_name=$DOMAIN_NAME \
+      --policy_key_file=policy_cert_file.$DOMAIN_NAME \
+      --policy_store_filename=$POLICY_STORE_NAME \
+      --encrypted_cryptstore_filename= $CRYPTSTORE_NAME \
+      --keyname="encryption_key_3" \
+      --symmetric_algorithm=aes-256-gcm \
+      --public_key_algorithm=rsa_2048 \
+      --tag=test-key-3 \
+      --entry_version=0 \
+      --type="binary-blob" \
+      --output_format="raw" \
+      --input_format="raw" \
+      --input_file="in_1" \
+      --output_file="out_1"
+
+    # retrieve symmetric key
+    $SRC_DIR/cf_utility.exe \
+      --cf_utility_help=false \
+      --init_trust=false \
+      --reinit_trust=false \
+      --generate_symmetric_key=false \
+      --generate_public_key=false \
+      --get_item=true \
+      --put_item=false \
+      --print_cryptstore=true \
+      --enclave_type="simulated-enclave" \
+      --data_dir=$DATA_DIR \
+      --policy_domain_name=$DOMAIN_NAME \
+      --policy_key_file=policy_cert_file.$DOMAIN_NAME \
+      --policy_store_filename=$POLICY_STORE_NAME \
+      --encrypted_cryptstore_filename= $CRYPTSTORE_NAME \
+      --keyname="encryption_key_3" \
+      --symmetric_algorithm=aes-256-gcm \
+      --public_key_algorithm=rsa_2048 \
+      --tag=test-key-3 \
+      --entry_version=0 \
+      --type="binary-blob" \
+      --output_format="raw" \
+      --input_format="raw" \
+      --input_file="in_1" \
+      --output_file="out_1"
     
     # print cryptstore
   popd
@@ -414,7 +592,6 @@ fi
 if [[ $RUN_GTESTS -eq 1 ]]; then
   run-support-test
 fi
-exit
 if [[ $COMPILE_UTIL -eq 1 ]]; then
   compile-certifier-utilities
 fi
