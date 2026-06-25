@@ -53,10 +53,13 @@ function print-options() {
 	echo "Data directory flag: -dd"
 	echo "Domain Name flag: -dn"
 	echo "Enclave type, flag: -et"
-	echo "Compile flag -cu"
-	echo "Clean flag -clean"
-	echo "Loud flag -loud"
+	echo "Clean flag: -clean"
+	echo "Loud flag: -loud"
         echo ""
+	echo "Compile certifier utilities flag: -cu"
+	echo "Compile program flag: -cp"
+        echo ""
+	echo "Run test flag: -rt"
 	echo "Provision keys flag: -pk"
 	echo "Policy key file flag: -pkn"
 	echo "Policy cert file flag: -cfn"
@@ -81,6 +84,8 @@ DOMAIN_NAME="datica"
 ENCLAVE_TYPE="simulated-enclave"
 PROVISION_KEYS=1
 COMPILE_UTIL=1
+COMPILE_PROGRAM=1
+RUN_TEST=1
 VERBOSE=1
 CLEAN=1
 POLICY_KEY_FILE_NAME="policy_key_file"
@@ -109,9 +114,11 @@ function print-variables() {
 	echo "Data directory: $DATA_DIR"
 	echo "Domain Name: $DOMAIN_NAME"
 	echo "Enclave type: $ENCLAVE_TYPE"
+	echo "Run test: $RUN_TEST"
         echo ""
 	echo "Provision keys: $PROVISION_KEYS"
-	echo "Compile flag: $COMPILE_UTIL"
+	echo "Compile certifier utilities flag: $COMPILE_UTIL"
+	echo "Compile program flag: $COMPILE_PROGRAM"
 	echo "Clean flag: $CLEAN"
 	echo "Loud flag: $VERBOSE"
         echo ""
@@ -143,6 +150,9 @@ function process-args() {
                 fi
                 if [[ ${array[i]} = "-cu" ]]; then
                         COMPILE_UTIL="${array[i+1]}"
+                fi
+                if [[ ${array[i]} = "-cp" ]]; then
+                        COMPILE_PROGRAM="${array[i+1]}"
                 fi
                 if [[ ${array[i]} = "-cfn" ]]; then
                         POLICY_CERT_FILE_NAME="${array[i+1]}"
@@ -185,6 +195,9 @@ function process-args() {
                 fi
                 if [[ ${array[i]} = "-loud" ]]; then
                         VERBOSE="${array[i+1]}"
+                fi
+                if [[ ${array[i]} = "-rt" ]]; then
+                        RUN_TEST="${array[i+1]}"
                 fi
         done
 }
