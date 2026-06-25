@@ -5,7 +5,7 @@ Here are the calling arguments for cf-utility which is a command line program.
 cf_osutility uses gflags to manage command line arguments,so if
 arguments are not specified, the defaults indicated below are used.
 
-cf-osutility.exe
+cf_utility.exe
     --cf_utility_help=false
     --init_trust=false
     --reinit_trust=false
