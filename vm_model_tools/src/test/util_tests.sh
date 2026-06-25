@@ -7,6 +7,27 @@
 set -Eeuo pipefail
 Me=$(basename "$0")
 
+if [[ ${CERTIFIER_ROOT+x} ]]; then
+        echo "CERTIFIER_ROOT already set"
+else
+        echo "setting CERTIFIER_ROOT"
+        pushd ../../.. > /dev/null
+        CERTIFIER_ROOT=$(pwd) > /dev/null
+        popd > /dev/null
+fi
+
+echo "setting EXAMPLE_DIR"
+EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools > /dev/null
+SRC_DIR=$EXAMPLE_DIR/src > /dev/null
+TEST_DIR=$SRC_DIR/test > /dev/null
+
+echo "Certifier directory: $CERTIFIER_ROOT"
+echo "Example directory: $EXAMPLE_DIR"
+echo "Source directory: $SRC_DIR"
+echo "Test directory: $TEST_DIR"
+
+exit
+
 source ./util-arg-processing.inc
 
 # This script builds the certifier utility and runs some tests.

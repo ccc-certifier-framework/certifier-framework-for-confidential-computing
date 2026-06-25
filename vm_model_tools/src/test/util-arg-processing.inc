@@ -8,7 +8,7 @@ if [[ ${CERTIFIER_ROOT+x} ]]; then
         echo "CERTIFIER_ROOT already set"
 else
         echo "setting CERTIFIER_ROOT"
-        pushd .. > /dev/null
+        pushd ../../.. > /dev/null
         CERTIFIER_ROOT=$(pwd) > /dev/null
         popd > /dev/null
 fi
@@ -17,7 +17,7 @@ if [[ ${EXAMPLE_DIR+x} ]]; then
         echo "EXAMPLE_DIR already set"
 else
         echo "setting EXAMPLE_DIR"
-        EXAMPLE_DIR=$(pwd) > /dev/null
+        EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools > /dev/null
 fi
 
 #echo ""
@@ -25,166 +25,108 @@ fi
 
 # Variables to find
 #       Variable NAME                           Flag            Values
+#       SRC_DIR                                 -sd             source directory
+#       TEST_DIR                                -td             test directory
+#       DOMAIN_NAME                             -dn             name
+#       ENCLAVE_TYPE                            -et             "simulated-enclave"
+#       COMPILE_UTIL                            -cu             1 or 0
+#
 #       POLICY_KEY_FILE_NAME                    -pkn            name
 #       POLICY_CERT_FILE_NAME                   -cfn            name
 #       POLICY_STORE_NAME                       -psn            name
 #       CRYPTSTORE_NAME                         -csn            name
-#       DOMAIN_NAME                             -dn             name
-#       SRC_DIR                                 -dd             source directory
-#       TEST_DIR                                -td             test directory
 #       SYMMETRIC_ENCRYPTION_ALGORITHM          -sea            alg name (see certifier)
 #       ASYMMETRIC_ENCRYPTION_ALGORITHM         -aen            alg name (see certifier)
-#       PROGRAM_NAME                            -pn             name
-#       COMPILE_UTIL                            -cu             1 or 0
 #       POLICY_FILE_NAME                        -pfn            name
 #       POLICY_SERVER_ADDRESS                   -psa            ip address or localhost
 #       POLICY_SERVER_PORT                      -psp            port number
-#       COMPILE_ONLY                            -just-compile   0
-#       ENCLAVE_TYPE                            -et             "simulated-enclave"
 
 
 function print-options() {
 
+        echo ""
         echo "Defined flags and variables"
         echo ""
-        echo "Variable name                     Flag            Value"
         echo "-----------------------------------------------------------------"
-        echo "COMPILE_CF                        -ccf            1 or 0"
-        echo "PROVISION_KEYS                    -pk             1 or 0"
-        echo "BUILD_SEV_SIMULATOR               -bss            1 or 0"
-        echo "POLICY_KEY_FILE_NAME              -pkn            name"
-        echo "POLICY_CERT_FILE_NAME             -cfn            name"
-        echo "POLICY_STORE_NAME                 -psn            name"
-        echo "CRYPTSTORE_NAME                   -csn            name"
-        echo "DOMAIN_NAME                       -dn             name"
-        echo "DATA_DIR                          -dd             directory"
-        echo "SYMMETRIC_ENCRYPTION_ALGORITHM    -sea            alg name (see certifier)"
-        echo "ASYMMETRIC_ENCRYPTION_ALGORITHM   -aen            alg name (see certifier)"
-        echo "PROGRAM_NAME                      -pn             name"
-        echo "VM_NAME                           -vmn            name"
-        echo "TEST_TYPE                         -tt             simulated/real"
-        echo "POLICY_FILE_NAME                  -pfn            name"
-        echo "POLICY_SERVER_ADDRESS             -psa            ip address or localhost"
-        echo "POLICY_SERVER_PORT                -psp            port number"
-        echo "KEY_SERVER_ADDRESS                -ksa            ip address or localhost"
-        echo "KEY_SERVER_PORT                   -ksp            port number"
-        echo "OPERATION                         -op             operation"
-        echo "CLEAN                             -clean          0/1"
-        echo "DEPLOYMENT_ENCLAVE_TYPE           -et1            enclave types"
-        echo "DEPLOYED_ENCLAVE_TYPE             -et2            enclave types"
-        echo "DEPLOYMENT_POLICY_STORE_NAME      -psn1           deployment policy file name"
-        echo "DEPLOYED_POLICY_STORE_NAME        -psn2           deployed policy store name"
-        echo "DEPLOYMENT_CRYPTSTORE_NAME        -csn1           deployment cryptstore name"
-        echo "DEPLOYED_CRYPTSTORE_NAME          -csn2           deployed cryptstore name"
-        echo "NUM_PCR                           -npcr           number of pcrs"
-        echo "PCRSTR                            -pcrs           pcr string"
-        echo "TPM_DEVICE                        -tpm            tpm device name"
-        echo "SEAL_STORE                        -seal           file name for seal hierarchy"
-        echo "QUOTE_STORE                       -quote          file name of quote hierarchy"
-        echo "QUOTE_CERT_FILE                   -quote_cert     file name for quote cert"
-        echo "END_CERT_FILE                     -end_cert       file name of endorsement cert"
-        echo "END_CERT_CHAIN_FILE               -end_chain      file name of endorsement cert"
-        echo "ACTIVATE_HOST                     -act_host       IP for activation"
-        echo "ACTIVATE_PORT                     -act_port       port number of activation"
-        echo "COMPILE_ONLY                      -just-compile   don't do root required stuff"
+	echo "Source directory flag: -sd"
+	echo "Test directory flag: -td"
+	echo "Data directory flag: -dd"
+	echo "Domain Name flag: -dn"
+	echo "Enclave type, flag: -et"
+	echo "Compile flag -cu"
+	echo "Clean flag -clean"
+	echo "Loud flag -loud"
+        echo ""
+	echo "Provision keys flag: -pk"
+	echo "Policy key file flag: -pkn"
+	echo "Policy cert file flag: -cfn"
+	echo "Cryptstore name flag:  -csn"
+	echo "Policy file name flag:  -pfn"
+	echo "Policy server IP flag:  -psa"
+	echo "Policy port: flag -psp"
+	echo "Cryptstore name flag:  -csn"
+        echo ""
+	echo "Symmetric algorithm flag: -sea"
+	echo "Asymmetric algorithm flag: -aen"
         echo "-----------------------------------------------------------------"
         echo ""
 }
 
 # Defaults
 
+SRC_DIR=$EXAMPLE_DIR/src
+TEST_DIR=$SRC_DIR/test
+DATA_DIR=$TEST_DIR
 DOMAIN_NAME="datica"
+ENCLAVE_TYPE="simulated-enclave"
+PROVISION_KEYS=1
+COMPILE_UTIL=1
+VERBOSE=1
+CLEAN=1
 POLICY_KEY_FILE_NAME="policy_key_file"
 POLICY_CERT_FILE_NAME="policy_cert_file"
-POLICY_STORE_NAME="policy_store"
-CRYPTSTORE_NAME="cryptstore"
-PROGRAM_NAME="datica-program"
-DATA_DIR="./"
-SYMMETRIC_ENCRYPTION_ALGORITHM="aes-256-gcm"
-ASYMMETRIC_ENCRYPTION_ALGORITHM="RSA-4096"
-VM_NAME="datica-sample-vm"
-TEST_TYPE="simulated"
-BUILD_SEV_SIMULATOR=0
-COMPILE_CF=1
-PROVISION_KEYS=1
 POLICY_FILE_NAME="policy.bin"
+CRYPTSTORE_NAME="cryptstore"
 POLICY_SERVER_ADDRESS="localhost"
 POLICY_SERVER_PORT="8123"
-KEY_SERVER_ADDRESS="localhost"
-KEY_SERVER_PORT="8120"
-OPERATION=\"\"
-CLEAN=0
-VERBOSE=1
-DEPLOYMENT_ENCLAVE_TYPE="simulated-enclave"
-DEPLOYED_ENCLAVE_TYPE="sev-enclave"
-DEPLOYMENT_POLICY_STORE_NAME=""
-DEPLOYED_POLICY_STORE_NAME=""
-DEPLOYMENT_CRYPTSTORE_NAME=""
-DEPLOYED_CRYPTSTORE_NAME=""
-NUM_PCR=1
-PCRSTR="7"
+SYMMETRIC_ENCRYPTION_ALGORITHM="aes-256-gcm"
+ASYMMETRIC_ENCRYPTION_ALGORITHM="RSA-4096"
+
 TPM_DEVICE="/dev/tpm0"
 SEAL_STORE="seal_hierarchy.bin"
 QUOTE_STORE="quote_hierarchy.bin"
-QUOTE_CERT_FILE="./quote_cert.crt"
-END_CERT_FILE=\"\"
-END_CERT_CHAIN_FILE=\"\"
-ACTIVATE_HOST="localhost"
-ACTIVATE_PORT="8130"
-COMPILE_ONLY=0
-
 
 function print-variables() {
+
+        echo "Defined flags and variables"
         echo ""
-        echo "Shell arguments"
+        echo "-----------------------------------------------------------------"
+        echo "Certifier root: $CERTIFIER_ROOT"
+        echo "Example directory: $EXAMPLE_DIR"
         echo ""
-        echo "Certifier root:                        $CERTIFIER_ROOT"
-        echo "Example directory:                     $EXAMPLE_DIR"
+	echo "Source directory: $SRC_DIR"
+	echo "Test directory: $TEST_DIR"
+	echo "Data directory: $DATA_DIR"
+	echo "Domain Name: $DOMAIN_NAME"
+	echo "Enclave type: $ENCLAVE_TYPE"
         echo ""
-        echo "Clean:                                 $CLEAN"
-        echo "Verbose:                               $VERBOSE"
-        echo "Compile Certifier flag:                $COMPILE_CF"
-        echo "Build SEV simulator:                   $BUILD_SEV_SIMULATOR"
-        echo "Provision keys:                        $PROVISION_KEYS"
-        echo "Test type:                             $TEST_TYPE"
-        echo "Program name:                          $PROGRAM_NAME"
-        echo "VM name:                               $VM_NAME"
-        echo "Operation:                             $OPERATION"
+	echo "Provision keys: $PROVISION_KEYS"
+	echo "Compile flag: $COMPILE_UTIL"
+	echo "Clean flag: $CLEAN"
+	echo "Loud flag: $VERBOSE"
         echo ""
-        echo "Domain name:                           $DOMAIN_NAME"
-        echo "Policy Key file name:                  $POLICY_KEY_FILE_NAME"
-        echo "Policy cert file name:                 $POLICY_CERT_FILE_NAME"
-        echo "Policy store file name:                $POLICY_STORE_NAME"
-        echo "Cryptstore file name:                  $CRYPTSTORE_NAME"
-        echo "Data directory name:                   $DATA_DIR"
-        echo "Deployment enclave type                $DEPLOYMENT_ENCLAVE_TYPE"
-        echo "Deployed enclave type                  $DEPLOYED_ENCLAVE_TYPE"
-        echo "Deployment policy store name           $DEPLOYMENT_POLICY_STORE_NAME"
-        echo "Deployed policy store directory        $DEPLOYED_POLICY_STORE_NAME"
-        echo "Deployment cryptstore name             $DEPLOYMENT_CRYPTSTORE_NAME"
-        echo "Deployed cryptstore name               $DEPLOYED_CRYPTSTORE_NAME"
+	echo "Policy key file: $POLICY_KEY_FILE_NAME"
+	echo "Policy cert file: $POLICY_CERT_FILE_NAME"
+	echo "Cryptstore name: $CRYPTSTORE_NAME"
+	echo "Policy file name: $POLICY_FILE_NAME"
+	echo "Policy server IP: $POLICY_SERVER_ADDRESS"
+	echo "Policy port: $POLICY_SERVER_PORT"
         echo ""
-        echo "Policy Server address:                 $POLICY_SERVER_ADDRESS"
-        echo "Policy server port:                    $POLICY_SERVER_PORT"
-        echo "Key server address:                    $KEY_SERVER_ADDRESS"
-        echo "Key server port:                       $KEY_SERVER_PORT"
-        echo "Encryption Algorithm:                  $SYMMETRIC_ENCRYPTION_ALGORITHM"
-        echo "Public key algorithm:                  $ASYMMETRIC_ENCRYPTION_ALGORITHM"
-        echo ""
-        echo "Number of pcrs measured                $NUM_PCR"
-        echo "Pcr string                             $PCRSTR"
-        echo "Name of TPM device                     $TPM_DEVICE"
-        echo "Seal hierarchy file name               $SEAL_STORE"
-        echo "Quote hierarchy file name              $QUOTE_STORE"
-        echo "Quote Cert file                        $QUOTE_CERT_FILE"
-        echo "Endorsement cert file                  $END_CERT_FILE"
-        echo "Endorsement cert chain                 $END_CERT_CHAIN_FILE"
-        echo "Activation service IP host             $ACTIVATE_HOST"
-        echo "Activation service port                $ACTIVATE_PORT"
-        echo "Compile only                           $COMPILE_ONLY"
+	echo "Symmetric algorithm: $SYMMETRIC_ENCRYPTION_ALGORITHM"
+	echo "Asymmetric algorithm: $ASYMMETRIC_ENCRYPTION_ALGORITHM"
+        echo "-----------------------------------------------------------------"
         echo ""
 }
-
 
 arg_string=$*
 function process-args() {
@@ -193,14 +135,26 @@ function process-args() {
         for (( i=0; i < $ARG_SIZE; i++ )); do
                 #echo "Processing arg $i: ${array[i]}"
 
-                if [[ ${array[i]} = "-dn" ]]; then
-                        DOMAIN_NAME="${array[i+1]}"
+                if [[ ${array[i]} = "-sd" ]]; then
+                        SRC_DIR="${array[i+1]}"
                 fi
-                if [[ ${array[i]} = "-pkn" ]]; then
-                        POLICY_KEY_FILE_NAME="${array[i+1]}"
+                if [[ ${array[i]} = "-td" ]]; then
+                        TEST_DIR="${array[i+1]}"
+                fi
+                if [[ ${array[i]} = "-cu" ]]; then
+                        COMPILE_UTIL="${array[i+1]}"
                 fi
                 if [[ ${array[i]} = "-cfn" ]]; then
                         POLICY_CERT_FILE_NAME="${array[i+1]}"
+                fi
+                if [[ ${array[i]} = "-dn" ]]; then
+                        DOMAIN_NAME="${array[i+1]}"
+                fi
+                if [[ ${array[i]} = "-et" ]]; then
+                        ENCLAVE_TYPE="${array[i+1]}"
+                fi
+                if [[ ${array[i]} = "-pk" ]]; then
+                        PROVISION_KEYS="${array[i+1]}"
                 fi
                 if [[ ${array[i]} = "-psn" ]]; then
                         POLICY_STORE_NAME="${array[i+1]}"
@@ -217,24 +171,6 @@ function process-args() {
                 if [[ ${array[i]} = "-aen" ]]; then
                         ASYMMETRIC_ENCRYPTION_ALGORITHM="${array[i+1]}"
                 fi
-                if [[ ${array[i]} = "-pn" ]]; then
-                        PROGRAM_NAME="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-vmn" ]]; then
-                        VM_NAME="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-tt" ]]; then
-                        TEST_TYPE="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-pk" ]]; then
-                        PROVISION_KEYS="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-bss" ]]; then
-                        BUILD_SEV_SIMULATOR="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-ccf" ]]; then
-                        COMPILE_CF="${array[i+1]}"
-                fi
                 if [[ ${array[i]} = "-pfn" ]]; then
                         POLICY_FILE_NAME="${array[i+1]}"
                 fi
@@ -244,88 +180,13 @@ function process-args() {
                 if [[ ${array[i]} = "-psp" ]]; then
                         POLICY_SERVER_PORT="${array[i+1]}"
                 fi
-                if [[ ${array[i]} = "-ksa" ]]; then
-                        KEY_SERVER_ADDRESS="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-ksp" ]]; then
-                        KEY_SERVER_PORT="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-op" ]]; then
-                        OPERATION="${array[i+1]}"
-                fi
                 if [[ ${array[i]} = "-clean" ]]; then
                         CLEAN="${array[i+1]}"
                 fi
                 if [[ ${array[i]} = "-loud" ]]; then
                         VERBOSE="${array[i+1]}"
                 fi
-                if [[ ${array[i]} = "-et1 " ]]; then
-                        DEPLOYMENT_ENCLAVE_TYPE="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-et2" ]]; then
-                        DEPLOYED_ENCLAVE_TYPE="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-psn1" ]]; then
-                        DEPLOYMENT_POLICY_STORE_NAME="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-psn2" ]]; then
-                        DEPLOYED_POLICY_STORE_NAME="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-csn1" ]]; then
-                        DEPLOYMENT_CRYPTSTORE_NAME="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-csn2" ]]; then
-                        DEPLOYED_CRYPTSTORE_NAME="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-npcr" ]]; then
-                        NUM_PCR="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-pcrs" ]]; then
-                        PCRSTR="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-tpm" ]]; then
-                        TPM_DEVICE="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-seal" ]]; then
-                        SEAL_STORE="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-quote" ]]; then
-                        QUOTE_STORE="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-quote_cert" ]]; then
-                        QUOTE_CERT_FILE="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-end_cert" ]]; then
-                        END_CERT_FILE="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-end_chain" ]]; then
-                        END_CERT_CHAIN_FILE="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-act_host" ]]; then
-                        ACTIVATE_HOST="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-act_port" ]]; then
-                        ACTIVATE_PORT="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-just-compile" ]]; then
-                        COMPILE_ONLY="${array[i+1]}"
-                fi
         done
-
-        POLICY_CERT_FILE_NAME=$POLICY_CERT_FILE_NAME.$DOMAIN_NAME
-        POLICY_STORE_NAME=$POLICY_STORE_NAME.$DOMAIN_NAME
-        CRYPTSTORE_NAME=$CRYPTSTORE_NAME.$DOMAIN_NAME
-        if [[ $DEPLOYMENT_ENCLAVE_TYPE != $DEPLOYED_ENCLAVE_TYPE ]]; then
-            DEPLOYMENT_POLICY_STORE_NAME="$POLICY_STORE_NAME.deployment"
-            DEPLOYED_POLICY_STORE_NAME="$POLICY_STORE_NAME.deployed"
-            DEPLOYMENT_CRYPTSTORE_NAME="$CRYPTSTORE_NAME.deployment"
-            DEPLOYED_CRYPTSTORE_NAME="$CRYPTSTORE_NAME.deployed"
-        else
-            DEPLOYMENT_POLICY_STORE_NAME="$POLICY_STORE_NAME"
-            DEPLOYED_POLICY_STORE_NAME="$POLICY_STORE_NAME"
-            DEPLOYMENT_CRYPTSTORE_NAME="$CRYPTSTORE_NAME"
-            DEPLOYED_CRYPTSTORE_NAME="$CRYPTSTORE_NAME"
-        fi
 }
 
 # ----------------------------------------------------------------------------------
