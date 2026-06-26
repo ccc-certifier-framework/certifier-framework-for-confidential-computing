@@ -33,39 +33,6 @@ source ./util-arg-processing.inc
 # was cloned into.
 # $EXAMPLE_DIR is the utility directory for the test,
 #    $CERTIFIER_ROOT/vm_model_tools
-#
-# The utility call is:
-# cf_utility.exe
-#    --cf_utility_help=false
-#    --init_trust=false
-#    --reinit_trust=false
-#    --generate_symmetric_key=false
-#    --generate_public_key=false
-#    --get_item=false
-#    --put_item=false
-#    --print_cryptstore=true
-#
-#    --enclave_type="sev-enclave"
-#    --data_dir=./cf_data
-#    --policy_domain_name=datica_file_share_1
-#    --policy_key_file=policy_cert_file.policy_domain_name
-#    --policy_store_filename=MUST-SPECIFY-IF-NEEDED
-#    --encrypted_cryptstore_filename=MUST-SPECIFY
-#    --keyname="store_encryption_key_1"
-#    --symmetric_algorithm=aes-256-gcm
-#    --public_key_algorithm=rsa_2048
-#
-#    --tag=MUST-SPECIFY-IF-NEEDED
-#    --entry_version=MUST-SPECIFY-IF-NEEDED
-#    --type=MUST-SPECIFY-IF-NEEDED
-#
-#    --certifier_service_URL=MUST-BE-SPECIFIED-IF-NEEDED
-#    --service_port=port-for-certifier-service, MUST-BE-SPECIFIED-IF-NEEDED
-#
-#    --output_format=key-message-serialized-protobuf
-#    --input_format=key-message-serialized-protobuf
-#    --input_file=in_1
-#    --output_file=out_1
 
 echo "Processing arguments"
 process-args
