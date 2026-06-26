@@ -355,6 +355,25 @@ function certify-programs() {
   popd
 }
 
+function print-store() {
+  # assumes you're in the right directory
+  $SRC_DIR/cf_utility.exe \
+      --cf_utility_help=false \
+      --init_trust=false \
+      --reinit_trust=false \
+      --generate_symmetric_key=false \
+      --generate_public_key=false \
+      --get_item=false \
+      --put_item=false \
+      --print_cryptstore=true \
+      --enclave_type="simulated-enclave" \
+      --data_dir=$DATA_DIR \
+      --policy_domain_name=$DOMAIN_NAME \
+      --policy_key_cert_file=policy_cert_file.$DOMAIN_NAME \
+      --policy_store_filename=$POLICY_STORE_NAME \
+      --encrypted_cryptstore_filename=$CRYPTSTORE_NAME 
+}
+
 function run-tests() {
   echo " "
   echo "run tests"
@@ -389,7 +408,7 @@ function run-tests() {
       --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
       --keyname="test_key_1" \
       --symmetric_key_algorithm=aes-256-gcm \
-      --public_key_algorithm=rsa_2048 \
+      --public_key_algorithm=rsa-2048 \
       --entry_tag=test_key_1 \
       --entry_version=0 \
       --entry_type="key-message-serialized-protobuf" \
@@ -399,22 +418,7 @@ function run-tests() {
       --output_file="out_1"
 
     # print store
-    $SRC_DIR/cf_utility.exe \
-      --cf_utility_help=false \
-      --init_trust=false \
-      --reinit_trust=false \
-      --generate_symmetric_key=false \
-      --generate_public_key=false \
-      --get_item=false \
-      --put_item=false \
-      --print_cryptstore=true \
-      --enclave_type="simulated-enclave" \
-      --data_dir=$DATA_DIR \
-      --policy_domain_name=$DOMAIN_NAME \
-      --policy_key_cert_file=policy_cert_file.$DOMAIN_NAME \
-      --policy_store_filename=$POLICY_STORE_NAME \
-      --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
-    return 0
+    print-store
 
     # retrieve symmetric key
     $SRC_DIR/cf_utility.exe \
@@ -434,7 +438,7 @@ function run-tests() {
       --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
       --keyname="test_key_1" \
       --symmetric_key_algorithm=aes-256-gcm \
-      --public_key_algorithm=rsa_2048 \
+      --public_key_algorithm=rsa-2048 \
       --entry_tag=test_key_1 \
       --entry_version=0 \
       --entry_type="key-message-serialized-protobuf" \
@@ -442,9 +446,11 @@ function run-tests() {
       --input_format="key-message-serialized-protobuf" \
       --input_file="in_1" \
       --output_file="out_1"
-    echo "retrieve key"
-    return 0
 
+    print-store
+    echo "Asymmetric key"
+
+    if [[ 0 -eq 1 ]]; then
     # make asymmetric key
     $SRC_DIR/cf_utility.exe \
       --cf_utility_help=false \
@@ -463,7 +469,7 @@ function run-tests() {
       --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
       --keyname="test_key_2" \
       --symmetric_key_algorithm=aes-256-gcm \
-      --public_key_algorithm=rsa_2048 \
+      --public_key_algorithm=rsa-2048 \
       --entry_tag=test_key_2 \
       --entry_version=0 \
       --entry_type="key-message-serialized-protobuf" \
@@ -471,7 +477,10 @@ function run-tests() {
       --input_format="key-message-serialized-protobuf" \
       --input_file="in_1" \
       --output_file="out_1"
-    
+   
+    print-store
+    echo "retrieving assymmetric key"
+
     # retrieve asymmetric key
     $SRC_DIR/cf_utility.exe \
       --cf_utility_help=false \
@@ -490,7 +499,7 @@ function run-tests() {
       --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
       --keyname="test_key_2" \
       --symmetric_key_algorithm=aes-256-gcm \
-      --public_key_algorithm=rsa_2048 \
+      --public_key_algorithm=rsa-2048 \
       --entry_tag=test_key_2 \
       --entry_version=0 \
       --entry_type="key-message-serialized-protobuf" \
@@ -498,6 +507,10 @@ function run-tests() {
       --input_format="key-message-serialized-protobuf" \
       --input_file="in_1" \
       --output_file="out_1"
+    fi
+   
+    print-store
+    echo "symmetric key as blob"
 
     # make symmetric key as binary-blob and store it
     $SRC_DIR/cf_utility.exe \
@@ -517,7 +530,7 @@ function run-tests() {
       --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
       --keyname="test_key_3" \
       --symmetric_key_algorithm=aes-256-gcm \
-      --public_key_algorithm=rsa_2048 \
+      --public_key_algorithm=rsa-2048 \
       --entry_tag=test_key_3 \
       --entry_version=0 \
       --entry_type="binary-blob" \
@@ -544,7 +557,7 @@ function run-tests() {
       --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
       --keyname="test_key_3" \
       --symmetric_key_algorithm=aes-256-gcm \
-      --public_key_algorithm=rsa_2048 \
+      --public_key_algorithm=rsa-2048 \
       --entry_tag=test_key_3 \
       --entry_version=0 \
       --entry_type="binary-blob" \
@@ -553,7 +566,7 @@ function run-tests() {
       --input_file="in_1" \
       --output_file="out_1"
     
-    # print cryptstore
+    print-store
   popd
 }
 
