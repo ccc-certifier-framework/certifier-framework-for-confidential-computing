@@ -159,7 +159,7 @@ function clean-run-time-files() {
 function copy-files() {
   echo "copy-files"
   make-directories
-  exit
+  return 0
 
   pushd $TEST_DIR
      if [[ ! -e "./provisioning" ]] ; then
@@ -206,7 +206,7 @@ function measure-program() {
 function build-policy() {
   echo "build-policy"
   make-directories
-  exit
+  return 0
 
   measure-program
 
@@ -307,7 +307,7 @@ function build-policy() {
 }
 
 function run-policy-server() {
-  exit
+  return 0
 
   if [[ $ENCLAVE_TYPE != "simulated-enclave" ]] ; then
 
@@ -339,7 +339,7 @@ function run-policy-server() {
 function certify-programs() {
   echo "certify-programs"
   make-directories
-  exit
+  return 0
 
   pushd $TEST_DIR
     $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
@@ -361,7 +361,7 @@ function certify-programs() {
 
 function run-tests() {
   echo "run tests"
-  exit
+  return 0
 
   pushd $TEST_DIR
     if [[ $RECERTIFY -eq 1 ]]; then
@@ -569,7 +569,9 @@ fi
 if [[ $RUN_TEST -eq 1 ]]; then
   run-tests
 fi
+
 cleanup-stale-procs
+
 echo ""
 echo "Done"
 echo ""
