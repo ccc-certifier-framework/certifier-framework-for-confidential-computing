@@ -470,8 +470,8 @@ function run-tests() {
       --entry_type="key-message-serialized-protobuf" \
       --output_format="key-message-serialized-protobuf" \
       --input_format="key-message-serialized-protobuf" \
-      --input_file="in_1" \
-      --output_file="out_1"
+      --input_file="in_2" \
+      --output_file="out_2"
    
     echo "retrieving asymmetric key"
     # retrieve asymmetric key
@@ -498,8 +498,8 @@ function run-tests() {
       --entry_type="key-message-serialized-protobuf" \
       --output_format="key-message-serialized-protobuf" \
       --input_format="key-message-serialized-protobuf" \
-      --input_file="in_1" \
-      --output_file="out_1"
+      --input_file="in_2" \
+      --output_file="out_2"
    
     # make symmetric key as binary-blob and store it
     $SRC_DIR/cf_utility.exe \
@@ -525,8 +525,8 @@ function run-tests() {
       --entry_type="binary-blob" \
       --output_format="raw" \
       --input_format="raw" \
-      --input_file="in_1" \
-      --output_file="out_1"
+      --input_file="in_3" \
+      --output_file="out_3"
 
     # retrieve symmetric key
     $SRC_DIR/cf_utility.exe \
@@ -552,8 +552,8 @@ function run-tests() {
       --entry_type="binary-blob" \
       --output_format="raw" \
       --input_format="raw" \
-      --input_file="in_1" \
-      --output_file="out_1"
+      --input_file="in_3" \
+      --output_file="out_3"
     
     print-store
   popd
