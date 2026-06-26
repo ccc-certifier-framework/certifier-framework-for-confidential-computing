@@ -40,6 +40,10 @@ function print-options() {
   echo "Compile certifier utilities flag: -cu"
   echo "Compile program flag: -cp"
   echo ""
+  echo "Tpm device flag: -tpm"
+  echo "Seal store flag: -ss"
+  echo "Quote store flag: -qs"
+  echo ""
   echo "Run gtests flag: -rgt"
   echo "Run test flag: -rt"
   echo "Recertify flag: -recertify"
@@ -83,7 +87,6 @@ POLICY_SERVER_ADDRESS="localhost"
 POLICY_SERVER_PORT="8123"
 SYMMETRIC_ENCRYPTION_ALGORITHM="aes-256-gcm"
 ASYMMETRIC_ENCRYPTION_ALGORITHM="RSA-4096"
-
 TPM_DEVICE="/dev/tpm0"
 SEAL_STORE="seal_hierarchy.bin"
 QUOTE_STORE="quote_hierarchy.bin"
@@ -100,7 +103,11 @@ function print-variables() {
   echo "Test directory: $TEST_DIR"
   echo "Data directory: $DATA_DIR"
   echo "Domain Name: $DOMAIN_NAME"
+  echo ""
   echo "Enclave type: $ENCLAVE_TYPE"
+  echo "Tpm device name: $TPM_DEVICE"
+  echo "Quote store file name: $QUOTE_STORE"
+  echo "Seal store file name: $SEAL_STORE"
   echo ""
   echo "Compile certifier utilities flag: $COMPILE_UTIL"
   echo "Compile program flag: $COMPILE_PROGRAM"
@@ -198,6 +205,15 @@ function process-args() {
     fi
     if [[ ${array[i]} = "-psn" ]]; then
             POLICY_STORE_NAME="${array[i+1]}"
+    fi
+    if [[ ${array[i]} = "-tpm" ]]; then
+            TPM_DEVICE="${array[i+1]}"
+    fi
+    if [[ ${array[i]} = "-ss" ]]; then
+            SEAL_STORE="${array[i+1]}"
+    fi
+    if [[ ${array[i]} = "-qs" ]]; then
+            QUOTE_STORE="${array[i+1]}"
     fi
   done
 }
