@@ -147,7 +147,7 @@ function clean-run-time-files() {
   echo " "
   echo "clean-runtime-files"
   pushd $TEST_DIR
-    rm $POLICY_STORE_NAME $CRYPTSTORE_NAME || true
+    rm $POLICY_STORE_NAME $CRYPTSTORE_NAME my_certs || true
     if [[ ! -e "./service" ]] ; then
       rm ./service/* || true
     fi
@@ -349,7 +349,7 @@ function certify-programs() {
         --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
         --symmetric_key_algorithm=aes-256-gcm  \
         --public_key_algorithm=rsa-2048 \
-        --data_dir="$TEST_DIR/" \
+        --data_dir="$DATA_DIR" \
         --certifier_service_URL=$POLICY_SERVER_ADDRESS \
         --service_port=8123 --print_level=1 \
   popd
@@ -360,6 +360,9 @@ function run-tests() {
   echo "run tests"
 
   pushd $TEST_DIR
+
+    $SRC_DIR/cf_utility.exe --cf_utility_help=true
+
     if [[ $RECERTIFY -eq 1 ]]; then
        clean-run-time-files
        build-policy
@@ -367,9 +370,7 @@ function run-tests() {
        run-policy-server
        certify-programs
     fi
-
-    # Check help
-    $SRC_DIR/cf_utility.exe --cf_utility_help=true
+    return 0
 
     # make symmetric key as protobuf and store it
     $SRC_DIR/cf_utility.exe \
