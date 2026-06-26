@@ -412,6 +412,9 @@ function run-tests() {
       --entry_tag=test_key_1 \
       --entry_version=0 \
       --entry_type="key-message-serialized-protobuf" \
+      --tpm_device=$TPM_DEVICE \
+      --seal_hierarchy_file_name=$SEAL_STORE \
+      --quote_hierarchy_file_name=$QUOTE_STORE \
       --output_format="key-message-serialized-protobuf" \
       --input_format="key-message-serialized-protobuf" \
       --input_file="in_1" \
@@ -439,6 +442,9 @@ function run-tests() {
       --entry_tag=test_key_1 \
       --entry_version=0 \
       --entry_type="key-message-serialized-protobuf" \
+      --tpm_device=$TPM_DEVICE \
+      --seal_hierarchy_file_name=$SEAL_STORE \
+      --quote_hierarchy_file_name=$QUOTE_STORE \
       --output_format="key-message-serialized-protobuf" \
       --input_format="key-message-serialized-protobuf" \
       --input_file="in_1" \
@@ -468,6 +474,9 @@ function run-tests() {
       --entry_tag=test_key_2 \
       --entry_version=0 \
       --entry_type="key-message-serialized-protobuf" \
+      --tpm_device=$TPM_DEVICE \
+      --seal_hierarchy_file_name=$SEAL_STORE \
+      --quote_hierarchy_file_name=$QUOTE_STORE \
       --output_format="key-message-serialized-protobuf" \
       --input_format="key-message-serialized-protobuf" \
       --input_file="in_2" \
@@ -496,6 +505,9 @@ function run-tests() {
       --entry_tag=test_key_2 \
       --entry_version=0 \
       --entry_type="key-message-serialized-protobuf" \
+      --tpm_device=$TPM_DEVICE \
+      --seal_hierarchy_file_name=$SEAL_STORE \
+      --quote_hierarchy_file_name=$QUOTE_STORE \
       --output_format="key-message-serialized-protobuf" \
       --input_format="key-message-serialized-protobuf" \
       --input_file="in_2" \
@@ -523,6 +535,9 @@ function run-tests() {
       --entry_tag=test_key_3 \
       --entry_version=0 \
       --entry_type="binary-blob" \
+      --tpm_device=$TPM_DEVICE \
+      --seal_hierarchy_file_name=$SEAL_STORE \
+      --quote_hierarchy_file_name=$QUOTE_STORE \
       --output_format="raw" \
       --input_format="raw" \
       --input_file="in_3" \
@@ -550,6 +565,9 @@ function run-tests() {
       --entry_tag=test_key_3 \
       --entry_version=0 \
       --entry_type="binary-blob" \
+      --tpm_device=$TPM_DEVICE \
+      --seal_hierarchy_file_name=$SEAL_STORE \
+      --quote_hierarchy_file_name=$QUOTE_STORE \
       --output_format="raw" \
       --input_format="raw" \
       --input_file="in_3" \

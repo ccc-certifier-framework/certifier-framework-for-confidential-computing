@@ -206,7 +206,7 @@ function process-args() {
     if [[ ${array[i]} = "-psn" ]]; then
             POLICY_STORE_NAME="${array[i+1]}"
     fi
-    if [[ ${array[i]} = "-tpm" ]]; then
+    if [[ ${array[i]} = "-tpm_device" ]]; then
             TPM_DEVICE="${array[i+1]}"
     fi
     if [[ ${array[i]} = "-ss" ]]; then
