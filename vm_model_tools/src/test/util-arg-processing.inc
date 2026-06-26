@@ -63,7 +63,7 @@ function print-options() {
 
 SRC_DIR=$EXAMPLE_DIR/src
 TEST_DIR=$SRC_DIR/test
-DATA_DIR=$TEST_DIR/cf_data
+DATA_DIR=$TEST_DIR/
 DOMAIN_NAME="datica"
 ENCLAVE_TYPE="simulated-enclave"
 PROVISION_KEYS=1
@@ -74,11 +74,11 @@ RUN_TEST=1
 VERBOSE=1
 CLEAN=1
 RECERTIFY=1
-POLICY_KEY_FILE_NAME="policy_key_file"
-POLICY_CERT_FILE_NAME="policy_cert_file"
+POLICY_KEY_FILE_NAME="policy_key_file.bin"
+POLICY_CERT_FILE_NAME="policy_cert_file.bin"
 POLICY_STORE_NAME="policy_store.bin"
 POLICY_FILE_NAME="policy.bin"
-CRYPTSTORE_NAME="cryptstore"
+CRYPTSTORE_NAME="cryptstore.bin"
 POLICY_SERVER_ADDRESS="localhost"
 POLICY_SERVER_PORT="8123"
 SYMMETRIC_ENCRYPTION_ALGORITHM="aes-256-gcm"

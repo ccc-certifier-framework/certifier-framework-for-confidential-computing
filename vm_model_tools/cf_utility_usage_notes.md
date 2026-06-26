@@ -22,12 +22,12 @@ cf_utility.exe
     --policy_store_filename=MUST-SPECIFY-IF-NEEDED
     --encrypted_cryptstore_filename=MUST-SPECIFY
     --keyname="store_encryption_key_1"
-    --symmetric_algorithm=aes-256-gcm
+    --symmetric_key_algorithm=aes-256-gcm
     --public_key_algorithm=rsa_2048
 
-    --tag=MUST-SPECIFY-IF-NEEDED
+    --entry_tag=MUST-SPECIFY-IF-NEEDED
     --entry_version=MUST-SPECIFY-IF-NEEDED
-    --type=MUST-SPECIFY-IF-NEEDED
+    --entry_type=MUST-SPECIFY-IF-NEEDED
 
     --certifier_service_URL=MUST-BE-SPECIFIED-IF-NEEDED
     --service_port=port-for-certifier-service, MUST-BE-SPECIFIED-IF-NEEDED

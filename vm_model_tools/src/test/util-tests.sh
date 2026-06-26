@@ -104,6 +104,7 @@ function make-directories() {
 }
 
 function provision-keys() {
+  echo " "
   echo "provision-keys"
   make-directories
   pushd $TEST_DIR/provisioning
@@ -119,8 +120,7 @@ function provision-keys() {
 
 function cleanup-stale-procs() {
   echo " "
-  # Find and kill simpleserver processes that may be running.
-  echo " "
+  echo "cleanup-stale-procs"
   set +e
 
   certifier_pid=$(ps -ef | grep -E "simpleserver" | grep -v -w -E 'grep|vi|vim' | awk '{print $2}')
@@ -134,35 +134,35 @@ function cleanup-stale-procs() {
 }
 
 function clear-keys() {
+  echo " "
+  echo "clear-keys"
   pushd $TEST_DIR
-    if [[ ! -e "./service" ]] ; then
-      rm ./service/*
-    fi
-    if [[ ! -e "./cf_data" ]] ; then
-      rm ./cf_data/*
+    if [[ ! -e "./provisioning" ]] ; then
+      rm ./provisioning/* || true
     fi
   popd
 }
 
 function clean-run-time-files() {
+  echo " "
+  echo "clean-runtime-files"
   pushd $TEST_DIR
-    # remove policy store and key store
+    rm $POLICY_STORE_NAME $CRYPTSTORE_NAME || true
     if [[ ! -e "./service" ]] ; then
-      rm ./service/*
+      rm ./service/* || true
     fi
     if [[ ! -e "./cf_data" ]] ; then
-      rm ./cf_data/*
+      rm ./cf_data/* || true
     fi
   popd
 }
 
 function copy-files() {
+  echo " "
   echo "copy-files"
-  make-directories
-  return 0
 
   pushd $TEST_DIR
-     if [[ ! -e "./provisioning" ]] ; then
+    if [[ ! -e "./provisioning" ]] ; then
             mkdir ./provisioning
     fi
     if [[ ! -e "./service" ]] ; then
@@ -172,47 +172,35 @@ function copy-files() {
             mkdir ./cf_data
     fi
 
-    cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME policy.bin ./service
-    cp -p $POLICY_CERT_FILE_NAME ./cf_data
+    pushd provisioning
+      cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME policy.bin ../service
+      cp -p $POLICY_CERT_FILE_NAME ../cf_data
 
-    if [[ -f cf_utility.measurement ]]; then
-        cp -p cf_utility.measurement ./cf_data
-    fi
-    if [[ -f platform_attest_endorsement.bin ]]; then
-        cp -p platform_key_file.bin attest_key_file.bin \
-              platform_attest_endorsement.bin ./cf_data
-    fi
+      if [[ -f cf_utility.measurement ]]; then
+          cp -p cf_utility.measurement ../cf_data
+      fi
+      if [[ -f platform_attest_endorsement.bin ]]; then
+          cp -p platform_key_file.bin attest_key_file.bin \
+                platform_attest_endorsement.bin ../cf_data
+      fi
 
-    $CERTIFIER_ROOT/utilities/combine_policy_certs.exe \
+      $CERTIFIER_ROOT/utilities/combine_policy_certs.exe \
           --init=true \
           --new_cert_file=$POLICY_CERT_FILE_NAME \
-          --output=my_certs
-  popd
-}
-
-function measure-program() {
-  if [[ ! -e "$TEST_DIR/provisioning" ]] ; then
-    mkdir $TEST_DIR/provisioning
-  fi
-
-  pushd $TEST_DIR/provisioning
-    $CERTIFIER_ROOT/utilities/measurement_utility.exe \
-       --type=hash \
-       --input=$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
-       --output=$TEST_DIR/provisioning/cf_utility.measurement
+          --output=../my_certs
+    popd
   popd
 }
 
 function build-policy() {
+  echo " "
   echo "build-policy"
   make-directories
-  return 0
-
-  measure-program
 
   COMBINED_STATEMENTS=""
 
   pushd $TEST_DIR/provisioning 
+
     if [[ $ENCLAVE_TYPE = "simulated-enclave" ]]; then
       $CERTIFIER_ROOT/utilities/measurement_utility.exe \
         --type=hash \
@@ -298,18 +286,25 @@ function build-policy() {
       COMBINED_STATEMENTS="$COMBINED_STATEMENTS,tpm_signed_claim_2.bin"
     fi
 
+    $CERTIFIER_ROOT/utilities/package_claims.exe \
+      --input=$COMBINED_STATEMENTS \
+      --output=$POLICY_FILE_NAME
+
+
     echo ""
     echo "Final policy"
     echo ""
     $CERTIFIER_ROOT/utilities/print_packaged_claims.exe \
       --input=$POLICY_FILE_NAME
+    echo ""
   popd
 }
 
 function run-policy-server() {
-  return 0
+  echo " "
+  echo "run-policy-server"
 
-  if [[ $ENCLAVE_TYPE != "simulated-enclave" ]] ; then
+  if [[ $ENCLAVE_TYPE == "simulated-enclave" ]] ; then
 
    export LD_LIBRARY_PATH=/usr/local/lib
    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/teelib
@@ -321,27 +316,28 @@ function run-policy-server() {
    sudo ldconfig
 
    pushd $TEST_DIR/service
-   if [[ $VERBOSE -eq 1 ]]; then
-     if [[ "$ENCLAVE_TYPE" == "simulated-enclave" ]] ; then
-       echo "running policy server for simulated-enclave"
-       $CERTIFIER_ROOT/certifier_service/simpleserver \
-            --policy_key_file=$POLICY_KEY_FILE_NAME \
-            --policy_cert_file=$POLICY_CERT_FILE_NAME \
-            --policyFile=$POLICY_STORE_NAME \
-            --readPolicy=true &
-        fi
-    fi
+     if [[ $VERBOSE -eq 1 ]]; then
+       if [[ "$ENCLAVE_TYPE" == "simulated-enclave" ]] ; then
+         echo "running policy server for simulated-enclave"
+         $CERTIFIER_ROOT/certifier_service/simpleserver \
+              --policy_key_file=$POLICY_KEY_FILE_NAME \
+              --policy_cert_file=$POLICY_CERT_FILE_NAME \
+              --policyFile=$POLICY_FILE_NAME \
+              --readPolicy=true &
+          fi
+      fi
     popd
     sleep 3
   fi
 }
 
 function certify-programs() {
+  echo " "
   echo "certify-programs"
   make-directories
-  return 0
 
   pushd $TEST_DIR
+
     $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
         --cf_utility_help=false \
         --init_trust=true \
@@ -360,16 +356,16 @@ function certify-programs() {
 }
 
 function run-tests() {
+  echo " "
   echo "run tests"
-  return 0
 
   pushd $TEST_DIR
     if [[ $RECERTIFY -eq 1 ]]; then
        clean-run-time-files
        build-policy
+       copy-files
        run-policy-server
        certify-programs
-       copy-files
     fi
 
     # Check help
@@ -388,19 +384,21 @@ function run-tests() {
       --enclave_type="simulated-enclave" \
       --data_dir=$DATA_DIR \
       --policy_domain_name=$DOMAIN_NAME \
-      --policy_key_file=policy_cert_file.$DOMAIN_NAME \
+      --policy_key_cert_file=policy_cert_file.$DOMAIN_NAME \
       --policy_store_filename=$POLICY_STORE_NAME \
       --encrypted_cryptstore_filename= $CRYPTSTORE_NAME \
       --keyname="encryption_key_1" \
-      --symmetric_algorithm=aes-256-gcm \
+      --symmetric_key_algorithm=aes-256-gcm \
       --public_key_algorithm=rsa_2048 \
-      --tag=test-key-1 \
+      --entry_tag=test-key-1 \
       --entry_version=0 \
-      --type="key-message-serialized-protobuf" \
+      --entry_type="key-message-serialized-protobuf" \
       --output_format="key-message-serialized-protobuf" \
       --input_format="key-message-serialized-protobuf" \
       --input_file="in_1" \
       --output_file="out_1"
+
+    return 0
 
     # retrieve symmetric key
     $SRC_DIR/cf_utility.exe \
@@ -419,11 +417,11 @@ function run-tests() {
       --policy_store_filename=$POLICY_STORE_NAME \
       --encrypted_cryptstore_filename= $CRYPTSTORE_NAME \
       --keyname="encryption_key_1" \
-      --symmetric_algorithm=aes-256-gcm \
+      --symmetric_key_algorithm=aes-256-gcm \
       --public_key_algorithm=rsa_2048 \
-      --tag=test-key-1 \
+      --entry_tag=test-key-1 \
       --entry_version=0 \
-      --type="key-message-serialized-protobuf" \
+      --entry_type="key-message-serialized-protobuf" \
       --output_format="key-message-serialized-protobuf" \
       --input_format="key-message-serialized-protobuf" \
       --input_file="in_1" \
@@ -446,11 +444,11 @@ function run-tests() {
       --policy_store_filename=$POLICY_STORE_NAME \
       --encrypted_cryptstore_filename= $CRYPTSTORE_NAME \
       --keyname="encryption_key_2" \
-      --symmetric_algorithm=aes-256-gcm \
+      --symmetric_key_algorithm=aes-256-gcm \
       --public_key_algorithm=rsa_2048 \
-      --tag=test-key-2 \
+      --entry_tag=test-key-2 \
       --entry_version=0 \
-      --type="key-message-serialized-protobuf" \
+      --entry_type="key-message-serialized-protobuf" \
       --output_format="key-message-serialized-protobuf" \
       --input_format="key-message-serialized-protobuf" \
       --input_file="in_1" \
@@ -473,11 +471,11 @@ function run-tests() {
       --policy_store_filename=$POLICY_STORE_NAME \
       --encrypted_cryptstore_filename= $CRYPTSTORE_NAME \
       --keyname="encryption_key_2" \
-      --symmetric_algorithm=aes-256-gcm \
+      --symmetric_key_algorithm=aes-256-gcm \
       --public_key_algorithm=rsa_2048 \
-      --tag=test-key-2 \
+      --entry_tag=test-key-2 \
       --entry_version=0 \
-      --type="key-message-serialized-protobuf" \
+      --entry_type="key-message-serialized-protobuf" \
       --output_format="key-message-serialized-protobuf" \
       --input_format="key-message-serialized-protobuf" \
       --input_file="in_1" \
@@ -500,11 +498,11 @@ function run-tests() {
       --policy_store_filename=$POLICY_STORE_NAME \
       --encrypted_cryptstore_filename= $CRYPTSTORE_NAME \
       --keyname="encryption_key_3" \
-      --symmetric_algorithm=aes-256-gcm \
+      --symmetric_key_algorithm=aes-256-gcm \
       --public_key_algorithm=rsa_2048 \
-      --tag=test-key-3 \
+      --entry_tag=test-key-3 \
       --entry_version=0 \
-      --type="binary-blob" \
+      --entry_type="binary-blob" \
       --output_format="raw" \
       --input_format="raw" \
       --input_file="in_1" \
@@ -527,11 +525,11 @@ function run-tests() {
       --policy_store_filename=$POLICY_STORE_NAME \
       --encrypted_cryptstore_filename= $CRYPTSTORE_NAME \
       --keyname="encryption_key_3" \
-      --symmetric_algorithm=aes-256-gcm \
+      --symmetric_key_algorithm=aes-256-gcm \
       --public_key_algorithm=rsa_2048 \
-      --tag=test-key-3 \
+      --entry_tag=test-key-3 \
       --entry_version=0 \
-      --type="binary-blob" \
+      --entry_type="binary-blob" \
       --output_format="raw" \
       --input_format="raw" \
       --input_file="in_1" \
@@ -544,9 +542,9 @@ function run-tests() {
 function run-support-test() {
   pushd $SRC_DIR
     if [[ $VERBOSE -eq 1 ]]; then
-    ./cf_support_test.exe --print_all=true
+      ./cf_support_test.exe --print_all=true
     else
-    ./cf_support_test.exe
+      ./cf_support_test.exe
     fi
   popd
 }
