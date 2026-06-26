@@ -402,6 +402,7 @@ function run-tests() {
        build-policy
        run-policy-server
        certify-programs
+       copy-files
     fi
 
     # Check help
@@ -601,4 +602,7 @@ fi
 if [[ $RUN_TEST -eq 1 ]]; then
   run-tests
 fi
-
+cleanup-stale-procs
+echo ""
+echo "Done"
+echo ""
