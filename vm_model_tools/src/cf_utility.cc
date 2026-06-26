@@ -1233,6 +1233,48 @@ int main(int an, char **av) {
       goto done;
     }
 
+    time_point tp;
+    if (!time_now(&tp)) {
+      printf("%s() error, line %d, Can't get current time\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+
+    string tp_str;
+    if (!time_to_string(tp, &tp_str)) {
+      printf("%s() error, line %d, Can't convert time to string\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+
+    int    version = 1;
+    string type("key-message-serialized-protobuf");
+
+    cryptstore_entry *ce = cs.add_entries();
+    int               l = 0;
+    int               h = 0;
+    if (version_range_in_cryptstore(cs, tag, &l, &h)) {
+      version = h + 1;
+    } else {
+      version = 1;
+    }
+    ce->set_tag(tag);
+    ce->set_type(type);
+    ce->set_version(version);
+    ce->set_time_entered(tp_str);
+    ce->set_exportable(true);
+
+    string serialized_key;
+    if (!km.SerializeToString(&serialized_key)) {
+      printf("%s() error, line %d, Can't generate serialized key\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+    ce->set_blob((byte *)serialized_key.data(), serialized_key.size());
+
     // add key to store and save it
     if (!save_cryptstore(cs,
                          FLAGS_data_dir,
