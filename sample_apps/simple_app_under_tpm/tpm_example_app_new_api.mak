@@ -101,8 +101,7 @@ $(EXE_DIR)/tpm_example_app.exe: $(dobj)
 	@echo "\nlinking executable $@"
 	$(LINK) $(dobj) $(LDFLAGS) -o $(@D)/$@
 
-$(I)/certifier.pb.h: $(US)/certifier.pb.cc
-$(US)/certifier.pb.cc: $(CP)/certifier.proto
+$(US)/certifier.pb.cc $(I)/certifier.pb.h: $(CP)/certifier.proto
 	$(PROTO) --proto_path=$(<D) --cpp_out=$(@D) $<
 	mv $(@D)/certifier.pb.h $(I)
 
