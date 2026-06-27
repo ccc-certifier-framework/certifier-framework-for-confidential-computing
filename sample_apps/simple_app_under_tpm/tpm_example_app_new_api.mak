@@ -161,7 +161,7 @@ $(O)/openssl_help.o: $(T)/openssl_help.cc
 	@echo "compiling openssl_help.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/openssl_help.o $(T)/openssl_help.cc
 
-$(O)/tpm2_support.o: $(T)/tpm2_support.cc $(T)/certifier.pb.cc $(T)/tpm2.pb.cc
+$(O)/tpm2_support.o: $(T)/tpm2_support.cc $(US)/certifier.pb.cc $(T)/tpm2.pb.cc
 	@echo "compiling tpm2_support.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/tpm2_support.o $(T)/tpm2_support.cc
 
