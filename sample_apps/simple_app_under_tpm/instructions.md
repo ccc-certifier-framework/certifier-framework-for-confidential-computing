@@ -95,7 +95,7 @@ TPM utilities, you should change the directoy set by the variable
 XDG_CONFIG_HOME to the location of your tpm state in the shell script
 start-tpm-simulator.sh.  I recommend using the full pathname.
 
-First, we need a "priviledged window" where we run as root.  We will
+First, we need a "privilged window" where we run as root.  We will
 use this window later.  If you have not already provisioned such a window,
 in a new window, "priviledged window 1," type:
 
@@ -140,7 +140,7 @@ application measurment).  In the "priviledged window," type:
   ../../src/tpm2/tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
 ```
 
-Now, run the first pass.  In the "priviledged window," type:
+Now, run the first pass.  In the "privilged window," type:
 
 ```shell
   ./first-pass.sh dom0 1
