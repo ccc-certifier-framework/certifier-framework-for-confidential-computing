@@ -879,6 +879,7 @@ function test-sample-app-tpm-compile() {
     echo " "
 
     pushd "${CERT_ROOT}"/sample_apps/simple_app_under_tpm > /dev/null 2>&1
+      echo "./prepare-test.sh checkin-test dom0"
       ./prepare-test.sh checkin-test dom0
     popd > /dev/null 2>&1
 

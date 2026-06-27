@@ -247,7 +247,20 @@ function do-compile-certifier() {
 
 function do-checkin-test() {
   echo " "
-  echo "do-all"
+  echo "do-checkin-test"
+
+  if [[ ! -d "$EXAMPLE_DIR/provisioning" ]] ; then
+    mkdir $EXAMPLE_DIR/provisioning
+  fi
+  if [[ ! -d "$EXAMPLE_DIR/service" ]] ; then
+    mkdir $EXAMPLE_DIR/service
+  fi
+  if [[ ! -d "$EXAMPLE_DIR/app1_data" ]] ; then
+    mkdir $EXAMPLE_DIR/app1_data
+  fi
+  if [[ ! -d "$EXAMPLE_DIR/app2_data" ]] ; then
+    mkdir $EXAMPLE_DIR/app2_data
+  fi
 
   do-compile-utilities
   do-make-keys
@@ -280,19 +293,6 @@ function do-all() {
   echo " "
   echo "do-all done"
 }
-
-if [[ ! -d "$EXAMPLE_DIR/provisioning" ]] ; then
-  mkdir $EXAMPLE_DIR/provisioning
-fi
-if [[ ! -d "$EXAMPLE_DIR/service" ]] ; then
-  mkdir $EXAMPLE_DIR/service
-fi
-if [[ ! -d "$EXAMPLE_DIR/app1_data" ]] ; then
-  mkdir $EXAMPLE_DIR/app1_data
-fi
-if [[ ! -d "$EXAMPLE_DIR/app2_data" ]] ; then
-  mkdir $EXAMPLE_DIR/app2_data
-fi
 
 if [ "$1" == "fresh" ] ; then
   echo " "
