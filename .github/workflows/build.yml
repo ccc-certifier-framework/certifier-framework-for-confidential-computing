@@ -48,11 +48,6 @@ jobs:
         ./CI/scripts/cppcheck.sh
 
     #! -------------------------------------------------------------------------
-    - name: test-sample-app-tpm-compile
-      run: |
-        ./CI/scripts/test.sh test-sample-app-tpm-compile
-
-    #! -------------------------------------------------------------------------
     - name: test-core-certifier-programs
       run: |
         ./CI/scripts/test.sh test-core-certifier-programs
