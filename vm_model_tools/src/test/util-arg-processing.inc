@@ -56,6 +56,11 @@ function print-options() {
   echo "Policy file name flag:  -pfn"
   echo "Policy server IP flag:  -psa"
   echo "Policy port: flag -psp"
+  echo "Tpm cert chain flag: -cc_flag"
+  echo "Tpm root file flag: -cr_flag"
+  echo "Current root file flag: -crf"
+  echo "Current issuer file flag: -cif"
+
   echo ""
   echo "Symmetric algorithm flag: -sea"
   echo "Asymmetric algorithm flag: -aen"
@@ -90,6 +95,10 @@ ASYMMETRIC_ENCRYPTION_ALGORITHM="RSA-4096"
 TPM_DEVICE="/dev/tpm0"
 SEAL_STORE="seal_hierarchy.bin"
 QUOTE_STORE="quote_hierarchy.bin"
+TPM_CERT_CHAIN_FILE="ekchain.bin"
+TPM_ROOTS_FILE="trustedRoots.bin"
+CURRENT_TPM_ROOT_FILE="/var/lib/swtpm-localca/swtpm-localca-rootca-cert.pem"
+CURRENT_TPM_ISSUER_FILE="/var/lib/swtpm-localca/issuercert.pem"
 
 function print-variables() {
 
@@ -119,11 +128,15 @@ function print-variables() {
   echo "Recertify: $RECERTIFY"
   echo "Provision keys: $PROVISION_KEYS"
   echo ""
-  echo "Policy key file: $POLICY_KEY_FILE_NAME"
   echo "Policy cert file: $POLICY_CERT_FILE_NAME"
   echo "Policy file name: $POLICY_FILE_NAME"
   echo "Policy store file name: $POLICY_STORE_NAME"
   echo "Cryptstore name: $CRYPTSTORE_NAME"
+  echo ""
+  echo "Tpm cert chain file: $TPM_CERT_CHAIN_FILE"
+  echo "Tpm trusted root file: $TPM_ROOTS_FILE"
+  echo "Current tpm root file: $CURRENT_TPM_ROOT_FILE"
+  echo "Current tpm issuer file: $CURRENT_TPM_ISSUER_FILE"
   echo ""
   echo "Policy server IP: $POLICY_SERVER_ADDRESS"
   echo "Policy port: $POLICY_SERVER_PORT"
@@ -214,6 +227,18 @@ function process-args() {
     fi
     if [[ ${array[i]} = "-qs" ]]; then
             QUOTE_STORE="${array[i+1]}"
+    fi
+    if [[ ${array[i]} = "-cc_flag" ]]; then
+            TPM_CERT_CHAIN_FILE="${array[i+1]}"
+    fi
+    if [[ ${array[i]} = "-cr_flag" ]]; then
+            TPM_ROOTS_FILE="${array[i+1]}"
+    fi
+    if [[ ${array[i]} = "-crf" ]]; then
+            CURRENT_TPM_ROOT_FILE="${array[i+1]}"
+    fi
+    if [[ ${array[i]} = "-cif" ]]; then
+            CURRENT_TPM_ISSUER_FILE="${array[i+1]}"
     fi
   done
 }

@@ -173,8 +173,12 @@ function copy-files() {
     fi
 
     pushd provisioning
-      cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME policy.bin ../service
-      cp -p $POLICY_CERT_FILE_NAME ../cf_data
+      cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME policy.bin ../service || true
+      cp -p $POLICY_CERT_FILE_NAME ../cf_data || true
+      if [[ $ENCLAVE_TYPE == "tpm-enclave" ]]; then
+        cp -p $TPM_ROOTS_FILE ../service || true
+        cp -p $TPM_CERT_CHAIN_FILE ../cf_data || true
+      fi
 
       if [[ -f cf_utility.measurement ]]; then
           cp -p cf_utility.measurement ../cf_data
@@ -190,6 +194,7 @@ function copy-files() {
           --output=../my_certs
     popd
   popd
+  sleep 1
 }
 
 function build-policy() {
@@ -298,13 +303,12 @@ function build-policy() {
       --input=$POLICY_FILE_NAME
     echo ""
   popd
+  sleep 1
 }
 
-function run-policy-server() {
+function init-policy-server-libraries() {
   echo " "
-  echo "run-policy-server"
-
-  if [[ $ENCLAVE_TYPE == "simulated-enclave" ]] ; then
+  echo "init-policy-server-libraries"
 
    export LD_LIBRARY_PATH=/usr/local/lib
    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/teelib
@@ -314,21 +318,103 @@ function run-policy-server() {
    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/tpmlib
    echo $LD_LIBRARY_PATH
    sudo ldconfig
+}
 
-   pushd $TEST_DIR/service
-     if [[ $VERBOSE -eq 1 ]]; then
-       if [[ "$ENCLAVE_TYPE" == "simulated-enclave" ]] ; then
-         echo "running policy server for simulated-enclave"
-         $CERTIFIER_ROOT/certifier_service/simpleserver \
-              --policy_key_file=$POLICY_KEY_FILE_NAME \
-              --policy_cert_file=$POLICY_CERT_FILE_NAME \
-              --policyFile=$POLICY_FILE_NAME \
-              --readPolicy=true &
-          fi
-      fi
-    popd
-    sleep 3
+function run-policy-server() {
+  echo " "
+  echo "run-policy-server"
+
+  pushd $TEST_DIR/service
+    $CERTIFIER_ROOT/certifier_service/simpleserver \
+        --policy_key_file=$POLICY_KEY_FILE_NAME \
+        --policy_cert_file=$POLICY_CERT_FILE_NAME \
+        --policyFile=$POLICY_FILE_NAME \
+        --readPolicy=true &
+  popd
+  sleep 3
+}
+
+function make-root-list() {
+
+  echo "make-root-list"
+  echo ""
+  pushd $TEST_DIR/provisioning
+    cp /var/lib/swtpm-localca/swtpm-localca-rootca-cert.pem root.pem
+    cp /var/lib/swtpm-localca/issuercert.pem issuercert.pem
+    openssl x509 -inform pem -in root.pem -outform der -out root.der
+    # openssl x509 -inform der -in root.der -text
+    openssl x509 -inform pem -in issuercert.pem -outform der -out issuercert.der
+    # openssl x509 -inform der -in issuercert.der -text
+    $CERTIFIER_ROOT/utilities/make_der_cert_chain.exe \
+        --output=$TPM_ROOTS_FILE -init=true \
+        --new_cert_file="root.der" --add_cert=true
+    $CERTIFIER_ROOT/utilities/make_der_cert_chain.exe \
+        --output=$TPM_CERT_CHAIN_FILE -init=true \
+        --new_cert_file="$CURRENT_TPM_ISSUER_FILE" --add_cert=true
+  popd
+}
+
+function build-first-pass-policy() {
+  echo " "
+  echo "build-first-pass-policy"
+
+  if [[ ! -e "$TEST_DIR/provisioning" ]] ; then
+    mkdir $TEST_DIR/provisioning
   fi
+
+  if [[ ! $ENCLAVE_TYPE = "tpm-enclave" ]]; then
+      echo "Can only make policy for tpm activation"
+      return 1
+  fi
+
+  make-root-list
+  cp $TEST_DIR/provisioning/trustedRoots.bin $TEST_DIR/service
+  cp $TEST_DIR/provisioning/$POLICY_KEY_FILE_NAME $TEST_DIR/service
+  cp $TEST_DIR/provisioning/$POLICY_CERT_FILE_NAME $TEST_DIR/service
+}
+
+function run-first-pass() {
+  echo " "
+  echo "run-first-pass"
+
+  pushd $TEST_DIR/service
+    $CERTIFIER_ROOT/certifier_service/simpleserver \
+       --policy_key_file=$POLICY_KEY_FILE_NAME \
+       --policy_cert_file=$POLICY_CERT_FILE_NAME \
+       --policyFile=$POLICY_FILE_NAME \
+       --print_all=true \
+       --trustedRootsFile=$TPM_ROOTS_FILE \
+       --doActivate=true &
+
+    sleep 3
+
+    $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
+      --data_dir=$DATA_DIR \
+      --enclave_type=$ENCLAVE_TYPE \
+      --policy_domain_name=$DOMAIN_NAME \
+      --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
+      --policy_store_filename=$POLICY_STORE_NAME \
+      --run_first_pass=true \
+      --tpm_device=$TPM_DEVICE \
+      --seal_hierarchy_file_name=$SEAL_STORE \
+      --quote_hierarchy_file_name=$QUOTE_STORE
+      --quote_cert_file="quote_cert.crt" \
+      --measurement_file="cf_utility.measurement" \
+      --endorsement_cert_chain_file=$TPM_CERT_CHAIN_FILE \
+      --endorsement_cert_file_name="" \
+      --generate_symmetric_key=true \
+      --keyname=primary-store-encryption-key \
+      --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
+      --symmetric_key_algorithm=aes-256-gcm  \
+      --public_key_algorithm=rsa-2048 \
+      --certifier_service_URL=$POLICY_SERVER_ADDRESS \
+      --service_port=$POLICY_SERVER_PORT --print_level=1 &
+
+    cp tpm_cf_utility.measurement provisioning
+    chmod 0777 tpm_cf_utility.measurement provisioning/tpm_cf_utility.measurement
+  popd
+
+  cleanup-stale-procs
 }
 
 function certify-programs() {
@@ -384,6 +470,11 @@ function run-tests() {
 
     if [[ $RECERTIFY -eq 1 ]]; then
        clean-run-time-files
+       init-policy-server-libraries
+       if [[ $ENCLAVE_TYPE == "tpm-enclave" ]]; then
+         build-first-pass-policy
+         run-first-pass
+       fi
        build-policy
        copy-files
        run-policy-server
@@ -586,6 +677,10 @@ function run-support-test() {
     fi
   popd
 }
+
+if [[ ! $ENCLAVE_TYPE = "tpm-enclave" ]]; then
+  echo "TPM simulator must be running for this test"
+fi
 
 if [[ $VERBOSE -eq 1 ]]; then
   print-variables
