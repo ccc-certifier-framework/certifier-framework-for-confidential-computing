@@ -54,6 +54,7 @@ else
 CFLAGS += $(INCLUDE) -O3 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
 endif
 
+CFLAGS += -Wno-strict-aliasing
 CFLAGS += -DTPM_SIMPLE_APP
 CFLAGS += -DTPM_CERTIFIER
 CFLAGS += -DFIRST_PASS_ON
