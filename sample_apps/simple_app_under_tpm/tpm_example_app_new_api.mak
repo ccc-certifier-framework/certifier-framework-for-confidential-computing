@@ -107,7 +107,7 @@ $(US)/certifier.pb.cc $(I)/certifier.pb.h: $(CP)/certifier.proto
 
 $(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "\ncompiling $<"
-	$(CC) $(CFLAGS) -Wno-array-bounds -o $(@D)/$@ -c $<
+	$(CC) $(CFLAGS) -Wno-array-bounds -o $(@D)/$@ -c $(US)/certifier.pb.cc
 
 $(O)/tpm_example_app.o: $(COMMON_SRC)/example_app.cc $(I)/certifier.h $(US)/certifier.pb.cc
 	@echo "\ncompiling $<"
