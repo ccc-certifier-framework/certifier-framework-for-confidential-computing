@@ -52,6 +52,7 @@ CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -W
 CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations -Wno-error=strict-aliasing
 endif
 CFLAGS=$(CFLAGS_NOERROR) -fPIC
+CFLAGS += -Wno-strict-aliasing
 
 ifdef ENABLE_SEV
 CFLAGS  += -D SEV_SNP -D SEV_DUMMY_GUEST
