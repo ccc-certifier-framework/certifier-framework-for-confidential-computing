@@ -12,32 +12,85 @@
 #    limitations under the License
 #    File: tpm2_support.mak
 
-#ifndef CERTIFIER_ROOT
-CERTIFIER_ROOT=../..
-#endif
-TPM_DIR=$(CERTIFIER_ROOT)/src/tpm2
-#ifndef EXE_DIR
-EXE_DIR=$(TPM_DIR)
-#endif
-#ifndef GOOGLE_INCLUDE
-GOOGLE_INCLUDE=/usr/local/include/google
-#endif
-#ifndef LOCAL_LIB
-LOCAL_LIB=/usr/local/lib
-#endif
-#ifndef TARGET_MACHINE_TYPE
-TARGET_MACHINE_TYPE= x64
-#endif
+
+if [[ ${CERTIFIER_ROOT+x} ]]; then
+  echo "CERTIFIER_ROOT already set"
+else
+  echo "setting CERTIFIER_ROOT"
+  pushd . > /dev/null
+    CERTIFIER_ROOT=$(pwd) > /dev/null
+  popd > /dev/null
+fi
+echo "CERTIFIER ROOT: $CERTIFIER_ROOT"
+export TPM_SUPPORT_DIR=$CERTIFIER_ROOT/src/tpm2
+echo "Tpm support dir: $TPM_SUPPORT_DIR"
+export XDG_CONFIG_HOME="$CERTIFIER_ROOT/swtpm_state
+echo "swtpm state dir: $XDG_CONFIG_HOME
+
+exit
 
 # compile
-make clean -f tpm2_support.mak
-make -f tpm2_support.mak
+pushd $TPM_SUPPORT_DIR > /dev/null
+  make clean -f tpm2_support.mak
+  make -f tpm2_support.mak
+popd > /dev/null
 
-# set up directory for siimulator start
+function install_swtpm() {
+  echo "function install_swtpm"
+  if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
+    echo "No swtpm state dir"
+    return 1
+  fi
+  apt update
+  apt install swtpm swtpm-tools apparmor -y
+}
 
-# install simulator if its not here
+# compile
+pushd $TPM_SUPPORT_DIR >> /dev/null
+  make clean -f tpm2_support.mak
+  make -f tpm2_support.mak
+popd >> /dev/null
+
+# reset defines as root
+sudo bash
+if [[ ${CERTIFIER_ROOT+x} ]]; then
+  echo "CERTIFIER_ROOT already set"
+else
+  echo "setting CERTIFIER_ROOT"
+  pushd . >> /dev/null
+    CERTIFIER_ROOT=$(pwd) > /dev/null
+  popd >> /dev/null
+fi
+echo "CERTIFIER ROOT: $CERTIFIER_ROOT"
+export TPM_SUPPORT_DIR=$CERTIFIER_ROOT/src/tpm2
+echo "Tpm support dir: $TPM_SUPPORT_DIR"
+export XDG_CONFIG_HOME="$CERTIFIER_ROOT/swtpm_state
+echo "swtpm state: $XDG_CONFIG_HOME
 
 
-./clean-tpm-simulator.sh
-./start-tpm-simulator.sh
+if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
+  pushd $CERTIFIER_ROOT
+    if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
+       mkdir ./swtpm_state
+    fi
+    install-swtpm
+  popd
+fi
+if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
+  echo " Couldn't make tpm state dir"
+  return 1
+fi
+
+pushd $TPM_SUPPORT_DIR
+  ./clean-tpm-simulator.sh || true
+  ./start-tpm-simulator.sh || true
+
+  ./tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
+  ./tpm2_test.exe --operation=MiscTest --tpm_device=/dev/tpmrm1
+  ./tpm2_test.exe --operation=GetCert --tpm_device=/dev/tpmrm1
+  ./tpm2_test.exe --operation=EndorsementTest --tpm_device=/dev/tpmrm1
+  ./tpm2_test.exe --operation=SealTest --tpm_device=/dev/tpmrm1
+  ./tpm2_test.exe --operation=QuoteTest --tpm_device=/dev/tpmrm1
+  ./clean-tpm-simulator.sh || true
+popd
 
