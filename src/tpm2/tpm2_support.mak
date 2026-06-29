@@ -62,6 +62,7 @@ CFLAGS=$(CFLAGS_COMMON)
 ifndef NEW_API
 CFLAGS += -DNEW_API
 endif
+CFLAGS += -Wno-strict-aliasing
 
 certifier_objs = $(O)/certifier.pb.o $(O)/certifier.o \
 	      $(O)/certifier_proofs.o  $(O)/support.o $(O)/simulated_enclave.o \

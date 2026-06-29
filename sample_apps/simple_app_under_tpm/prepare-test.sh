@@ -15,7 +15,7 @@ else
 fi
 EXAMPLE_DIR=$(pwd)
 
-NO_COMPILE_UTILITIES=1
+NO_COMPILE_UTILITIES=0
 
 echo " "
 echo "Certifier root: $CERTIFIER_ROOT"
@@ -245,6 +245,29 @@ function do-compile-certifier() {
   echo "do-compile-certifier done"
 }
 
+function do-checkin-test() {
+  echo " "
+  echo "do-checkin-test"
+
+  if [[ ! -d "$EXAMPLE_DIR/provisioning" ]] ; then
+    mkdir $EXAMPLE_DIR/provisioning
+  fi
+  if [[ ! -d "$EXAMPLE_DIR/service" ]] ; then
+    mkdir $EXAMPLE_DIR/service
+  fi
+  if [[ ! -d "$EXAMPLE_DIR/app1_data" ]] ; then
+    mkdir $EXAMPLE_DIR/app1_data
+  fi
+  if [[ ! -d "$EXAMPLE_DIR/app2_data" ]] ; then
+    mkdir $EXAMPLE_DIR/app2_data
+  fi
+
+  do-compile-utilities
+  do-make-keys
+  do-compile-program
+  do-compile-certifier
+}
+
 function do-all() {
   echo " "
   echo "do-all"
@@ -280,6 +303,12 @@ fi
 if [ "$1" == "all" ] ; then
   echo "Base name: $0"
   do-all
+  exit
+fi
+
+if [ "$1" == "checkin-test" ] ; then
+  echo "Base name: $0"
+  do-checkin-test
   exit
 fi
 

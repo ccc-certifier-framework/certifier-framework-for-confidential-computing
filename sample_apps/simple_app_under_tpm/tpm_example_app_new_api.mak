@@ -54,6 +54,7 @@ else
 CFLAGS += $(INCLUDE) -O3 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
 endif
 
+CFLAGS += -Wno-strict-aliasing
 CFLAGS += -DTPM_SIMPLE_APP
 CFLAGS += -DTPM_CERTIFIER
 CFLAGS += -DFIRST_PASS_ON
@@ -100,14 +101,13 @@ $(EXE_DIR)/tpm_example_app.exe: $(dobj)
 	@echo "\nlinking executable $@"
 	$(LINK) $(dobj) $(LDFLAGS) -o $(@D)/$@
 
-$(I)/certifier.pb.h: $(US)/certifier.pb.cc
-$(US)/certifier.pb.cc: $(CP)/certifier.proto
+$(US)/certifier.pb.cc $(I)/certifier.pb.h: $(CP)/certifier.proto
 	$(PROTO) --proto_path=$(<D) --cpp_out=$(@D) $<
 	mv $(@D)/certifier.pb.h $(I)
 
 $(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "\ncompiling $<"
-	$(CC) $(CFLAGS) -Wno-array-bounds -o $(@D)/$@ -c $<
+	$(CC) $(CFLAGS) -Wno-array-bounds -o $(@D)/$@ -c $(US)/certifier.pb.cc
 
 $(O)/tpm_example_app.o: $(COMMON_SRC)/example_app.cc $(I)/certifier.h $(US)/certifier.pb.cc
 	@echo "\ncompiling $<"
@@ -161,7 +161,7 @@ $(O)/openssl_help.o: $(T)/openssl_help.cc
 	@echo "compiling openssl_help.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/openssl_help.o $(T)/openssl_help.cc
 
-$(O)/tpm2_support.o: $(T)/tpm2_support.cc $(T)/certifier.pb.cc $(T)/tpm2.pb.cc
+$(O)/tpm2_support.o: $(T)/tpm2_support.cc $(US)/certifier.pb.cc $(T)/tpm2.pb.cc
 	@echo "compiling tpm2_support.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/tpm2_support.o $(T)/tpm2_support.cc
 

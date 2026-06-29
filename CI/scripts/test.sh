@@ -84,6 +84,7 @@ TestList=(
 
 	   "test-acl_lib-programs"
 	   "test-cf-utility"
+	   "test-sample-app-tpm-compile"
            
            #"test-run_example-simple_app_python"
            #"test-simple_app_python-with-warm-restart"
@@ -860,9 +861,26 @@ function test-cf-utility() {
 
     pushd "${CERT_ROOT}"/vm_model_tools/src > /dev/null 2>&1
     # We need to clean here
-    make -i -f cf_utility.mak clean
-    make -j${NumMakeThreads} -f cf_utility.mak
-    ./cf_support_test.exe
+    pushd test
+      ./util-tests.sh -cu 1 -cp 1 -pk 1 -clean 1 -rt 1 -recertify 1 -loud 1
+    popd
+    #make -i -f cf_utility.mak clean
+    #make -j${NumMakeThreads} -f cf_utility.mak
+    #./cf_support_test.exe
+    popd > /dev/null 2>&1
+
+}
+
+# #############################################################################
+function test-sample-app-tpm-compile() {
+    echo "******************************************************************"
+    echo "* Test the test-sample-app-tpm-compile"
+    echo "******************************************************************"
+    echo " "
+
+    pushd "${CERT_ROOT}"/sample_apps/simple_app_under_tpm > /dev/null 2>&1
+      echo "./prepare-test.sh checkin-test dom0"
+      ./prepare-test.sh checkin-test dom0
     popd > /dev/null 2>&1
 
 }

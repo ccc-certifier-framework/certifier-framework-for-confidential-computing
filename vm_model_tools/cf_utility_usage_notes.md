@@ -5,7 +5,7 @@ Here are the calling arguments for cf-utility which is a command line program.
 cf_osutility uses gflags to manage command line arguments,so if
 arguments are not specified, the defaults indicated below are used.
 
-cf-osutility.exe
+cf_utility.exe
     --cf_utility_help=false
     --init_trust=false
     --reinit_trust=false
@@ -22,12 +22,12 @@ cf-osutility.exe
     --policy_store_filename=MUST-SPECIFY-IF-NEEDED
     --encrypted_cryptstore_filename=MUST-SPECIFY
     --keyname="store_encryption_key_1"
-    --symmetric_algorithm=aes-256-gcm
+    --symmetric_key_algorithm=aes-256-gcm
     --public_key_algorithm=rsa_2048
 
-    --tag=MUST-SPECIFY-IF-NEEDED
+    --entry_tag=MUST-SPECIFY-IF-NEEDED
     --entry_version=MUST-SPECIFY-IF-NEEDED
-    --type=MUST-SPECIFY-IF-NEEDED
+    --entry_type=MUST-SPECIFY-IF-NEEDED
 
     --certifier_service_URL=MUST-BE-SPECIFIED-IF-NEEDED
     --service_port=port-for-certifier-service, MUST-BE-SPECIFIED-IF-NEEDED
