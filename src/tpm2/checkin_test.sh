@@ -53,8 +53,10 @@ echo "swtpm state: $XDG_CONFIG_HOME"
 
 set +e
 if [[ "$(id -u)" -ne 0 ]]; then
-    echo "This script must be run as root (or with sudo)."
-    exit 1
+   sudo bash
+fi
+if [[ "$(id -u)" -ne 0 ]]; then
+    echo "Must be root"
 else
     echo "I'm root"
 fi
