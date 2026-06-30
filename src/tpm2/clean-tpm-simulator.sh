@@ -39,6 +39,8 @@ TPM_SUPPORT_DIR=$CERTIFIER_ROOT/src/tpm2
 echo " "
 echo "Certifier root: $CERTIFIER_ROOT"
 echo "TPM support directory: $TPM_SUPPORT_DIR"
+echo "XDG_CONFIG_HOME: $XDG_CONFIG_HOME"
+exit 0
 
 if [[ ! -v XDG_CONFIG_HOME ]]; then
   echo "Using export XDG_CONFIG_HOME=~/.config"
@@ -66,4 +68,4 @@ pushd $XDG_CONFIG_HOME/mytpm1
 popd
 
 echo "Done"
-exit
+exit 0

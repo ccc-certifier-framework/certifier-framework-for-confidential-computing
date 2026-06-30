@@ -27,13 +27,34 @@ echo "Tpm support dir: $TPM_SUPPORT_DIR"
 export XDG_CONFIG_HOME="$CERTIFIER_ROOT/swtpm_state"
 echo "swtpm state dir: $XDG_CONFIG_HOME"
 
-exit 0 || true
-
 # compile
 pushd $TPM_SUPPORT_DIR > /dev/null
   make clean -f tpm2_support.mak
   make -f tpm2_support.mak
 popd > /dev/null
+
+# compile
+pushd $TPM_SUPPORT_DIR >> /dev/null
+  make clean -f tpm2_support.mak
+  make -f tpm2_support.mak
+popd >> /dev/null
+
+sudo bash
+
+# reset defines as root
+if [[ ${CERTIFIER_ROOT+x} ]]; then
+  echo "CERTIFIER_ROOT already set"
+else
+  echo "setting CERTIFIER_ROOT"
+  pushd ../.. >> /dev/null
+    CERTIFIER_ROOT=$(pwd) > /dev/null
+  popd >> /dev/null
+fi
+echo "CERTIFIER ROOT: $CERTIFIER_ROOT"
+export TPM_SUPPORT_DIR=$CERTIFIER_ROOT/src/tpm2
+echo "Tpm support dir: $TPM_SUPPORT_DIR"
+export XDG_CONFIG_HOME="$CERTIFIER_ROOT/swtpm_state"
+echo "swtpm state: $XDG_CONFIG_HOME"
 
 function install_swtpm() {
   echo "function install_swtpm"
@@ -45,33 +66,10 @@ function install_swtpm() {
   apt install swtpm swtpm-tools apparmor -y
 }
 
-# compile
-pushd $TPM_SUPPORT_DIR >> /dev/null
-  make clean -f tpm2_support.mak
-  make -f tpm2_support.mak
-popd >> /dev/null
-
-# reset defines as root
-sudo bash
-if [[ ${CERTIFIER_ROOT+x} ]]; then
-  echo "CERTIFIER_ROOT already set"
-else
-  echo "setting CERTIFIER_ROOT"
-  pushd . >> /dev/null
-    CERTIFIER_ROOT=$(pwd) > /dev/null
-  popd >> /dev/null
-fi
-echo "CERTIFIER ROOT: $CERTIFIER_ROOT"
-export TPM_SUPPORT_DIR=$CERTIFIER_ROOT/src/tpm2
-echo "Tpm support dir: $TPM_SUPPORT_DIR"
-export XDG_CONFIG_HOME="$CERTIFIER_ROOT/swtpm_state
-echo "swtpm state: $XDG_CONFIG_HOME
-
-
 if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
   pushd $CERTIFIER_ROOT
     if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
-       mkdir ./swtpm_state
+       mkdir $XDG_CONFIG_HOME
     fi
     install-swtpm
   popd
@@ -80,6 +78,8 @@ if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
   echo "Couldn't make tpm state dir"
   return 1
 fi
+
+exit 0 || true
 
 pushd $TPM_SUPPORT_DIR
   ./clean-tpm-simulator.sh || true
