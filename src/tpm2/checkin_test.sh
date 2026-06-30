@@ -60,6 +60,7 @@ if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
   pushd $CERTIFIER_ROOT
     if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
        mkdir $XDG_CONFIG_HOME
+       mkdir $XDG_CONFIG_HOME/mytpm1
     fi
     install-swtpm
   popd
