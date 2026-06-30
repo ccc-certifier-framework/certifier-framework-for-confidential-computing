@@ -52,7 +52,7 @@ XDG_CONFIG_HOME=$CERTIFIER_ROOT/swtpm_state
 echo "swtpm state: $XDG_CONFIG_HOME"
 
 set +e
-if [ "$(id -u)" -ne 0 ]; then
+if [[ "$(id -u)" -ne 0 ]]; then
     echo "This script must be run as root (or with sudo)."
     exit 1
 else
