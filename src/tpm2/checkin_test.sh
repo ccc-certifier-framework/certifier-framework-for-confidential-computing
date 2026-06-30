@@ -59,6 +59,9 @@ function install-swtpm() {
   apt update
   apt install swtpm swtpm-tools apparmor -y
   echo "swtpm installed"
+  sleep 4
+  source ~/.bashrc
+  echo "updated path"
 }
 
 if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
@@ -73,7 +76,6 @@ if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
   echo "Couldn't make tpm state dir"
   return 1
 fi
-rehash
 echo "Path: $PATH"
 
 
