@@ -77,7 +77,7 @@ if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
   popd
 fi
 if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
-  echo " Couldn't make tpm state dir"
+  echo "Couldn't make tpm state dir"
   return 1
 fi
 

@@ -24,7 +24,7 @@ fi
 echo "CERTIFIER ROOT: $CERTIFIER_ROOT"
 EXAMPLE_DIR=$(pwd)
 echo "Example dir: $EXAMPLE_DIR"
-export XDG_CONFIG_HOME="$CERTIFIER_ROOT/swtpm_state
+export XDG_CONFIG_HOME="$CERTIFIER_ROOT/swtpm_state"
 echo "swtpm state dir: $XDG_CONFIG_HOME"
 
 exit 0 || true
@@ -64,8 +64,8 @@ fi
 echo "CERTIFIER ROOT: $CERTIFIER_ROOT"
 export EXAMPLE_DIR=$(pwd)
 echo "Example dir: $EXAMPLE_DIR"
-export XDG_CONFIG_HOME="$CERTIFIER_ROOT/swtpm_state
-echo "swtpm state: $XDG_CONFIG_HOME
+export XDG_CONFIG_HOME="$CERTIFIER_ROOT/swtpm_state"
+echo "swtpm state: $XDG_CONFIG_HOME"
 
 
 if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
@@ -77,7 +77,7 @@ if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
   popd
 fi
 if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
-  echo " Couldn't make tpm state dir"
+  echo "Couldn't make tpm state dir"
   return 1
 fi
 
