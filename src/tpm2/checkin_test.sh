@@ -62,12 +62,12 @@ fi
 if [[ ! -d "$XDG_CONFIG_HOME" ]] ; then
    echo ""
    echo "making simulator state directories"
-   mkdir $XDG_CONFIG_HOME
-   mkdir $XDG_CONFIG_HOME/mytpm1
-   chmod 0777 $XDG_CONFIG_HOME
-   chmod 0777 $XDG_CONFIG_HOME/mytpm1
-   ls -l $CERTIFIER_ROOT
-   ls -l $XDG_CONFIG_HOME
+   mkdir $XDG_CONFIG_HOME || true
+   mkdir $XDG_CONFIG_HOME/mytpm1 || true
+   chmod 0777 $XDG_CONFIG_HOME || true
+   chmod 0777 $XDG_CONFIG_HOME/mytpm1 || true
+   ls -l $CERTIFIER_ROOT || true
+   ls -l $XDG_CONFIG_HOME || true
    echo "simulator state directories made"
 else
    echo "simulator state directories exist"
