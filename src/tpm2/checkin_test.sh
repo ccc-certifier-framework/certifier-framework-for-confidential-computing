@@ -61,6 +61,8 @@ if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
        chmod 0666 $XDG_CONFIG_HOME/mytpm1
        ls -l $XDG_CONFIG_HOME
        echo "simulator state directories made"
+    else
+       echo "simulator state directories exist"
     fi
   popd
 fi
