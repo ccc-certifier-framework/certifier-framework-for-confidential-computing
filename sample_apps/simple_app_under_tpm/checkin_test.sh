@@ -27,7 +27,7 @@ echo "Example dir: $EXAMPLE_DIR"
 export XDG_CONFIG_HOME="$CERTIFIER_ROOT/swtpm_state
 echo "swtpm state dir: $XDG_CONFIG_HOME
 
-return 0
+exit 0 || true
 
 # compile
 pushd $EXAMPLE_DIR > /dev/null
