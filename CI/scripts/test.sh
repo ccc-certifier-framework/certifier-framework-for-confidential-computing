@@ -85,6 +85,8 @@ TestList=(
 	   "test-acl_lib-programs"
 	   "test-cf-utility"
 	   "test-sample-app-tpm-compile"
+	   "test-tpm-utility"
+	   "test-tpm-simple-app"
            
            #"test-run_example-simple_app_python"
            #"test-simple_app_python-with-warm-restart"
