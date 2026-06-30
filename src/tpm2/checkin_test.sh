@@ -58,7 +58,7 @@ if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
        mkdir $XDG_CONFIG_HOME
        mkdir $XDG_CONFIG_HOME/mytpm1
        chmod 0666 $XDG_CONFIG_HOME
-       chmode 0666 $XDG_CONFIG_HOME/mytpm1
+       chmod 0666 $XDG_CONFIG_HOME/mytpm1
        ls -l $XDG_CONFIG_HOME
        echo "simulator state directories made"
     fi
