@@ -51,7 +51,7 @@ export XDG_CONFIG_HOME="$CERTIFIER_ROOT/swtpm_state"
 echo "swtpm state: $XDG_CONFIG_HOME"
 
 function install-swtpm() {
-  echo "function install_swtpm"
+  echo "function install-swtpm"
   which swtpm-setup
 }
 
