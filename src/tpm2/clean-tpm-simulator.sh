@@ -36,12 +36,6 @@ else
 fi
 TPM_SUPPORT_DIR=$CERTIFIER_ROOT/src/tpm2
 
-echo " "
-echo "Certifier root: $CERTIFIER_ROOT"
-echo "TPM support directory: $TPM_SUPPORT_DIR"
-echo "XDG_CONFIG_HOME: $XDG_CONFIG_HOME"
-exit 0
-
 if [[ ! -v XDG_CONFIG_HOME ]]; then
   echo "Using export XDG_CONFIG_HOME=~/.config"
   export XDG_CONFIG_HOME="$HOME/.config"
@@ -50,6 +44,17 @@ if [[ ! -e $XDG_CONFIG_HOME ]]; then
   echo "$XDG_CONFIG_HOME does not exist"
   exit
 fi
+
+echo " "
+echo "Certifier root: $CERTIFIER_ROOT"
+echo "TPM support directory: $TPM_SUPPORT_DIR"
+echo "XDG_CONFIG_HOME: $XDG_CONFIG_HOME"
+exit 0
+echo " "
+echo "Certifier root: $CERTIFIER_ROOT"
+echo "TPM support directory: $TPM_SUPPORT_DIR"
+echo "XDG_CONFIG_HOME: $XDG_CONFIG_HOME"
+exit 0
 
 pushd $TPM_SUPPORT_DIR
   echo " "

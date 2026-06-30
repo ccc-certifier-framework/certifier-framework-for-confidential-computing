@@ -50,7 +50,7 @@ echo "Tpm support dir: $TPM_SUPPORT_DIR"
 export XDG_CONFIG_HOME="$CERTIFIER_ROOT/swtpm_state"
 echo "swtpm state: $XDG_CONFIG_HOME"
 
-function install_swtpm() {
+function install-swtpm() {
   echo "function install_swtpm"
   if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
     echo "No swtpm state dir"
@@ -73,10 +73,10 @@ if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
   return 1
 fi
 
-exit 0 || true
 
 pushd $TPM_SUPPORT_DIR
   ./clean-tpm-simulator.sh || true
+exit 0 || true
   ./start-tpm-simulator.sh || true
 
   ./tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
