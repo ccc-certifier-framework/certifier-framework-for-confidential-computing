@@ -881,6 +881,7 @@ function test-tpm-utility() {
     echo " "
 
     pushd "${CERT_ROOT}/src/tpm2" >> /dev/null 2>&1
+       ./checkkin-test.sh
     popd >> /dev/null 2>&1
 
 }
@@ -893,7 +894,7 @@ function test-tpm-simple-app() {
     echo " "
 
     pushd "${CERT_ROOT}"/sample_apps/simple_app_under_tpm> /dev/null 2>&1
-    # We need to clean here
+       ./checkkin-test.sh
     popd > /dev/null 2>&1
 }
 
