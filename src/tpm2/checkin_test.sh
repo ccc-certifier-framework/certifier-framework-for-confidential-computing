@@ -55,10 +55,10 @@ if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
   pushd $CERTIFIER_ROOT
     if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
        echo "making simulator state directories"
-       mkdir $XDG_CONFIG_HOME
-       mkdir $XDG_CONFIG_HOME/mytpm1
-       chmod 0666 $XDG_CONFIG_HOME
-       chmod 0666 $XDG_CONFIG_HOME/mytpm1
+       sudo mkdir $XDG_CONFIG_HOME
+       sudo mkdir $XDG_CONFIG_HOME/mytpm1
+       sudo chmod 0666 $XDG_CONFIG_HOME
+       sudo chmod 0666 $XDG_CONFIG_HOME/mytpm1
        ls -l $XDG_CONFIG_HOME
        echo "simulator state directories made"
     else
