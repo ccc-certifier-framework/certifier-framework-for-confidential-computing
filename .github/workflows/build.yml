@@ -77,9 +77,9 @@ jobs:
         #!set +x
 
     #! -------------------------------------------------------------------------
-    - name: test-tpm-utilities
+    - name: test-tpm-utility
       run: |
-         ./CI/scripts/test.sh test-tpm-utilities
+         ./CI/scripts/test.sh test-tpm-utility
 
     #! -------------------------------------------------------------------------
     - name: test-tpm-simple-app
