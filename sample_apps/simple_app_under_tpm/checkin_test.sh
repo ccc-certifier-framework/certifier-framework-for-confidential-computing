@@ -29,13 +29,7 @@ echo "swtpm state dir: $XDG_CONFIG_HOME"
 
 exit 0 || true
 
-# compile
-pushd $EXAMPLE_DIR > /dev/null
-  make clean -f tpm2_support.mak
-  make -f tpm2_support.mak
-popd > /dev/null
-
-function install_swtpm() {
+function install-swtpm() {
   echo "function install_swtpm"
   if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
     echo "No swtpm state dir"
@@ -44,12 +38,6 @@ function install_swtpm() {
   apt update
   apt install swtpm swtpm-tools apparmor -y
 }
-
-# compile
-pushd $EXAMPLE_DIR >> /dev/null
-  make clean -f tpm2_support.mak
-  make -f tpm2_support.mak
-popd >> /dev/null
 
 # reset defines as root
 sudo bash

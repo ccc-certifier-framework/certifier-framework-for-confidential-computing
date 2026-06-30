@@ -76,7 +76,6 @@ fi
 
 pushd $TPM_SUPPORT_DIR
   ./clean-tpm-simulator.sh || true
-exit 0 || true
   ./start-tpm-simulator.sh || true
 
   ./tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1

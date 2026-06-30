@@ -42,19 +42,13 @@ if [[ ! -v XDG_CONFIG_HOME ]]; then
 fi
 if [[ ! -e $XDG_CONFIG_HOME ]]; then
   echo "$XDG_CONFIG_HOME does not exist"
-  exit
+  exit 1
 fi
 
 echo " "
 echo "Certifier root: $CERTIFIER_ROOT"
 echo "TPM support directory: $TPM_SUPPORT_DIR"
 echo "XDG_CONFIG_HOME: $XDG_CONFIG_HOME"
-exit 0
-echo " "
-echo "Certifier root: $CERTIFIER_ROOT"
-echo "TPM support directory: $TPM_SUPPORT_DIR"
-echo "XDG_CONFIG_HOME: $XDG_CONFIG_HOME"
-exit 0
 
 pushd $TPM_SUPPORT_DIR
   echo " "
