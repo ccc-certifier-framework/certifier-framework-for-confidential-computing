@@ -62,8 +62,8 @@ pushd $TPM_SUPPORT_DIR
 popd
 
 pushd $XDG_CONFIG_HOME/mytpm1
-  rm ./*
-  rm ./.lock
+  rm ./* || true
+  rm ./.lock || true
 popd
 
 echo "Done"
