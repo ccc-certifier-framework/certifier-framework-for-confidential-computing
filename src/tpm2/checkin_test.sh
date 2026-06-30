@@ -28,12 +28,6 @@ export XDG_CONFIG_HOME="$CERTIFIER_ROOT/swtpm_state"
 echo "swtpm state dir: $XDG_CONFIG_HOME"
 
 # compile
-pushd $TPM_SUPPORT_DIR > /dev/null
-  make clean -f tpm2_support.mak
-  make -f tpm2_support.mak
-popd > /dev/null
-
-# compile
 pushd $TPM_SUPPORT_DIR >> /dev/null
   make clean -f tpm2_support.mak
   make -f tpm2_support.mak
