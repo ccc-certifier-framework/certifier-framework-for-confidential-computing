@@ -52,6 +52,7 @@ echo "swtpm state: $XDG_CONFIG_HOME"
 
 function install-swtpm() {
   echo "function install-swtpm"
+  echo "which swtpm-setup"
   which swtpm-setup
 }
 
