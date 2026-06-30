@@ -8,21 +8,14 @@
 set -Eeuo pipefail
 Me=$(basename "$0")
 
-sudo bash
-
-if [[ -v CERTIFIER_ROOT ]] ; then
-  echo "CERTIFIER_ROOT already set."
-else
-  pushd ../..
+pushd ../.. > /dev/null
   CERTIFIER_ROOT=$(pwd)
-  popd
-fi
+popd
 TPM_SUPPORT_DIR=$CERTIFIER_ROOT/src/tpm2
 
 echo " "
 echo "Certifier root: $CERTIFIER_ROOT"
 echo "TPM support directory: $TPM_SUPPORT_DIR"
-
 if [[ ! -v XDG_CONFIG_HOME ]]; then
   XDG_CONFIG_HOME=$CERTIFIER_ROOT/swtpm_state
 fi

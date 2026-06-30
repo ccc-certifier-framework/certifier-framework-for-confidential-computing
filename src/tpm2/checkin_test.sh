@@ -84,15 +84,15 @@ if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
 fi
 
 pushd $TPM_SUPPORT_DIR
-  ./clean-tpm-simulator.sh || true
-  ./start-tpm-simulator.sh || true
+  sudo ./clean-tpm-simulator.sh || true
+  sudo ./start-tpm-simulator.sh || true
 
-  ./tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
-  ./tpm2_test.exe --operation=MiscTest --tpm_device=/dev/tpmrm1
-  ./tpm2_test.exe --operation=GetCert --tpm_device=/dev/tpmrm1
-  ./tpm2_test.exe --operation=EndorsementTest --tpm_device=/dev/tpmrm1
-  ./tpm2_test.exe --operation=SealTest --tpm_device=/dev/tpmrm1
-  ./tpm2_test.exe --operation=QuoteTest --tpm_device=/dev/tpmrm1
-  ./clean-tpm-simulator.sh || true
+  sudo ./tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
+  sudo ./tpm2_test.exe --operation=MiscTest --tpm_device=/dev/tpmrm1
+  sudo ./tpm2_test.exe --operation=GetCert --tpm_device=/dev/tpmrm1
+  sudo ./tpm2_test.exe --operation=EndorsementTest --tpm_device=/dev/tpmrm1
+  sudo ./tpm2_test.exe --operation=SealTest --tpm_device=/dev/tpmrm1
+  sudo ./tpm2_test.exe --operation=QuoteTest --tpm_device=/dev/tpmrm1
+  sudo ./clean-tpm-simulator.sh || true
 popd
 
