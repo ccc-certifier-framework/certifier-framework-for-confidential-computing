@@ -54,13 +54,15 @@ echo "swtpm state: $XDG_CONFIG_HOME"
 if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
   pushd $CERTIFIER_ROOT
     if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
+       echo ""
+       whoami
        echo "making simulator state directories"
        sudo mkdir $XDG_CONFIG_HOME
        sudo mkdir $XDG_CONFIG_HOME/mytpm1
        sudo chmod 0777 $XDG_CONFIG_HOME
        sudo chmod 0777 $XDG_CONFIG_HOME/mytpm1
-       ls -l $CERTIFIER_ROOT
-       ls -l $XDG_CONFIG_HOME
+       sudo ls -l $CERTIFIER_ROOT
+       sudo ls -l $XDG_CONFIG_HOME
        echo "simulator state directories made"
     else
        echo "simulator state directories exist"
