@@ -48,14 +48,14 @@ fi
 echo "CERTIFIER ROOT: $CERTIFIER_ROOT"
 export TPM_SUPPORT_DIR=$CERTIFIER_ROOT/src/tpm2
 echo "Tpm support dir: $TPM_SUPPORT_DIR"
-export XDG_CONFIG_HOME="$CERTIFIER_ROOT/swtpm_state"
+XDG_CONFIG_HOME=$CERTIFIER_ROOT/swtpm_state
 echo "swtpm state: $XDG_CONFIG_HOME"
 
+set +e
 if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
   pushd $CERTIFIER_ROOT
     if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
        echo ""
-       whoami
        echo "making simulator state directories"
        sudo mkdir $XDG_CONFIG_HOME
        sudo mkdir $XDG_CONFIG_HOME/mytpm1
@@ -69,6 +69,7 @@ if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
     fi
   popd
 fi
+set -e
 if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
   echo "Couldn't make tpm state dir"
   return 1
