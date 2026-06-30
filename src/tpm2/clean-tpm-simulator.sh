@@ -63,4 +63,3 @@ pushd $XDG_CONFIG_HOME/mytpm1
 popd
 
 echo "Done"
-exit 0

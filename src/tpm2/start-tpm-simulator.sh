@@ -54,9 +54,8 @@ pushd $TPM_SUPPORT_DIR
     sleep 2
     socat PTY,link=/dev/tpmrm1,raw,echo=0 TCP4:127.0.0.1:2321 &
   fi
+  echo "tpm simulator started"
   chmod 0777 *.crt || true
 popd
 ls -l /dev/tpm*
-
 echo "Done"
-exit
