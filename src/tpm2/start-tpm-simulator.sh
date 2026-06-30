@@ -8,6 +8,8 @@
 set -Eeuo pipefail
 Me=$(basename "$0")
 
+sudo bash
+
 if [[ -v CERTIFIER_ROOT ]] ; then
   echo "CERTIFIER_ROOT already set."
 else

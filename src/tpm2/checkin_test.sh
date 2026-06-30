@@ -45,21 +45,23 @@ else
     CERTIFIER_ROOT=$(pwd) > /dev/null
   popd >> /dev/null
 fi
+
+set +e
+if [[ "$(id -u)" -ne 0 ]]; then
+   echo "becomming root again"
+   sudo bash
+fi
+if [[ "$(id -u)" -ne 0 ]]; then
+    echo "Must be root $(id -u)"
+else
+    echo "I'm root"
+fi
+
 echo "CERTIFIER ROOT: $CERTIFIER_ROOT"
 export TPM_SUPPORT_DIR=$CERTIFIER_ROOT/src/tpm2
 echo "Tpm support dir: $TPM_SUPPORT_DIR"
 XDG_CONFIG_HOME=$CERTIFIER_ROOT/swtpm_state
 echo "swtpm state: $XDG_CONFIG_HOME"
-
-set +e
-if [[ "$(id -u)" -ne 0 ]]; then
-   sudo bash
-fi
-if [[ "$(id -u)" -ne 0 ]]; then
-    echo "Must be root"
-else
-    echo "I'm root"
-fi
 
 if [[ ! -d "$XDG_CONFIG_HOME" ]] ; then
    echo ""
