@@ -56,8 +56,8 @@ function install-swtpm() {
     echo "No swtpm state dir"
     return 1
   fi
-  apt update
-  apt install swtpm swtpm-tools apparmor -y
+  sudo apt update
+  sudo apt install swtpm swtpm-tools apparmor -y
   echo "swtpm installed"
   sleep 4
   source ~/.bashrc
