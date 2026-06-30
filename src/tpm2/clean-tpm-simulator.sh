@@ -23,6 +23,7 @@ function cleanup-stale-procs() {
   else
     echo "no simulator service running"
   fi
+  set -e
 
   echo "cleanup_stale_procs done"
 }
@@ -31,18 +32,14 @@ if [[ -v CERTIFIER_ROOT ]] ; then
   echo "CERTIFIER_ROOT already set."
 else
   pushd ../..
-  CERTIFIER_ROOT=$(pwd)
+    CERTIFIER_ROOT=$(pwd)
   popd
 fi
 TPM_SUPPORT_DIR=$CERTIFIER_ROOT/src/tpm2
 
-if [[ ! -v XDG_CONFIG_HOME ]]; then
-  echo "Using export XDG_CONFIG_HOME=~/.config"
-  export XDG_CONFIG_HOME="$HOME/.config"
-fi
 if [[ ! -e $XDG_CONFIG_HOME ]]; then
   echo "$XDG_CONFIG_HOME does not exist"
-  exit 1
+  return 1
 fi
 
 echo " "
