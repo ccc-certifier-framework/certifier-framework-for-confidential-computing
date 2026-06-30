@@ -34,65 +34,66 @@ pushd $TPM_SUPPORT_DIR >> /dev/null
   make -f tpm2_support.mak
 popd >> /dev/null
 
-sudo bash
+sudo bash << EOF
 
-# reset defines as root
-if [[ ${CERTIFIER_ROOT+x} ]]; then
-  echo "CERTIFIER_ROOT already set"
-else
-  echo "setting CERTIFIER_ROOT"
-  pushd ../.. >> /dev/null
-    CERTIFIER_ROOT=$(pwd) > /dev/null
-  popd >> /dev/null
-fi
+  # reset defines as root
+  if [[ ${CERTIFIER_ROOT+x} ]]; then
+    echo "CERTIFIER_ROOT already set"
+  else
+    echo "setting CERTIFIER_ROOT"
+    pushd ../.. >> /dev/null
+      CERTIFIER_ROOT=$(pwd) > /dev/null
+    popd >> /dev/null
+  fi
 
-set +e
-if [[ "$(id -u)" -ne 0 ]]; then
-   echo "becomming root again"
-   sudo bash
-fi
-if [[ "$(id -u)" -ne 0 ]]; then
-    echo "Must be root $(id -u)"
-else
-    echo "I'm root"
-fi
+  set +e
+  if [[ "$(id -u)" -ne 0 ]]; then
+     echo "Becomming root again"
+     sudo bash
+  fi
+  if [[ "$(id -u)" -ne 0 ]]; then
+      echo "Must be root $(id -u)"
+  else
+      echo "I'm root"
+  fi
 
-echo "CERTIFIER ROOT: $CERTIFIER_ROOT"
-export TPM_SUPPORT_DIR=$CERTIFIER_ROOT/src/tpm2
-echo "Tpm support dir: $TPM_SUPPORT_DIR"
-XDG_CONFIG_HOME=$CERTIFIER_ROOT/swtpm_state
-echo "swtpm state: $XDG_CONFIG_HOME"
+  echo "CERTIFIER ROOT: $CERTIFIER_ROOT"
+  export TPM_SUPPORT_DIR=$CERTIFIER_ROOT/src/tpm2
+  echo "Tpm support dir: $TPM_SUPPORT_DIR"
+  XDG_CONFIG_HOME=$CERTIFIER_ROOT/swtpm_state
+  echo "swtpm state: $XDG_CONFIG_HOME"
 
-if [[ ! -d "$XDG_CONFIG_HOME" ]] ; then
-   echo ""
-   echo "making simulator state directories"
-   mkdir $XDG_CONFIG_HOME || true
-   mkdir $XDG_CONFIG_HOME/mytpm1 || true
-   chmod 0777 $XDG_CONFIG_HOME || true
-   chmod 0777 $XDG_CONFIG_HOME/mytpm1 || true
-   ls -l $CERTIFIER_ROOT || true
-   ls -l $XDG_CONFIG_HOME || true
-   echo "simulator state directories made"
-else
-   echo "simulator state directories exist"
-fi
+  if [[ ! -d "$XDG_CONFIG_HOME" ]] ; then
+     echo ""
+     echo "making simulator state directories"
+     mkdir $XDG_CONFIG_HOME || true
+     mkdir $XDG_CONFIG_HOME/mytpm1 || true
+     chmod 0777 $XDG_CONFIG_HOME || true
+     chmod 0777 $XDG_CONFIG_HOME/mytpm1 || true
+     ls -l $CERTIFIER_ROOT || true
+     ls -l $XDG_CONFIG_HOME || true
+     echo "simulator state directories made"
+  else
+     echo "simulator state directories exist"
+  fi
 
-set -e
-if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
-  echo "Couldn't make tpm state dir"
-  return 1
-fi
+  set -e
+  if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
+    echo "Couldn't make tpm state dir"
+    return 1
+  fi
 
-pushd $TPM_SUPPORT_DIR
-  sudo ./clean-tpm-simulator.sh || true
-  sudo ./start-tpm-simulator.sh || true
-
-  sudo ./tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
-  sudo ./tpm2_test.exe --operation=MiscTest --tpm_device=/dev/tpmrm1
-  sudo ./tpm2_test.exe --operation=GetCert --tpm_device=/dev/tpmrm1
-  sudo ./tpm2_test.exe --operation=EndorsementTest --tpm_device=/dev/tpmrm1
-  sudo ./tpm2_test.exe --operation=SealTest --tpm_device=/dev/tpmrm1
-  sudo ./tpm2_test.exe --operation=QuoteTest --tpm_device=/dev/tpmrm1
-  sudo ./clean-tpm-simulator.sh || true
-popd
+  pushd $TPM_SUPPORT_DIR
+    sudo ./clean-tpm-simulator.sh || true
+    sudo ./start-tpm-simulator.sh || true
+  
+    ./tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
+    ./tpm2_test.exe --operation=MiscTest --tpm_device=/dev/tpmrm1
+    ./tpm2_test.exe --operation=GetCert --tpm_device=/dev/tpmrm1
+    ./tpm2_test.exe --operation=EndorsementTest --tpm_device=/dev/tpmrm1
+    ./tpm2_test.exe --operation=SealTest --tpm_device=/dev/tpmrm1
+    ./tpm2_test.exe --operation=QuoteTest --tpm_device=/dev/tpmrm1
+    ./clean-tpm-simulator.sh || true
+  popd
+EOF
 
