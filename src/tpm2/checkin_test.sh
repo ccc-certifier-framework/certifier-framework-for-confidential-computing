@@ -24,7 +24,7 @@ fi
 echo "CERTIFIER ROOT: $CERTIFIER_ROOT"
 export TPM_SUPPORT_DIR=$CERTIFIER_ROOT/src/tpm2
 echo "Tpm support dir: $TPM_SUPPORT_DIR"
-export XDG_CONFIG_HOME="$CERTIFIER_ROOT/swtpm_state
+export XDG_CONFIG_HOME="$CERTIFIER_ROOT/swtpm_state"
 echo "swtpm state dir: $XDG_CONFIG_HOME"
 
 exit 0 || true
