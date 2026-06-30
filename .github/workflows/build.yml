@@ -77,6 +77,16 @@ jobs:
         #!set +x
 
     #! -------------------------------------------------------------------------
+    #!- name: test-tpm-utilities
+      #!run: |
+      #!./CI/scripts/test.sh test-tpm-utilities
+
+    #! -------------------------------------------------------------------------
+    #!- name: test-tpm-simple-app
+      #!run: |
+      #!./CI/scripts/test.sh test-tpm-simple-app
+
+    #! -------------------------------------------------------------------------
     #!- name: test-cert_framework-pytests
       #!run: |
       #!./CI/scripts/test.sh test-cert_framework-pytests

@@ -872,6 +872,31 @@ function test-cf-utility() {
 }
 
 # #############################################################################
+function test-tpm-utility() {
+    echo "******************************************************************"
+    echo "* Test the tpm_utility"
+    echo "******************************************************************"
+    echo " "
+
+    pushd "${CERT_ROOT}/src/tpm2" >> /dev/null 2>&1
+    popd >> /dev/null 2>&1
+
+}
+
+# #############################################################################
+function test-tpm-simple-app() {
+    echo "******************************************************************"
+    echo "* Test the tpm based simple app"
+    echo "******************************************************************"
+    echo " "
+
+    pushd "${CERT_ROOT}"/sample_apps/simple_app_under_tpm> /dev/null 2>&1
+    # We need to clean here
+    popd > /dev/null 2>&1
+}
+
+
+# #############################################################################
 function test-sample-app-tpm-compile() {
     echo "******************************************************************"
     echo "* Test the test-sample-app-tpm-compile"
