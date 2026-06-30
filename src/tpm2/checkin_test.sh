@@ -50,27 +50,20 @@ echo "Tpm support dir: $TPM_SUPPORT_DIR"
 export XDG_CONFIG_HOME="$CERTIFIER_ROOT/swtpm_state"
 echo "swtpm state: $XDG_CONFIG_HOME"
 
-function install-swtpm() {
-  echo "function install-swtpm"
-  echo "which swtpm-setup"
-  which swtpm-setup
-}
-
 if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
   pushd $CERTIFIER_ROOT
     if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
+       echo "making simulator state directories"
        mkdir $XDG_CONFIG_HOME
        mkdir $XDG_CONFIG_HOME/mytpm1
+       ls -l $XDG_CONFIG_HOME
     fi
-    install-swtpm
   popd
 fi
 if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
   echo "Couldn't make tpm state dir"
   return 1
 fi
-echo "Path: $PATH"
-
 
 pushd $TPM_SUPPORT_DIR
   ./clean-tpm-simulator.sh || true
