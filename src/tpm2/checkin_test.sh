@@ -52,16 +52,7 @@ echo "swtpm state: $XDG_CONFIG_HOME"
 
 function install-swtpm() {
   echo "function install_swtpm"
-  if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
-    echo "No swtpm state dir"
-    return 1
-  fi
-  sudo apt update
-  sudo apt install swtpm swtpm-tools apparmor -y
-  echo "swtpm installed"
-  sleep 4
-  source ~/.bashrc
-  echo "updated path"
+  which swtpm-setup
 }
 
 if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
