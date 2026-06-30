@@ -23,7 +23,6 @@ function cleanup-stale-procs() {
   else
     echo "no simulator service running"
   fi
-  set -e
 
   echo "cleanup_stale_procs done"
 }

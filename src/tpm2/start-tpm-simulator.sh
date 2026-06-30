@@ -43,10 +43,12 @@ pushd $TPM_SUPPORT_DIR
   set +e
   modprobe tpm_vtpm_proxy
   if [[ $? -eq 0 ]] ; then
+    set -e
     echo "Using chardev"
     swtpm chardev --vtpm-proxy --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 \
       --tpm2 --ctrl type=tcp,port=2322 --flags not-need-init,startup-clear &
   else
+    set -e
     echo "chardev unavailable, using socket"
     swtpm socket --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --ctrl type=tcp,port=2322 --server type=tcp,port=2321 --flags not-need-init,startup-clear --log level=20 &
     sleep 2
@@ -54,7 +56,7 @@ pushd $TPM_SUPPORT_DIR
   fi
   chmod 0777 *.crt || true
 popd
-#endif
+ls -l /dev/tpm*
 
 echo "Done"
 exit
