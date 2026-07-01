@@ -36,6 +36,17 @@ popd >> /dev/null
 
 sudo bash << EOF
 
+  set +e
+  if [[ "$(id -u)" -ne 0 ]]; then
+     echo "Becoming root again"
+     sudo bash
+  fi
+  if [[ "$(id -u)" -ne 0 ]]; then
+      echo "Must be root $(id -u)"
+  else
+      echo "I'm root"
+  fi
+
   # reset defines as root
   if [[ ${CERTIFIER_ROOT+x} ]]; then
     echo "CERTIFIER_ROOT already set"
@@ -44,17 +55,6 @@ sudo bash << EOF
     pushd ../.. >> /dev/null
       CERTIFIER_ROOT=$(pwd) > /dev/null
     popd >> /dev/null
-  fi
-
-  set +e
-  if [[ "$(id -u)" -ne 0 ]]; then
-     echo "Becomming root again"
-     sudo bash
-  fi
-  if [[ "$(id -u)" -ne 0 ]]; then
-      echo "Must be root $(id -u)"
-  else
-      echo "I'm root"
   fi
 
   echo "CERTIFIER ROOT: $CERTIFIER_ROOT"
