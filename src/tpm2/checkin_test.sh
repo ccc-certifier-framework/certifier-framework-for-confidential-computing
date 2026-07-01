@@ -14,6 +14,23 @@
 
 
 set -e
+
+# reset defines as root
+if [[ ${CERTIFIER_ROOT+x} ]]; then
+  echo "CERTIFIER_ROOT already set"
+else
+  echo "setting CERTIFIER_ROOT"
+  pushd ../.. >> /dev/null
+    CERTIFIER_ROOT=$(pwd) > /dev/null
+  popd >> /dev/null
+fi
+
+  echo "CERTIFIER ROOT: $CERTIFIER_ROOT"
+  export TPM_SUPPORT_DIR=$CERTIFIER_ROOT/src/tpm2
+  echo "Tpm support dir: $TPM_SUPPORT_DIR"
+  XDG_CONFIG_HOME=$CERTIFIER_ROOT/swtpm_state
+  echo "swtpm state: $XDG_CONFIG_HOME"
+
 # compile
 pushd $TPM_SUPPORT_DIR >> /dev/null
   make clean -f tpm2_support.mak
@@ -26,22 +43,6 @@ popd >> /dev/null
      echo "Must be root, exiting"
      exit 1
   fi
-
-  # reset defines as root
-  if [[ ${CERTIFIER_ROOT+x} ]]; then
-    echo "CERTIFIER_ROOT already set"
-  else
-    echo "setting CERTIFIER_ROOT"
-    pushd ../.. >> /dev/null
-      CERTIFIER_ROOT=$(pwd) > /dev/null
-    popd >> /dev/null
-  fi
-
-  echo "CERTIFIER ROOT: $CERTIFIER_ROOT"
-  export TPM_SUPPORT_DIR=$CERTIFIER_ROOT/src/tpm2
-  echo "Tpm support dir: $TPM_SUPPORT_DIR"
-  XDG_CONFIG_HOME=$CERTIFIER_ROOT/swtpm_state
-  echo "swtpm state: $XDG_CONFIG_HOME"
 
   if [[ ! -d "$XDG_CONFIG_HOME" ]] ; then
      echo ""
