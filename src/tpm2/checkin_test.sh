@@ -16,7 +16,7 @@
 set -e
 
 # reset defines as root
-if [[ ${CERTIFIER_ROOT+x} ]]; then
+if [[ -v CERTIFIER_ROOT ]]; then
   echo "CERTIFIER_ROOT already set"
 else
   echo "setting CERTIFIER_ROOT"
