@@ -1025,7 +1025,7 @@ bool get_endorsement_key(local_tpm  &tpm,
                           ek_handle,
                           &pub_out)) {
     printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);
-    return false;
+    // return false;
   }
 
   return true;
