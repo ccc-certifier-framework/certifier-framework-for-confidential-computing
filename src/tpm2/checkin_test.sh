@@ -84,8 +84,8 @@ sudo bash << EOF
   fi
 
   pushd $TPM_SUPPORT_DIR
-    sudo ./clean-tpm-simulator.sh || true
-    sudo ./start-tpm-simulator.sh || true
+    ./clean-tpm-simulator.sh || true
+    ./start-tpm-simulator.sh || true
   
     ./tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
     ./tpm2_test.exe --operation=MiscTest --tpm_device=/dev/tpmrm1
