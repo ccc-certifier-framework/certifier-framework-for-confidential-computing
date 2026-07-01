@@ -29,7 +29,7 @@ if [[ ! -e $XDG_CONFIG_HOME ]]; then
   echo "$XDG_CONFIG_HOME does not exist"
   exit 1
 fi
-echo "TPM state directory: $XDG_CONFIG_HOME
+echo "TPM state directory: $XDG_CONFIG_HOME"
 
 pushd $TPM_SUPPORT_DIR
   echo " "
