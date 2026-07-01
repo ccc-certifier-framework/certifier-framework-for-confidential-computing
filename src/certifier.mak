@@ -67,6 +67,7 @@ CFLAGS  += -D SEV_SNP
 endif
 
 CFLAGS += $(CFLAGS_PIC)
+CFLAGS += -Wno-strict-aliasing
 
 CC=g++
 LINK=g++
