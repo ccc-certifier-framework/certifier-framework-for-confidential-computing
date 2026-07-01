@@ -27,7 +27,7 @@ echo "Tpm support dir: $TPM_SUPPORT_DIR"
 export XDG_CONFIG_HOME="$CERTIFIER_ROOT/swtpm_state"
 echo "swtpm state dir: $XDG_CONFIG_HOME"
 
-set -e 
+set -e
 # compile
 pushd $TPM_SUPPORT_DIR >> /dev/null
   make clean -f tpm2_support.mak
@@ -88,7 +88,7 @@ sudo bash << EOF
     ./start-tpm-simulator.sh || true
     sleep 2
     echo "tpm started"
-  
+
     ./tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
     sleep 2
     ./tpm2_test.exe --operation=SealTest --tpm_device=/dev/tpmrm1
