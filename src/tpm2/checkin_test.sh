@@ -86,13 +86,21 @@ sudo bash << EOF
   pushd $TPM_SUPPORT_DIR
     ./clean-tpm-simulator.sh || true
     ./start-tpm-simulator.sh || true
+    sleep 2
+    echo "tpm started"
   
-    ./tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
-    ./tpm2_test.exe --operation=MiscTest --tpm_device=/dev/tpmrm1
-    ./tpm2_test.exe --operation=GetCert --tpm_device=/dev/tpmrm1
-    ./tpm2_test.exe --operation=EndorsementTest --tpm_device=/dev/tpmrm1
-    ./tpm2_test.exe --operation=SealTest --tpm_device=/dev/tpmrm1
-    ./tpm2_test.exe --operation=QuoteTest --tpm_device=/dev/tpmrm1
+    ./tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1 --print_all=true
+    sleep 2
+    ./tpm2_test.exe --operation=MiscTest --tpm_device=/dev/tpmrm1 --print_all=true
+    sleep 2
+    ./tpm2_test.exe --operation=GetCert --tpm_device=/dev/tpmrm1 --print_all=true
+    sleep 2
+    ./tpm2_test.exe --operation=EndorsementTest --tpm_device=/dev/tpmrm1 --print_all=true
+    sleep 2
+    ./tpm2_test.exe --operation=SealTest --tpm_device=/dev/tpmrm1 --print_all=true
+    sleep 2
+    ./tpm2_test.exe --operation=QuoteTest --tpm_device=/dev/tpmrm1 --print_all=true
+    sleep 2
     ./clean-tpm-simulator.sh || true
   popd
 EOF
