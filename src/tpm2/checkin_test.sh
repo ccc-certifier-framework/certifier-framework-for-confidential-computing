@@ -14,7 +14,7 @@
 
 
 if [[ ${CERTIFIER_ROOT+x} ]]; then
-  echo "CERTIFIER_ROOT already set"
+  echo "CERTIFIER_ROOT already set, $CERTIFIER_ROOT"
 else
   echo "setting CERTIFIER_ROOT"
   pushd ../.. > /dev/null

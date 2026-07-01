@@ -22,6 +22,7 @@ jobs:
         pip install pytest
         sudo apt update -y
         sudo apt install swtpm swtpm-tools apparmor -y
+        sudo apt install socat
 
 
         # Needed for Python bindings support
