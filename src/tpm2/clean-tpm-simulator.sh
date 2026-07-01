@@ -57,9 +57,11 @@ pushd $TPM_SUPPORT_DIR
   rm seal_hierarchy.bin quote_hierarchy.bin || true
 popd
 
-pushd $XDG_CONFIG_HOME/mytpm1
-  rm ./* || true
-  rm ./.lock || true
-popd
+if [[ -d $XDG_CONFIG_HOME/mytpm1 ]]; then
+  pushd $XDG_CONFIG_HOME/mytpm1
+    rm ./* || true
+    rm ./.lock || true
+  popd
+fi
 
 echo "Done"

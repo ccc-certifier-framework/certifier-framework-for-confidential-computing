@@ -5,14 +5,13 @@ echo $XDG_CONFIG_HOME
 
 OLD
 
-XDG_CONFIG_HOME="/home/jlm/.config"
+XDG_CONFIG_HOME="$CERTIFIER_ROOT/swtpm_state"
 swtpm_setup --tpm2 --tpmstate ${XDG_CONFIG_HOME}/mytpm1 --create-ek-cert --create-platform-cert --lock-nvram
 echo $XDG_CONFIG_HOME
-/home/jlm/.config
 export TPM2TOOLS_TCTI="swtpm:port=2321"
 swtpm socket --tpmstate dir=<swtpm_path> --tpm2 --server type=tcp,port=2321 --ctrl type=tcp,port=2322 --flags not-need-init,startup-clear
 
-export XDG_CONFIG_HOME="/home/jlm/.config"
+export XDG_CONFIG_HOME="$CERTIFIER_ROOT/swtpm_state"
 sudo swtpm_setup --tpm2 --tpmstate ${XDG_CONFIG_HOME}/mytpm1 --create-ek-cert --create-platform-cert --lock-nvram
 sudo swtpm chardev -c /dev/vtpm --vtpm-proxy --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --ctrl type=tcp,port=2322
 
