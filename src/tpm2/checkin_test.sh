@@ -16,7 +16,7 @@
 set -e
 
 # reset defines as root
-if [[ -v CERTIFIER_ROOT ]]; then
+if [ -v CERTIFIER_ROOT ]; then
   echo "CERTIFIER_ROOT already set"
 else
   echo "setting CERTIFIER_ROOT"
@@ -39,12 +39,12 @@ popd >> /dev/null
 
 # Should be root
   set +e
-  if [[ "$(id -u)" -ne 0 ]]; then
+  if [[ "$(id -u)" -ne 0 ]; then
      echo "Must be root, exiting"
      exit 1
   fi
 
-  if [[ ! -d "$XDG_CONFIG_HOME" ]] ; then
+  if [ ! -d "$XDG_CONFIG_HOME" ] ; then
      echo ""
      echo "making simulator state directories"
      mkdir $XDG_CONFIG_HOME || true
@@ -59,7 +59,7 @@ popd >> /dev/null
   fi
 
   set -e
-  if [[ ! -e "$XDG_CONFIG_HOME" ]] ; then
+  if [ ! -d "$XDG_CONFIG_HOME" ] ; then
     echo "Couldn't make tpm state dir"
     return 1
   fi
