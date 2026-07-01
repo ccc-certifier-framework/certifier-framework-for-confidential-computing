@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 #    Copyright 2026 John Manferdelli, All Rights Reserved.
 #    Licensed under the Apache License, Version 2.0 (the "License");
