@@ -8,6 +8,11 @@
 set -Eeuo pipefail
 Me=$(basename "$0")
 
+if [[ "$(id -u)" -ne 0 ]]; then
+   echo "Must be root, exiting"
+   exit 1
+fi
+
 function cleanup-stale-procs() {
   echo " "
   echo "cleanup-stale-procs"
@@ -46,7 +51,7 @@ fi
 echo " "
 echo "Certifier root: $CERTIFIER_ROOT"
 echo "TPM support directory: $TPM_SUPPORT_DIR"
-echo "XDG_CONFIG_HOME: $XDG_CONFIG_HOME"
+echo "TPM state directory: $XDG_CONFIG_HOME"
 
 pushd $TPM_SUPPORT_DIR
   echo " "

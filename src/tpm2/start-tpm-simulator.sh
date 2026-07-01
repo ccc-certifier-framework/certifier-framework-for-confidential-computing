@@ -8,6 +8,11 @@
 set -Eeuo pipefail
 Me=$(basename "$0")
 
+if [[ "$(id -u)" -ne 0 ]]; then
+   echo "Must be root, exiting"
+   exit 1
+fi
+
 pushd ../.. > /dev/null
   CERTIFIER_ROOT=$(pwd)
 popd
@@ -23,6 +28,7 @@ if [[ ! -e $XDG_CONFIG_HOME ]]; then
   echo "$XDG_CONFIG_HOME does not exist"
   exit 1
 fi
+echo "TPM state directory: $XDG_CONFIG_HOME
 
 pushd $TPM_SUPPORT_DIR
   echo " "

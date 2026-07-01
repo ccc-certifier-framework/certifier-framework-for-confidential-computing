@@ -13,20 +13,6 @@
 #    File: tpm2_support.mak
 
 
-if [[ ${CERTIFIER_ROOT+x} ]]; then
-  echo "CERTIFIER_ROOT already set, $CERTIFIER_ROOT"
-else
-  echo "setting CERTIFIER_ROOT"
-  pushd ../.. > /dev/null
-    CERTIFIER_ROOT=$(pwd) > /dev/null
-  popd > /dev/null
-fi
-echo "CERTIFIER ROOT: $CERTIFIER_ROOT"
-export TPM_SUPPORT_DIR=$CERTIFIER_ROOT/src/tpm2
-echo "Tpm support dir: $TPM_SUPPORT_DIR"
-export XDG_CONFIG_HOME="$CERTIFIER_ROOT/swtpm_state"
-echo "swtpm state dir: $XDG_CONFIG_HOME"
-
 set -e
 # compile
 pushd $TPM_SUPPORT_DIR >> /dev/null
@@ -34,17 +20,11 @@ pushd $TPM_SUPPORT_DIR >> /dev/null
   make -f tpm2_support.mak
 popd >> /dev/null
 
-sudo bash << EOF
-
+# Should be root
   set +e
   if [[ "$(id -u)" -ne 0 ]]; then
-     echo "Becoming root again"
-     sudo bash
-  fi
-  if [[ "$(id -u)" -ne 0 ]]; then
-      echo "Must be root $(id -u)"
-  else
-      echo "I'm root"
+     echo "Must be root, exiting"
+     exit 1
   fi
 
   # reset defines as root
@@ -100,5 +80,4 @@ sudo bash << EOF
     ./clean-tpm-simulator.sh || true
   popd
 
-EOF
 
