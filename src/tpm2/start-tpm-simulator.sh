@@ -44,12 +44,11 @@ pushd $TPM_SUPPORT_DIR
   else
     set -e
     echo "chardev unavailable, using socket"
-    swtpm socket --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --ctrl type=tcp,port=2322 --server type=tcp,port=2321 --flags not-need-init,startup-clear --log level=2 &
+    swtpm socket --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --ctrl type=tcp,port=2322 --server type=tcp,port=2321 --flags not-need-init,startup-clear --log level=0 &
     sleep 5
     socat PTY,link=/dev/tpmrm1,raw,echo=0 TCP4:127.0.0.1:2321 &
   fi
   echo "tpm simulator started"
   chmod 0777 *.crt || true
 popd
-ls -l /dev/tpm*
 echo "Done"
