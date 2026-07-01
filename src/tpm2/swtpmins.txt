@@ -1,4 +1,4 @@
-export XDG_CONFIG_HOME="/home/jlm/.config"
+export XDG_CONFIG_HOME=$CERTIFIER_ROOT/swtpm_state
 echo $XDG_CONFIG_HOME
 
 -------------------------------------------------------------------------------
@@ -39,7 +39,7 @@ To run the simulator and tests:
 sudo bash
 # You should use a full path name here, use the location you
 want the tpm simulator state files in:
-export XDG_CONFIG_HOME="/home/jlm/.config"
+export XDG_CONFIG_HOME=$CERTIFIER_ROOT/swtpm_state
 if [[ ! -v XDG_CONFIG_HOME ]]; then
   echo "XDG_CONFIG_HOME not defined"
 fi

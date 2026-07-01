@@ -35,10 +35,14 @@ else
   popd
 fi
 TPM_SUPPORT_DIR=$CERTIFIER_ROOT/src/tpm2
+if [[ ! -v XDG_CONFIG_HOME ]]; then
+  XDG_CONFIG_HOME=$CERTIFIER_ROOT/swtpm_state
+fi 
 
 echo " "
 echo "Certifier root: $CERTIFIER_ROOT"
 echo "TPM support directory: $TPM_SUPPORT_DIR"
+echo "TPM state: $XDG_CONFIG_HOME"
 
   echo " "
   echo "cleanup-tpm-simulator"

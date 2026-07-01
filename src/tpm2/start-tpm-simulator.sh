@@ -21,6 +21,7 @@ if [[ ! -v XDG_CONFIG_HOME ]]; then
 fi
 if [[ ! -e $XDG_CONFIG_HOME ]]; then
   echo "$XDG_CONFIG_HOME does not exist"
+  exit 1
 fi
 
 pushd $TPM_SUPPORT_DIR

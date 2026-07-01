@@ -53,6 +53,7 @@ else
 CFLAGS += $(INCLUDE) -O3 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -D SEV_SNP -Wno-deprecated-declarations
 endif
 CFLAGS += -DSEV_SIMPLE_APP
+CFLAGS += -Wno-strict-aliasing
 
 tpm_obj = $(O)/tpm2.pb.o $(O)/tpm2_lib.o $(O)/openssl_help.o \
         $(O)/convert.o $(O)/tpm2_support.o

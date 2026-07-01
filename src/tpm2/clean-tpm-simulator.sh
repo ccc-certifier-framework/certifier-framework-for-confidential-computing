@@ -38,7 +38,7 @@ TPM_SUPPORT_DIR=$CERTIFIER_ROOT/src/tpm2
 
 if [[ ! -e $XDG_CONFIG_HOME ]]; then
   echo "$XDG_CONFIG_HOME does not exist"
-  return 1
+  export XDG_CONFIG_HOME=$CERTIFIER_ROOT/swtpm_state
 fi
 
 echo " "
