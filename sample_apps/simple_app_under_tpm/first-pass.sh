@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # ############################################################################
 # first-pass.sh: Script to run build simple_app_under_tpm test environment.
 # ############################################################################
@@ -15,12 +16,21 @@ else
   popd
 fi
 EXAMPLE_DIR=$(pwd)
-
 NO_COMPILE_UTILITIES=1
+
+if [[ ! -v XDG_CONFIG_HOME ]]; then
+  XDG_CONFIG_HOME=$CERTIFIER_ROOT/swtpm_state
+fi
+if [[ ! -e $XDG_CONFIG_HOME ]]; then
+  echo "$XDG_CONFIG_HOME does not exist"
+  mkdir $XDG_CONFIG_HOME
+  mkdir $XDG_CONFIG_HOME/mytpm1
+fi
 
 echo " "
 echo "Certifier root: $CERTIFIER_ROOT"
 echo "Example directory: $EXAMPLE_DIR"
+echo "TPM state directory: $XDG_CONFIG_HOME"
 
 ARG_SIZE="$#"
 
@@ -96,8 +106,6 @@ function do-get-quote-cert-and-measurement() {
       echo ""
     popd
   fi
-
-	#--endorsement_cert_file_name="./ek-rsa2048.crt" \
 
   echo ""
   echo "getting quote cert"

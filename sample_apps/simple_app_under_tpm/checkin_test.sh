@@ -1,4 +1,5 @@
 #!/bin/bash
+
 #
 #    Copyright 2026 John Manferdelli, All Rights Reserved.
 #    Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,8 +12,7 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License
-#    File: tpm2_support.mak
-
+#    File: checkin_test.sh
 
 if [[ ${CERTIFIER_ROOT+x} ]]; then
   echo "CERTIFIER_ROOT already set"
@@ -22,11 +22,10 @@ else
     CERTIFIER_ROOT=$(pwd) > /dev/null
   popd > /dev/null
 fi
+
 echo "CERTIFIER ROOT: $CERTIFIER_ROOT"
 EXAMPLE_DIR=$(pwd)
 echo "Example dir: $EXAMPLE_DIR"
 export XDG_CONFIG_HOME="$CERTIFIER_ROOT/swtpm_state"
 echo "swtpm state dir: $XDG_CONFIG_HOME"
-
-exit 0 || true
 

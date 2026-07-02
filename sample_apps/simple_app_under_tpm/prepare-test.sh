@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # ############################################################################
 # prepare-test.sh: Script to run build simple_app_under_tpm test environment.
 # ############################################################################
@@ -10,16 +11,21 @@ if [[ -v CERTIFIER_ROOT ]] ; then
   echo "CERTIFIER_ROOT already set."
 else
   pushd ../..
-  CERTIFIER_ROOT=$(pwd)
+    CERTIFIER_ROOT=$(pwd)
   popd
 fi
 EXAMPLE_DIR=$(pwd)
 
 NO_COMPILE_UTILITIES=0
 
+if [[ ! -v XDG_CONFIG_HOME ]]; then
+  XDG_CONFIG_HOME=$CERTIFIER_ROOT/swtpm_state
+fi
+
 echo " "
 echo "Certifier root: $CERTIFIER_ROOT"
 echo "Example directory: $EXAMPLE_DIR"
+echo "TPM state directory: $XDG_CONFIG_HOME"
 
 ARG_SIZE="$#"
 

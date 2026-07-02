@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # ############################################################################
 # final-prep.sh: Script to make-policy and copy files
 # ############################################################################
@@ -121,7 +122,6 @@ fi
 do-make-policy
 do-copy-files
 make-cert-chain
-
 
 echo " "
 echo "done "
