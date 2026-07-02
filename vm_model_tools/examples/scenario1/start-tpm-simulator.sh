@@ -22,12 +22,13 @@ echo "Certifier root: $CERTIFIER_ROOT"
 echo "TPM support directory: $TPM_SUPPORT_DIR"
 
 if [[ ! -v XDG_CONFIG_HOME ]]; then
-  echo "Using export XDG_CONFIG_HOME=$HOME/.config"
-  export XDG_CONFIG_HOME="$HOME/.config"
+  echo "Using export XDG_CONFIG_HOME=$CERTIFIER_ROOT/swtpm_state"
+  export XDG_CONFIG_HOME="$CERTIFIER_ROOT/swtpm_state"
 fi
 if [[ ! -e $XDG_CONFIG_HOME ]]; then
   echo "$XDG_CONFIG_HOME does not exist"
-  exit
+  mkdir $XDG_CONFIG_HOME
+  mkdir $XDG_CONFIG_HOME/mytpm1
 fi
 echo "Tpm simulator state in $XDG_CONFIG_HOME"
 echo "Current directory: $(pwd)"

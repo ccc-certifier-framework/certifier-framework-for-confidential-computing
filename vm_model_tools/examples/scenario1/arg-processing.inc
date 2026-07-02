@@ -109,6 +109,7 @@ function print-options() {
         echo "ACTIVATE_HOST                     -act_host       IP for activation"
         echo "ACTIVATE_PORT                     -act_port       port number of activation"
         echo "COMPILE_ONLY                      -just-compile   don't do root required stuff"
+        echo "TPM_MEASUREMENT_FILE_NAME         -tpm-mfn        tpm measurement file name"
         echo "-----------------------------------------------------------------"
         echo ""
 }
@@ -123,7 +124,7 @@ CRYPTSTORE_NAME="cryptstore"
 PROGRAM_NAME="datica-program"
 DATA_DIR="./"
 SYMMETRIC_ENCRYPTION_ALGORITHM="aes-256-gcm"
-ASYMMETRIC_ENCRYPTION_ALGORITHM="RSA-4096"
+ASYMMETRIC_ENCRYPTION_ALGORITHM="rsa-2048"
 VM_NAME="datica-sample-vm"
 TEST_TYPE="simulated"
 BUILD_SEV_SIMULATOR=0
@@ -148,12 +149,13 @@ PCRSTR="7"
 TPM_DEVICE="/dev/tpm0"
 SEAL_STORE="seal_hierarchy.bin"
 QUOTE_STORE="quote_hierarchy.bin"
-QUOTE_CERT_FILE="./quote_cert.crt"
+QUOTE_CERT_FILE="quote_cert.crt"
 END_CERT_FILE=\"\"
 END_CERT_CHAIN_FILE=\"\"
 ACTIVATE_HOST="localhost"
 ACTIVATE_PORT="8130"
 COMPILE_ONLY=0
+TPM_MEASUREMENT_FILE_NAME="./tpm_cf_utility.measurement"
 
 
 function print-variables() {
@@ -204,6 +206,7 @@ function print-variables() {
         echo "Activation service IP host             $ACTIVATE_HOST"
         echo "Activation service port                $ACTIVATE_PORT"
         echo "Compile only                           $COMPILE_ONLY"
+        echo "TPM measurement file name              $TPM_MEASUREMENT_FILE_NAME"
         echo ""
 }
 
@@ -331,6 +334,9 @@ function process-args() {
                 fi
                 if [[ ${array[i]} = "-just-compile" ]]; then
                         COMPILE_ONLY="${array[i+1]}"
+                fi
+                if [[ ${array[i]} = "-tpm-mfn" ]]; then
+                        TPM_MEASUREMENT_FILE_NAME="${array[i+1]}"
                 fi
         done
 

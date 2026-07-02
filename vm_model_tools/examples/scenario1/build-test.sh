@@ -76,10 +76,10 @@ function do-run() {
         --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
         --policy_store_filename=$POLICY_STORE_NAME \
         --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
-        --symmetric_key_algorithm=aes-256-gcm  \
-        --public_key_algorithm=rsa-2048 \
+        --symmetric_key_algorithm=$SYMMETRIC_ENCRYPTION_ALGORITHM  \
+        --public_key_algorithm=$ASYMMETRIC_ENCRYPTION_ALGORITHM \
         --data_dir="$EXAMPLE_DIR/" \
-        --certifier_service_URL=localhost \
+        --certifier_service_URL=$POLICY_SERVER_ADDRESS \
         --service_port=8123" --print_level=1 \
 	--trust_anchors=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1/cf_data/my_certs
       echo " "
@@ -94,11 +94,11 @@ function do-run() {
         --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
         --policy_store_filename=$POLICY_STORE_NAME \
         --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
-        --symmetric_key_algorithm=aes-256-gcm  \
-        --public_key_algorithm=rsa-2048 \
+        --symmetric_key_algorithm=$SYMMETRIC_ENCRYPTION_ALGORITHM  \
+        --public_key_algorithm=$ASYMMETRIC_ENCRYPTION_ALGORITHM \
         --data_dir="$EXAMPLE_DIR/" \
-        --certifier_service_URL=localhost \
-        --service_port=8123 --print_level=1
+        --certifier_service_URL=$POLICY_SERVER_ADDRESS \
+        --service_port=$POLICY_SERVER_PORT --print_level=1
 
       sleep 3
 
@@ -113,11 +113,11 @@ function do-run() {
         --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
         --policy_store_filename=$POLICY_STORE_NAME \
         --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
-        --symmetric_key_algorithm=aes-256-gcm  \
-        --public_key_algorithm=rsa-2048 \
+        --symmetric_key_algorithm=$SYMMETRIC_ENCRYPTION_ALGORITHM \
+        --public_key_algorithm=$ASYMMETRIC_ENCRYPTION_ALGORITHM \
         --data_dir="$EXAMPLE_DIR/" \
-        --certifier_service_URL=localhost \
-        --service_port=8123" --print_level=1
+        --certifier_service_URL=$POLICY_SERVER_ADDRESS  \
+        --service_port=$POLICY_SERVER_PORT" --print_level=1
       echo " "
       echo " Alternatively add \
 	--trust_anchors=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1/cf_data/my_certs"
@@ -133,11 +133,11 @@ function do-run() {
         --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
         --policy_store_filename=$POLICY_STORE_NAME \
         --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
-        --symmetric_key_algorithm=aes-256-gcm  \
-        --public_key_algorithm=rsa-2048 \
+        --symmetric_key_algorithm=$SYMMETRIC_ENCRYPTION_ALGORITHM \
+        --public_key_algorithm=$ASYMMETRIC_ENCRYPTION_ALGORITHM \
         --data_dir="$EXAMPLE_DIR/" \
-        --certifier_service_URL=localhost \
-        --service_port=8123 --print_level=1 \
+        --certifier_service_URL=$POLICY_SERVER_ADDRESS \
+        --service_port=$POLICY_SERVER_PORT --print_level=1 \
 	--trust_anchors=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1/cf_data/my_certs
     fi
 
