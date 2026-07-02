@@ -63,6 +63,7 @@ bool first_pass(const string &tpm_device,
                 const string &quote_hierarchy_file_name,
                 int           num_pcrs,
                 byte         *pcrs,
+                const string &tpm_measurement_file_name,
                 const string &activate_service_host,
                 const string &activate_service_port,
                 const string &quote_cert_file_name,
@@ -333,8 +334,7 @@ bool first_pass(const string &tpm_device,
   printf("\n");
 #endif
 
-  string measurement_file_name("tpm_cf_utility.measurement");
-  if (!write_file_from_string(measurement_file_name, pcr_digest)) {
+  if (!write_file_from_string(tpm_measurement_file_name, pcr_digest)) {
     printf("%s(), error, line: %d, can't write measurement\n",
            __func__,
            __LINE__);

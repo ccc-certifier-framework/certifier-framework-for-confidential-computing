@@ -135,6 +135,9 @@ DEFINE_string(endorsement_cert_file_name, "", "tpm cert file name");
 DEFINE_string(endorsement_cert_chain_file, "", "endorsement cert chain file");
 DEFINE_string(activate_service_host, "localhost", "activate service host IP");
 DEFINE_string(activate_service_port, "8130", "activate service port");
+DEFINE_string(tpm_measurement_file_name,
+              "tpm_cf_utility.measurement",
+              "tpm enclave measurement");
 
 // -------------------------------------------------------------------------
 
@@ -895,6 +898,7 @@ int main(int an, char **av) {
                          const string &quote_hierarchy_file_name,
                          int           num_pcrs,
                          byte         *pcrs,
+                         const string &tpm_measurement_file_name,
                          const string &service_host,
                          const string &service_port,
                          const string &quote_cert_file_name,
@@ -915,6 +919,7 @@ int main(int an, char **av) {
                     FLAGS_quote_hierarchy_file_name,
                     (int)pcrs_out.size(),
                     (byte *)pcrs_out.data(),
+                    FLAGS_tpm_measurement_file_name,
                     FLAGS_activate_service_host,
                     FLAGS_activate_service_port,
                     FLAGS_quote_cert_file,

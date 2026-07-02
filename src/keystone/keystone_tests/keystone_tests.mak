@@ -30,6 +30,7 @@ SEV_S = $(S)/keystone
 I = $(SRC_DIR)/include
 CFLAGS += -I$(I) -I$(SEV_S) # TODO: rework -I$(SEV_S)
 LDFLAGS +=
+CFLAGS += -Wno-strict-aliasing
 
 $(O)/keystone_aes.o: $(KEYSTONE_RT_SRC)/crypto/aes.c
 	@echo "compiling keystone_aes.o"

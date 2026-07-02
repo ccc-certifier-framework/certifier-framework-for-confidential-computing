@@ -326,6 +326,7 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
                           &srk_handle,
                           &pub_out)) {
     printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);
+    return false;
   }
 
   TPM2B_DIGEST secret;
@@ -413,9 +414,7 @@ bool create_seal_hierarchy_and_secret(local_tpm    &tpm,
                          &creation_out,
                          &digest_out,
                          &creation_ticket)) {
-    printf("%s() error, line %d, Create with digest failed\n",
-           __func__,
-           __LINE__);
+    printf("%s() error, line %d, CreateSealed failed\n", __func__, __LINE__);
     Tpm2_FlushContext(tpm, session_handle);
     return false;
   }
@@ -1026,7 +1025,7 @@ bool get_endorsement_key(local_tpm  &tpm,
                           ek_handle,
                           &pub_out)) {
     printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);
-    return false;
+    // return false;
   }
 
   return true;

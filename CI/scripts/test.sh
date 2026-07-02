@@ -85,6 +85,8 @@ TestList=(
 	   "test-acl_lib-programs"
 	   "test-cf-utility"
 	   "test-sample-app-tpm-compile"
+	   "test-tpm-utility"
+	   "test-tpm-simple-app"
            
            #"test-run_example-simple_app_python"
            #"test-simple_app_python-with-warm-restart"
@@ -870,6 +872,32 @@ function test-cf-utility() {
     popd > /dev/null 2>&1
 
 }
+
+# #############################################################################
+function test-tpm-utility() {
+    echo "******************************************************************"
+    echo "* Test the tpm_utility"
+    echo "******************************************************************"
+    echo " "
+
+    pushd "${CERT_ROOT}/src/tpm2" >> /dev/null 2>&1
+       sudo ./checkin_test.sh
+    popd >> /dev/null 2>&1
+
+}
+
+# #############################################################################
+function test-tpm-simple-app() {
+    echo "******************************************************************"
+    echo "* Test the tpm based simple app"
+    echo "******************************************************************"
+    echo " "
+
+    pushd "${CERT_ROOT}"/sample_apps/simple_app_under_tpm> /dev/null 2>&1
+       sudo ./checkin_test.sh
+    popd > /dev/null 2>&1
+}
+
 
 # #############################################################################
 function test-sample-app-tpm-compile() {

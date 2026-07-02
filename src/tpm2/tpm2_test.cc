@@ -1168,6 +1168,8 @@ int main(int an, char **av) {
       printf("endorsement test succeeded\n");
     } else {
       printf("endorsement test failed\n");
+      tpm_close();
+      return 1;
     }
   } else if (FLAGS_operation == "SealTest") {
     printf("\n");
@@ -1175,6 +1177,8 @@ int main(int an, char **av) {
       printf("seal test succeeded\n");
     } else {
       printf("seal test failed\n");
+      tpm_close();
+      return 1;
     }
   } else if (FLAGS_operation == "QuoteTest") {
     printf("\n");
@@ -1182,6 +1186,8 @@ int main(int an, char **av) {
       printf("quote test succeeded\n");
     } else {
       printf("quote test failed\n");
+      tpm_close();
+      return 1;
     }
   } else if (FLAGS_operation == "ContextTest") {
     printf("\n");
@@ -1189,6 +1195,8 @@ int main(int an, char **av) {
       printf("context test succeeded\n");
     } else {
       printf("context test failed\n");
+      tpm_close();
+      return 1;
     }
   } else if (FLAGS_operation == "NvTest") {
     printf("\n");
@@ -1196,6 +1204,8 @@ int main(int an, char **av) {
       printf("nv test succeeded\n");
     } else {
       printf("nv test failed\n");
+      tpm_close();
+      return 1;
     }
   } else if (FLAGS_operation == "GetCert") {
     string cert;
@@ -1203,6 +1213,8 @@ int main(int an, char **av) {
       printf("get cert test succeeded\n");
     } else {
       printf("get cert test failed\n");
+      tpm_close();
+      return 1;
     }
   } else if (FLAGS_operation == "MiscTest") {
     printf("\n");
@@ -1210,6 +1222,8 @@ int main(int an, char **av) {
       printf("misc test succeeded\n");
     } else {
       printf("misc test failed\n");
+      tpm_close();
+      return 1;
     }
   } else if (FLAGS_operation == "CertifierTest") {
     printf("\n");
@@ -1217,12 +1231,14 @@ int main(int an, char **av) {
       printf("certifier test succeeded\n");
     } else {
       printf("certifier test failed\n");
+      tpm_close();
+      return 1;
     }
   } else {
     printf("\n");
     printf("No such operation (%s)\n", FLAGS_operation.c_str());
   }
 
-  close_tpm();
+  tpm_close();
   return 0;
 }

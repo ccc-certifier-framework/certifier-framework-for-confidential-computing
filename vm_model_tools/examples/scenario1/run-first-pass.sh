@@ -102,18 +102,19 @@ function run-first-pass() {
     --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
     --policy_store_filename=$POLICY_STORE_NAME \
     --run_first_pass=true \
-    --tpm_device="/dev/tpmrm1" \
-    --seal_hierarchy_file_name="seal_hierarchy.bin" \
-    --quote_hierarchy_file_name="quote_hierarchy.bin" \
-    --quote_cert_file="quote_cert.crt" \
+    --tpm_device="$TPM_DEVICE" \
+    --seal_hierarchy_file_name="$SEAL_STORE" \
+    --quote_hierarchy_file_name="$QUOTE_STORE" \
+    --quote_cert_file="$QUOTE_CERT_FILE" \
     --measurement_file="cf_utility.measurement" \
+    --tpm_measurement_file_name="$TPM_MEASUREMENT_FILE_NAME" \
     --endorsement_cert_chain_file=$END_CERT_CHAIN_FILE \
     --endorsement_cert_file_name="" \
     --generate_symmetric_key=true \
     --keyname=primary-store-encryption-key \
     --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
-    --symmetric_key_algorithm=aes-256-gcm  \
-    --public_key_algorithm=rsa-2048 \
+    --symmetric_key_algorithm=$SYMMETRIC_ENCRYPTION_ALGORITHM \
+    --public_key_algorithm=$ASYMMETRIC_ENCRYPTION_ALGORITHM \
     --certifier_service_URL=$POLICY_SERVER_ADDRESS \
     --service_port=$POLICY_SERVER_PORT --print_level=1
 
@@ -122,8 +123,8 @@ function run-first-pass() {
 
   echo "copy measurement"
   echo ""
-  cp tpm_cf_utility.measurement provisioning
-  chmod 0777 tpm_cf_utility.measurement provisioning/tpm_cf_utility.measurement provisioning
+  cp $TPM_MEASUREMENT_FILE_NAME provisioning
+  chmod 0777 provisioning $TPM_MEASUREMENT_FILE_NAME provisioning/$TPM_MEASUREMENT_FILE_NAME
 
   echo ""
   echo "first pass done"

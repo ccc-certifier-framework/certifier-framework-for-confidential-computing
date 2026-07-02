@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # ############################################################################
 # Start tpm simulator
 # ############################################################################
@@ -8,27 +9,28 @@
 set -Eeuo pipefail
 Me=$(basename "$0")
 
-if [[ -v CERTIFIER_ROOT ]] ; then
-  echo "CERTIFIER_ROOT already set."
-else
-  pushd ../..
-  CERTIFIER_ROOT=$(pwd)
-  popd
+if [[ "$(id -u)" -ne 0 ]]; then
+   echo "Must be root, exiting"
+   exit 1
 fi
+
+pushd ../.. > /dev/null
+  CERTIFIER_ROOT=$(pwd)
+popd
 TPM_SUPPORT_DIR=$CERTIFIER_ROOT/src/tpm2
 
 echo " "
 echo "Certifier root: $CERTIFIER_ROOT"
 echo "TPM support directory: $TPM_SUPPORT_DIR"
-
 if [[ ! -v XDG_CONFIG_HOME ]]; then
-  echo "Using export XDG_CONFIG_HOME=~/.config"
-  export XDG_CONFIG_HOME="$HOME/.config"
+  XDG_CONFIG_HOME=$CERTIFIER_ROOT/swtpm_state
 fi
 if [[ ! -e $XDG_CONFIG_HOME ]]; then
   echo "$XDG_CONFIG_HOME does not exist"
-  exit
+  mkdir $XDG_CONFIG_HOME
+  mkdir $XDG_CONFIG_HOME/mytpm1
 fi
+echo "TPM state directory: $XDG_CONFIG_HOME"
 
 pushd $TPM_SUPPORT_DIR
   echo " "
@@ -43,18 +45,18 @@ pushd $TPM_SUPPORT_DIR
   set +e
   modprobe tpm_vtpm_proxy
   if [[ $? -eq 0 ]] ; then
+    set -e
     echo "Using chardev"
     swtpm chardev --vtpm-proxy --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 \
       --tpm2 --ctrl type=tcp,port=2322 --flags not-need-init,startup-clear &
   else
+    set -e
     echo "chardev unavailable, using socket"
     swtpm socket --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --ctrl type=tcp,port=2322 --server type=tcp,port=2321 --flags not-need-init,startup-clear --log level=20 &
-    sleep 2
+    sleep 5
     socat PTY,link=/dev/tpmrm1,raw,echo=0 TCP4:127.0.0.1:2321 &
   fi
+  echo "tpm simulator started"
   chmod 0777 *.crt || true
 popd
-#endif
-
 echo "Done"
-exit

@@ -37,7 +37,7 @@ $CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe \
     --enclave_type=$DEPLOYED_ENCLAVE_TYPE \
     --policy_store_filename=$DEPLOYED_POLICY_STORE_NAME \
     --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
-    --data_dir="./" \
+    --data_dir="$DATA_DIR" \
     --resource_name=key-client-test-key \
     --version=0 \
     --input_format=raw \
@@ -47,9 +47,9 @@ $CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe \
     --action=retrieve \
     --key_server_url=$KEY_SERVER_ADDRESS \
     --key_server_port=$KEY_SERVER_PORT \
-    --tpm_device="/dev/tpmrm1" \
-    --seal_hierarchy_file_name="seal_hierarchy.bin" \
-    --quote_hierarchy_file_name="quote_hierarchy.bin"
+    --tpm_device="$TPM_DEVICE" \
+    --seal_hierarchy_file_name="$SEAL_STORE" \
+    --quote_hierarchy_file_name="$QUOTE_STORE"
 
 sleep 3
 

@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # ############################################################################
 # cleanup after tpm simulator
 # ############################################################################
@@ -7,6 +8,11 @@
 
 set -Eeuo pipefail
 Me=$(basename "$0")
+
+if [[ "$(id -u)" -ne 0 ]]; then
+   echo "Must be root, exiting"
+   exit 1
+fi
 
 function cleanup-stale-procs() {
   echo " "
@@ -31,23 +37,22 @@ if [[ -v CERTIFIER_ROOT ]] ; then
   echo "CERTIFIER_ROOT already set."
 else
   pushd ../..
-  CERTIFIER_ROOT=$(pwd)
+    CERTIFIER_ROOT=$(pwd)
   popd
 fi
 TPM_SUPPORT_DIR=$CERTIFIER_ROOT/src/tpm2
 
+if [[ -v $XDG_CONFIG_HOME ]]; then
+  echo "$XDG_CONFIG_HOME is defined"
+else
+  echo "$XDG_CONFIG_HOME does not exist"
+  export XDG_CONFIG_HOME=$CERTIFIER_ROOT/swtpm_state
+fi
+
 echo " "
 echo "Certifier root: $CERTIFIER_ROOT"
 echo "TPM support directory: $TPM_SUPPORT_DIR"
-
-if [[ ! -v XDG_CONFIG_HOME ]]; then
-  echo "Using export XDG_CONFIG_HOME=~/.config"
-  export XDG_CONFIG_HOME="$HOME/.config"
-fi
-if [[ ! -e $XDG_CONFIG_HOME ]]; then
-  echo "$XDG_CONFIG_HOME does not exist"
-  exit
-fi
+echo "TPM state directory: $XDG_CONFIG_HOME"
 
 pushd $TPM_SUPPORT_DIR
   echo " "
@@ -60,10 +65,11 @@ pushd $TPM_SUPPORT_DIR
   rm seal_hierarchy.bin quote_hierarchy.bin || true
 popd
 
-pushd $XDG_CONFIG_HOME/mytpm1
-  rm ./*
-  rm ./.lock
-popd
+if [[ -d $XDG_CONFIG_HOME/mytpm1 ]]; then
+  pushd $XDG_CONFIG_HOME/mytpm1
+    rm ./* || true
+    rm ./.lock || true
+  popd
+fi
 
 echo "Done"
-exit

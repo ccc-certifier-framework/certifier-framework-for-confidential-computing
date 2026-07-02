@@ -20,6 +20,10 @@ jobs:
         sudo apt install -y clang-format libgtest-dev libgflags-dev openssl libssl-dev protobuf-compiler protoc-gen-go golang-go cmake uuid-dev
         sudo apt install -y python3 pylint
         pip install pytest
+        sudo apt update -y
+        sudo apt install swtpm swtpm-tools apparmor -y
+        sudo apt install socat -y
+
 
         # Needed for Python bindings support
         sudo apt install -y swig
@@ -75,6 +79,16 @@ jobs:
         #! CI fails due to above error, suppressed by use of --exit-zero
         #!PYTHONPATH=. pylint --disable W0212 --exit-zero tests/pytests/*.py
         #!set +x
+
+    #! -------------------------------------------------------------------------
+    - name: test-tpm-utility
+      run: |
+         ./CI/scripts/test.sh test-tpm-utility
+
+    #! -------------------------------------------------------------------------
+    - name: test-tpm-simple-app
+      run: |
+         ./CI/scripts/test.sh test-tpm-simple-app
 
     #! -------------------------------------------------------------------------
     #!- name: test-cert_framework-pytests

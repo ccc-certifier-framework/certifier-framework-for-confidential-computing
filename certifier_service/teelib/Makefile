@@ -29,7 +29,7 @@ endif
 LDFLAGS=
 
 CFLAGS += -DTPM_CERTIFIER
-
+CFLAGS += -Wno-strict-aliasing
 
 ifndef NEWPROTOBUF
 LDFLAGS += -L $(LOCAL_LIB) -ldl -lprotobuf -pthread $(CERTIFIER_LDFLAGS)

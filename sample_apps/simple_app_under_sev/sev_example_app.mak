@@ -57,6 +57,7 @@ CFLAGS += -DSEV_SIMPLE_APP
 ifdef CF_NEW_API
 CFLAGS += -DNEW_API
 endif
+CFLAGS += -Wno-strict-aliasing
 
 CC=g++
 LINK=g++

@@ -90,7 +90,7 @@ $CERTIFIER_ROOT/src/tpm2/swtpmins.txt, for instructions).
 First set the location of the simulated tpm state:
 
 ```shell
-    export XDG_CONFIG_HOME=full directory name (/home/jlm/.config in my case)
+    export XDG_CONFIG_HOME=full directory name (probably $CERTIFIER_ROOT/swtom_state)
 ```
 
 You may want to clean up files and simulator state from previous runs.
@@ -116,7 +116,7 @@ You may want to just compile the framework and vm_model_tools executables,
 without being root.  To do this:
 
 ```shell
-    ./run-test-scenario1.sh  -bss 0 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 -just-compile 1
+    ./run-test-scenario1.sh  -bss 0 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 -just-compile 1 -tpm /dev/tpmrm1
 ```
 
 If you do this, you can use the -ccf 0 flag when you run run-test-scenario1.sh as root.
@@ -124,13 +124,13 @@ If you do this, you can use the -ccf 0 flag when you run run-test-scenario1.sh a
 To run run-test-scenario1.sh from scratch, in the tpm environment, as root, type:
 
 ```shell
-    ./run-test-scenario1.sh  -bss 0 -ccf 1 -loud 1 -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin -pk 1 -pn cf-utility
+    ./run-test-scenario1.sh  -bss 0 -ccf 1 -loud 1 -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin -pk 1 -pn cf-utility -tpm /dev/tpmrm1
 ```
 
 or, if you previously did a "compile only", as root:
 
 ```shell
-    ./run-test-scenario1.sh  -bss 0 -ccf 0 -loud 1 -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin -pk 1 -pn cf-utility
+    ./run-test-scenario1.sh  -bss 0 -ccf 0 -loud 1 -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin -pk 1 -pn cf-utility -tpm /dev/tpmrm1
 ```
 
 Some important variable have the following effect:
@@ -150,7 +150,7 @@ You can rerun the test by typing:
 
 ```shell
     ./clean-files.sh
-    ./run-test-scenario1.sh  -bss 0 -ccf 0 -pk 1 -dn dom0 -loud 0 -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin
+    ./run-test-scenario1.sh  -bss 0 -ccf 0 -pk 1 -dn dom0 -loud 0 -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin -tpm /dev/tpmrm1
 ```
 This does not recompile the utilities and is much faster..
 
@@ -190,7 +190,7 @@ root.
 To run the test from scratch, in the simulated sev environment, as root, type:
 
 ```shell
-    ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1
+    ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 -tpm /dev/tpmrm1
 ```
 
 or, if you already compiled as above:

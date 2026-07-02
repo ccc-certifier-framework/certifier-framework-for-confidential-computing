@@ -2,6 +2,7 @@ include config.mk
 
 CFLAGS=$(shell pkg-config tpmhostverify-$(COMPILER) --cflags) -std=c++17
 LDFLAGS=$(shell pkg-config tpmhostverify-$(COMPILER) --libs)
+CFLAGS += -Wno-strict-aliasing
 
 .PHONY: all build dummy clean
 

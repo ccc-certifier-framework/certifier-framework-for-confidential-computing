@@ -45,16 +45,16 @@ echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
         --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
         --policy_store_filename=$POLICY_STORE_NAME \
         --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
-        --symmetric_key_algorithm=aes-256-gcm  \
-        --public_key_algorithm=rsa-2048 \
+        --symmetric_key_algorithm=$SYMMETRIC_ENCRYPTION_ALGORITHM \
+        --public_key_algorithm=$ASYMMETRIC_ENCRYPTION_ALGORITHM \
         --data_dir="$EXAMPLE_DIR/" \
         --certifier_service_URL=$POLICY_SERVER_ADDRESS \
         --service_port=$POLICY_SERVER_PORT " --print_level=1 \
 	--trust_anchors=$EXAMPLE_DIR/cf_data/my_certs \
-        --tpm_device="/dev/tpmrm1" \
+        --tpm_device="$TPM_DEVICE" \
 	--endorsement_cert_file_name="ekchain.bin" \
-        --seal_hierarchy_file_name="seal_hierarchy.bin" \
-        --quote_hierarchy_file_name="quote_hierarchy.bin"
+        --seal_hierarchy_file_name="$SEAL_STORE" \
+        --quote_hierarchy_file_name="$QUOTE_STORE"
 
 echo " "
 
@@ -67,14 +67,14 @@ echo " "
         --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
         --policy_store_filename=$DEPLOYED_POLICY_STORE_NAME \
         --encrypted_cryptstore_filename=$DEPLOYED_CRYPTSTORE_NAME \
-        --symmetric_key_algorithm=aes-256-gcm  \
-        --public_key_algorithm=rsa-2048 \
+        --symmetric_key_algorithm=$SYMMETRIC_ENCRYPTION_ALGORITHM \
+        --public_key_algorithm=$ASYMMETRIC_ENCRYPTION_ALGORITHM \
         --data_dir="$EXAMPLE_DIR/" \
         --certifier_service_URL=$POLICY_SERVER_ADDRESS \
-        --service_port=8123 --print_level=1 \
-        --tpm_device="/dev/tpmrm1" \
-        --seal_hierarchy_file_name="seal_hierarchy.bin" \
-        --quote_hierarchy_file_name="quote_hierarchy.bin"
+        --service_port=$POLICY_SERVER_PORT --print_level=1 \
+        --tpm_device="$TPM_DEVICE" \
+        --seal_hierarchy_file_name="$SEAL_STORE" \
+        --quote_hierarchy_file_name="$QUOTE_STORE"
 
 sleep 3
 
@@ -90,14 +90,14 @@ echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
         --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
         --policy_store_filename=$POLICY_STORE_NAME \
         --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
-        --symmetric_key_algorithm=aes-256-gcm  \
-        --public_key_algorithm=rsa-2048 \
+        --symmetric_key_algorithm=$SYMMETRIC_ENCRYPTION_ALGORITHM \
+        --public_key_algorithm=$ASYMMETRIC_ENCRYPTION_ALGORITHM \
         --data_dir="$EXAMPLE_DIR/" \
         --certifier_service_URL=$POLICY_SERVER_ADDRESS \
         --service_port=$POLICY_SERVER_PORT --print_level=1" \
-        --tpm_device="/dev/tpmrm1" \
-        --seal_hierarchy_file_name="seal_hierarchy.bin" \
-        --quote_hierarchy_file_name="quote_hierarchy.bin"
+        --tpm_device="$TPM_DEVICE" \
+        --seal_hierarchy_file_name="$SEAL_STORE" \
+        --quote_hierarchy_file_name="$QUOTE_STORE"
 echo " "
 echo " Alternatively add \
 	--trust_anchors=$EXAMPLE_DIR/cf_data/my_certs"
