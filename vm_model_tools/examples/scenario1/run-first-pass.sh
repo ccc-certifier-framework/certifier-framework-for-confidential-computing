@@ -107,7 +107,7 @@ function run-first-pass() {
     --quote_hierarchy_file_name="$QUOTE_STORE" \
     --quote_cert_file="$QUOTE_CERT_FILE" \
     --measurement_file="cf_utility.measurement" \
-    --tpm_measurement_filename="$TPM_MEASUREMENT_FILE_NAME" \
+    --tpm_measurement_file_name="$TPM_MEASUREMENT_FILE_NAME" \
     --endorsement_cert_chain_file=$END_CERT_CHAIN_FILE \
     --endorsement_cert_file_name="" \
     --generate_symmetric_key=true \
