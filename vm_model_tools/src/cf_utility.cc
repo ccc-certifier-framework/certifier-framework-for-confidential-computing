@@ -919,7 +919,7 @@ int main(int an, char **av) {
                     FLAGS_quote_hierarchy_file_name,
                     (int)pcrs_out.size(),
                     (byte *)pcrs_out.data(),
-		    FLAGS_tpm_measurement_file_name,
+                    FLAGS_tpm_measurement_file_name,
                     FLAGS_activate_service_host,
                     FLAGS_activate_service_port,
                     FLAGS_quote_cert_file,
