@@ -11,7 +11,7 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License
-#    File: tpm2_support.mak
+#    File: checkin_test.sh
 
 
 set -e
@@ -61,7 +61,7 @@ popd >> /dev/null
 
   set -e
   if [[ ! -d "$XDG_CONFIG_HOME" ]] ; then
-    echo "Couldn't make tpm state dir"
+    echo "Tpm state dir $XDG_CONFIG_HOME does not exist"
     return 1
   fi
 
@@ -69,12 +69,17 @@ popd >> /dev/null
     ./clean-tpm-simulator.sh || true
     ./start-tpm-simulator.sh || true
     sleep 2
-    echo "tpm started"
-
     ./tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
-    sleep 2
     ./tpm2_test.exe --operation=EndorsementTest --tpm_device=/dev/tpmrm1
+    ./clean-tpm-simulator.sh || true
+    ./start-tpm-simulator.sh || true
+    sleep 2
+    ./tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
     ./tpm2_test.exe --operation=SealTest --tpm_device=/dev/tpmrm1
+    ./clean-tpm-simulator.sh || true
+    ./start-tpm-simulator.sh || true
+    sleep 2
+    ./tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
     ./tpm2_test.exe --operation=QuoteTest --tpm_device=/dev/tpmrm1
     ./clean-tpm-simulator.sh || true
   popd
