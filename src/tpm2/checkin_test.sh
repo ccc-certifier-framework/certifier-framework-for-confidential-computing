@@ -81,5 +81,3 @@ popd >> /dev/null
 
     ./clean-tpm-simulator.sh || true
   popd
-
-swtpm cuse --name mytpm1 --tpmstate dir=  --tpm2
