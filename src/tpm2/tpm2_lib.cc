@@ -172,11 +172,9 @@ int Tpm2_SetCommand(uint16_t tag,
   change_endian32((uint32_t *)&size,
                   &(((TPM2_COMMAND_HEADER *)buf)->paramSize));
   change_endian32(&cmd, &(((TPM2_COMMAND_HEADER *)buf)->commandCode));
-  if (size_param > 0 && params == nullptr) {
-    printf("%s() error, line %d, null param copy\n", __func__, __LINE__);
-    return -1;
+  if (size_param > 0 && params != nullptr) {
+    memcpy(buf + sizeof(TPM2_COMMAND_HEADER), params, size_param);
   }
-  memcpy(buf + sizeof(TPM2_COMMAND_HEADER), params, size_param);
   return size;
 }
 
