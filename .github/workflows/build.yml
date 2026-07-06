@@ -28,6 +28,7 @@ jobs:
         sudo chmod 0777 /etc/apparmor.d
         sudo mkdir /etc/apparmor.d/local || true
         sudo chmod 0777 /etc/apparmor.d/local || true
+        sudo ls -l /etc/apparmor.d
         sudo ls -l /etc/apparmor.d/local
         sudo echo "capability sys_admin," > /etc/apparmor.d/local/usr.bin.swtpm
         sudo aa-enforce /usr/bin/swtpm
