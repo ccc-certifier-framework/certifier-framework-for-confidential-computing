@@ -24,11 +24,17 @@ jobs:
         sudo apt install swtpm swtpm-tools apparmor -y
         sudo apt install socat -y
         sudo apt install fuse3 libfuse3-dev -y
+        echo ""
+        echo "apparmor hack"
         sudo mkdir /etc/apparmor.d || true
         sudo chmod 0777 /etc/apparmor.d
         sudo mkdir /etc/apparmor.d/local || true
         sudo chmod 0777 /etc/apparmor.d/local || true
+        echo ""
+        echo "/etc/apparmor.d"
         sudo ls -l /etc/apparmor.d
+        echo ""
+        echo "/etc/apparmor.d/local"
         sudo ls -l /etc/apparmor.d/local
         sudo echo "capability sys_admin," > /etc/apparmor.d/local/usr.bin.swtpm
         sudo aa-enforce /usr/bin/swtpm
