@@ -21,7 +21,7 @@ jobs:
         sudo apt install -y python3 pylint
         pip install pytest
         sudo apt update -y
-        sudo apt install swtpm swtpm-tools apparmor -y
+        sudo apt install swtpm swtpm-tools apparmor apparmor-utils apparmor-profiles -y
         sudo apt install socat -y
         sudo apt install fuse3 libfuse3-dev -y
         echo ""
