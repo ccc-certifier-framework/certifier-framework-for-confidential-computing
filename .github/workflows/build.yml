@@ -25,7 +25,9 @@ jobs:
         sudo apt install socat -y
         sudo apt install fuse3 libfuse3-dev -y
         sudo mkdir /etc/apparmor.d || true
+        sudo chmod 0777 /etc/apparmor.d
         sudo mkdir /etc/apparmor.d/local || true
+        sudo chmod 0777 /etc/apparmor.d/local || true
         sudo echo "capability sys_admin," > /etc/apparmor.d/local/usr.bin.swtpm
         sudo aa-enforce /usr/bin/swtpm
         sudo systemctl reload apparmor
