@@ -24,8 +24,8 @@ jobs:
         sudo apt install swtpm swtpm-tools apparmor -y
         sudo apt install socat -y
         sudo apt install fuse3 libfuse3-dev -y
-        sudo ls -l /etc/apparmor.d
-        sudo ls -l /etc/apparmor.d/local/usr.bin.swtpm
+        sudo mkdir /etc/apparmor.d
+        sudo mkdir /etc/apparmor.d/local
         sudo echo "capability sys_admin," > /etc/apparmor.d/local/usr.bin.swtpm
         sudo aa-enforce /usr/bin/swtpm
         sudo systemctl reload apparmor
