@@ -30,15 +30,15 @@ jobs:
         sudo chmod 0777 /etc/apparmor.d/local || true
         echo ""
         echo "/etc/apparmor.d/local"
-        sudo ls -l /etc/apparmor.d/local
-        sudo chmod 666 /etc/apparmor.d/local/usr.bin.swtpm
-        sudo echo "capability sys_admin," >> /etc/apparmor.d/local/usr.bin.swtpm
+        sudo ls -l /etc/apparmor.d/local || true
+        sudo chmod 666 /etc/apparmor.d/local/usr.bin.swtpm || true
+        sudo echo "capability sys_admin," >> /etc/apparmor.d/local/usr.bin.swtpm || true
         echo ""
         echo "enforce"
-        sudo aa-enforce /usr/bin/swtpm
+        sudo aa-enforce /usr/bin/swtpm || true
         echo ""
         echo "reload"
-        sudo systemctl reload apparmor
+        sudo systemctl reload apparmor || true
 
         # Needed for Python bindings support
         sudo apt install -y swig
