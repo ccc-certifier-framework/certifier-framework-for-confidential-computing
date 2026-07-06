@@ -35,11 +35,6 @@ pushd $TPM_SUPPORT_DIR
   echo " "
   echo "start-tpm-simulator"
 
-  pushd $XDG_CONFIG_HOME/mytpm1
-    rm ./*
-    rm ./.lock
-  popd
-
   swtpm_setup --tpmstate ${XDG_CONFIG_HOME}/mytpm1 --create-ek-cert \
     --create-platform-cert --tpm2 --write-ek-cert-files .
 
