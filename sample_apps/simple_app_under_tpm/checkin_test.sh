@@ -23,14 +23,32 @@ else
   popd > /dev/null
 fi
 
+ARG_SIZE="$#"
+
+if [ $ARG_SIZE == 0 ] ; then
+  echo "Must call with arguments, as follows:"
+  echo "  ./checkin_test.sh domain-name"
+  exit
+fi
+DOMAIN_NAME=$1
+
 echo "CERTIFIER ROOT: $CERTIFIER_ROOT"
 EXAMPLE_DIR=$(pwd)
 echo "Example dir: $EXAMPLE_DIR"
 export XDG_CONFIG_HOME="$CERTIFIER_ROOT/swtpm_state"
 echo "swtpm state dir: $XDG_CONFIG_HOME"
 
+POLICY_KEY_FILE_NAME="policy_key_file.$DOMAIN_NAME"
+POLICY_CERT_FILE_NAME="policy_cert_file.$DOMAIN_NAME"
+echo "Policy key file name: $POLICY_KEY_FILE_NAME"
+echo "Policy cert file name: $POLICY_CERT_FILE_NAME"
+
+POLICY_STORE_NAME="policy_store.$DOMAIN_NAME"
+echo "Policy store name 1: ./app1_data/$POLICY_STORE_NAME"
+echo "Policy store name 2: ./app2_data/$POLICY_STORE_NAME"
+
 pushd $CERTIFIER_ROOT/src/tpm2
-  make -clean -f tpm2_support.mak
+  make clean -f tpm2_support.mak
   make -f tpm2_support.mak
 popd
 
@@ -56,7 +74,7 @@ fi
 
 # These tests run on my machine but ...
 echo "Exiting until we get a tpm fix"
-exit 0
+# exit 0
 
 function cleanup-stale-procs() {
   echo " "
@@ -114,28 +132,125 @@ pushd $EXAMPLE_DIR
     mkdir $EXAMPLE_DIR/app2_data
   fi
 
+  export LD_LIBRARY_PATH=/usr/local/lib
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/teelib
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/graminelib
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/isletlib
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/oelib
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/tpmlib
+  echo $LD_LIBRARY_PATH
+  sudo ldconfig
+
+  sleep 3
+
   rm ekchain.bin quote_hierarchy.bin seal_hierarchy.bin || true
   rm ./app1_data/* ./app2_data/* ./service/* ./provisioning/* || true
-  ./prepare-test.sh all dom0
+
+  ./prepare-test.sh fresh $DOMAIN_NAME
+  ./prepare-test.sh all $DOMAIN_NAME
 
   ./clean-tpm-simulator.sh || true
   ./start-tpm-simulator.sh
   echo "simulator started"
+
   sleep 2
 
   ../../src/tpm2/tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
-  ./first-pass.sh dom0 1
+  ./first-pass.sh $DOMAIN_NAME 1
   cp measurement ./provisioning
   chmod 0777 measurement ./provisioning/measurement
   chmod 0777 ./provisioning/quote_cert.crt
 
-  ./final-prep.sh dom0
+  ./final-prep.sh $DOMAIN_NAME
   sleep 3
-  ./run-init-apps.sh run dom0
+
+  pushd ./service
+    echo " "
+    echo "running simpleserver"
+    echo "$CERTIFIER_ROOT/certifier_service/simpleserver  \
+      --policy_key_file=$POLICY_KEY_FILE_NAME
+      --policy_cert_file=$POLICY_CERT_FILE_NAME \
+      --policyFile=policy.bin --readPolicy=true &"
+    $CERTIFIER_ROOT/certifier_service/simpleserver  \
+      --policy_key_file=$POLICY_KEY_FILE_NAME \
+      --policy_cert_file=$POLICY_CERT_FILE_NAME \
+      --policyFile=policy.bin --readPolicy=true &
+    echo "simpleserver started"
+    echo " "
+
+    sleep 5
+  popd
+
+  echo " "
+  echo "initializing app1"
+  $EXAMPLE_DIR/tpm_example_app.exe --data_dir=./app1_data/  \
+      --domain_name=$DOMAIN_NAME \
+      --operation=fresh-start  \
+      --tpm_device="/dev/tpmrm1" \
+      --endorsement_cert_chain_file="ekchain.bin" \
+      --seal_hierarchy_file_name="seal_hierarchy.bin" \
+      --quote_hierarchy_file_name="quote_hierarchy.bin" \
+      --policy_store_file=$POLICY_STORE_NAME --print_all=true
+
   sleep 3
-  ./run-server-app.sh dom0 &
+
+  echo "certifying app1"
+  $EXAMPLE_DIR/tpm_example_app.exe --data_dir=./app1_data/  \
+      --domain_name=$DOMAIN_NAME \
+      --operation=get-certified \
+      --tpm_device="/dev/tpmrm1" \
+      --endorsement_cert_chain_file="ekchain.bin" \
+      --seal_hierarchy_file_name="seal_hierarchy.bin" \
+      --quote_hierarchy_file_name="quote_hierarchy.bin" \
+      --policy_store_file=$POLICY_STORE_NAME --print_all=true
+
   sleep 3
-  ./run-client-app.sh dom0
+
+  echo " "
+  echo "initializing app2"
+  $EXAMPLE_DIR/tpm_example_app.exe  --data_dir=./app2_data/ \
+      --domain_name=$DOMAIN_NAME \
+      --operation=fresh-start \
+      --tpm_device="/dev/tpmrm1" \
+      --endorsement_cert_chain_file="ekchain.bin" \
+      --seal_hierarchy_file_name="seal_hierarchy.bin" \
+      --quote_hierarchy_file_name="quote_hierarchy.bin" \
+      --policy_store_file=$POLICY_STORE_NAME --print_all=true
+
+  sleep 3
+
+  echo "certifying app2"
+  $EXAMPLE_DIR/tpm_example_app.exe  --data_dir=./app2_data/ \
+      --domain_name=$DOMAIN_NAME \
+      --operation=get-certified  \
+      --tpm_device="/dev/tpmrm1" \
+      --endorsement_cert_chain_file="ekchain.bin" \
+      --seal_hierarchy_file_name="seal_hierarchy.bin" \
+      --quote_hierarchy_file_name="quote_hierarchy.bin" \
+      --policy_store_file=$POLICY_STORE_NAME --print_all=true
+
+  echo " "
+  echo "running app-as-server"
+  $EXAMPLE_DIR/tpm_example_app.exe \
+    --data_dir=./app2_data/ --operation="run-app-as-server" \
+    --domain_name=$DOMAIN_NAME \
+    --tpm_device="/dev/tpmrm1" \
+    --seal_hierarchy_file_name="seal_hierarchy.bin" \
+    --quote_hierarchy_file_name="quote_hierarchy.bin" \
+    --policy_store_file=$POLICY_STORE_FILE_NAME --print_all=true &
+
+  sleep 3
+
+  echo "running app-as-client"
+  $EXAMPLE_DIR/tpm_example_app.exe \
+    --data_dir=./app1_data/ --operation="run-app-as-client" \
+    --domain_name=$DOMAIN_NAME \
+    --tpm_device="/dev/tpmrm1" \
+    --seal_hierarchy_file_name="seal_hierarchy.bin" \
+    --quote_hierarchy_file_name="quote_hierarchy.bin" \
+    --policy_store_file=$POLICY_STORE_FILE_NAME --print_all=true
+
+  cleanup-stale-procs
 
   ./clean-tpm-simulator.sh || true
   echo "done"
