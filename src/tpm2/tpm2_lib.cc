@@ -163,12 +163,18 @@ int Tpm2_SetCommand(uint16_t tag,
                     int      size_param,
                     byte_t  *params) {
   uint32_t size = sizeof(TPM2_COMMAND_HEADER) + size_param;
+  if (size > MAX_SIZE_PARAMS) {
+    printf("%s() error, line %d, buffer too small\n", __func__, __LINE__);
+    return -1;
+  }
 
   change_endian16(&tag, &(((TPM2_COMMAND_HEADER *)buf)->tag));
   change_endian32((uint32_t *)&size,
                   &(((TPM2_COMMAND_HEADER *)buf)->paramSize));
   change_endian32(&cmd, &(((TPM2_COMMAND_HEADER *)buf)->commandCode));
-  memcpy(buf + sizeof(TPM2_COMMAND_HEADER), params, size_param);
+  if (size_param > 0 && params != nullptr) {
+    memcpy(buf + sizeof(TPM2_COMMAND_HEADER), params, size_param);
+  }
   return size;
 }
 

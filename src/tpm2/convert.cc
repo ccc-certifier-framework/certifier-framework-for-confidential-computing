@@ -154,8 +154,10 @@ string *byte_to_base64_left_to_right(int size, byte_t *in) {
   string *out = new string(n, 0);
   char   *str = (char *)out->c_str();
 
-  if (size <= 0 || in == nullptr)
+  if (size <= 0 || in == nullptr) {
+    delete out;
     return nullptr;
+  }
   while (size >= 3) {
     three_bytes_to_base64(*in, *(in + 1), *(in + 2), str);
     in += 3;
@@ -182,8 +184,10 @@ string *byte_to_base64_right_to_left(int size, byte_t *in) {
   string *out = new string(n, 0);
   char   *str = (char *)out->c_str();
 
-  if (size <= 0 || in == nullptr)
+  if (size <= 0 || in == nullptr) {
+    delete out;
     return nullptr;
+  }
   in += size - 1;
   while (size >= 3) {
     three_bytes_to_base64(*in, *(in - 1), *(in - 2), str);

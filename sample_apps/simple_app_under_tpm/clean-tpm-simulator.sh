@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # ############################################################################
 # cleanup after tpm simulator
 # ############################################################################
@@ -44,13 +45,17 @@ echo "Certifier root: $CERTIFIER_ROOT"
 echo "TPM support directory: $TPM_SUPPORT_DIR"
 echo "TPM state: $XDG_CONFIG_HOME"
 
-  echo " "
-  echo "cleanup-tpm-simulator"
+echo " "
+echo "cleanup-tpm-simulator"
 
-  # kill the server
-  cleanup-stale-procs
+# kill the server
+cleanup-stale-procs
 
-  # remove the files
-  rm seal_hierarchy.bin quote_hierarchy.bin
+# remove the files
+rm seal_hierarchy.bin quote_hierarchy.bin || true
+pushd $XDG_CONFIG_HOME
+  cd mytpm1
+  rm ./* || true
+popd
 
 echo "Done"

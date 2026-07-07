@@ -42,10 +42,10 @@ else
 fi
 TPM_SUPPORT_DIR=$CERTIFIER_ROOT/src/tpm2
 
-if [[ -v $XDG_CONFIG_HOME ]]; then
+if [[ -v XDG_CONFIG_HOME ]]; then
   echo "$XDG_CONFIG_HOME is defined"
 else
-  echo "$XDG_CONFIG_HOME does not exist"
+  echo "XDG_CONFIG_HOME does not exist"
   export XDG_CONFIG_HOME=$CERTIFIER_ROOT/swtpm_state
 fi
 

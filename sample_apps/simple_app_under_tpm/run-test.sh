@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # ############################################################################
 # run-test.sh: Driver script to run tpm simple-example test
 # ############################################################################
@@ -143,9 +144,10 @@ function do-run() {
   pushd $EXAMPLE_DIR/service
     echo " "
     echo "$CERTIFIER_ROOT/certifier_service/simpleserver  \
-      --policy_key_file=$POLICY_KEY_FILE_NAME 
+      --policy_key_file=$POLICY_KEY_FILE_NAME \
       --policy_cert_file=$POLICY_CERT_FILE_NAME \
       --policyFile=policy.bin --readPolicy=true"
+
     $CERTIFIER_ROOT/certifier_service/simpleserver  \
       --policy_key_file=$POLICY_KEY_FILE_NAME \
       --policy_cert_file=$POLICY_CERT_FILE_NAME \
