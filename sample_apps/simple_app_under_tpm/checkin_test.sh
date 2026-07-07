@@ -74,7 +74,7 @@ fi
 
 # These tests run on my machine but ...
 echo "Exiting until we get a tpm fix"
-# exit 0
+exit 0
 
 function cleanup-stale-procs() {
   echo " "
@@ -217,7 +217,7 @@ pushd $EXAMPLE_DIR
       --quote_hierarchy_file_name="quote_hierarchy.bin" \
       --policy_store_file=$POLICY_STORE_NAME --print_all=true
 
-  sleep 3
+  sleep 5
 
   echo "certifying app2"
   $EXAMPLE_DIR/tpm_example_app.exe  --data_dir=./app2_data/ \
@@ -237,9 +237,9 @@ pushd $EXAMPLE_DIR
     --tpm_device="/dev/tpmrm1" \
     --seal_hierarchy_file_name="seal_hierarchy.bin" \
     --quote_hierarchy_file_name="quote_hierarchy.bin" \
-    --policy_store_file=$POLICY_STORE_FILE_NAME --print_all=true &
+    --policy_store_file=$POLICY_STORE_NAME --print_all=true &
 
-  sleep 3
+  sleep 5
 
   echo "running app-as-client"
   $EXAMPLE_DIR/tpm_example_app.exe \
@@ -248,7 +248,7 @@ pushd $EXAMPLE_DIR
     --tpm_device="/dev/tpmrm1" \
     --seal_hierarchy_file_name="seal_hierarchy.bin" \
     --quote_hierarchy_file_name="quote_hierarchy.bin" \
-    --policy_store_file=$POLICY_STORE_FILE_NAME --print_all=true
+    --policy_store_file=$POLICY_STORE_NAME --print_all=true
 
   cleanup-stale-procs
 

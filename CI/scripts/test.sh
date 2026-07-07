@@ -894,7 +894,7 @@ function test-tpm-simple-app() {
     echo " "
 
     pushd "${CERT_ROOT}"/sample_apps/simple_app_under_tpm> /dev/null 2>&1
-       sudo ./checkin_test.sh
+       sudo ./checkin_test.sh dom0
     popd > /dev/null 2>&1
 }
 
