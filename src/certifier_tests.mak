@@ -179,8 +179,7 @@ $(CL)/$(CERTIFIER_TESTS_SHARED_LIB): $(cftests_sl_dobj)
 	@echo "\nLinking certifier tests shared library $@"
 	$(LINK) -shared $(cftests_sl_dobj) -o $@ $(LDFLAGS)
 
-$(I)/certifier.pb.h: $(S)/certifier.pb.cc
-$(S)/certifier.pb.cc: $(CP)/certifier.proto
+$(I)/certifier.pb.h $(S)/certifier.pb.cc: $(CP)/certifier.proto
 	$(PROTO) --cpp_out=$(S) --proto_path $(<D) $<
 	mv $(S)/certifier.pb.h $(I)
 
@@ -222,7 +221,7 @@ $(O)/convert.o: $(T)/convert.cc
 	@echo "compiling convert.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/convert.o $(T)/convert.cc
 
-$(O)/tpm2_lib.o: $(T)/tpm2_lib.cc
+$(O)/tpm2_lib.o: $(T)/tpm2_lib.cc $(T)/tpm2.pb.h
 	@echo "compiling tpm2_lib.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/tpm2_lib.o $(T)/tpm2_lib.cc
 
@@ -230,7 +229,7 @@ $(O)/openssl_help.o: $(T)/openssl_help.cc
 	@echo "compiling openssl_help.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/openssl_help.o $(T)/openssl_help.cc
 
-$(O)/tpm2_support.o: $(T)/tpm2_support.cc $(T)/tpm2.pb.cc
+$(O)/tpm2_support.o: $(T)/tpm2_support.cc $(T)/tpm2.pb.h
 	@echo "compiling tpm2_support.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/tpm2_support.o $(T)/tpm2_support.cc
 
@@ -266,15 +265,15 @@ $(O)/certifier.pb.o: $(S)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
-$(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
+$(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h $(T)/tpm2.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
-$(O)/certifier_proofs.o: $(S)/certifier_proofs.cc $(I)/certifier.pb.h $(I)/certifier.h
+$(O)/certifier_proofs.o: $(S)/certifier_proofs.cc $(I)/certifier.pb.h $(I)/certifier.h $(T)/tpm2.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
-$(O)/cc_helpers.o: $(S)/cc_helpers.cc $(I)/certifier.pb.h $(I)/cc_helpers.h
+$(O)/cc_helpers.o: $(S)/cc_helpers.cc $(I)/certifier.pb.h $(I)/cc_helpers.h $(T)/tpm2.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 

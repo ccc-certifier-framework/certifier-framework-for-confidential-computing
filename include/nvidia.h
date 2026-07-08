@@ -17,6 +17,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <stdint.h>
 
 enum GPUArch {
   Unknown = -1,

@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <sys/types.h>
+#include <stdint.h>
 #include "nvidia_impl.h"
 #include <cstring>
 #include <dlfcn.h>

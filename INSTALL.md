@@ -31,15 +31,28 @@ The Certifier API is in the `src/` directory.
 You will need to install the following packages:
 
 ```shell
-$ sudo apt-get update -y
-$ sudo apt-get install -y protobuf-compiler
-$ sudo apt-get install -y libgtest-dev/jammy
-$ sudo apt-get install -y libgflags-dev/jammy
-$ sudo apt-get install -y protoc-gen-go
-$ sudo apt-get install -y golang-go
-$ sudo apt-get install -y libmbedtls-dev/jammy
-$ sudo apt-get install -y libssl-dev uuid-dev python3-pip swig
+sudo apt update -y
+sudo apt install -y build-essential
+sudo apt install -y clang-format
+sudo apt install -y protobuf-compiler libprotobuf-dev
+sudo apt install -y libgtest-dev
+sudo apt install -y libgflags-dev
+sudo apt install -y protoc-gen-go
+sudo apt install -y golang-go
+sudo apt install -y libmbedtls-dev
+sudo apt install -y python3-pip swig
+sudo apt install -y openssl libssl-dev
+sudo apt install -y cmake uuid-dev
+sudo apt install -y pkg-config
+sudo apt install -y python3 pylint
+pip install pytest
+sudo apt install swtpm swtpm-tools apparmor apparmor-utils apparmor-profiles -y
+sudo apt install fuse3 libfuse3-dev -y
+sudo apt install socat -y
+sudo apt install vim -y
 ```
+
+Some of these may be pre-installed and some packages are not needed for all builds.
 
 ## To compile and run the Certifier API tests
 
