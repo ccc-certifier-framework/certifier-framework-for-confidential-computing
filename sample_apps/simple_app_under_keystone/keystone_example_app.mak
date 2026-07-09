@@ -53,7 +53,7 @@ else
 CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations -D KEYSTONE_CERTIFIER
 endif
 CFLAGS = $(CFLAGS_NOERROR) -Werror -DKEYSTONE_SIMPLE_APP
-CFLAGS += -Wno-error=strict-aliasing
+CFLAGS += -Wno-strict-aliasing
 
 CC=g++
 LINK=g++

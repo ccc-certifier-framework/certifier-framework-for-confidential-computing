@@ -1,10 +1,11 @@
 #!/bin/bash
+
 # ############################################################################
 # run-test.sh: script to run multidomain test.
 # ############################################################################
 
 ## Please dont name a domain "fresh"
-if [ $ARG_SIZE == 0 ] ; then
+if [[ $ARG_SIZE == 0 ]] ; then
   echo "Must call with arguments, as follows:"
   echo "  ./run-test.sh fresh"
   echo "  ./run-test.sh fresh client-domain-name server-domain-name"
