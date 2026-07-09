@@ -173,12 +173,12 @@ function do-run() {
 
 if [ "$1" == "fresh" ] ; then
   do-fresh
-  exit
+  exit 0
 fi
 
 if [ "$1" == "run" ] ; then
   do-run
-  exit
+  exit 0
 fi
 
 echo " "
