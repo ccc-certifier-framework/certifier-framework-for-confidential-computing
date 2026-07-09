@@ -26,7 +26,7 @@ $CERTIFIER_ROOT is the top level directory for the Certifier repository.
 It is helpful to have a shell variable for it, e.g., :
 
 ```shell
-export CERTIFIER_ROOT=~/Projects/certifier-framework-for-confidential-computing
+export CERTIFIER_ROOT=.../certifier-framework-for-confidential-computing
 ```
 
 $EXAMPLE_DIR is this directory containing the example application.

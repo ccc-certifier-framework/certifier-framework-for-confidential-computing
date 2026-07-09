@@ -287,19 +287,6 @@ function do-make-policy() {
       --private_key_file=$CLIENT_POLICY_KEY_FILE_NAME --output="signed_claim_2b.bin"
     echo "signed_claim_2b done"
 
-    # signed_claim_3a.bin: server-signed server_vse_policy3a.bin
-    $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe   \
-      --vse_file="vse_policy3a.bin" --duration=9000  \
-      --private_key_file=$SERVER_POLICY_KEY_FILE_NAME --output="signed_claim_3a.bin"
-    echo "signed_claim_3a done"
-
-    # signed_claim_3b.bin: vse_policy3b.bin
-    $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe   \
-      --vse_file="vse_policy3b.bin" --duration=9000    \
-      --private_key_file=$CLIENT_POLICY_KEY_FILE_NAME  \
-      --output="signed_claim_3b.bin"
-    echo "signed_claim_3b done"
-
      # ts3.bin: platform-key is-trusted-for-attestation
      $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe  \
        --key_subject=platform_key_file.bin --verb="is-trusted-for-attestation" \
@@ -323,6 +310,19 @@ function do-make-policy() {
         --key_subject=$CLIENT_POLICY_KEY_FILE_NAME --verb="says" \
         --clause="ts3.bin" --output="vse_policy3b.bin"
      echo "vse_policy3b done"
+
+    # signed_claim_3a.bin: server-signed server_vse_policy3a.bin
+    $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe   \
+      --vse_file="vse_policy3a.bin" --duration=9000  \
+      --private_key_file=$SERVER_POLICY_KEY_FILE_NAME --output="signed_claim_3a.bin"
+    echo "signed_claim_3a done"
+
+    # signed_claim_3b.bin: vse_policy3b.bin
+    $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe   \
+      --vse_file="vse_policy3b.bin" --duration=9000    \
+      --private_key_file=$CLIENT_POLICY_KEY_FILE_NAME  \
+      --output="signed_claim_3b.bin"
+    echo "signed_claim_3b done"
 
      # vse-policy4.bin: platform-key says attest-key is-trusted-for-attestation
      $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
@@ -381,7 +381,7 @@ function do-compile-certifier() {
 
     go build simpleserver.go
 
-    pop
+  popd
   echo "do-compile-certifier done"
 }
 
@@ -392,9 +392,9 @@ function do-copy-files() {
   pushd $EXAMPLE_DIR/provisioning
     cp -p server_policy.bin client_policy.bin $EXAMPLE_DIR/service
     cp -p $CLIENT_POLICY_KEY_FILE_NAME  $CLIENT_POLICY_CERT_FILE_NAME \
-          multidomain_client_app.exe.measurement policy.bin $EXAMPLE_DIR/app1_data
+          multidomain_client_app.exe.measurement $EXAMPLE_DIR/app1_data
     cp -p $SERVER_POLICY_KEY_FILE_NAME $SERVER_POLICY_CERT_FILE_NAME \
-          multidomain_server_app.exe.measurement policy.bin $EXAMPLE_DIR/app2_data
+          multidomain_server_app.exe.measurement $EXAMPLE_DIR/app2_data
     cp platform_attest_endorsement.bin  attest_key_file.bin ../app1_data
     cp platform_attest_endorsement.bin  attest_key_file.bin ../app2_data
   popd

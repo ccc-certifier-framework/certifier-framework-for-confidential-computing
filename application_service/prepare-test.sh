@@ -196,7 +196,8 @@ function do-make-keys() {
       --attest_key_output_file=attest_key_file.bin
 
     $CERTIFIER_ROOT/utilities/simulated_sev_key_generation.exe  \
-         --ark_der=ark_cert.der --ask_der=ask_cert.der \
+         --ark_der=ark_cert.der \
+         --ask_der=ask_cert.der \
          --vcek_der=vcek_cert.der  \
          --vcek_key_file=/etc/certifier-snp-sim/ec-secp384r1-pub-key.pem
   popd

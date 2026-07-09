@@ -48,11 +48,13 @@ if [[ $ARG_SIZE == 2 ]] ; then
   DOMAIN_NAME=$2
 fi
 echo "domain name: $DOMAIN_NAME"
+ENCLAVE_TYPE=se
 
 POLICY_KEY_FILE_NAME="policy_key_file.$DOMAIN_NAME"
 POLICY_CERT_FILE_NAME="policy_cert_file.$DOMAIN_NAME"
 echo "Policy key file name: $POLICY_KEY_FILE_NAME"
 echo "Policy cert file name: $POLICY_CERT_FILE_NAME"
+echo "App service dir: $APP_SERVICE_DIR"
 
 POLICY_STORE_NAME="policy_store.$DOMAIN_NAME"
 echo "Policy store name: $POLICY_STORE_NAME"
@@ -146,24 +148,45 @@ function do-fresh() {
   exit
 }
 
+function run-service () {
+  echo "running service"
+    if [[ "$ENCLAVE_TYPE" == "se" ]] ;  then
+      $APP_SERVICE_DIR/app_service.exe \
+        --domain_name=app_service --service_dir="./service/" \
+        --policy_cert_file=$POLICY_KEY_FILE_NAME --service_policy_store=$POLICY_STORE_NAME \
+        --host_enclave_type="simulated-enclave" --platform_file_name="platform_file.bin" \
+        --platform_attest_endorsement="platform_attest_endorsement.bin"  \
+        --attest_key_file="attest_key_file.bin" \
+        --measurement_file="app_service.measurement" --guest_login_name="jlm" &
+    fi
+    if [[ "$ENCLAVE_TYPE" == "sev" ]] ;  then
+      $APP_SERVICE_DIR/app_service.exe \
+        --domain_name=app_service \
+        --service_dir="./service/" \
+        --policy_cert_file=$POLICY_KEY_FILE_NAME --service_policy_store=$POLICY_STORE_NAME \
+        --host_enclave_type="sev-enclave" --platform_file_name="platform_file.bin" \
+        --platform_attest_endorsement="platform_attest_endorsement.bin"   \
+        --attest_key_file="attest_key_file.bin" \
+        --measurement_file="app_service.measurement" --guest_login_name="jlm" &
+    fi
+    sleep 3
+}
+
 function do-make-service () {
 echo " "
 echo "do-make-service"
 
   pushd $APP_SERVICE_DIR
 
+    APP_SERVICE_POLICY_KEY_CERT="$APP_SERVICE_DIR/service/policy_cert_file.app_service"
     if [[ -e "$APP_SERVICE_DIR/app_service.exe" && -d "$APP_SERVICE_DIR/service" ]] ; then
-        echo "App service already built"
-        if [[ -e "$APP_SERVICE_DIR/service/policy_cert_file.app_service" ]] ; then
-          APP_SERVICE_POLICY_KEY_CERT="$APP_SERVICE_DIR/service/policy_cert_file.app_service"
-        fi
-        return
+      echo "App service already built"
+      echo "App service directory: $APP_SERVICE_DIR"
+    else
+      ./prepare-test.sh fresh "app_service"
+      ./prepare-test.sh all "se" "app_service"
+      ./run-test.sh fresh
     fi
-    echo "Building app service"
-    ./prepare-test.sh fresh "app_service"
-    ./prepare-test.sh all "se" "app_service"
-    ./run-test.sh fresh
-    ./run-test.sh run  "se" "app_service"
   popd
 
 echo "do-make-service done"
@@ -222,14 +245,27 @@ function do-compile-program() {
 function do-make-policy() {
   echo "do-make-policy"
 
-  do-make-service   # Gets service key
+  #do-make-service   # Gets service key
   pushd $EXAMPLE_DIR/provisioning
 
     echo " "
 
     if [[ "$APP_SERVICE_POLICY_KEY_CERT" == "" ]] ; then
-      echo "app attestation key does not exist"
-      exit
+      if [[ -e "$APP_SERVICE_DIR/app_service.exe" && -d "$APP_SERVICE_DIR/service" ]] ; then
+        echo "App service already built"
+        echo "App service directory: $APP_SERVICE_DIR"
+        if [[ -e "$APP_SERVICE_DIR/service/policy_cert_file.app_service" ]] ; then
+          APP_SERVICE_POLICY_KEY_CERT="$APP_SERVICE_DIR/service/policy_cert_file.app_service"
+        else
+          echo "$APP_SERVICE_POLICY_KEY_CERT doesn't exist"
+          return 1
+        fi
+      fi
+
+      if [[ "$APP_SERVICE_POLICY_KEY_CERT" == "" ]] ; then
+        echo "app attestation key does not exist"
+        return 1
+      fi
     fi
 
     echo "got signing cert: $APP_SERVICE_POLICY_KEY_CERT"

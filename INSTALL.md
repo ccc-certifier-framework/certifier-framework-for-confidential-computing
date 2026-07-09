@@ -46,10 +46,15 @@ sudo apt install -y cmake uuid-dev
 sudo apt install -y pkg-config
 sudo apt install -y python3 pylint
 pip install pytest
-sudo apt install swtpm swtpm-tools apparmor apparmor-utils apparmor-profiles -y
-sudo apt install fuse3 libfuse3-dev -y
-sudo apt install socat -y
-sudo apt install vim -y
+sudo apt install -y swtpm swtpm-tools apparmor apparmor-utils apparmor-profiles
+sudo apt install -y fuse3 libfuse3-dev
+sudo apt install -y socat
+
+For development you might add:
+
+```shell
+sudo apt -y install vim
+sudo apt -y install git
 ```
 
 Some of these may be pre-installed and some packages are not needed for all builds.

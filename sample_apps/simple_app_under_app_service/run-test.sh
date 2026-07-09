@@ -22,7 +22,7 @@ echo "Example directory: $EXAMPLE_DIR"
 ARG_SIZE="$#"
 
 ## Please dont name a domain "fresh"
-if [ $ARG_SIZE == 0 ] ; then
+if [[ $ARG_SIZE == 0 ]] ; then
   echo "Must call with arguments, as follows:"
   echo "  ./run-test.sh fresh"
   echo "  ./run-test.sh fresh domain-name"
@@ -54,7 +54,14 @@ if [[ $ARG_SIZE == 2  && $1 == "run" ]] ; then
   DOMAIN_NAME=$2
 fi
 
-echo "domain name: $DOMAIN_NAME"
+if [[ ! -v APP_SERVICE_DIR ]] ; then
+  pushd $CERTIFIER_ROOT/application_service
+    APP_SERVICE_DIR=$(pwd)
+  popd
+fi
+
+echo "App service directory: $APP_SERVICE_DIR"
+echo "Domain name: $DOMAIN_NAME"
 
 POLICY_KEY_FILE_NAME="policy_key_file.$DOMAIN_NAME"
 POLICY_CERT_FILE_NAME="policy_cert_file.$DOMAIN_NAME"
@@ -64,6 +71,8 @@ echo "Policy cert file name: $POLICY_CERT_FILE_NAME"
 POLICY_STORE_NAME="policy_store.$DOMAIN_NAME"
 echo "Policy store name 1: ./app1_data/$POLICY_STORE_NAME"
 echo "Policy store name 2: ./app2_data/$POLICY_STORE_NAME"
+
+ENCLAVE_TYPE=se
 
 function do-fresh() {
   echo " "
@@ -86,6 +95,33 @@ function do-fresh() {
 
   echo "Done"
   exit
+}
+
+function run-service () {
+  echo "running service"
+
+    pushd $APP_SERVICE_DIR
+      if [[ "$ENCLAVE_TYPE" == "se" ]] ;  then
+        ./app_service.exe \
+          --domain_name=app_service --service_dir="./service/" \
+          --policy_cert_file=policy_key_cert_file.app_service --service_policy_store=policy_store.app_service \
+          --host_enclave_type="simulated-enclave" --platform_file_name="platform_file.bin" \
+          --platform_attest_endorsement="platform_attest_endorsement.bin"  \
+          --attest_key_file="attest_key_file.bin" \
+          --measurement_file="app_service.measurement" --guest_login_name="jlm" &
+      fi
+      if [[ "$ENCLAVE_TYPE" == "sev" ]] ;  then
+        ./app_service.exe \
+          --domain_name=app_service \
+          --service_dir="./service/" \
+          --policy_cert_file=policy_key_cert_file.app_service --service_policy_store=policy_store.app_service \
+          --host_enclave_type="sev-enclave" --platform_file_name="platform_file.bin" \
+          --platform_attest_endorsement="platform_attest_endorsement.bin"   \
+          --attest_key_file="attest_key_file.bin" \
+          --measurement_file="app_service.measurement" --guest_login_name="jlm" &
+      fi
+    popd
+    sleep 3
 }
 
 function cleanup_stale_procs() {
@@ -203,6 +239,7 @@ if [ "$1" == "fresh" ] ; then
 fi
 
 if [ "$1" == "run" ] ; then
+  run-service
   do-run
   exit
 fi

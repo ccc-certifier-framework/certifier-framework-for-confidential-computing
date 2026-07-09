@@ -53,7 +53,7 @@ CFLAGS=$(CFLAGS_NOERROR) -Werror -fPIC
 ifdef CF_NEW_API
 CFLAGS += -DNEW_API
 endif
-CFLAGS += -Wno-error=strict-aliasing
+CFLAGS += -Wno-strict-aliasing
 
 
 CC=g++

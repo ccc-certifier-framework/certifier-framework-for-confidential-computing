@@ -93,6 +93,8 @@ see all the output and preserve the running servers.
 
 The shell scripts assume you have all the right software installed including
 the go programs and libraries mentioned below.
+
+Note that the script assums you've built the sev simulator.
    
 The shell scripts use the new API.
 
