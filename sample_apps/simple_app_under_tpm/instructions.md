@@ -11,7 +11,7 @@ This example embeds the policy key in the application using the
 
 We also support a TPM simulator (swtpm) which can be configured and installed
 on any Linux host.  This is done using the script start-tpm-simulator.sh.
-You should follow the instructions in $CERTIFIER_PROTOTYPE/src/tpm2 to install
+You should follow the instructions in $CERTIFIER_ROOT/src/tpm2 to install
 the simulator and build the pcr utility.  If you use a "real" tpm, you should
 change the device name in the scripts.
 
@@ -60,18 +60,18 @@ Certificate" as is customary.
 Set up environment
 ------------------
 
-$CERTIFIER_PROTOTYPE is the top level directory for the certifier repository.
+$CERTIFIER_ROOT is the top level directory for the certifier repository.
 It is helpful to have a shell variable for it, e.g.,:
 
 ```shell
-export CERTIFIER_PROTOTYPE=~/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing
+export CERTIFIER_ROOT=~/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing
 ```
 
 $EXAMPLE_DIR is this directory containing the example application.  Again, a
 shell variable is useful.
 
 ```shell
-export EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_apps/simple_app_under_tpm
+export EXAMPLE_DIR=$CERTIFIER_ROOT/sample_apps/simple_app_under_tpm
 ```
 
 
@@ -105,8 +105,8 @@ in a new window, "priviledged window 1," type:
    password
    # In the next command, use the full path name of your certifier
    # root directory.
-   export CERTIFIER_PROTOTYPE=/home/jlm/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing
-   export EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_apps/simple_app_under_tpm
+   export CERTIFIER_ROOT=/home/jlm/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing
+   export EXAMPLE_DIR=$CERTIFIER_ROOT/sample_apps/simple_app_under_tpm
 ```
 
 Even if you've already started a tpm simulator, if it is in a bad state,
