@@ -31,6 +31,7 @@ typedef struct optlookup {
   const char *name;
 } optlookup;
 
+// inexplicable formatting error
 #define DCL__OPTLOOKUP(token, descr) {.id = token, .name = descr}
 
 #define DCL_OPTLOOKUP(token, descr) DCL__OPTLOOKUP(token, #token ": " descr)
