@@ -82,8 +82,8 @@ After you run "prepare-test.sh all", you can rerun the tests without
 invoking prepare-test.sh.  After you run "prepare-test.sh all",
 you need only run subcommands that cause a change in the files;
 for example, if you change the policy, you need only run
-"prepare-test.sh make-policy" before running the tests.
-
+"prepare-test.sh make-policy" before running the tests.  You must
+run the tests as root.
 
 To run the tests
   echo "  ./run-test.sh fresh"
@@ -102,6 +102,7 @@ To run the tests
 
 $CERTIFIER_PROTOTYPE is the top level directory for the certifier repository.
 It is helpful to have a shell variable for it, e.g.,:
+ -l
 
 ```shell
 export CERTIFIER_PROTOTYPE=~/Projects/certifier-framework-for-confidential-computing

@@ -31,14 +31,13 @@ typedef struct optlookup {
   const char *name;
 } optlookup;
 
-#define DCL__OPTLOOKUP(token, descr)                                           \
-  { .id = token, .name = descr }
+// inexplicable formatting error
+#define DCL__OPTLOOKUP(token, descr) {.id = token, .name = descr}
 
 #define DCL_OPTLOOKUP(token, descr) DCL__OPTLOOKUP(token, #token ": " descr)
 
 // Declare a terminating entry for optlookup table
-#define DCL_OPTLOOKUP_TERM()                                                   \
-  { .id = -1, .name = NULL }
+#define DCL_OPTLOOKUP_TERM() {.id = -1, .name = NULL}
 
 // Evaluate the size of an array of constants
 #define ARRAY_LEN(a) ((int)(sizeof(a) / sizeof((*a))))

@@ -196,6 +196,9 @@ bool certifier::framework::cc_trust_manager::initialize_enclave(
   } else if (enclave_type_ == "sev-enclave") {
 
     string ark, ask, vcek;
+    if (n == 3) {
+      return initialize_sev_enclave(params[0], params[1], params[2]);
+    }
     if (n == 0) {
       if (sev_get_platform_certs(&vcek, &ask, &ark) != EXIT_SUCCESS) {
         printf("%s() error, line %d, Failed to fetch platform certs\n",
@@ -206,6 +209,12 @@ bool certifier::framework::cc_trust_manager::initialize_enclave(
       printf("%s() error, line %d, Wrong number of sev parameters\n",
              __func__,
              __LINE__);
+      printf("Parameters %d:\n", n);
+      for (int i = 0; i < n; i++) {
+        printf("Parameter %d:\n", i);
+        print_bytes(params[i].size(), (byte *)params[i].data());
+        printf("\n");
+      }
       return false;
     }
     return initialize_sev_enclave(ark, ask, vcek);
@@ -2875,10 +2884,11 @@ bool open_server_socket(const string &host_name, int port, int *soc) {
   // and) try the next address.
   for (rp = result; rp != NULL; rp = rp->ai_next) {
     sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-    if (sfd == -1)
+    if (sfd == -1) {
       continue;
+    }
 
-      // Reuse addresses and ports
+    // Reuse addresses and ports
 #define REUSE_SOCKETS_AND_PORTS
 #ifdef REUSE_SOCKETS_AND_PORTS
 
