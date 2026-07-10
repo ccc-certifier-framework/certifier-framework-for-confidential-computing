@@ -83,8 +83,7 @@ invoking prepare-test.sh.  After you run "prepare-test.sh all",
 you need only run subcommands that cause a change in the files;
 for example, if you change the policy, you need only run
 "prepare-test.sh make-policy" before running the tests.  You must
-run the tests as rootudp
-
+run the tests as root.
 
 To run the tests
   echo "  ./run-test.sh fresh"

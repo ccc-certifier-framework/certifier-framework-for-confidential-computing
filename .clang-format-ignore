@@ -1,0 +1,4 @@
+# This is a comment. Blank lines are skipped.
+
+# Ignore a specific file 
+./include/cc_useful.h
