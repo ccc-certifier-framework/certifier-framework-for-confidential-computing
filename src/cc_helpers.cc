@@ -2884,8 +2884,9 @@ bool open_server_socket(const string &host_name, int port, int *soc) {
   // and) try the next address.
   for (rp = result; rp != NULL; rp = rp->ai_next) {
     sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-    if (sfd == -1)
+    if (sfd == -1) {
       continue;
+    }
 
     // Reuse addresses and ports
 #define REUSE_SOCKETS_AND_PORTS
