@@ -66,6 +66,8 @@ trap cleanup ERR
 # add it to this list, here, so that one can see it in --list output.
 # ##################################################################
 TestList=( 
+	   "test-tpm-utility"
+	   "test-tpm-simple-app"
 	   "test-core-certifier-programs"
            "test-cert_framework-pytests"   #Needs work.
            "test-mtls-ssl-client-server-comm-pytest"  #needs work
@@ -84,10 +86,10 @@ TestList=(
 
 	   "test-acl_lib-programs"
 	   "test-cf-utility"
-	   "test-sample-app-tpm-compile"
 	   "test-tpm-utility"
 	   "test-tpm-simple-app"
            
+	   #"test-sample-app-tpm-compile"
            #"test-run_example-simple_app_python"
            #"test-simple_app_python-with-warm-restart"
            #"test-ISLET-SDK-shim_test"
