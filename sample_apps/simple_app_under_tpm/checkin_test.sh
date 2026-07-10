@@ -73,8 +73,8 @@ if [[ ! -d "$XDG_CONFIG_HOME" ]] ; then
 fi
 
 # These tests run on my machine but ...
-echo "Exiting until we get a tpm fix"
-exit 0
+# echo "Exiting until we get a tpm fix"
+# exit 0
 
 function cleanup-stale-procs() {
   echo " "

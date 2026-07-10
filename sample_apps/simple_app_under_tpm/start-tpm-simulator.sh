@@ -49,9 +49,10 @@ pushd $TPM_SUPPORT_DIR
     set -e
     echo "chardev unavailable, using socket"
 
-    swtpm socket --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --server type=unixio,path=$XDG_CONFIG_HOME/tpmDevice --flags not-need-init,startup-clear --log level=2 &
+    SHORT_CONFIG_HOME=../../swtpm_state
+    swtpm socket --tpmstate dir=${SHORT_CONFIG_HOME}/mytpm1 --tpm2 --server type=unixio,path=$SHORT_CONFIG_HOME/tpmDevice --flags not-need-init,startup-clear --log level=2 &
     sleep 3
-    socat PTY,link=/dev/tpmrm1,raw,echo=0 UNIX-CONNECT:$XDG_CONFIG_HOME/tpmDevice &
+    socat PTY,link=/dev/tpmrm1,raw,echo=0 UNIX-CONNECT:$SHORT_CONFIG_HOME/tpmDevice &
   fi
 
   chmod 0777 *.crt

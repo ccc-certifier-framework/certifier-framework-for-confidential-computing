@@ -66,6 +66,7 @@ popd >> /dev/null
   fi
 
   pushd $TPM_SUPPORT_DIR
+    echo "TPM tests"
     ./clean-tpm-simulator.sh || true
     ./start-tpm-simulator.sh || true
     sleep 2
