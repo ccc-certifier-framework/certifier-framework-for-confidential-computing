@@ -33,7 +33,10 @@ typedef struct optlookup {
 
 #define DCL__OPTLOOKUP(token, descr) {.id = token, .name = descr}
 
-#define DCL_OPTLOOKUP(token, descr) DCL__OPTLOOKUP(token, #token ": " descr)
+#define DCL_OPTLOOKUP(token, descr)                                            \
+  DCL__OPTLOOKUP(token, #token ": " descr) {                                   \
+    .id = token, .name = descr                                                 \
+  }
 
 // Declare a terminating entry for optlookup table
 #define DCL_OPTLOOKUP_TERM() {.id = -1, .name = NULL}
