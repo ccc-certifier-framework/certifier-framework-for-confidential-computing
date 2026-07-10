@@ -42,9 +42,9 @@ pushd $TPM_SUPPORT_DIR
 
   swtpm_setup --tpmstate ${XDG_CONFIG_HOME}/mytpm1 --create-ek-cert \
     --create-platform-cert --tpm2 --write-ek-cert-files .
+  sleep 3
 
   set +e
-  # /usr/bin/echo "capability sys_admin," > /etc/apparmor.d/local/usr.bin.swtpm aa-enforce /usr/bin/swtpm
   modprobe tpm_vtpm_proxy
   if [[ $? -eq 0 ]] ; then
     set -e
@@ -54,10 +54,12 @@ pushd $TPM_SUPPORT_DIR
   else
     set -e
     echo "chardev unavailable, using socket"
-    swtpm socket --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --ctrl type=tcp,port=2322 --server type=tcp,port=2321 --flags not-need-init,startup-clear --log level=20 &
-    sleep 5
-    socat PTY,link=/dev/tpmrm1,raw,echo=0 TCP4:127.0.0.1:2321 &
-fi
+
+    swtpm socket --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --server type=unixio,path=$XDG_CONFIG_HOME/tpmDevice --flags not-need-init,startup-clear --log level=2 &
+    sleep 3
+    socat PTY,link=/dev/tpmrm1,raw,echo=0 UNIX-CONNECT:$XDG_CONFIG_HOME/tpmDevice &
+  fi
+
 
   echo "tpm simulator started"
   chmod 0777 *.crt || true
