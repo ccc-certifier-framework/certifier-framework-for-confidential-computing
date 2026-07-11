@@ -66,6 +66,7 @@ popd >> /dev/null
   fi
 
   pushd $TPM_SUPPORT_DIR
+    echo "TPM tests"
     ./clean-tpm-simulator.sh || true
     ./start-tpm-simulator.sh || true
     sleep 2
@@ -73,8 +74,12 @@ popd >> /dev/null
     ./tpm2_test.exe --operation=EndorsementTest --tpm_device=/dev/tpmrm1
 
     # These work on my machine
-    # ./tpm2_test.exe --operation=SealTest --tpm_device=/dev/tpmrm1
-    # ./tpm2_test.exe --operation=QuoteTest --tpm_device=/dev/tpmrm1
+    #sleep 2
+    #echo "seal test"
+    #./tpm2_test.exe --operation=SealTest --tpm_device=/dev/tpmrm1
+    #sleep 2
+    #echo "quote test"
+    #./tpm2_test.exe --operation=QuoteTest --tpm_device=/dev/tpmrm1
 
     ./clean-tpm-simulator.sh || true
   popd
