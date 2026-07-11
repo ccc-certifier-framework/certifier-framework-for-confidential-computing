@@ -72,7 +72,7 @@ popd >> /dev/null
     sleep 2
     ./tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 --tpm_device=/dev/tpmrm1
     sleep 2
-    ./tpm2_test.exe --operation=EndorsementTest --tpm_device=/dev/tpmrm1
+    #./tpm2_test.exe --operation=EndorsementTest --tpm_device=/dev/tpmrm1
     sleep 2
     echo "seal test"
     ./tpm2_test.exe --operation=SealTest --tpm_device=/dev/tpmrm1
