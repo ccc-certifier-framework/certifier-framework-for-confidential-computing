@@ -211,7 +211,6 @@ Parameters:
 Header:
 ```cpp
 certifiers *find_certifier_by_domain_name(const string &domain_name);
-```
 
 What it does:
 - 
@@ -220,14 +219,11 @@ Parameters:
 - ``: 
 ```
 
-
 ### save_store`
 
 Headers:
 ```cpp
 certifiers* find_certifier_by_domain_name(const string& domain_name);
-bool save_store();
-```
 
 What they do:
 - Finds a domain record (`certifiers`) for in the policy-store and performs status checks or updates.
@@ -277,7 +273,6 @@ These APIs are used for app-to-app secure communication after certification.
 Header:
 ```cpp
 secure_authenticated_channel(string& role);
-```
 
 What it does:
 - Creates channel wrapper in `client` or `server` role using the application authentication keys and admissions
@@ -286,11 +281,6 @@ a channel has a server side and client side just like TLS.
 
 Parameter:
 - `role`: usually `"client"` or `"server"`.
-
-Snippet:
-```cpp
-string my_role("client");
-secure_authenticated_channel channel(my_role);
 ```
 
 ### `init_client_ssl` (domain + trust manager overload)
@@ -301,7 +291,6 @@ bool init_client_ssl(const string& domain_name,
                      const string& host_name,
                      int port,
                      cc_trust_manager& mgr);
-```
 
 What it does:
 - Builds TLS context and client socket using the relevant authentication keys and admissions certificates in the policy store.
@@ -314,15 +303,6 @@ Parameters:
 - `host_name`: server hostname/IP.
 - `port`: server TCP port.
 - `mgr`: initialized and certified trust manager.
-
-Snippet:
-```cpp
-if (!channel.init_client_ssl(FLAGS_domain_name,
-                             FLAGS_server_app_host,
-                             FLAGS_server_app_port,
-                             *trust_mgr)) {
-  return 1;
-}
 ```
 
 ### Using the secure channel: `read`, `write`, `close`
@@ -332,7 +312,6 @@ Headers:
 int read(string* out);
 int write(int size, byte* b);
 void close();
-```
 
 What they do:
 - `write`: sends encrypted/authenticated application bytes.
@@ -358,7 +337,7 @@ channel.close();
 
 ### `server_dispatch`
 
-Header (NEW_API overload):
+Header:
 ```cpp
 bool server_dispatch(const string& domain_name,
                      const string& host_name,
@@ -393,12 +372,11 @@ if (!server_dispatch(FLAGS_domain_name,
 
 These are optional (but useful) utility API's.
 
-### `read_file_into_string`
+### read_file_into_string
 
 Header:
 ```cpp
 bool read_file_into_string(const string& file_name, string* out);
-```
 
 What it does:
 - Reads entire file contents into a C++ string.
@@ -409,7 +387,6 @@ Parameters:
 - `out`: destination buffer.
 
 Snippet:
-```cpp
 if (!read_file_into_string(FLAGS_data_dir + FLAGS_attest_key_file, &args[0])) {
   return false;
 }
@@ -427,7 +404,6 @@ if (!read_file_into_string(FLAGS_data_dir + FLAGS_platform_attest_endorsement,
 Header:
 ```cpp
 bool write_file_from_string(const string& file_name, const string& in);
-```
 
 What it does:
 - Writes a string payload to disk.
@@ -438,7 +414,6 @@ Parameters:
 - `in`: bytes/string to write.
 
 Snippet:
-```cpp
 if (!write_file_from_string(FLAGS_output_file, serialized_cryptstore_entry)) {
   return false;
 }
