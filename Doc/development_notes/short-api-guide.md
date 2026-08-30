@@ -422,71 +422,200 @@ you can use in special circumstances.
 
 ##  Policy Store
 
-class policy_store {
- public:
-  enum { MAX_NUM_ENTRIES = 500 };
-
-  unsigned      max_num_ents_;
-  unsigned      num_ents_;
-  store_entry **entry_;
-
- public:
-  policy_store(unsigned max_ents);
-  policy_store();
-  ~policy_store();
-
- private:
-  bool add_entry(const string &tag, const string &type, const string &value);
-
- public:
-  unsigned      get_num_entries();
-  int           find_entry(const string &tag, const string &type);
-  const string *tag(unsigned ent);
-  const string *type(unsigned ent);
-  store_entry  *get_entry(unsigned ent);
-  bool          delete_entry(unsigned ent);
-  bool          get(unsigned ent, string *v);
-  bool          put(unsigned ent, const string v);
-  bool          update_or_insert(const string &tag,
-                                 const string &type,
-                                 const string &value);
-  void          print();
-  bool          Serialize(string *psout);
-  bool          Deserialize(string &in);
-};
-
-### `cc_trust_manager` constructor
+### `policy_store` constructor
 
 Header:
 ```cpp
-cc_trust_manager(const string& enclave_type,
-                 const string& purpose,
-                 const string& policy_store_name);
+policy_store((unsigned max_ents);
 ```
 
 What it does:
-- Creates the main trust-state object for one process.
-- Binds it to an enclave type, intended purpose, and local store file.
+- 
 
 Parameters:
-- `enclave_type`: platform adapter selector, typically `simulated-enclave`, `sev-enclave`, `tpm-enclave`, `gramine-enclave`, `oe-enclave`.
-- `purpose`: commonly `authentication` in sample apps.
-- `policy_store_name`: path to the persisted policy store.
+- ``: 
 
-Snippet (used in both sample apps and vm tools):
-```cpp
-string purpose("authentication");
-string store_file(FLAGS_data_dir);
-store_file.append(FLAGS_policy_store_file);
-
-cc_trust_manager* trust_mgr =
-    new cc_trust_manager(enclave_type, purpose, store_file);
+policy_store* ps =
+    new policy_store(500);
 ```
+
+  unsigned      get_num_entries();
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
+  int           find_entry(const string &tag, const string &type);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
+  const string *tag(unsigned ent);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
+  const string *type(unsigned ent);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
+  store_entry  *get_entry(unsigned ent);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
+  bool          delete_entry(unsigned ent);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
+  bool          get(unsigned ent, string *v);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
+  bool          put(unsigned ent, const string v);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
+  bool          update_or_insert(const string &tag,
+                                 const string &type,
+                                 const string &value);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
+  void          print();
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
+  bool          Serialize(string *psout);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
+  bool          Deserialize(string &in);
+};
+
 
 ## Low level trust support functions
 
 
 ### Seal
+
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
 
 bool Seal(const string &enclave_type,
           const string &enclave_id,
@@ -498,6 +627,19 @@ bool Seal(const string &enclave_type,
 
 ### Unseal
 
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 bool Unseal(const string &enclave_type,
             const string &enclave_id,
             int           in_size,
@@ -507,6 +649,17 @@ bool Unseal(const string &enclave_type,
 
 
 ### Attest
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
 
 bool Attest(const string &enclave_type,
             int           what_to_say_size,
@@ -519,6 +672,19 @@ bool Attest(const string &enclave_type,
 
 
 ### protect_blob
+### `
+
+Header:
+```cpp
+
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
 
 bool protect_blob(const string &enclave_type,
                   key_message  &key,
@@ -529,6 +695,20 @@ bool protect_blob(const string &enclave_type,
 
 
 ### unprotect_blob
+
+
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
 
 bool unprotect_blob(const string &enclave_type,
                     int           size_protected_blob,
@@ -549,80 +729,295 @@ bool reprotect_blob(const string &enclave_type,
 
 ## More on trust manager object
 
-class cc_trust_manager {
+### `
 
- private:
-  void cc_trust_manager_default_init();
+Header:
+```cpp
+```
 
- public:
-  static const int max_symmetric_key_size_ = 128;
+What it does:
+- 
 
-  string purpose_;
-  string enclave_type_;
-  string store_file_name_;
-  string public_key_algorithm_;
-  string symmetric_key_algorithm_;
+Parameters:
+- ``: 
+```
 
-  int         num_accelerators_;
   accelerator accelerators_[max_accerlerators];
+
   bool add_accelerator(const string &acc_type, int num_certs, string *certs);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   bool accelerator_verified(const string &acc_type);
 
-  bool         cc_policy_store_initialized_;
-  policy_store store_;
-
-  // platform initialized?
-  bool cc_provider_provisioned_;
-
-  // auth key is the same in all domains
   bool        cc_auth_key_initialized_;
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   key_message private_auth_key_;
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   key_message public_auth_key_;
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
   // For attest
   bool        cc_service_key_initialized_;
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   key_message private_service_key_;
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   key_message public_service_key_;
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
   bool   cc_service_cert_initialized_;
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   string serialized_service_cert_;
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
   bool                 cc_service_platform_rule_initialized_;
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   signed_claim_message platform_rule_;
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
   //  symmetric key is the same in any domain
   bool        cc_symmetric_key_initialized_;
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   byte        symmetric_key_bytes_[max_symmetric_key_size_];
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   key_message symmetric_key_;
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
   // This is the sealing key
   bool        cc_sealing_key_initialized_;
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   byte        sealing_key_bytes_[max_symmetric_key_size_];
-  key_message service_sealing_key_;
+### `
 
-  // The domains I get certified in.
-  // If purpose is attestation, there can only be one.
-  int          max_num_certified_domains_;
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   int          num_certified_domains_;
-  certifiers **certified_domains_;
+### `
 
-  // For peer-to-peer certification (not used now)
-  bool        peer_data_initialized_;
-  key_message local_policy_key_;
-  string      local_policy_cert_;
+Header:
+```cpp
+```
 
-  enum { MAX_NUM_CERTIFIERS = 32 };
-  cc_trust_manager();
-  cc_trust_manager(const string &enclave_type,
-                   const string &purpose,
-                   const string &policy_store_name);
-  ~cc_trust_manager();
+What it does:
+- 
 
-  // Each of the enclave types have bespoke initialization
-  bool initialize_simulated_enclave(
-      const string &serialized_attest_key,
-      const string &measurement,
-      const string &serialized_attest_endorsement);
+Parameters:
+- ``: 
+```
+
+
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
 
   // Interface invoked through Python apps
   bool python_initialize_simulated_enclave(
@@ -632,9 +1027,36 @@ class cc_trust_manager {
       int         measurement_size,
       const byte *serialized_attest_endorsement,
       int         attest_key_signed_claim_size);
+
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   bool initialize_sev_enclave(const string &ark_der_cert,
                               const string &ask_der_cert,
                               const string &vcek_der_cert);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   bool initialize_tpm_enclave(const string &device_name,
                               const string &endorsement_cert_file_name,
                               const string &endorsement_cert_chain_file_name,
@@ -642,57 +1064,368 @@ class cc_trust_manager {
                               const string &quote_hierarchy_file_name,
                               const string &tpm_pcr_list,
                               const string &quote_cert_file_name);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   bool initialize_gramine_enclave(const int size, byte *cert);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   bool initialize_oe_enclave(const string &cert);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   bool initialize_application_enclave(const string &parent_enclave_type,
                                       int           in_fd,
                                       int           out_fd);
-  bool initialize_keystone_enclave();
-  bool initialize_islet_enclave();
-  bool close_enclave();
+### `
 
-// If n == 0, systems should be able to find parameters
-  // by default, for example, sev and sgx.
-  bool initialize_enclave(int n, string *params);
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
 
   bool put_trust_data_in_store();
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   bool get_trust_data_from_store();
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 #ifdef NEW_API
   bool initialize_store();
 #endif
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   bool fetch_store();
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   bool save_store();
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   void clear_sensitive_data();
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
   bool generate_symmetric_key(bool regen);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   bool generate_sealing_key(bool regen);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   bool generate_auth_key(bool regen);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   bool generate_service_key(bool regen);
 
 #ifdef NEW_API
   certifiers *find_certifier_by_domain_name(const string &domain_name);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   bool        initialize_keys(const string &public_key_alg,
                               const string &symmetric_key_alg,
                               bool          force = false);
-  bool        initialize_new_domain(const string &domain_name,
-                                    const string &purpose,
-                                    const string &symmetric_key_alg,
-                                    const string &host_url,
-                                    int           port);
-  bool        initialize_existing_domain(const string &domain_name);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   bool        certify(const string &domain_name);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   bool get_admissions_cert(const string &domain_name, string *admin_cert);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   bool admissions_cert_valid_status(const string &domain_name);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 #endif
 
   bool GetPlatformSaysAttestClaim(signed_claim_message *scm);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   void print_trust_data();
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
   // For peer-to-peer certification (not used yet)
   bool init_peer_certification_data(const string &public_key_alg);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   bool recover_peer_certification_data();
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   bool get_peer_certification(const string &host_name, int port);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   bool run_peer_certification_service(const string &host_name, int port);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
 
   // multi-domain support
@@ -703,9 +1436,61 @@ class cc_trust_manager {
                                 const string &host,
                                 int           port);
 #endif
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   bool get_certifiers_from_store();
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   bool put_certifiers_in_store();
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   bool write_private_key_to_file(const string &filename);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 };
 
 
@@ -714,24 +1499,167 @@ class cc_trust_manager {
 class certifiers {
  private:
   // should be const, don't delete it
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   cc_trust_manager *owner_;
 
  public:
   string signed_rule_;
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   string purpose_;
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   string domain_name_;
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   string domain_policy_cert_;
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 #ifdef NEW_API
   bool        is_initialized_;
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   X509       *x509_policy_cert_;
   key_message public_policy_key_;
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 #endif  // NEW_API
   string host_;
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   int    port_;
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   string admissions_cert_;
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   bool   is_certified_;
 
   certifiers(cc_trust_manager *owner);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
   ~certifiers();
 
 #ifdef NEW_API
@@ -740,6 +1668,19 @@ class certifiers {
                                 const string &cert,
                                 const string &host,
                                 int           port);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 #endif  // NEW_API
 
 
@@ -749,12 +1690,35 @@ class certifiers {
 ### make_certifier_rsa_key
 
 bool make_certifier_rsa_key(int n, key_message *k);
+### `
 
+Header:
+```cpp
+```
 
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
 
 ### make_certifier_ecc_key
 
 bool make_certifier_ecc_key(int n, key_message *k);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
 
 ### key_to_RSA
@@ -765,19 +1729,71 @@ bool key_to_RSA(const key_message &k, RSA *r);
 ### RSA_to_key
 
 bool RSA_to_key(const RSA *r, key_message *k);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
 
 ### generate_new_ecc_key
 
 EC_KEY *generate_new_ecc_key(int num_bits);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
 ### key_to_ECC
 
 EC_KEY *key_to_ECC(const key_message &kr);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
 ###  ECC_to_key
 
 bool    ECC_to_key(const EC_KEY *e, key_message *k);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
 
 
@@ -788,6 +1804,19 @@ bool digest_message(const char  *alg,
                     int          message_len,
                     byte        *digest,
                     unsigned int digest_len);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
 
 
@@ -802,6 +1831,19 @@ bool authenticated_encrypt(const char *alg,
                            int         iv_len,
                            byte       *out,
                            int        *out_size);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
 ###  authenticated_decrypt
 
@@ -812,27 +1854,105 @@ bool authenticated_decrypt(const char *alg,
                            int         key_len,
                            byte       *out,
                            int        *out_size);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
 ### get_random
 
 bool get_random(int num_bits, byte *out);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
 
 ### cipher_block_byte_size
 
 int cipher_block_byte_size(const char *alg_name);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
 ### cipher_key_byte_size
 
 int cipher_key_byte_size(const char *alg_name);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
 ### digest_output_byte_size
 
 int digest_output_byte_size(const char *alg_name);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
 ### mac_output_byte_size
 
 int mac_output_byte_size(const char *alg_name);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
 ## Specialized time structures
 
@@ -840,56 +1960,238 @@ int mac_output_byte_size(const char *alg_name);
 ### time_t_to_tm_time
 
 bool time_t_to_tm_time(time_t *t, struct tm *tm_time);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
 ### tm_time_to_time_point
 
 bool tm_time_to_time_point(struct tm *tm_time, time_point *tp);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
 ### asn1_time_to_tm_time
 
 bool asn1_time_to_tm_time(const ASN1_TIME *s, struct tm *tm_time);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
 ### get_not_before_from_cert
 
 bool get_not_before_from_cert(X509 *c, time_point *tp);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
 ### get_not_after_from_cert
 
 bool get_not_after_from_cert(X509 *c, time_point *tp);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
 ### time_now
 
 bool time_now(time_point *t);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
 ### time_to_string
 
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 bool time_to_string(time_point &t, string *s);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
 ### string_to_time
 
 bool string_to_time(const string &s, time_point *t);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
 ### add_interval_to_time_point
 
 bool add_interval_to_time_point(time_point &t_in,
                                 double      hours,
                                 time_point *out);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
 ### Compare_time
 
 int  compare_time(time_point &t1, time_point &t2);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
 ### print_time_point
 
 void print_time_point(time_point &t);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
 ### print_entity
 
 void print_entity(const entity_message &em);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
 ### print_key
 
 void print_key(const key_message &k);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
 
 ## Certificates
@@ -908,6 +2210,19 @@ bool produce_artifact(key_message &signing_key,
                       X509        *x509,
                       bool         is_root,
                       bool         vcek = false);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
 ### verify_artifact
 
@@ -919,19 +2234,70 @@ bool verify_artifact(X509        &cert,
                      string      *subject_name_str,
                      string      *subject_description_str,
                      uint64_t    *sn);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
 
 ### asn1_to_x509
 
 bool asn1_to_x509(const string &in, X509 *x);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
 ### x509_to_asn1
 
 bool x509_to_asn1(X509 *x, string *out);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+```
+
 
 ### check_date_range
 
 bool check_date_range(const string &nb, const string &na);
+### `
+
+Header:
+```cpp
+```
+
+What it does:
+- 
+
+Parameters:
+- ``: 
+
 
 
 ### `file_size`
