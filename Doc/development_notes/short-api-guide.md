@@ -2,33 +2,66 @@
 
 This guide documents library functions that are actively used by application code under `sample_apps/` and `vm_model_tools/`.
 
-Scope:
-- Runtime trust setup and certification
-- Authenticated channel setup and I/O
-- File and sized-socket helpers
+The Cerrtifier API has changed slightly over time to support multiple security domains and new enclaves.  I'll try
+to keep this description "up-to-date."  As always, the actual sample and tests (like those in "certifier_tests.cc"
+built by "certifier_tests.mak" provide the most detailed guide on employing the certifier library.
 
-Primary headers for these APIs:
+This document does not include a descrtiption of the structure or libraries for the Certification Server.
+Developers are generally not expected to modify or add to this code but the instructions and files in "certifier_service"
+and the tests in "certlib" have some information.  The Certifier uses protobufs for serializing wire formats and files.
+The directory "certifier_service/certoprotos" has these definitions.
+
+The Certifier is organized around two core concepts:
+- Runtime trust setup and certification 
+- Authenticated channel setup and I/O
+
+There are a bunch of supporting functions (like secure storage) that a developer may find generally useful.
+All developer accessible functions are contained in the header files:
 - `include/certifier_framework.h`
 - `include/certifier_utilities.h`
+These, in turn, rely on implementing function in, for example,
 - `include/support.h`
 - `include/cc_helpers.h`
 
-Representative call sites:
+Almost all important call can be seen in action in the consolidated app:
 - `sample_apps/common/example_app.cc`
-- `sample_apps/simple_app_under_app_service/start_program.cc`
-- `sample_apps/simple_app_under_tpm/first_pass.cc`
+Almost all the sample apps use this common code as the basis for the applications.
+"vm_model_tool" utilities" are also instructive, they are in:
 - `vm_model_tools/src/cf_utility.cc`
 - `vm_model_tools/src/cf_key_client.cc`
+- `vm_model_tools/src/cf_key_server.cc`
+The utilites to generate keys and build policy are in the "utilities" directory.
+Hopefully, developers won't need to understand the details of these but they may
+be generally worth a glance.
 
-## 1) Trust manager lifecycle APIs
+Finally, there are support programs like:
+- `sample_apps/simple_app_under_app_service/start_program.cc` which implements the application service application initialization
+for testing.
+TPM based applications, employ a two-pass certification process (unlike any other enclaves), the file
+- `sample_apps/simple_app_under_tpm/first_pass.cc` implements this protocol.
 
-The dominant pattern in both application trees is:
-1. Build enclave parameter list from files.
-2. Create a `cc_trust_manager`.
-3. Initialize enclave, store, and keys.
-4. Initialize or load domain.
-5. Certify domain when needed.
-6. Use admissions material to open secure channels.
+
+## Trust manager lifecycle APIs
+
+The dominant application pattern is:
+1. Build enclave parameter list from files.  This includes locating and copying existing files (like the ARK, ASK and VCEK certs, in
+the case of SEV)
+2. Create a `cc_trust_manager` object which serves as a "full service" interface to certification.  The declaration of this
+object names the enclave type (e.g., sev-enclave, tpm-enclave), cipher suite used for authentication, confidentiality and integrity, and
+the enclave purpose.  There are two purposes: authentication and attestation.  Authentication is the most common purpose it refers to
+the process of provisioning and certifying a public key for authenticating the enclave to other enclaves in the Security Domain.
+The other purpose, "attestation", refers to the certifying an attestation key for a subordinate enclave (like the application-enclave)
+within another enclave liek SEV.
+3. The calls to the cc_trust manager interacts with the enclave, providing uniform access to "attest." "seal," and "unseal."  It
+generates keys used in common Confidential Computing workflows and cans store the keys safely in a "secure store" between enclave
+acctivations.
+5. The most important functionality provided by this object is "certification".  Certification consiste of generating an authentication key,
+assembling security domain evidence (including an attestation" that allows it to "prove" to a "certification service" that it conforms to
+all "security domain" rules.  Certification results in an "admissions certificate," signed by the "policy key" for a security domain that
+can be used in interattions with other enclave in the domain to establish trust using the public key named in the "admissions certificate."
+Typically, this certificate as well as the cprresponding public and private keys maintained by the cc_trust_manager to
+open secure channels.  Opening and using these secure channels between enclaves in a security domain is handled by another important object
+in the Certifier API, the "secure_authenticated_channel" described below.
 
 ### 1.1 `cc_trust_manager` constructor
 
@@ -69,11 +102,13 @@ What it does:
 - Platform-neutral enclave/provider initialization entrypoint.
 - Dispatches to platform-specific initialization based on `enclave_type` and `params`.
 
-Parameters:
+Parameters are enclave specific and are generally strings (for example, the files containing the ARK,
+ASK and VCEK certs in the case of SAV):
 - `n`: number of parameter strings in `params`.
 - `params`: ordered platform-specific arguments.
   - Simulated enclave examples: attestation key, measurement, endorsement.
   - SEV examples: ARK cert, ASK cert, VCEK cert.
+Since the arguments are enclave specific, the API arguments can not be described in a general way.
 
 Snippet:
 ```cpp
@@ -99,13 +134,15 @@ bool initialize_keys(const string& public_key_alg,
 ```
 
 What they do:
-- `initialize_store`: loads/creates and wires the policy store state.
-- `initialize_keys`: generates or loads auth/service/symmetric key material.
+- `initialize_store`: loads/creates the policy store state.
+- `initialize_keys`: generates or loads auth/service/symmetric key material.  This includes the
+keys to encrypt the policy-store and app-specific information as well as the "authentication" key
+for the enclave.
 
 Parameters (`initialize_keys`):
 - `public_key_alg`: public/signing algorithm name string (for example RSA-2048 family constants).
 - `symmetric_key_alg`: authenticated symmetric algorithm string.
-- `force`: when true, forces key regeneration/reinitialization.
+- `force`: when true, forces key regeneration/reinitialization, even if there are existing keys.
 
 Snippet:
 ```cpp
@@ -130,14 +167,12 @@ bool initialize_new_domain(const string& domain_name,
                            int port);
 
 bool initialize_existing_domain(const string& domain_name);
-
-bool certify(const string& domain_name);
 ```
 
 What they do:
-- `initialize_new_domain`: creates domain metadata and policy anchor data for a new domain.
-- `initialize_existing_domain`: loads an existing domain entry from store.
-- `certify`: performs admission certification with certifier service for that domain.
+- `initialize_new_domain`: creates domain metadata and policy anchor data for a new domain.  This includes generating keys, interacting with
+the certification service, obtaining an admissions certificate and storing all this material afely in the "policy-store."
+- `initialize_existing_domain`: loads an existing domain entry from material in the policy store.  This includes authentication keys and related
 
 Parameters:
 - `domain_name`: policy domain label (for example `dom0`).
@@ -164,6 +199,9 @@ if (!trust_mgr->certify(FLAGS_policy_domain_name)) {
 }
 ```
 
+
+bool certify(const string& domain_name) performs certification.  It is called, for example, from initialize_new_domain.
+
 ### 1.5 Domain lookup and persistence: `find_certifier_by_domain_name`, `save_store`
 
 Headers:
@@ -173,7 +211,7 @@ bool save_store();
 ```
 
 What they do:
-- Finds a domain record (`certifiers`) for status checks or updates.
+- Finds a domain record (`certifiers`) for in the policy-store and performs status checks or updates.
 - Persists updated trust data to the policy store file.
 
 Snippet:
@@ -209,6 +247,8 @@ trust_mgr->clear_sensitive_data();
 delete trust_mgr;
 ```
 
+Most enclaves handle teardown without calling "close-enclave" gracefully but some (like the tpm-enclave) do not.
+
 ## 2) Authenticated channel APIs
 
 These APIs are used for app-to-app secure communication after certification.
@@ -221,7 +261,8 @@ secure_authenticated_channel(string& role);
 ```
 
 What it does:
-- Creates channel wrapper in `client` or `server` role.
+- Creates channel wrapper in `client` or `server` role using the application authentication keys and admissions
+certificates in the policy store.  The secure channels are established using TLS with mutual auth.
 
 Parameter:
 - `role`: usually `"client"` or `"server"`.
