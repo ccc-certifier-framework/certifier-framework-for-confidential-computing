@@ -63,7 +63,7 @@ Typically, this certificate as well as the cprresponding public and private keys
 open secure channels.  Opening and using these secure channels between enclaves in a security domain is handled by another important object
 in the Certifier API, the "secure_authenticated_channel" described below.
 
-### 1.1 `cc_trust_manager` constructor
+### `cc_trust_manager` constructor
 
 Header:
 ```cpp
@@ -91,19 +91,8 @@ cc_trust_manager* trust_mgr =
     new cc_trust_manager(enclave_type, purpose, store_file);
 ```
 
-### 1.2 `initialize_enclave`
-
-Header:
-```cpp
-bool initialize_enclave(int n, string* params);
-```
-
-What it does:
-- Platform-neutral enclave/provider initialization entrypoint.
-- Dispatches to platform-specific initialization based on `enclave_type` and `params`.
-
-Parameters are enclave specific and are generally strings (for example, the files containing the ARK,
-ASK and VCEK certs in the case of SAV):
+### `initialize_enclave`
+Header: ```cpp bool initialize_enclave(int n, string* params); ``` What it does: - Platform-neutral enclave/provider initialization entrypoint.  - Dispatches to platform-specific initialization based on `enclave_type` and `params`.  Parameters are enclave specific and are generally strings (for example, the files containing the ARK, ASK and VCEK certs in the case of SAV):
 - `n`: number of parameter strings in `params`.
 - `params`: ordered platform-specific arguments.
   - Simulated enclave examples: attestation key, measurement, endorsement.
@@ -123,7 +112,7 @@ if (!trust_mgr->initialize_enclave(n, params)) {
 delete[] params;
 ```
 
-### 1.3 `initialize_store` and `initialize_keys`
+### `initialize_store` and `initialize_keys`
 
 Headers:
 ```cpp
@@ -156,7 +145,7 @@ if (!trust_mgr->initialize_keys(FLAGS_public_key_algorithm,
 }
 ```
 
-### 1.4 Domain setup: `initialize_new_domain`, `initialize_existing_domain`, `certify`
+### Domain setup: `initialize_new_domain`, `initialize_existing_domain`, `certify`
 
 Headers:
 ```cpp
@@ -202,7 +191,7 @@ if (!trust_mgr->certify(FLAGS_policy_domain_name)) {
 
 bool certify(const string& domain_name) performs certification.  It is called, for example, from initialize_new_domain.
 
-### 1.5 Domain lookup and persistence: `find_certifier_by_domain_name`, `save_store`
+### Domain lookup and persistence: `find_certifier_by_domain_name`, `save_store`
 
 Headers:
 ```cpp
@@ -228,7 +217,7 @@ if (!trust_mgr->save_store()) {
 }
 ```
 
-### 1.6 Teardown: `close_enclave`, `clear_sensitive_data`
+### Teardown: `close_enclave`, `clear_sensitive_data`
 
 Headers:
 ```cpp
@@ -253,7 +242,7 @@ Most enclaves handle teardown without calling "close-enclave" gracefully but som
 
 These APIs are used for app-to-app secure communication after certification.
 
-### 2.1 `secure_authenticated_channel` constructor
+### `secure_authenticated_channel` constructor
 
 Header:
 ```cpp
@@ -262,7 +251,8 @@ secure_authenticated_channel(string& role);
 
 What it does:
 - Creates channel wrapper in `client` or `server` role using the application authentication keys and admissions
-certificates in the policy store.  The secure channels are established using TLS with mutual auth.
+certificates in the policy store.  The secure channels are established using TLS with mutual auth.  As a result,
+a channel has a server side and client side just like TLS.
 
 Parameter:
 - `role`: usually `"client"` or `"server"`.
@@ -273,7 +263,7 @@ string my_role("client");
 secure_authenticated_channel channel(my_role);
 ```
 
-### 2.2 `init_client_ssl` (domain + trust manager overload)
+### `init_client_ssl` (domain + trust manager overload)
 
 Header:
 ```cpp
@@ -284,7 +274,8 @@ bool init_client_ssl(const string& domain_name,
 ```
 
 What it does:
-- Builds TLS context and client socket.
+- Builds TLS context and client socket using the relevant authentication keys and admissions certificates in the policy store.
+It used the cc_trust_manager to interact with the policy store.
 - Uses domain cert chain and key material tracked in `mgr`.
 - Authenticates peer according to certifier trust anchors.
 
@@ -304,7 +295,7 @@ if (!channel.init_client_ssl(FLAGS_domain_name,
 }
 ```
 
-### 2.3 `read`, `write`, `close`
+### Using the secure channel: `read`, `write`, `close`
 
 Headers:
 ```cpp
@@ -335,7 +326,7 @@ int n = channel.read(&out);
 channel.close();
 ```
 
-### 2.4 `server_dispatch`
+### `server_dispatch`
 
 Header (NEW_API overload):
 ```cpp
@@ -347,7 +338,8 @@ bool server_dispatch(const string& domain_name,
 ```
 
 What it does:
-- Creates authenticated server endpoint and dispatches accepted channels to callback.
+- Creates authenticated server endpoint and dispatches accepted channels to callback.  This allows developers
+to avoid creating a "server endpoint" on their own.
 
 Parameters:
 - `domain_name`: domain identity to present for server side.
@@ -367,9 +359,11 @@ if (!server_dispatch(FLAGS_domain_name,
 }
 ```
 
-## 3) File and data helper APIs used by apps/tools
+## File and data helper APIs used by apps/tools
 
-### 3.1 `read_file_into_string`
+These are optional (but useful) utility API's.
+
+### `read_file_into_string`
 
 Header:
 ```cpp
@@ -398,7 +392,7 @@ if (!read_file_into_string(FLAGS_data_dir + FLAGS_platform_attest_endorsement,
 }
 ```
 
-### 3.2 `write_file_from_string`
+### `write_file_from_string`
 
 Header:
 ```cpp
@@ -420,7 +414,7 @@ if (!write_file_from_string(FLAGS_output_file, serialized_cryptstore_entry)) {
 }
 ```
 
-### 3.3 `file_size`
+### `file_size`
 
 Header:
 ```cpp
@@ -443,9 +437,9 @@ if (file_size(cryptstore_file_name) < 0) {
 }
 ```
 
-## 4) Sized socket helpers used by app service and TPM flows
+## socket based helpers used by app service and TPM flows
 
-### 4.1 `sized_socket_write` and `sized_socket_read`
+### `sized_socket_write` and `sized_socket_read`
 
 Headers:
 ```cpp
@@ -499,16 +493,14 @@ if (resp_size < 0) {
 
 When writing a new tool or sample with this library, the same sequence usually works:
 
-1. Load enclave/cert inputs with `read_file_into_string`.
-2. Build `cc_trust_manager` with correct enclave type and store path.
-3. Call `initialize_enclave`, `initialize_store`, `initialize_keys`.
-4. Call `initialize_new_domain` (first boot) or `initialize_existing_domain` (restart).
-5. Ensure certification (`certify` or existing `is_certified_` status).
-6. Use `secure_authenticated_channel` or `server_dispatch` for secure app traffic.
-7. Persist updates with `save_store` and clean up with `close_enclave` and `clear_sensitive_data`.
+1. Instantiate `cc_trust_manager` with correct enclave type and store path.
+2. Call `initialize_enclave`, `initialize_store`, `initialize_keys`, if needed.
+3. Call `initialize_new_domain` (first boot) or `initialize_existing_domain` (on restart).
+4. Ensure certification has occured (`certify` or check `is_certified_` status).
+5. Use `secure_authenticated_channel` to establish a secure, policy-compliant encrypted and integrity protected secure channel between two enclaves.
+6. Persist updates with `save_store` and clean up with `close_enclave` and `clear_sensitive_data`.
 
 ## 6) Notes
 
-- Most code paths in these directories use the NEW_API model.
-- Many policy/claim generation steps in scripts call utility executables (for example `make_signed_claim_from_vse_clause.exe`) rather than direct C++ function calls.
+- This document covers the most recent API.  The old API is still supported but is depricated.  The flag  NEW_API in the make files signals the use of the new API in a bluild.
 - For additional end-to-end examples, see `sample_apps/common/example_app.cc` and `vm_model_tools/src/cf_utility.cc`.
