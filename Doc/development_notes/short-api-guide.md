@@ -23,7 +23,7 @@ These, in turn, rely on implementing function in, for example,
 - include/support.h
 - include/cc_helpers.h
 
-Almost all important call can be seen in action in the consolidated app:
+Almost all important calls can be seen in action in the consolidated app:
 - sample_apps/common/example_app.cc
 Almost all the sample apps use this common code as the basis for the applications.
 "vm_model_tool" utilities" are also instructive, they are in:
@@ -234,7 +234,8 @@ class cc_trust_manager {
 };
 ```
 
-The major methods are described below:
+The major methods are described below, we've omitted methods and objects that external developers
+will not use.
 
 ### cc_trust_manager constructor
 
@@ -268,9 +269,9 @@ cc_trust_manager* trust_mgr =
 Header:
 ```bool initialize_enclave(int n, string* params); ``` 
 What it does:
-- Platform-neutral enclave/provider initialization entrypoint.  - Dispatches to platform-specific initialization based on `enclave_type` and `params`.  Parameters are enclave specific and are generally strings (for example, the files containing the ARK, ASK and VCEK certs in the case of SAV):
-- `n`: number of parameter strings in `params`.
-- `params`: ordered platform-specific arguments.
+- Platform-neutral enclave/provider initialization entrypoint.  - Dispatches to platform-specific initialization based on enclave_type and params.  Parameters are enclave specific and are generally strings (for example, the files containing the ARK, ASK and VCEK certs in the case of SAV):
+- n: number of parameter strings in params.
+- params: ordered platform-specific arguments.
   - Simulated enclave examples: attestation key, measurement, endorsement.
   - SEV examples: ARK cert, ASK cert, VCEK cert.
 Since the arguments are enclave specific, the API arguments can not be described in a general way.
@@ -364,15 +365,13 @@ if (!trust_mgr->certify(FLAGS_policy_domain_name)) {
 }
 ```
 
-
 ###  certify
 
 Header:
 ```cpp
 bool certify(const string& domain_name)
-```
 
-What it does:
+What it does: Certify the named domain.
 - 
 
 Parameters:
@@ -384,11 +383,11 @@ Header:
 ```cpp
 bool save_store();
 
-What it does:
+What it does:  This protects and saves the policy store for this enclave.
 -
 
 Parameters:
-- ``:
+-  Clear.
 ```
 
 ### find_certifier_by_domain_name
@@ -420,13 +419,8 @@ if (!trust_mgr->save_store()) {
 Header:
 ```cpp
   accelerator accelerators_[max_accerlerators];
-```
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does:  This is used for accelerator protection (like GPUs).  You shouldn't call this.
 ```
 
 ###  add_accelerator
@@ -434,13 +428,8 @@ Parameters:
 Header:
 ```cpp
   bool add_accelerator(const string &acc_type, int num_certs, string *certs);
-```
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: This is used for accelerator protection (like GPUs).  You shouldn't call this.
 ```
 
 ###  accelerator_verified
@@ -449,11 +438,7 @@ Header:
 ```cpp
   bool accelerator_verified(const string &acc_type);
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: This is used for accelerator protection (like GPUs).  You shouldn't call this.
 ```
 
 ###  cc_auth_key_initialized_
@@ -462,11 +447,7 @@ Header:
 ```cpp
   bool        cc_auth_key_initialized_;
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: This variable details the status, for the trust object, of the authorization key.
 ```
 
 ###  private_auth_key_;
@@ -475,11 +456,7 @@ Header:
 ```cpp
   key_message private_auth_key_;
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does:  This is the private auth key.
 ```
 
 ###  public_auth_key_;
@@ -488,11 +465,7 @@ Header:
 ```cpp
   key_message public_auth_key_;
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does:  This is the public auth key.
 ```
 
 
@@ -502,11 +475,7 @@ Header:
 ```cpp
   bool        cc_service_key_initialized_;
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does:  This is the status of the service key used for attestation (if purpose is attestation).
 ```
 
 ###  private_service_key_;
@@ -515,11 +484,7 @@ Header:
 ```cpp
   key_message private_service_key_;
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: This is the private service key used for attestation (if purpose is attestation).
 ```
 
 ### ` public_service_key_;
@@ -528,11 +493,7 @@ Header:
 ```cpp
   key_message public_service_key_;
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: This is the public service key used for attestation (if purpose is attestation).
 ```
 
 
@@ -542,11 +503,7 @@ Header:
 ```cpp
   bool   cc_service_cert_initialized_;
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: This is the certification status of the service key.
 ```
 
 ###  serialized_service_cert_
@@ -555,11 +512,7 @@ Header:
 ```cpp
   string serialized_service_cert_;
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: This is the certification cert for attestation.
 ```
 
 ###  cc_service_platform_rule_initialized_;
@@ -567,13 +520,8 @@ Parameters:
 Header:
 ```cpp
   bool                 cc_service_platform_rule_initialized_;
-```
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: This is the evidence for the individual platform attestation cert.
 ```
 
 ###  cc_symmetric_key_initialized_
@@ -581,13 +529,7 @@ Parameters:
 Header:
 ```cpp
   bool        cc_symmetric_key_initialized_;
-```
-
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does:  This is the intermediate key used to encrypt and integrity protect the policy store.
 ```
 
 ###  symmetric_key_bytes_
@@ -596,11 +538,7 @@ Header:
 ```cpp
   byte        symmetric_key_bytes_[max_symmetric_key_size_];
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: This is the intermediate symmetric key used to protect the policy store.
 ```
 
 ###  symmetric_key_
@@ -622,24 +560,7 @@ Header:
 ```cpp
   bool        cc_sealing_key_initialized_;
 
-What it does:
-- 
-
-Parameters:
-- ``: 
-```
-
-###  sealing_key_bytes_
-
-Header:
-```cpp
-  byte        sealing_key_bytes_[max_symmetric_key_size_];
-
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: This is the protobuf intermediate symmetric key used to protect the policy store.
 ```
 
 ### num_certified_domains_
@@ -648,31 +569,7 @@ Header:
 ```cpp
   int          num_certified_domains_;
 
-What it does:
-- 
-
-Parameters:
-- ``: 
-```
-
-
-### python_initialize_simulated_enclave
-
-Header:
-```cpp
-  bool python_initialize_simulated_enclave(
-      const byte *serialized_attest_key,
-      int         attest_key_size,
-      const byte *measurement,
-      int         measurement_size,
-      const byte *serialized_attest_endorsement,
-      int         attest_key_signed_claim_size);
-
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: This is the number of security domains that have been certified for this enclave.
 ```
 
 ###  initialize_sev_enclave
@@ -683,11 +580,8 @@ Header:
                               const string &ask_der_cert,
                               const string &vcek_der_cert);
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: This is the initialization procedure for sev.  It is called by initialize_enclave.
+Developers willl not use this.
 ```
 
 ###  initialize_tpm_enclave
@@ -702,11 +596,8 @@ Header:
                               const string &tpm_pcr_list,
                               const string &quote_cert_file_name);
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: This is the initialization procedure for the tp,.  It is called by initialize_enclave.
+Developers willl not use this.
 ```
 
 ###  initialize_gramine_enclave
@@ -715,11 +606,8 @@ Header:
 ```cpp
   bool initialize_gramine_enclave(const int size, byte *cert);
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: This is the initialization procedure for the gramine interface to SGX.  It is called by initialize_enclave.
+Developers willl not use this.
 ```
 
 ###  initialize_oe_enclave
@@ -728,11 +616,8 @@ Header:
 ```cpp
   bool initialize_oe_enclave(const string &cert);
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: This is the initialization procedure for the open enclave interface to SGX.  It is called by initialize_enclave.
+Developers willl not use this.
 ```
 
 ###  initialize_application_enclave
@@ -743,11 +628,8 @@ Header:
                                       int           in_fd,
                                       int           out_fd);
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does:  This is the initialization procedure for an application enclave.  It is called by initialize_enclave.
+Developers will not use this.
 ```
 
 ###  put_trust_data_in_store
@@ -756,11 +638,8 @@ Header:
 ```cpp
   bool put_trust_data_in_store();
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: This saves trust information from this object into the policy store.
+Developers will not use this.
 ```
 
 ###  get_trust_data_from_store
@@ -769,11 +648,8 @@ Header:
 ```cpp
   bool get_trust_data_from_store();
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does:  This retrieves trust information from the policy store.
+Developers will not use this.
 ```
 
 ###  initialize_store
@@ -782,11 +658,8 @@ Header:
 ```cpp
   bool initialize_store();
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: Creates a policy store.
+Developers will not use this.
 ```
 
 ###  fetch_store
@@ -795,11 +668,8 @@ Header:
 ```cpp
   bool fetch_store();
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: This reads the policy store from a file.
+Developers will not use this.
 ```
 
 ###  save_store
@@ -808,11 +678,8 @@ Header:
 ```cpp
   bool save_store();
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: This saves the policy store.
+Developers will not use this.
 ```
 
 ###  clear_sensitive_data
@@ -821,11 +688,8 @@ Header:
 ```cpp
   void clear_sensitive_data();
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: This erases the sensitive information from this object.
+Developers will not use this.
 ```
 
 ###  generate_symmetric_key
@@ -835,24 +699,8 @@ Header:
   bool generate_symmetric_key(bool regen);
 ```
 
-What it does:
-- 
-
-Parameters:
-- ``: 
-```
-
-###  generate_sealing_key
-
-Header:
-```cpp
-  bool generate_sealing_key(bool regen);
-
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does:  This generates the symmetric key if it isnt present or regenerates it if regen is true.
+Developers will not use this.
 ```
 
 ###  generate_auth_key
@@ -861,11 +709,8 @@ Header:
 ```cpp
   bool generate_auth_key(bool regen);
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: This generates the auth key if it isnt present or regenerates it if regen is true.
+Developers will not use this.
 ```
 
 ###  generate_service_key
@@ -874,11 +719,8 @@ Header:
 ```cpp
   bool generate_service_key(bool regen);
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: This generates the service key if it isnt present or regenerates it if regen is true.
+Developers will not use this.
 ```
 
 ###  initialize_keys
@@ -889,24 +731,8 @@ Header:
                               const string &symmetric_key_alg,
                               bool          force = false);
 
-What it does:
-- 
-
-Parameters:
-- ``: 
-```
-
-###  certify
-
-Header:
-```cpp
-  bool        certify(const string &domain_name);
-
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: This generates auth, service and symmetric keys if they aren't present or regenerates it if force is true.
+Developers will not use this.
 ```
 
 ###  get_admissions_cert
@@ -915,11 +741,7 @@ Header:
 ```cpp
   bool get_admissions_cert(const string &domain_name, string *admin_cert);
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: Gets the asn1 admissions certificate and loads it into the string.
 ```
 
 ###  admissions_cert_valid_status
@@ -928,13 +750,8 @@ Header:
 ```cpp
   bool admissions_cert_valid_status(const string &domain_name);
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does:  The status of the admissions cert.
 ```
-
 
 ###  print_trust_data
 
@@ -942,11 +759,7 @@ Header:
 ```cpp
   void print_trust_data();
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: Prints this object.
 ```
 
 ###  init_peer_certification_data
@@ -955,11 +768,8 @@ Header:
 ```cpp
   bool init_peer_certification_data(const string &public_key_alg);
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: This is related to peer (secure channel) connections.
+Developers won't use this.
 ```
 
 ###  recover_peer_certification_data
@@ -968,11 +778,8 @@ Header:
 ```cpp
   bool recover_peer_certification_data();
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: This is related to peer (secure channel) connections.
+Developers won't use this.
 ```
 
 ###  get_peer_certification
@@ -981,11 +788,8 @@ Header:
 ```cpp
   bool get_peer_certification(const string &host_name, int port);
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: This is related to peer (secure channel) connections.
+Developers won't use this.
 ```
 
 ###  run_peer_certification_service
@@ -994,11 +798,10 @@ Header:
 ```cpp
   bool run_peer_certification_service(const string &host_name, int port);
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: This is related to peer (secure channel) connections.
+Developers won't use this.
+-
+TODO
 ```
 
 ###  add_or_update_new_domain
@@ -1011,11 +814,9 @@ Header:
                                 const string &host,
                                 int           port);
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does:  Certify a new domain.
+-
+TODO
 ```
 
 ### Teardown: close_enclave, clear_sensitive_data
@@ -1041,6 +842,8 @@ Most enclaves handle teardown without calling "close-enclave" gracefully but som
 
 
 ## Certifiers object 
+
+This is the object that does a per-domain certification.
 
 ```cpp
 class certifiers {
@@ -1315,13 +1118,13 @@ Some of the major methods are described below.
 
 Header:
 ```cpp
-policy_store((unsigned max_ents);
+policy_store(unsigned max_ents);
 
-What it does:
+What it does:  This initialized the store with max_ent entries.
 - 
 
 Parameters:
-- ``: 
+- `max_ents`: Maximum nubmer of entries.
 
 policy_store* ps =
     new policy_store(500);
@@ -1333,11 +1136,11 @@ Header:
 ```cpp
   unsigned      get_num_entries();
 
-What it does:
+What it does: Retrieves the number of active entries in the policy store.
 - 
 
 Parameters:
-- ``: 
+- Clear.
 ```
 
 ### find_entry
@@ -1346,11 +1149,12 @@ Header:
 ```cpp
   int           find_entry(const string &tag, const string &type);
 
-What it does:
+What it does:  Retrieve the index of the entry in the policy store with the named tag and type.
 - 
 
 Parameters:
-- ``: 
+- `tag`: Lookup string for the entry.
+- `type`: Data type of the value.
 ```
 
 ### tag
@@ -1358,13 +1162,12 @@ Parameters:
 Header:
 ```cpp
   const string *tag(unsigned ent);
-```
 
 What it does:  Returns the enrty with the named tag.
 - 
 
 Parameters:
-- ``: 
+- Clear.
 ```
 
 ### type
@@ -1372,13 +1175,12 @@ Parameters:
 Header:
 ```cpp
   const string *type(unsigned ent);
-```
 
-What it does: Returns the type of the named entr.
+What it does: Returns the type of the named entry.
 - 
 
 Parameters:
-- ``: 
+- Clear.
 ```
 
 ###  get_entry
@@ -1386,13 +1188,12 @@ Parameters:
 Header:
 ```cpp
   store_entry  *get_entry(unsigned ent);
-```
 
-What it does:
+What it does: Retrieves the entry in the policy store of intex ent.
 - 
 
 Parameters:
-- ``: 
+- `ent`: Index of desired entry.
 ```
 
 ###  delete_entry
@@ -1400,13 +1201,12 @@ Parameters:
 Header:
 ```cpp
   bool          delete_entry(unsigned ent);
-```
 
-What it does:
+What it does: Deletes the entry of index ent in the policy store.
 - 
 
 Parameters:
-- ``: 
+- `ent`: index of entry to be removed.
 ```
 
 ###  get
@@ -1414,13 +1214,12 @@ Parameters:
 Header:
 ```cpp
   bool          get(unsigned ent, string *v);
-```
 
-What it does:  Gets the value of the named entry.
+What it does:  Gets the serialized value of the named entry.
 - 
 
 Parameters:
-- ``: 
+- Clear.
 ```
 
 ###  put
@@ -1428,13 +1227,8 @@ Parameters:
 Header:
 ```cpp
   bool          put(unsigned ent, const string v);
-```
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: Sets the serialized value of the named entry.
 ```
 
 ###  update_or_insert
@@ -1444,13 +1238,11 @@ Header:
   bool          update_or_insert(const string &tag,
                                  const string &type,
                                  const string &value);
-```
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: Add or update the entry with the named tag and type with the
+named value.
+-
+TODO
 ```
 
 ###  print
@@ -1458,13 +1250,12 @@ Parameters:
 Header:
 ```cpp
   void          print();
-```
 
-What it does:
+What it does: Print the store (used for debugging).
 - 
 
 Parameters:
-- ``: 
+- Clear.
 ```
 
 ###  Serialize
@@ -1472,13 +1263,12 @@ Parameters:
 Header:
 ```cpp
   bool          Serialize(string *psout);
-```
 
-What it does:
+What it does: Serialize the policy store as a protobuf and put it into the named string.
 - 
 
 Parameters:
-- ``: 
+- Clear.
 ```
 
 ###  Deserialize
@@ -1487,11 +1277,11 @@ Header:
 ```cpp
   bool          Deserialize(string &in);
 
-What it does:
+What it does: Deserialize the policy store from the named string.
 - 
 
 Parameters:
-- ``: 
+- Clear.
 ```
 
 
@@ -1510,13 +1300,10 @@ bool Seal(const string &enclave_type,
           byte         *in,
           int          *size_out,
           byte         *out);
-```
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does:  Seal a value to the named enclave.
+-
+TODO
 ```
 
 
@@ -1531,11 +1318,9 @@ bool Unseal(const string &enclave_type,
             int          *size_out,
             byte         *out);
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does:  Unseal a value from the named enclave.
+-
+TODO
 ```
 
 
@@ -1549,11 +1334,11 @@ bool Attest(const string &enclave_type,
             int          *size_out,
             byte         *out);
 
-What it does:
+What it does: Attest from named enclave.
 - 
 
 Parameters:
-- ``: 
+- Clear.
 ```
 
 ## Protection utilities
@@ -1569,13 +1354,11 @@ bool protect_blob(const string &enclave_type,
                   byte         *unencrypted_data,
                   int          *size_protected_blob,
                   byte         *blob);
-```
-
-What it does:
+What it does: Encrypt and integrity protect some data with the named key.
 - 
 
 Parameters:
-- ``: 
+- Clear.
 ```
 
 
@@ -1591,33 +1374,12 @@ bool unprotect_blob(const string &enclave_type,
                     int          *size_of_unencrypted_data,
                     byte         *data);
 
-What it does:
+What it does: Undo protect_blob.
 - 
 
 Parameters:
-- ``: 
+- Clear.
 ```
-
-
-###  reportect_blob
-
-Header:
-```cpp
-bool reprotect_blob(const string &enclave_type,
-                    key_message  *key,
-                    int           size_protected_blob,
-                    byte         *protected_blob,
-                    int          *size_new_encrypted_blob,
-
-                    byte         *data);
-
-What it does:
-- 
-
-Parameters:
-- ``: 
-```
-
 
 ## Crypto helpers
 
@@ -1630,13 +1392,12 @@ C++ string objects and, in fact, C++strings are often used to store byte streams
 Header:
 ```cpp
 bool make_certifier_rsa_key(int n, key_message *k);
-```
 
-What it does:
+What it does: Generate an rsa key and put it in the named key_message.
 - 
 
 Parameters:
-- ``: 
+- Clear.
 ```
 
 ### make_certifier_ecc_key
@@ -1645,11 +1406,11 @@ Header:
 ```cpp
 bool make_certifier_ecc_key(int n, key_message *k);
 
-What it does:
+What it does: Generate an ecc key and put it in the named key_message.
 - 
 
 Parameters:
-- ``: 
+- Clear.
 ```
 
 ### key_to_RSA
@@ -1662,7 +1423,7 @@ What it does: Translates the protobuf representation of a key into the internal 
 - 
 
 Parameters:
-- ``: 
+- Clear.
 ```
 
 ### RSA_to_key
@@ -1671,11 +1432,11 @@ Header:
 ```cpp
 bool RSA_to_key(const RSA *r, key_message *k);
 
-What it does:
+What it does: Translates a key in the internal openssl format intor the protobuf representation of a key.
 - 
 
 Parameters:
-- ``: 
+- Clear.
 ```
 
 ### generate_new_ecc_key
@@ -1684,11 +1445,11 @@ Header:
 ```cpp
 EC_KEY *generate_new_ecc_key(int num_bits);
 
-What it does:
+What it does: Generates an ECC key.
 - 
 
 Parameters:
-- ``: 
+- Clear.
 ```
 
 ### key_to_ECC
@@ -1701,7 +1462,7 @@ What it does:  Translates the protobuf representation of a key into the internal
 - 
 
 Parameters:
-- ``: 
+- Clear.
 ```
 
 ###  ECC_to_key
@@ -1714,7 +1475,7 @@ What it does:  Translates openssl key format into a protobuf.
 - 
 
 Parameters:
-- ``: 
+- Clear.
 ```
 
 
@@ -1727,13 +1488,12 @@ bool digest_message(const char  *alg,
                     int          message_len,
                     byte        *digest,
                     unsigned int digest_len);
-```
 
 What it does:  Computes the digest of the specified byte string using the named algorithm.
 - 
 
 Parameters:
-- ``: 
+- The parameters are clear.
 ```
 
 
@@ -1751,11 +1511,11 @@ bool authenticated_encrypt(const char *alg,
                            byte       *out,
                            int        *out_size);
 
-What it does:
+What it does: Use the named authenticated encryption algorithm and key to encrypt a byte blob.
 - 
 
 Parameters:
-- ``: 
+- The parameters are clear, some algorithms need an IV which is specified here.
 ```
 
 ###  authenticated_decrypt
@@ -1769,13 +1529,8 @@ bool authenticated_decrypt(const char *alg,
                            int         key_len,
                            byte       *out,
                            int        *out_size);
-```
 
-What it does:
-- 
-
-Parameters:
-- ``: 
+What it does: Use the named authenticated encryption algorithm and key to decrypt a byte blob.
 ```
 
 ### private_key_to_public_key
@@ -1783,11 +1538,12 @@ Header:
 ```cpp
 bool private_key_to_public_key(const key_message &in, key_message *out);
 
-What it does:  Uses a private key protobuf to produce the corresponding protobuf public key.
+What it does:  Uses a private key protobuf to produce the corresponding protobuf public key removing
+private parameters.
 - 
 
 Parameters:
-- ``: 
+- Clear.
 ```
 
 
@@ -1801,7 +1557,7 @@ What it does: Gets random bits.
 - 
 
 Parameters:
-- ``: 
+-  Clear.
 ```
 
 ### cipher_block_byte_size
@@ -1809,13 +1565,12 @@ Parameters:
 Header:
 ```cpp
 int cipher_block_byte_size(const char *alg_name);
-```
 
 What it does: Returns the size (in bytes) of the cipher block of the named algorithm.
 - 
 
 Parameters:
-- ``: 
+-  Clear.
 ```
 
 ### cipher_key_byte_size
@@ -1829,7 +1584,7 @@ What it does: Returns the size (in bytes) of the cipher key for the named algori
 - 
 
 Parameters:
-- ``: 
+-  Clear.
 ```
 
 ### digest_output_byte_size
@@ -1842,7 +1597,7 @@ What it does: Returns the size (in bytes) of for the named digest algorithm.
 - 
 
 Parameters:
-- ``: 
+-  Clear.
 ```
 
 ### mac_output_byte_size
@@ -1855,24 +1610,13 @@ What it does: Returns the size (in bytes) of for the named MAC algorithm.
 - 
 
 Parameters:
-- ``: 
+-  Clear.
 ```
 
 ## Specialized time structures
 
+The certifier has a protobuf for Date/time points called time_point.
 
-### time_t_to_tm_time
-
-Header:
-```cpp
-bool time_t_to_tm_time(time_t *t, struct tm *tm_time);
-
-What it does:
-- 
-
-Parameters:
-- ``: 
-```
 
 ### tm_time_to_time_point
 
@@ -1884,7 +1628,7 @@ What it does:  Translates the unix time structure into the protobuf time structu
 - 
 
 Parameters:
-- ``: 
+-  Clear.
 ```
 
 ### asn1_time_to_tm_time
@@ -1898,7 +1642,7 @@ What it does: Translates the asn1 time into the unix time structure.
 - 
 
 Parameters:
-- ``: 
+-  Clear.
 ```
 
 ### get_not_before_from_cert
@@ -1911,7 +1655,7 @@ What it does: Get not_before entry in certificate in protobuf format.
 - 
 
 Parameters:
-- ``: 
+-  Clear.
 ```
 
 ### get_not_after_from_cert
@@ -1924,7 +1668,7 @@ What it does: Get not_after entry in certificate in protobuf format.
 - 
 
 Parameters:
-- ``: 
+-  Clear.
 ```
 
 ### time_now
@@ -1937,7 +1681,7 @@ What it does: Returns current time in protobuf format.
 - 
 
 Parameters:
-- ``: 
+-  Clear.
 ```
 
 ### time_to_string
@@ -1950,7 +1694,7 @@ What it does:  Converts protobuf time structure into a string.
 - 
 
 Parameters:
-- ``: 
+-  Clear.
 ```
 
 ### string_to_time
@@ -1963,7 +1707,7 @@ What it does: Converts string time into protobuf time structure.
 - 
 
 Parameters:
-- ``: 
+-  Clear.
 ```
 
 ### add_interval_to_time_point
@@ -1978,7 +1722,7 @@ What it does:  Add the time interval to the protobuf structure producing a new p
 - 
 
 Parameters:
-- ``: 
+-  Clear.
 ```
 
 ### Compare_time
@@ -1987,11 +1731,11 @@ Header:
 ```cpp
 int  compare_time(time_point &t1, time_point &t2);
 
-What it does:
+What it does: Returns 1 if t1 is later than t2, 0 if they are equal and -1 if earlier.
 - 
 
 Parameters:
-- ``: 
+-  Clear.
 ```
 
 ### print_time_point
@@ -1999,13 +1743,12 @@ Parameters:
 Header:
 ```cpp
 void print_time_point(time_point &t);
-```
 
 What it does: print the time point
 - 
 
 Parameters:
-- ``: 
+-  Clear.
 ```
 
 ### print_entity
@@ -2018,7 +1761,7 @@ What it does: Print the entity structure.
 - 
 
 Parameters:
-- ``: 
+-  Clear.
 ```
 
 ### `
@@ -2031,8 +1774,8 @@ What it does: Print the key in the named key structure.
 - 
 
 Parameters:
-- ``: 
-
+-  Clear.
+```
 
 ## Certificates
 
@@ -2054,10 +1797,6 @@ bool produce_artifact(key_message &signing_key,
                       bool         vcek = false);
 
 What it does:  Makes a signed x509 certificate.
-- 
-
-Parameters:
-- ``: 
 ```
 
 ### verify_artifact
@@ -2074,10 +1813,6 @@ bool verify_artifact(X509        &cert,
                      uint64_t    *sn);
 
 What it does: Verifies a signed x509 certificate.
-- 
-
-Parameters:
-- ``: 
 ```
 
 ### asn1_to_x509
@@ -2090,7 +1825,7 @@ What it does:  Converts an asn1 string into and x509 structure.
 - 
 
 Parameters:
-- ``: 
+-  Clear.
 ```
 
 ### x509_to_asn1
@@ -2103,7 +1838,7 @@ What it does:  Translates certificates in the internal x509 format into asn1.
 - 
 
 Parameters:
-- ``: 
+-  Clear.
 ```
 
 ### check_date_range
@@ -2116,7 +1851,7 @@ What it does:
 - 
 
 Parameters:
-- ``: 
+-  Clear.
 ```
 
 ### file_size
@@ -2235,15 +1970,15 @@ if (!write_file_from_string(FLAGS_output_file, serialized_cryptstore_entry)) {
 
 When writing a new tool or sample with this library, the same flow sequence is:
 
-1. Instantiate `cc_trust_manager` with correct enclave type and store path.
-2. Call `initialize_enclave`, `initialize_store`, `initialize_keys`, if needed.
-3. Call `initialize_new_domain` (first boot) or `initialize_existing_domain` (on restart).
-4. Ensure certification has occured (`certify` or check `is_certified_` status).
-5. Use `secure_authenticated_channel` to establish a secure, policy-compliant encrypted and integrity protected secure channel between two enclaves.
-6. Persist updates with `ave_store` and clean up with `close_enclave` and `clear_sensitive_data`.
+1. Instantiate cc_trust_manager with correct enclave type, purpose, and store path.
+2. Call initialize_enclave, initialize_store, initialize_keys, if needed.
+3. Call initialize_new_domain (first boot) or initialize_existing_domain (on restart).
+4. Ensure certification has occured (certify or check is_certified_ status).
+5. Use secure_authenticated_channel to establish a secure, policy-compliant encrypted and integrity protected secure channel between two enclaves.
+6. Persist updates with ave_store and clean up with close_enclave and clear_sensitive_data.
 
 ## Notes
 
 - This document covers the most recent API.  The old API is still supported but is depricated.  The flag  NEW_API in the make files signals the use of the new API in a build.
-- For additional end-to-end examples, see `sample_apps/common/example_app.cc` and `vm_model_tools/src/cf_utility.cc`.
+- For additional end-to-end examples, see sample_apps/common/example_app.cc and vm_model_tools/src/cf_utility.cc.
 
