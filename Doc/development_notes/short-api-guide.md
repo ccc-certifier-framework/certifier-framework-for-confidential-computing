@@ -70,6 +70,8 @@ in the Certifier API, the "secure_authenticated_channel" described below.
 
 Trust management is implemented by the cc_trust_manager object.
 
+The reader might want to glance at APP-RUNTIME-STRUCTURE.md in this directory which describes this flow in more detail.
+
 ## The cc_trust_manager object
 
 The cc_trust_object manages trust relationships and certification.
