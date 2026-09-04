@@ -2,9 +2,10 @@
 
 This guide documents library functions that are actively used by application code under sample_apps/ and vm_model_tools/.
 
-The Cerrtifier API has changed slightly over time to support multiple security domains and new enclaves.  I'll try
+The Certifier API has changed slightly over time to support multiple security domains and new enclaves.  I'll try
 to keep this description "up-to-date."  As always, the actual sample and tests (like those in "certifier_tests.cc"
-built by "certifier_tests.mak" provide the most detailed guide on employing the certifier library.
+built by "certifier_tests.mak" provide the most detailed guide on employing the certifier library.  This document
+only describes the new API.
 
 This document does not include a descrtiption of the structure or libraries for the Certification Server.
 Developers are generally not expected to modify or add to this code but the instructions and files in "certifier_service"
@@ -22,6 +23,19 @@ All developer accessible functions are contained in the header files:
 These, in turn, rely on implementing function in, for example,
 - include/support.h
 - include/cc_helpers.h
+
+The "authoritative source" for using the API is in the sample_apps:
+-
+  The most important is in sample_apps/simple_app.  The code for this is in sample_apps/common.  That common code
+  works for most of the enclaves.
+-
+  vm_model_tools/src has three utilities: cf_utility.cc, cf_key_server.cc, and cf_key_client.cc which are also examples.
+  works for most of the enclaves.
+-
+  sample_apps/multidomain_simple_app is an example of using multidomain support.
+
+Many of the sample applications show the use of both the old API and the new API but you should always use the new api.
+
 
 Almost all important calls can be seen in action in the consolidated app:
 - sample_apps/common/example_app.cc
@@ -54,7 +68,12 @@ object names the enclave type (e.g., sev-enclave, tpm-enclave), cipher suite use
 the enclave purpose.  There are two purposes: authentication and attestation.  Authentication is the most common purpose it refers to
 the process of provisioning and certifying a public key for authenticating the enclave to other enclaves in the Security Domain.
 The other purpose, "attestation", refers to the certifying an attestation key for a subordinate enclave (like the application-enclave)
-within another enclave liek SEV.
+within another enclave like SEV.  Enclave initialization is handled by initialize_new_domain for a new domain or initialize_existing domain
+for a domain previousely initialized whose data is in the policy store.  The method "certify" in the trust object performs
+certification for a named domain.  The trust object actually saves information in the certifiers objects and used those objects
+to perform certification and initialization.  In some of the examples, we manually locate the certifiers object for the named
+domain using find_certifier_by_domain_name and then call certify_domain on that object, instead of just calling certify on the
+trust_manager object.  Sorry.
 
 3. The calls to the cc_trust manager interacts with the enclave, providing uniform access to "attest." "seal," and "unseal."  It
 generates keys used in common Confidential Computing workflows and cans store the keys safely in a "secure store" between enclave
@@ -276,7 +295,8 @@ What it does:
 - params: ordered platform-specific arguments.
   - Simulated enclave examples: attestation key, measurement, endorsement.
   - SEV examples: ARK cert, ASK cert, VCEK cert.
-Since the arguments are enclave specific, the API arguments can not be described in a general way.
+Since the arguments are enclave specific, the API arguments can not be described in a general way.  Consult the sample_app for the
+relevant enclave types to see examples.
 
 Snippet:
 ```cpp
@@ -725,18 +745,6 @@ What it does: This generates the service key if it isnt present or regenerates i
 Developers will not use this.
 ```
 
-###  initialize_keys
-
-Header:
-```cpp
-  bool        initialize_keys(const string &public_key_alg,
-                              const string &symmetric_key_alg,
-                              bool          force = false);
-
-What it does: This generates auth, service and symmetric keys if they aren't present or regenerates it if force is true.
-Developers will not use this.
-```
-
 ###  get_admissions_cert
 
 Header:
@@ -748,9 +756,6 @@ What it does: Gets the asn1 admissions certificate and loads it into the string.
 
 ###  admissions_cert_valid_status
 
-Header:
-```cpp
-  bool admissions_cert_valid_status(const string &domain_name);
 
 What it does:  The status of the admissions cert.
 ```
@@ -806,6 +811,82 @@ Developers won't use this.
 TODO
 ```
 
+##  find_certifier_by_domain_name
+
+Header:
+```cpp
+  certifiers *find_certifier_by_domain_name(const string &domain_name);
+                     
+What it does:  Finds the certifiers object in the trust object for this domain name.
+-      
+Parameters:
+- 
+domain_name: name of domain
+```
+
+###  initialize_existing_domain
+
+Header:
+```cpp
+  bool        initialize_existing_domain(const string &domain_name);
+What it does:  Initializes domain from policy store information for the named domain.
+-      
+Parameters:
+- 
+domain_name: doamin name
+```
+
+###   certify
+
+Header:
+```cpp
+   bool        certify(const string &domain_name);
+                     
+What it does:  Certifies named domain
+-      
+Parameters:
+- 
+```
+
+## Note:
+
+In the new API, initialize_new_domain replaces cold_init in the old API;
+initialize_existing_domain replaces warm_restart and certify replaces
+certify_me.
+
+
+###  add_or_update_new_domain
+
+Header:
+```cpp
+                     
+What it does:  Adds the data for a secondary domain.
+-      
+Parameters:
+- 
+TODO
+```
+
+###  get_admissions_cert
+
+Header:
+```cpp
+  bool get_admissions_cert(const string &domain_name, string *admin_cert);
+                     
+What it does:  retrieves admission certificate for the named domain
+```
+
+
+### bool admissions_cert_valid_status
+
+Header:
+```cpp
+bool admissions_cert_valid_status(const string &domain_name);
+                     
+What it does:  Tells whether named domain is certified and has admissions cert.
+```
+
+
 ###  add_or_update_new_domain
 
 Header:
@@ -816,9 +897,13 @@ Header:
                                 const string &host,
                                 int           port);
 
-What it does:  Certify a new domain.
+What it does:  Adds the data for a new secondary domain.
 -
-TODO
+Parameters:
+- domain_name: The secondary domain name
+- purpose: same as in cold_init
+- policy_cert is the policy cert for the domain.
+- host and port are the same as in cold_init
 ```
 
 ### Teardown: close_enclave, clear_sensitive_data
@@ -845,7 +930,20 @@ Most enclaves handle teardown without calling "close-enclave" gracefully but som
 
 ## Certifiers object 
 
-This is the object that does a per-domain certification.
+This is the object that contains domain data and does a per-domain certification.
+
+Enclaves can be certified in multiple domains.  There is always a primary domain which is the first
+domain initialized.  Domains are initialized  by the sequence initialize_new_doamin, initialize_keys and certify
+ (for certification).  In the old api, this was done by cold_init and certify_me.  Existing domains are initialized from the store.
+
+These activities are managed using the certifiers object but programmers will generally not have to interact with
+the certifiers objects.
+
+The secure_authenticated_channel in the new api specifies the domain in the init_client_ssl and init_server_ssl
+so the correct domain data is used in establishing the secure channels.
+
+See the examples in sample_apps/common and sample_apps/multidomain_simple_app for more details.
+
 
 ```cpp
 class certifiers {
@@ -872,8 +970,61 @@ class certifiers {
                                 const string &cert,
                                 const string &host,
                                 int           port);
+  bool certify_domain(const string &purpose);
+  void print_certifiers_entry();
 };
 ```
+
+### certifiers constructor
+
+Header:
+```cpp
+ certifiers(cc_trust_manager *owner);
+
+What it does: Create certifiers object
+
+Parameter:
+- owner is the owning cc_trust_manager object
+```
+
+### init_certifiers_data_new
+
+Header:
+```cpp
+bool init_certifiers_data_new(const string &domain_name,
+                                const string &purpose,
+                                const string &cert,
+                                const string &host,
+                                int           port);
+
+What it does: Initializes named data in certifiers object
+
+Parameters:
+domain_name: domain name
+purpose: authentication or attestation
+cert: policy cert for this domain
+host: URL for certification
+port: port for certification
+```
+
+### certify_domain
+
+Header:
+```cpp
+ bool certify_domain(const string &purpose);
+
+What it does: Interacts with doamin server to obtain admissions cert ("Certification").
+```
+
+### print_certifiers_entry
+
+Header:
+```cpp
+void print_certifiers_entry();
+
+What it does: Prints certifier object (Used for debugging).
+```
+
 
 ## Authenticated channel APIs
 
@@ -914,46 +1065,18 @@ class secure_authenticated_channel {
   // Interface invoked through Python apps. (We don't use the python_ prefix
   // as other tests / programs also exercise this through C++ code.)
 
-  bool init_client_ssl(const string &host_name,
-                       int           port,
-                       const string &asn1_root_cert,
-                       key_message  &private_key,
-                       const string &private_key_cert);
-
 #ifdef NEW_API
   bool init_client_ssl(const string     &domain_name,
                        const string     &host_name,
                        int               port,
                        cc_trust_manager &mgr);
 #endif
-
-  // Interface invoked through Python apps. (We don't use the python_ prefix
-  // as other tests / programs also exercise this through C++ code.)
-  bool init_server_ssl(const string &host_name,
-                       int           port,
-                       const string &asn1_root_cert,
-                       key_message  &private_key,
-                       const string &private_key_cert);
-
-  // Interface invoked for user supplied keys and cert chain.
-  // This is used, for example, when either endpoint is not a certifier approved
-  // key.
-  bool init_client_ssl(const string &host_name,
-                       int           port,
-                       const string &asn1_root_cert,
-                       const string &peer_asn1_root_cert,
-                       int           cert_chain_length,
-                       string       *der_certs,
-                       key_message  &private_key,
-                       const string &auth_cert);
-  bool init_server_ssl(const string &host_name,
-                       int           port,
-                       const string &asn1_root_cert,
-                       const string &peer_asn1_root_cert,
-                       int           cert_chain_length,
-                       string       *der_certs,
-                       key_message  &private_key,
-                       const string &auth_cert);
+#ifdef NEW_API
+  bool init_server_ssl(const string     &domain_name,
+                       const string     &host_name,
+                       int               port,
+                       cc_trust_manager &mgr);
+#endif  //  NEW_API
 
   void server_channel_accept_and_auth(
       void (*func)(secure_authenticated_channel &));
@@ -982,6 +1105,33 @@ a channel has a server side and client side just like TLS.
 
 Parameter:
 - `role`: usually `"client"` or `"server"`.
+```
+
+### server_channel_accept_and_auth
+Header:
+```cpp
+  void server_channel_accept_and_auth(
+      void (*func)(secure_authenticated_channel &));
+What it does: TODO
+```
+
+### init_server_ssl
+Header:
+```cpp
+  bool init_server_ssl(const string     &domain_name,
+                       const string     &host_name,
+                       int               port,
+                       cc_trust_manager &mgr);
+
+What it does:  same as init_client_ssl but for server role.
+```
+
+### load_client_certs_and_key
+Header:
+```cpp
+bool load_client_certs_and_key();
+
+What it does:  TODO
 ```
 
 ### init_client_ssl (domain + trust manager overload)
@@ -1036,7 +1186,17 @@ int n = channel.read(&out);
 channel.close();
 ```
 
-### server_dispatch
+### get_peer_id
+
+Header:
+```cpp
+bool get_peer_id(string *out_peer_id);
+
+
+What it does:  Gets peer id (after channel is established).
+```
+
+## server_dispatch
 
 Header:
 ```cpp
@@ -1048,7 +1208,7 @@ bool server_dispatch(const string& domain_name,
 
 What it does:
 - Creates authenticated server endpoint and dispatches accepted channels to callback.  This allows developers
-to avoid creating a "server endpoint" on their own.
+to avoid creating a "server endpoint" on their own.  This implements the standard ssl server control loop.
 
 Parameters:
 - domain_name: domain identity to present for server side.
