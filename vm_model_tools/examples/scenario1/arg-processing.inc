@@ -110,6 +110,20 @@ function print-options() {
         echo "ACTIVATE_PORT                     -act_port       port number of activation"
         echo "COMPILE_ONLY                      -just-compile   don't do root required stuff"
         echo "TPM_MEASUREMENT_FILE_NAME         -tpm-mfn        tpm measurement file name"
+        echo "SEV_DEVICE                        -sev-dev        sev device"
+        echo "SEV_MEASUREMENT_FILE_NAME         -sev-mfn        sev measurement file name"
+        echo "VM_OVMF_FILE_NAME                 -ovmf-mfn       ovmf file name"
+        echo "VM_KERNEL_FILE_NAME               -kernel-mfn     linux file name"
+        echo "VM_INITRAM_FILE_NAME              -initram-mfn    initram file name"
+        echo "VM_COMMAND_LINE                   -vm-cmd         vm command line"
+
+        echo "CPU TYPE                          -cpu-type       cpu type"
+        echo "NVCPUS                            -n-cpus         number of cpus"
+        echo "CPU_TYPE                          -cpu-type       cpu type"
+        echo "CPU_MODEL                         -cpu-model      cpu model"
+        echo "CPU_STEPPING                      -cpu-stepping   cpu stepping"
+        echo "CPU_FAMILY                        -cpu-family     cpu family"
+        echo "CPU_FEATURES                      -cpi-features   cpu features"
         echo "-----------------------------------------------------------------"
         echo ""
 }
@@ -156,6 +170,19 @@ ACTIVATE_HOST="localhost"
 ACTIVATE_PORT="8130"
 COMPILE_ONLY=0
 TPM_MEASUREMENT_FILE_NAME="./tpm_cf_utility.measurement"
+SEV_DEVICE="/dev/sev-guest"
+SEV_MEASUREMENT_FILE_NAME="./sev.measurement"
+VM_OVMF_FILE_NAME="ovmf.fd"
+VM_KERNEL_FILE_NAME="./vmlinuz"
+VM_INITRAM_FILE_NAME="./initrd.img"
+VM_COMMAND_LINE=""
+CPU_TYPE="EPYC-v4"
+NVCPUS=2
+CPU_MODEL=1
+CPU_STEPPING=2
+CPU_FAMILY=23
+CPU_FEATURES=""
+
 
 
 function print-variables() {
@@ -207,6 +234,18 @@ function print-variables() {
         echo "Activation service port                $ACTIVATE_PORT"
         echo "Compile only                           $COMPILE_ONLY"
         echo "TPM measurement file name              $TPM_MEASUREMENT_FILE_NAME"
+        echo "SEV device                             $SEV_DEVICE"
+        echo "SEV measurement file name              $SEV_MEASUREMENT_FILE_NAME"
+        echo "OVMF name                              $VM_OVMF_FILE_NAME"
+        echo "VM kernel file                         $VM_KERNEL_FILE_NAME"
+        echo "VM initram file                        $VM_INITRAM_FILE_NAME"
+        echo "VM command line                        $VM_COMMAND_LINE"
+        echo "CPU type                               $CPU_TYPE"
+        echo "Number of cpus                         $NVCPUS"
+        echo "cpu model                              $CPU_MODEL"
+        echo "cpu stepping                           $CPU_STEPPING"
+        echo "cpu features                           $CPU_FEATURES"
+
         echo ""
 }
 
@@ -216,128 +255,166 @@ function process-args() {
 
         IFS=' ' read -ra array <<< "$arg_string"
         for (( i=0; i < $ARG_SIZE; i++ )); do
-                #echo "Processing arg $i: ${array[i]}"
+            #echo "Processing arg $i: ${array[i]}"
 
-                if [[ ${array[i]} = "-dn" ]]; then
-                        DOMAIN_NAME="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-pkn" ]]; then
-                        POLICY_KEY_FILE_NAME="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-cfn" ]]; then
-                        POLICY_CERT_FILE_NAME="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-psn" ]]; then
-                        POLICY_STORE_NAME="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-csn" ]]; then
-                        CRYPTSTORE_NAME="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-dd" ]]; then
-                        DATA_DIR="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-sea" ]]; then
-                        SYMMETRIC_ENCRYPTION_ALGORITHM="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-aen" ]]; then
-                        ASYMMETRIC_ENCRYPTION_ALGORITHM="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-pn" ]]; then
-                        PROGRAM_NAME="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-vmn" ]]; then
-                        VM_NAME="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-tt" ]]; then
-                        TEST_TYPE="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-pk" ]]; then
-                        PROVISION_KEYS="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-bss" ]]; then
-                        BUILD_SEV_SIMULATOR="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-ccf" ]]; then
-                        COMPILE_CF="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-pfn" ]]; then
-                        POLICY_FILE_NAME="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-psa" ]]; then
-                        POLICY_SERVER_ADDRESS="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-psp" ]]; then
-                        POLICY_SERVER_PORT="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-ksa" ]]; then
-                        KEY_SERVER_ADDRESS="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-ksp" ]]; then
-                        KEY_SERVER_PORT="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-op" ]]; then
-                        OPERATION="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-clean" ]]; then
-                        CLEAN="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-loud" ]]; then
-                        VERBOSE="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-et1 " ]]; then
-                        DEPLOYMENT_ENCLAVE_TYPE="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-et2" ]]; then
-                        DEPLOYED_ENCLAVE_TYPE="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-psn1" ]]; then
-                        DEPLOYMENT_POLICY_STORE_NAME="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-psn2" ]]; then
-                        DEPLOYED_POLICY_STORE_NAME="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-csn1" ]]; then
-                        DEPLOYMENT_CRYPTSTORE_NAME="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-csn2" ]]; then
-                        DEPLOYED_CRYPTSTORE_NAME="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-npcr" ]]; then
-                        NUM_PCR="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-pcrs" ]]; then
-                        PCRSTR="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-tpm" ]]; then
-                        TPM_DEVICE="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-seal" ]]; then
-                        SEAL_STORE="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-quote" ]]; then
-                        QUOTE_STORE="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-quote_cert" ]]; then
-                        QUOTE_CERT_FILE="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-end_cert" ]]; then
-                        END_CERT_FILE="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-end_chain" ]]; then
-                        END_CERT_CHAIN_FILE="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-act_host" ]]; then
-                        ACTIVATE_HOST="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-act_port" ]]; then
-                        ACTIVATE_PORT="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-just-compile" ]]; then
-                        COMPILE_ONLY="${array[i+1]}"
-                fi
-                if [[ ${array[i]} = "-tpm-mfn" ]]; then
-                        TPM_MEASUREMENT_FILE_NAME="${array[i+1]}"
-                fi
+            if [[ ${array[i]} = "-dn" ]]; then
+                    DOMAIN_NAME="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-pkn" ]]; then
+                    POLICY_KEY_FILE_NAME="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-cfn" ]]; then
+                    POLICY_CERT_FILE_NAME="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-psn" ]]; then
+                    POLICY_STORE_NAME="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-csn" ]]; then
+                    CRYPTSTORE_NAME="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-dd" ]]; then
+                    DATA_DIR="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-sea" ]]; then
+                    SYMMETRIC_ENCRYPTION_ALGORITHM="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-aen" ]]; then
+                    ASYMMETRIC_ENCRYPTION_ALGORITHM="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-pn" ]]; then
+                    PROGRAM_NAME="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-vmn" ]]; then
+                    VM_NAME="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-tt" ]]; then
+                    TEST_TYPE="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-pk" ]]; then
+                    PROVISION_KEYS="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-bss" ]]; then
+                    BUILD_SEV_SIMULATOR="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-ccf" ]]; then
+                    COMPILE_CF="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-pfn" ]]; then
+                    POLICY_FILE_NAME="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-psa" ]]; then
+                    POLICY_SERVER_ADDRESS="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-psp" ]]; then
+                    POLICY_SERVER_PORT="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-ksa" ]]; then
+                    KEY_SERVER_ADDRESS="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-ksp" ]]; then
+                    KEY_SERVER_PORT="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-op" ]]; then
+                    OPERATION="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-clean" ]]; then
+                    CLEAN="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-loud" ]]; then
+                    VERBOSE="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-et1 " ]]; then
+                    DEPLOYMENT_ENCLAVE_TYPE="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-et2" ]]; then
+                    DEPLOYED_ENCLAVE_TYPE="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-psn1" ]]; then
+                    DEPLOYMENT_POLICY_STORE_NAME="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-psn2" ]]; then
+                    DEPLOYED_POLICY_STORE_NAME="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-csn1" ]]; then
+                    DEPLOYMENT_CRYPTSTORE_NAME="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-csn2" ]]; then
+                    DEPLOYED_CRYPTSTORE_NAME="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-npcr" ]]; then
+                    NUM_PCR="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-pcrs" ]]; then
+                    PCRSTR="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-tpm" ]]; then
+                    TPM_DEVICE="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-seal" ]]; then
+                    SEAL_STORE="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-quote" ]]; then
+                    QUOTE_STORE="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-quote_cert" ]]; then
+                    QUOTE_CERT_FILE="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-end_cert" ]]; then
+                    END_CERT_FILE="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-end_chain" ]]; then
+                    END_CERT_CHAIN_FILE="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-act_host" ]]; then
+                    ACTIVATE_HOST="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-act_port" ]]; then
+                    ACTIVATE_PORT="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-just-compile" ]]; then
+                    COMPILE_ONLY="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-tpm-mfn" ]]; then
+                    TPM_MEASUREMENT_FILE_NAME="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-sev-dev" ]]; then
+                    SEV_DEVICE="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-sev-mfn" ]]; then
+                    SEV_MEASUREMENT_FILE_NAME="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-ovmf-mfn" ]]; then
+              VM_OVMF_FILE_NAME="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-kernel-mfn " ]]; then
+              VM_KERNEL_FILE_NAME="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-vm-cmd" ]]; then
+              VM_COMMAND_LINE="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-initram-mfn" ]]; then
+              VM_INITRAM_FILE_NAME="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-cpu-type" ]]; then
+              CPU_TYPE="${array[i+1]}"
+            fi
+
+            if [[ ${array[i]} = "-n-cpu" ]]; then
+              NVCPUS="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-cpu-model" ]]; then
+              CPU_MODEL="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-cpu-stepping" ]]; then
+              CPU_STEPPING="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-cpu-family" ]]; then
+              CPU_FAMILY="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-cpu-features" ]]; then
+              CPU_FEATURES=""
+            fi
+
         done
 
         POLICY_CERT_FILE_NAME=$POLICY_CERT_FILE_NAME.$DOMAIN_NAME

@@ -60,14 +60,56 @@ define the first two in the shell you use by doing the following:
 
 ```shell
     export CERTIFIER_ROOT=~/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing
+```
+
+or
+
+```shell
+    export CERTIFIER_ROOT=~/src/github.com/certifier-framework-for-confidential-computing
+```
+
+or specify the directory you installed the certifier.
+
+If you're root, use the full path name without the "~" abbreviation. For
+example,
+
+```shell
+    export CERTIFIER_ROOT=/home/jlm/src/github.com/certifier-framework-for-confidential-computing
+```
+
+Then,
+
+```shell
     export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
 ```
 
-When running in a "sudo" window, you should use the full path and not use the
-"~" shortcut.
-
-
 # Running the tests
+
+All tests can be run from a consolidated script called run-test-scenario1.sh. The script
+uses a number of variables to control test behavior.  Some important
+variables have the following effect:
+
+    "-ccf 1" tells the script that it should compile all the certifier utilities
+        and programs.
+    "-bss 0" tells the script NOT to build and install the driver for the
+        simulated sev.
+    "-pk 1" tells the script to generate keys and certificates for the domain.
+    "-loud 1" tells the script to print a lot of debug output.
+    "-just-compile 1" tells the script to just compile stuff (you need not be root to do this)
+
+You may want to just compile the framework and vm_model_tools executables,
+without being root.  To do this:
+
+```shell
+    ./run-test-scenario1.sh  -bss 0 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 -just-compile 1
+```
+
+If you do this, you can use the -ccf 0 flag when you run run-test-scenario1.sh as root for
+platforms that need root privileges.  Not having to compile saves a lot of time so you should
+definitely not recompile if you don't have to.
+
+Now refer to the platform specific instructions below.
+
 
 ## Running the tpm tests
 
@@ -98,7 +140,6 @@ To do this:
 
 ```shell
     ./clean-tpm-simulator.sh
-    ./clean-files.sh
 ```
 As root, start the tpm simulator for testing, and set pcr 7:
 
@@ -112,8 +153,8 @@ As root, start the tpm simulator for testing, and set pcr 7:
 If you are using a "real" tpm, make sure you set the correct device name
 (-tpm /dev/tpmrm1, below).
 
-You may want to just compile the framework and vm_model_tools executables,
-without being root.  To do this:
+as mentioned abolve, you may want to just compile the framework and 
+vm_model_tools executables, without being root.  To do this:
 
 ```shell
     ./run-test-scenario1.sh  -bss 0 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 -just-compile 1 -tpm /dev/tpmrm1
@@ -133,20 +174,10 @@ or, if you previously did a "compile only", as root:
     ./run-test-scenario1.sh  -bss 0 -ccf 0 -loud 1 -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin -pk 1 -pn cf-utility -tpm /dev/tpmrm1
 ```
 
-Some important variable have the following effect:
-
-    "-ccf 1" tells the script that it should compile all the certifier utilities
-        and programs.
-    "-bss 0" tells the script NOT to build and install the driver for the
-        simulated sev.
-    "-pk 1" tells the script to generate keys and certificates for the domain.
-    "-loud 1" tells the script to print a lot of debug output.
-    "-just-compile 1" tells the script to just compile stuff (you need not be root to do this)
-
-
 If you have already set pcr 7, you need not and should not reset it.
 You do not need "-bss 1" and you shouldn't set it.
-You can rerun the test by typing:
+
+You can rerun the test by typing, for example, in the tpm case:
 
 ```shell
     ./clean-files.sh
@@ -177,8 +208,14 @@ not do so.
 
 Again, almost all the variables are set within run-test-scenario1.sh.
 
-You may want to just compile the framework and vm_model_tools executables,
-without being root.  To do this:
+As mentioned above, you may want to just compile the framework and vm_model_tools
+executables, without being root.  To do this, for the simulated sev environment:
+
+```shell
+    ./run-test-scenario1.sh  -bss 1 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 -just-compile 1
+```
+
+if you are running on a real sev platform, 
 
 ```shell
     ./run-test-scenario1.sh  -bss 0 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 -just-compile 1
@@ -186,6 +223,21 @@ without being root.  To do this:
 
 If you do this, you can use the -ccf 0 flag when you run run-test-scenario1.sh as
 root.
+
+SEV measurements for the real SEV platform requires installing an open source tool from IBM.
+You will likely install this is your github.com directory.
+
+To do this:
+
+```shell
+cd ~/src/github.com
+git clone https://github.com/virtee/sev-snp-measure.git
+```
+
+If you are using real SEV, the script that measures the vm will call the utility but
+the scripts assume the directory .../virtee/sev-snp-measure is in your path.
+If you are using simulated SEV, the scripts construct the fabricated measurement
+without this utility
 
 To run the test from scratch, in the simulated sev environment, as root, type:
 
@@ -196,16 +248,24 @@ To run the test from scratch, in the simulated sev environment, as root, type:
 or, if you already compiled as above:
 
 ```shell
-    ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 0 -loud 1 -dn dom0 -pn cf-utility -pk 1
+    ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 0 -loud 1 -dn dom0 -pn cf-utility -pk 1 -tpm /dev/tpmrm1
 ```
 
-There is a new flag:
+If you use the real SEV and have compiled the framework (and the measurement tool),
+
+```shell
+    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -loud 1 -dn dom0 -pn cf-utility -pk 1 -sev-dev /dev/sev -sev-mfn ./sev.measurement
+```
+
+Some new flags we used are:
     "-tt simulated" tells the script that the "deployed enviornment" is the
         simulated SEV enclave.  As a result, the simulating SEV device driver
         will be build and installed and no VM is needed and simulated keys and
         keys for the simulated environment are built.
     "-bss 1" tells the script to build and install the driver for the
         simulated sev.
+    "-sev-dev" specifies the sev device driver.
+    "-sev-mfn specifies the location of the measurement file.
 
 After you run the test the first time, you need not re-compile the certifier or
 install the device driver. To rerun the tests again, first clean the app files:

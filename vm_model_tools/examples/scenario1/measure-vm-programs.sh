@@ -47,8 +47,9 @@ function do-measure-vm() {
 	fi
 
 	pushd $EXAMPLE_DIR/provisioning
-	echo "virtee call goes here"
-	# put it in $VM_NAME.measurement
+          echo "sev-snp-measure --mode snp --vcpu-family=$CPU_FAMILY --vcpu-model=$CPU_MODEL --vcpu-stepping=CPU_STEPPING \ "
+           "--ovmf=$VM_OVMF_FILE_NAME  --kernel=$VM_KERNEL_FILE_NAME --initrd=$VM_INITRAM_FILE_NAME \ "
+           "--append=$VM_COMMAND_LINE --vcpus=N_VCPUS --vmm-type=QEMU --guest-features=$CPU_FEATURES --output-format hex > $SEV_MEASUREMENT_FILE_NAME "
 	popd
 
 	echo "vm measured"
