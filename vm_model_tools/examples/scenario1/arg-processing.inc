@@ -112,7 +112,6 @@ function print-options() {
         echo "TPM_MEASUREMENT_FILE_NAME         -tpm-mfn        tpm measurement file name"
         echo "SEV_DEVICE                        -sev-dev        sev device"
         echo "SEV_MEASUREMENT_FILE_NAME         -sev-mfn        sev measurement file name"
-        echo "VM_OVMF_FILE_NAME                 -ovmf-mfn       ovmf file name"
         echo "VM_KERNEL_FILE_NAME               -kernel-mfn     linux file name"
         echo "VM_INITRAM_FILE_NAME              -initram-mfn    initram file name"
         echo "VM_COMMAND_LINE                   -vm-cmd         vm command line"
@@ -123,7 +122,9 @@ function print-options() {
         echo "CPU_MODEL                         -cpu-model      cpu model"
         echo "CPU_STEPPING                      -cpu-stepping   cpu stepping"
         echo "CPU_FAMILY                        -cpu-family     cpu family"
-        echo "CPU_FEATURES                      -cpi-features   cpu features"
+        echo "CPU_FEATURES                      -cpu-feat       cpu features"
+        echo "VMM_TYPE                          -vmm-type       VMM type"
+        echo "OVMF_LOCATION                     -ovmf-loc       ovmf file"
         echo "-----------------------------------------------------------------"
         echo ""
 }
@@ -172,7 +173,6 @@ COMPILE_ONLY=0
 TPM_MEASUREMENT_FILE_NAME="./tpm_cf_utility.measurement"
 SEV_DEVICE="/dev/sev-guest"
 SEV_MEASUREMENT_FILE_NAME="./sev.measurement"
-VM_OVMF_FILE_NAME="ovmf.fd"
 VM_KERNEL_FILE_NAME="./vmlinuz"
 VM_INITRAM_FILE_NAME="./initrd.img"
 VM_COMMAND_LINE=""
@@ -182,7 +182,8 @@ CPU_MODEL=1
 CPU_STEPPING=2
 CPU_FAMILY=23
 CPU_FEATURES=""
-
+VMM_TYPE="QEMU"
+OVMF_LOCATION="/usr/share/ovmf/OVMF.amdsev.fd"
 
 
 function print-variables() {
@@ -201,6 +202,7 @@ function print-variables() {
         echo "Program name:                          $PROGRAM_NAME"
         echo "VM name:                               $VM_NAME"
         echo "Operation:                             $OPERATION"
+        echo "Compile only                           $COMPILE_ONLY"
         echo ""
         echo "Domain name:                           $DOMAIN_NAME"
         echo "Policy Key file name:                  $POLICY_KEY_FILE_NAME"
@@ -225,26 +227,29 @@ function print-variables() {
         echo "Number of pcrs measured                $NUM_PCR"
         echo "Pcr string                             $PCRSTR"
         echo "Name of TPM device                     $TPM_DEVICE"
+        echo "TPM measurement file name              $TPM_MEASUREMENT_FILE_NAME"
+        echo "SEV device                             $SEV_DEVICE"
+        echo "SEV measurement file name              $SEV_MEASUREMENT_FILE_NAME"
+        echo ""
         echo "Seal hierarchy file name               $SEAL_STORE"
         echo "Quote hierarchy file name              $QUOTE_STORE"
+        echo ""
         echo "Quote Cert file                        $QUOTE_CERT_FILE"
         echo "Endorsement cert file                  $END_CERT_FILE"
         echo "Endorsement cert chain                 $END_CERT_CHAIN_FILE"
         echo "Activation service IP host             $ACTIVATE_HOST"
         echo "Activation service port                $ACTIVATE_PORT"
-        echo "Compile only                           $COMPILE_ONLY"
-        echo "TPM measurement file name              $TPM_MEASUREMENT_FILE_NAME"
-        echo "SEV device                             $SEV_DEVICE"
-        echo "SEV measurement file name              $SEV_MEASUREMENT_FILE_NAME"
-        echo "OVMF name                              $VM_OVMF_FILE_NAME"
+        echo ""
         echo "VM kernel file                         $VM_KERNEL_FILE_NAME"
         echo "VM initram file                        $VM_INITRAM_FILE_NAME"
         echo "VM command line                        $VM_COMMAND_LINE"
         echo "CPU type                               $CPU_TYPE"
         echo "Number of cpus                         $NVCPUS"
-        echo "cpu model                              $CPU_MODEL"
-        echo "cpu stepping                           $CPU_STEPPING"
-        echo "cpu features                           $CPU_FEATURES"
+        echo "CPU model                              $CPU_MODEL"
+        echo "CPU stepping                           $CPU_STEPPING"
+        echo "CPU features                           $CPU_FEATURES"
+        echo "VMM type                               $VMM_TYPE"
+        echo "OVMF file location                     $OVMF_LOCATION"
 
         echo ""
 }
@@ -383,10 +388,7 @@ function process-args() {
             if [[ ${array[i]} = "-sev-mfn" ]]; then
                     SEV_MEASUREMENT_FILE_NAME="${array[i+1]}"
             fi
-            if [[ ${array[i]} = "-ovmf-mfn" ]]; then
-              VM_OVMF_FILE_NAME="${array[i+1]}"
-            fi
-            if [[ ${array[i]} = "-kernel-mfn " ]]; then
+            if [[ ${array[i]} = "-kernel-mfn" ]]; then
               VM_KERNEL_FILE_NAME="${array[i+1]}"
             fi
             if [[ ${array[i]} = "-vm-cmd" ]]; then
@@ -411,8 +413,14 @@ function process-args() {
             if [[ ${array[i]} = "-cpu-family" ]]; then
               CPU_FAMILY="${array[i+1]}"
             fi
-            if [[ ${array[i]} = "-cpu-features" ]]; then
-              CPU_FEATURES=""
+            if [[ ${array[i]} = "-cpu-feat" ]]; then
+              CPU_FEATURES="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-vmm-type" ]]; then
+                    VMM_TYPE="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-ovmf-loc" ]]; then
+                    OVMF_LOCATION="${array[i+1]}"
             fi
 
         done

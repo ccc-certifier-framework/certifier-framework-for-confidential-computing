@@ -31,13 +31,6 @@ function do-fresh() {
         echo " "
 }
 
-# git clone https://github.com/virtee/sev-snp-measure.git
-# cd sev-snp-measure
-# ./sev-snp-measure.py --help
-# Something like this:
-# 	sev-snp-measure --mode snp --vcpus=1 --vcpu-type=EPYC-v4 --ovmf=OVMF.fd
-#         \ --kernel=vmlinuz --initrd=initrd.img --append="console=ttyS0 loglevel=7"
-
 function do-measure-vm() {
 	echo " "
 	echo "measuring vm"
@@ -47,9 +40,24 @@ function do-measure-vm() {
 	fi
 
 	pushd $EXAMPLE_DIR/provisioning
-          echo "sev-snp-measure --mode snp --vcpu-family=$CPU_FAMILY --vcpu-model=$CPU_MODEL --vcpu-stepping=CPU_STEPPING \ "
-           "--ovmf=$VM_OVMF_FILE_NAME  --kernel=$VM_KERNEL_FILE_NAME --initrd=$VM_INITRAM_FILE_NAME \ "
-           "--append=$VM_COMMAND_LINE --vcpus=N_VCPUS --vmm-type=QEMU --guest-features=$CPU_FEATURES --output-format hex > $SEV_MEASUREMENT_FILE_NAME "
+          pushd $CERTIFIER_ROOT
+            cd ..
+            MEASURE_PROG_DIR=$(pwd)/virtee/sev-snp-measure
+          popd
+          if [[ ! -e "$MEASURE_PROG_DIR" ]] ; then
+            echo "Measurement program directory, $MEASURE_PROG_DIR, does not exist.  Did you install it?"
+            exit
+          fi
+          echo ""
+          #echo "$MEASURE_PROG_DIR/sev-snp-measure.py --mode snp --vcpu-family $CPU_FAMILY --vcpu-model $CPU_MODEL --vcpu-stepping $CPU_STEPPING " \
+          #  "--ovmf $OVMF_LOCATION --kernel $VM_KERNEL_FILE_NAME --initrd $VM_INITRAM_FILE_NAME  " \
+          #  "--append $VM_COMMAND_LINE --vcpus $NVCPUS --vmm-type $VMM_TYPE --guest-features $CPU_FEATURES --output-format hex > $SEV_MEASUREMENT_FILE_NAME "
+          echo "$MEASURE_PROG_DIR/sev-snp-measure.py --mode snp --vcpu-family $CPU_FAMILY --vcpu-model $CPU_MODEL --vcpu-stepping $CPU_STEPPING " \
+            "--ovmf $OVMF_LOCATION --kernel $VM_KERNEL_FILE_NAME --initrd $VM_INITRAM_FILE_NAME  " \
+            "$VM_COMMAND_LINE --vcpus $NVCPUS --vmm-type $VMM_TYPE --output-format hex > $SEV_MEASUREMENT_FILE_NAME "
+          $MEASURE_PROG_DIR/sev-snp-measure.py --mode snp --vcpu-family $CPU_FAMILY --vcpu-model $CPU_MODEL --vcpu-stepping $CPU_STEPPING  \
+             --ovmf $OVMF_LOCATION --kernel $VM_KERNEL_FILE_NAME --initrd $VM_INITRAM_FILE_NAME \  
+             --vcpus $N_VCPUS --vmm-type $VMM_TYPE --output-format hex > $SEV_MEASUREMENT_FILE_NAME 
 	popd
 
 	echo "vm measured"

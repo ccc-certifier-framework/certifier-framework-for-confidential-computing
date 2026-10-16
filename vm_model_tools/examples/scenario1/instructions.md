@@ -234,6 +234,22 @@ cd ~/src/github.com
 git clone https://github.com/virtee/sev-snp-measure.git
 ```
 
+You shoud also install the ovmf firmware for the measurement tool.
+
+```shell
+sudo apt install ovmf
+git clone https://github.com/AMDESE/AMDSEV.git
+```
+
+The following package build host/guest kernels, QEMU, and OVMF
+from AMD's development branches for SEV 3.0+ (SNP).
+
+```shell
+git clone https://github.com/AMDESE/AMDSEV.git
+```
+
+https://www.amd.com/en/developer/sev.html has useful information for sev.
+
 If you are using real SEV, the script that measures the vm will call the utility but
 the scripts assume the directory .../virtee/sev-snp-measure is in your path.
 If you are using simulated SEV, the scripts construct the fabricated measurement
@@ -254,7 +270,7 @@ or, if you already compiled as above:
 If you use the real SEV and have compiled the framework (and the measurement tool),
 
 ```shell
-    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -loud 1 -dn dom0 -pn cf-utility -pk 1 -sev-dev /dev/sev -sev-mfn ./sev.measurement
+    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -loud 1 -dn dom0 -pn cf-utility -pk 1 -sev-dev /dev/sev -sev-mfn ./sev.measurement -initram-mfn /boot/initrd.img -kernel-mfn /boot/vmlinuz -ovmf • --ovmf /usr/share/OVMF
 ```
 
 Some new flags we used are:
