@@ -117,7 +117,7 @@ function do-make-policy() {
 
         echo " "
         if [[ $TEST_TYPE = "simulated" ]]; then
-          echo "For simulated enclave"
+          echo "For simulated sev enclave"
         else
           echo "For real sev enclave"
         fi
