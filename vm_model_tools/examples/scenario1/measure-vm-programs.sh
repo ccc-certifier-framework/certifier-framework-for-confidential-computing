@@ -49,15 +49,12 @@ function do-measure-vm() {
             exit
           fi
           echo ""
-          #echo "$MEASURE_PROG_DIR/sev-snp-measure.py --mode snp --vcpu-family $CPU_FAMILY --vcpu-model $CPU_MODEL --vcpu-stepping $CPU_STEPPING " \
-          #  "--ovmf $OVMF_LOCATION --kernel $VM_KERNEL_FILE_NAME --initrd $VM_INITRAM_FILE_NAME  " \
-          #  "--append $VM_COMMAND_LINE --vcpus $NVCPUS --vmm-type $VMM_TYPE --guest-features $CPU_FEATURES --output-format hex > $SEV_MEASUREMENT_FILE_NAME "
           echo "$MEASURE_PROG_DIR/sev-snp-measure.py --mode snp --vcpu-family $CPU_FAMILY --vcpu-model $CPU_MODEL --vcpu-stepping $CPU_STEPPING " \
             "--ovmf $OVMF_LOCATION --kernel $VM_KERNEL_FILE_NAME --initrd $VM_INITRAM_FILE_NAME  " \
-            "$VM_COMMAND_LINE --vcpus $NVCPUS --vmm-type $VMM_TYPE --output-format hex > $SEV_MEASUREMENT_FILE_NAME "
-          $MEASURE_PROG_DIR/sev-snp-measure.py --mode snp --vcpu-family $CPU_FAMILY --vcpu-model $CPU_MODEL --vcpu-stepping $CPU_STEPPING  \
-             --ovmf $OVMF_LOCATION --kernel $VM_KERNEL_FILE_NAME --initrd $VM_INITRAM_FILE_NAME \  
-             --vcpus $N_VCPUS --vmm-type $VMM_TYPE --output-format hex > $SEV_MEASUREMENT_FILE_NAME 
+            "$NVCPUS --vmm-type $VMM_TYPE --output-format hex > $SEV_MEASUREMENT_FILE_NAME "
+          $MEASURE_PROG_DIR/sev-snp-measure.py --mode snp --vcpu-family $CPU_FAMILY --vcpu-model $CPU_MODEL --vcpu-stepping $CPU_STEPPING \
+            "--ovmf $OVMF_LOCATION --kernel $VM_KERNEL_FILE_NAME --initrd $VM_INITRAM_FILE_NAME  \
+            "$NVCPUS --vmm-type $VMM_TYPE --output-format hex > $SEV_MEASUREMENT_FILE_NAME
 	popd
 
 	echo "vm measured"
