@@ -154,14 +154,14 @@ if [[ $DEPLOYED_ENCLAVE_TYPE == "tpm-enclave" ]]; then
   cp $QUOTE_CERT_FILE ./cf_data
 fi
 
+echo ""
+echo "build-policy.sh"
+./build-policy.sh $ALLARGS			# working
+
 if [[ $TEST_TYPE = "real" ]]; then
 	echo "\"real\" sev test not working yet"
         exit
 fi
-
-echo ""
-echo "build-policy.sh"
-./build-policy.sh $ALLARGS			# working
 
 echo ""
 echo "copy-files.sh"
