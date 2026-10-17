@@ -270,7 +270,7 @@ or, if you already compiled as above:
 If you use the real SEV and have compiled the framework (and the measurement tool),
 
 ```shell
-    ./run-test-scenario1.sh  -tt real -bss 0 -ccf 0 -loud 1 -dn dom0 -pn cf-utility -pk 1 -sev-dev /dev/sev -sev-mfn ./sev.measurement -initram-mfn ./initrd.img -kernel-mfn ./vmlinuz -ovmf • --ovmf /usr/share/ovmf/OVMF.amdsev.fd 
+    ./run-test-scenario1.sh  -tt real -bss 0 -ccf 0 -loud 1 -dn dom0 -pn cf-utility -pk 1 -sev-dev /dev/sev -sev-mfn ./sev.measurement -initram-mfn ../initrd.img -kernel-mfn ../vmlinuz -ovmf-loc /usr/share/ovmf/OVMF.amdsev.fd 
 ```
 
 Some new flags we used are:
