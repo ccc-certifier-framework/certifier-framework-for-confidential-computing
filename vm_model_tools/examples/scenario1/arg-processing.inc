@@ -118,7 +118,6 @@ function print-options() {
 
         echo "CPU TYPE                          -cpu-type       cpu type"
         echo "NVCPUS                            -n-cpus         number of cpus"
-        echo "CPU_TYPE                          -cpu-type       cpu type"
         echo "CPU_MODEL                         -cpu-model      cpu model"
         echo "CPU_STEPPING                      -cpu-stepping   cpu stepping"
         echo "CPU_FAMILY                        -cpu-family     cpu family"
