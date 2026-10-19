@@ -92,7 +92,7 @@ dobj += tpm_obj
 key_dobj += tpm_obj
 endif
 
-all:	cert_utility.exe measurement_init.exe key_utility.exe combine_policy_certs.exe
+all:	cert_utility.exe measurement_init.exe key_utility.exe combine_policy_certs.exe cpuid.exe
 clean:
 	@echo "removing object and generated files"
 	rm -rf $(O)/*.o $(US)/certifier.pb.cc $(US)/certifier.pb.h $(I)/certifier.pb.h || true
@@ -182,4 +182,8 @@ $(O)/tpm2_support.o: $(T)/tpm2_support.cc $(T)/certifier.pb.cc $(T)/tpm2.pb.cc
 $(O)/tpm2.pb.o: $(T)/tpm2.pb.cc $(T)/tpm2.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+cpuid.exe: $(US)/cpuid.cc
+	@echo "\ncpuid $@"
+	$(CC) -o $(EXE_DIR)/cpuid.exe $(US)/cpuid.cc
 
