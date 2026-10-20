@@ -99,23 +99,23 @@ typedef long long int           i64;
  *    10      invpcid                                 vpclmulqdq
  *    11      rtm  Transactional Synchronization      avx512vnni
  *    12      pqm  Platform Service Monitoring        avx512bitalg   AVX-512 BITALG instructions
- *    14      mpx  Intel MPX                          avx512vpopcntdq  
+ *    14      mpx  Intel MPX                          avx512vpopcntdq
  *    15      pqe  Platform QOS
- *    16      avx512f 
- *    17      avx512dq 
+ *    16      avx512f
+ *    17      avx512dq
  *    18      rdseed RDSEED instruction
- *    19      adx 
+ *    19      adx
  *    20      smap Supervisor Mode Access Prevention
- *    21      avx512ifma   
+ *    21      avx512ifma
  *    22      pcommit                                 rdpid   Read Processor ID
- *    23      clflushopt 
- *    24      clwb 
- *    25      intel_pt Processor Trace 
- *    26      avx512pf  Prefetch Instructions 
+ *    23      clflushopt
+ *    24      clwb
+ *    25      intel_pt Processor Trace
+ *    26      avx512pf  Prefetch Instructions
  *    27      avx512er  Exponential and Reciprocal
- *    28      avx512cd  Conflict Detection 
- *    29      sha 
- *    30      avx512bw 
+ *    28      avx512cd  Conflict Detection
+ *    29      sha
+ *    30      avx512bw
  *    31      avx512vl
  *
  *    Bit     EDX
@@ -222,7 +222,7 @@ char* rgCallName[MAXCALL] = {
   (char*) "new",            // 63, 0x3f
 
 };
- 
+
 
 struct cpuCapability {
   int   offset;
