@@ -112,7 +112,7 @@ bool read_file(string file_name, int *size, byte *data) {
   return true;
 }
 
-bool read_file_into_string(const string &file_name, string  *out) {
+bool read_file_into_string(const string &file_name, string *out) {
   int size = file_size(file_name);
   if (size < 0) {
     printf("%s() error, line: %d, read_file_into_string: Can't size input file "
@@ -219,8 +219,8 @@ int main(int an, char **av) {
     printf("Output file: %s\n", FLAGS_out_file.c_str());
   }
 
-  int  measurement_size = 64;
-  byte m[measurement_size];
+  int    measurement_size = 64;
+  byte   m[measurement_size];
   string hex_measurement;
 
   if (FLAGS_test_measurement == true) {
@@ -243,7 +243,9 @@ int main(int an, char **av) {
              FLAGS_in_file.c_str());
       return 1;
     }
-    int n = hex_to_byte((char *)hex_measurement.data(), hex_measurement.size() - 1, m);
+    int n = hex_to_byte((char *)hex_measurement.data(),
+                        hex_measurement.size() - 1,
+                        m);
     if (n < 0) {
       printf("%s() error, line %d, Cant convert to hex %s\n",
              __func__,
