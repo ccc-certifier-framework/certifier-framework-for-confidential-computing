@@ -171,7 +171,7 @@ int num_bytes_in_hex(char *in) {
 
 int num_hex_in_bytes(int size, byte_t *in) {
   return 2 * size;
-} 
+}
 
 byte_t hex_to_value(char x) {
   if (x >= '0' && x <= '9') {

@@ -215,7 +215,7 @@ executables, without being root.  To do this, for the simulated sev environment:
     ./run-test-scenario1.sh  -bss 1 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 -just-compile 1
 ```
 
-if you are running on a real sev platform, 
+if you are running on a real sev platform,
 
 ```shell
     ./run-test-scenario1.sh  -bss 0 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 -just-compile 1

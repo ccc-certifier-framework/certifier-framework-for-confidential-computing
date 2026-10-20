@@ -62,20 +62,20 @@ typedef long long int           i64;
  *      13      pge Page Global Enable bit in CR4   cx16   CMPXCHG16B instruction
  *      14      mca Machine check architecture      xtpr   Can disable sending task priority messages
  *      15      cmov Conditional move and FCMOV     pdcm   Perfmon & debug capability
- *      16      pat  Page Attribute Table 
+ *      16      pat  Page Attribute Table
  *      17      pse-36  36-bit page size extension  pcid   Process context identifiers (CR4 bit 17)
  *      18      psn                                 dca   Direct cache access for DMA writes[12][13]
  *      19      clfsh                               sse4.1
  *      21      ds                                  x2apic
  *      22      acpi thermal MSRs for ACPI          movbe (big-endian)
- *      23      mmx                                 popcnt 
+ *      23      mmx                                 popcnt
  *      24      fxsr                                tsc-deadline
  *      25      sse (Katmai) Instructions           aes
  *      26      sse2                                xsave
  *      27      ss CPU cache supports self-snoop    osxsave XSAVE enabled by OS
- *      28      htt Hyper-threading                 avx 
+ *      28      htt Hyper-threading                 avx
  *      29      tm Thermal monitor limits temp      f16c half-precision FP support
- *      30      ia64 processor emulating x86        rdrnd 
+ *      30      ia64 processor emulating x86        rdrnd
  *      31      pbe                                 hypervisor Running on a hypervisor
  *
  *  EAX=2: Cache and TLB Descriptor information
@@ -92,12 +92,12 @@ typedef long long int           i64;
  *    2       sgx Software Guard Extensions           umip   User-mode Instruction Prevention
  *    3       bmi1  Bit Manipulation Set 1            pku   Memory Protection Keys for User-mode pages
  *    4       hle Transactional Synchronization       ospke   PKU enabled by OS
- *    5       avx2 Advanced Vector Extensions 2 
+ *    5       avx2 Advanced Vector Extensions 2
  *    7       smep Supervisor-Mode Execution Prevent
  *    8       bmi2 Bit Manipulation                   gfni  Galois Field instructions
  *    9       erms Enhanced REP MOVSB/STOSB           vaes  Vector AES instruction set (VEX-256/EVEX)
- *    10      invpcid                                 vpclmulqdq 
- *    11      rtm  Transactional Synchronization      avx512vnni 
+ *    10      invpcid                                 vpclmulqdq
+ *    11      rtm  Transactional Synchronization      avx512vnni
  *    12      pqm  Platform Service Monitoring        avx512bitalg   AVX-512 BITALG instructions
  *    14      mpx  Intel MPX                          avx512vpopcntdq  
  *    15      pqe  Platform QOS
@@ -130,7 +130,7 @@ typedef long long int           i64;
  *    The highest calling parameter is returned in EAX.
  *
  *   EAX=2: Cache and TLB Descriptor information
- *     Returns descriptors indicating cache and TLB capabilities in EAX, EBX, ECX and EDX 
+ *     Returns descriptors indicating cache and TLB capabilities in EAX, EBX, ECX and EDX
  *
  *  EAX=3: Processor Serial Number
  *  EAX=80000000h: Get Highest Extended Function Supported
@@ -222,7 +222,7 @@ char* rgCallName[MAXCALL] = {
   (char*) "new",            // 63, 0x3f
 
 };
-    
+ 
 
 struct cpuCapability {
   int   offset;
@@ -340,9 +340,9 @@ struct cpuCapability ECX2Capability[32]= {
    2,   (char*)"umip",
    3,   (char*)"pku",
    4,   (char*)"ospke",
-   -5,  (char*)"", 
-   -6,  (char*)"", 
-   -7,  (char*)"",   
+   -5,  (char*)"",
+   -6,  (char*)"",
+   -7,  (char*)"",
    8,   (char*)"gfni",
    9,   (char*)"vaes",
    10,  (char*)"vpclmulqdq ",
@@ -375,9 +375,9 @@ struct cpuCapability EDX2Capability[32]= {
    2,   (char*)"avx512_4vnniw",
    3,   (char*)"avx512_4fmaps",
    -4,   (char*)"",
-   -5,  (char*)"", 
-   -6,  (char*)"", 
-   -7,  (char*)"",   
+   -5,  (char*)"",
+   -6,  (char*)"",
+   -7,  (char*)"",
    -8,   (char*)"",
    -9,   (char*)"",
    -10,  (char*)"",
@@ -412,10 +412,10 @@ void printFeatures(u32 capabilities, struct cpuCapability* rg)
     if(rg[i].offset < 0)
         continue;
     if(((capabilities>>rg[i].offset)&1)!=0)
-        printf("\t");
+        printf("t");
     else
-        printf("\tNO ");
-    printf("%s\n", rg[i].feature);
+        printf("tNO ");
+    printf("%sn", rg[i].feature);
   }
 }
 
@@ -431,15 +431,15 @@ void callcpuid(u32 a, u32 b, u32 c, u32 d, u32 out[4]) {
   u32   a1, a2, a3, a4;
 
   asm volatile(
-    "\tmovl    %[a], %%eax\n" \
-    "\tmovl    %[b], %%ebx\n" \
-    "\tmovl    %[c], %%ecx\n" \
-    "\tmovl    %[d], %%edx\n" \
-    "\tcpuid   \n" \
-    "\tmovl    %%eax, %[a1]\n" \
-    "\tmovl    %%ebx, %[a2]\n" \
-    "\tmovl    %%ecx, %[a3]\n" \
-    "\tmovl    %%edx, %[a4]\n" \
+    "tmovl    %[a], %%eax\n" \
+    "tmovl    %[b], %%ebx\n" \
+    "tmovl    %[c], %%ecx\n" \
+    "tmovl    %[d], %%edx\n" \
+    "tcpuid   \n" \
+    "tmovl    %%eax, %[a1]\n" \
+    "tmovl    %%ebx, %[a2]\n" \
+    "tmovl    %%ecx, %[a3]\n" \
+    "tmovl    %%edx, %[a4]\n" \
     : [a1] "=m"(a1), [a2] "=m"(a2), [a3] "=m"(a3), [a4] "=m"(a4)
     : [a] "m" (a), [b] "m" (b), [c] "m" (c), [d] "m" (d)
     : "%eax", "%ebx", "%ecx", "%edx");
@@ -494,9 +494,9 @@ int main(int an, char** av) {
 
   // Manufacturer info
   a= 0;
-  printf("\n");
+  printf("n");
   callcpuid(a, 0, 0, 0,retValues);
-  printf("cpuid(%d): %08x %08x %08x %08x   %s\n", a,
+  printf("cpuid(%d): %08x %08x %08x %08x   %sn", a,
           retValues[0], retValues[1], retValues[2], retValues[3],
           rgCallName[a]);
 
@@ -504,7 +504,7 @@ int main(int an, char** av) {
     maxArg = MAXCALL;
 
   char m_name[14];
-  printf("\tmaximum input value: %d, ", maxArg);
+  printf("tmaximum input value: %d, ", maxArg);
   p=(char*) &retValues[1];
   printf("%c%c%c%c", *p,*(p+1), *(p+2), *(p+3));
   memcpy(&m_name[0], p, 4);
@@ -514,16 +514,16 @@ int main(int an, char** av) {
   p=(char*) &retValues[2];
   printf("%c%c%c%c", *p,*(p+1), *(p+2), *(p+3));
   memcpy(&m_name[8], p, 4);
-  printf("\n\n");
+  printf("n\n");
   m_name[12] = 0;
-  printf("manufacturer string: %s\n", m_name);
+  printf("manufacturer string: %sn", m_name);
 
   // AMD info
   if (strcmp("AuthenticAMD", m_name) == 0) {
     a= 0x80000000;
-    printf("\n");
+    printf("n");
     callcpuid(a, 0, 0, 0, retValues);
-    printf("cpuid(0x%08x): %08x %08x %08x %08x   %s\n", a,
+    printf("cpuid(0x%08x): %08x %08x %08x %08x   %sn", a,
             retValues[0], retValues[1], retValues[2], retValues[3],
             "AMD space");
   }
@@ -532,38 +532,38 @@ int main(int an, char** av) {
   // hypervisors and operating systems probe CPUID extended leaf 0x8000001F
   if (strcmp("AuthenticAMD", m_name) == 0) {
     a= 0x8000001f;
-    printf("\n");
+    printf("n");
     callcpuid(a, 0, 0, 0, retValues);
-    printf("cpuid(0x%08x): %08x %08x %08x %08x   %s\n", a,
+    printf("cpuid(0x%08x): %08x %08x %08x %08x   %sn", a,
             retValues[0], retValues[1], retValues[2], retValues[3],
             "SEV info");
     if ((retValues[0]&0x1) != 0) {
-      printf("        SME\n");
+      printf("        SMEn");
     } else {
-      printf("        no SME\n");
+      printf("        no SMEn");
     }
     if ((retValues[0]&0x2) != 0) {
-      printf("        baseline virtualization support\n");
+      printf("        baseline virtualization supportn");
     } else {
-      printf("        no baseline virtualization support\n");
+      printf("        no baseline virtualization supportn");
     }
     if ((retValues[0]&0x4) != 0) {
-      printf("        encrypted state support\n");
+      printf("        encrypted state supportn");
     } else {
-      printf("        no encrypted state support\n");
+      printf("        no encrypted state supportn");
     }
     if ((retValues[0]&0x8) != 0) {
-      printf("        SNP support\n");
+      printf("        SNP supportn");
     } else {
-      printf("        no SNP support\n");
+      printf("        no SNP supportn");
     }
   }
 
   // Processor features
   a= 1;
-  printf("\n");
+  printf("n");
   callcpuid(a, 0, 0, 0, retValues);
-  printf("cpuid(%d): %08x %08x %08x %08x   %s\n", a,
+  printf("cpuid(%d): %08x %08x %08x %08x   %sn", a,
           retValues[0], retValues[1], retValues[2], retValues[3],
           rgCallName[a]);
 
@@ -575,222 +575,222 @@ int main(int an, char** av) {
   u32 ex_model = (b>>16)&0xf;
   u32 ex_fam = (b>>20)&0xff;
 
-  printf("\tstepping: %x\n", step);
-  printf("\tmodel: %x\n", model);
-  printf("\textended model id: %x\n", ex_model);
-  printf("\tfamily id: %x\n", fam_id);
-  printf("\textended family id: %x\n", ex_fam);
-  printf("\tprocessor type: %x\n", proc_type);
+  printf("tstepping: %x\n", step);
+  printf("tmodel: %x\n", model);
+  printf("textended model id: %x\n", ex_model);
+  printf("tfamily id: %x\n", fam_id);
+  printf("textended family id: %x\n", ex_fam);
+  printf("tprocessor type: %x\n", proc_type);
   if (strcmp("AuthenticAMD", m_name) == 0) {
-    printf("\tAMD family group numbering: %d, 0x%02x\n", fam_id + ex_fam, fam_id + ex_fam);
+    printf("tAMD family group numbering: %d, 0x%02x\n", fam_id + ex_fam, fam_id + ex_fam);
   }
 
   if (strcmp("AuthenticAMD", m_name) == 0) {
     u32 gen = model + ex_model;
     switch(fam_id + ex_fam) {
       default:
-        printf("\tAMD unknown family\n");
+        printf("tAMD unknown family\n");
         break;
       case 23:
-        printf("\tAMD zen 1/2 family (Ryzen, EPYC Naples\n");
+        printf("tAMD zen 1/2 family (Ryzen, EPYC Naples\n");
         break;
       case 24:
-        printf("\tAMD hygon family\n");
+        printf("tAMD hygon family\n");
         break;
       case 25:
-        printf("\tAMD zen 3/4 family (Ryzen, Milan), ");
+        printf("tAMD zen 3/4 family (Ryzen, Milan), ");
         if (gen >=0 && gen < 0xf || gen >=0x30 && gen < 0x3f) {
-          printf(" 3th gen\n");
+          printf(" 3th genn");
         } else if (gen >=0x10 && gen < 0x1f) {
-          printf(" 4th gen\n");
+          printf(" 4th genn");
         } else {
-          printf(" gen unknown\n");
+          printf(" gen unknownn");
         }
         break;
       case 26:
-        printf("\tAMD zen 5/6 family (Turin), ");
-        printf(" 5th gen\n");
+        printf("tAMD zen 5/6 family (Turin), ");
+        printf(" 5th genn");
         break;
     }
   }
 
-  printf("\nfeatures:\n");
+  printf("nfeatures:\n");
   printFeatures(retValues[3], EDXCapability);
-  printf("\n");
+  printf("n");
   printFeatures(retValues[2], ECXCapability);
-  printf("\n");
+  printf("n");
 
   // cache and TLB
   a= 2;
-  printf("\n");
+  printf("n");
   callcpuid(a, 0, 0, 0, retValues);
-  printf("cpuid(%d): %08x %08x %08x %08x   %s\n", a,
+  printf("cpuid(%d): %08x %08x %08x %08x   %sn", a,
           retValues[0], retValues[1], retValues[2], retValues[3],
           rgCallName[a]);
 
   // cache hierarchy
   a= 4;
-  printf("\n");
+  printf("n");
   callcpuid(a, 0, 0, 0, retValues);
-  printf("cpuid(%d): %08x %08x %08x %08x   %s\n", a,
+  printf("cpuid(%d): %08x %08x %08x %08x   %sn", a,
           retValues[0], retValues[1], retValues[2], retValues[3],
           rgCallName[a]);
 
   // Monitor/mwait
   a= 5;
-  printf("\n");
+  printf("n");
   callcpuid(a, 0, 0, 0, retValues);
-  printf("cpuid(%d): %08x %08x %08x %08x   %s\n", a,
+  printf("cpuid(%d): %08x %08x %08x %08x   %sn", a,
           retValues[0], retValues[1], retValues[2], retValues[3],
           rgCallName[a]);
   if ((retValues[2]&0x1) != 0) {
-    printf("        EMX\n");
+    printf("        EMXn");
   } else {
-    printf("        no EMX\n");
+    printf("        no EMXn");
   }
   if ((retValues[2]&0x2) != 0) {
-    printf("        IBE\n");
+    printf("        IBEn");
   } else {
-    printf("        no IBE\n");
+    printf("        no IBEn");
   }
 
   // Thermal and Power
   a= 6;
-  printf("\n");
+  printf("n");
   callcpuid(a, 0, 0, 0, retValues);
-  printf("cpuid(%d): %08x (eax) %08x (ebx) %08x (ecx) %08x (edx)  %s\n", a,
+  printf("cpuid(%d): %08x (eax) %08x (ebx) %08x (ecx) %08x (edx)  %sn", a,
           retValues[0], retValues[1], retValues[2], retValues[3],
           rgCallName[a]);
   if ((retValues[1]&0xf) != 0) {
-    printf("        interrupt threshholds : %d\n", retValues[1]&0xf);
-  } 
+    printf("        interrupt threshholds : %dn", retValues[1]&0xf);
+  }
 
   // Extended features
   a= 7;
-  printf("\n");
+  printf("n");
   callcpuid(a, 0, 0, 0, retValues);
-  printf("cpuid(%d): %08x %08x %08x %08x   %s\n", a,
+  printf("cpuid(%d): %08x %08x %08x %08x   %sn", a,
           retValues[0], retValues[1], retValues[2], retValues[3],
           rgCallName[a]);
   printFeatures(retValues[1], EBX2Capability);
-  printf("\n");
+  printf("n");
   printFeatures(retValues[2], ECX2Capability);
-  printf("\n");
+  printf("n");
   printFeatures(retValues[3], EDX2Capability);
-  printf("\n");
+  printf("n");
 
-  printf("\n");
+  printf("n");
   ui= 0x80000006;
   pLabel= (char*)"extended cache features";
   callcpuid(ui, 0, 0, 0, retValues);
-  printf("cpuid(0x%08x): %08x %08x %08x %08x   %s\n", ui,
+  printf("cpuid(0x%08x): %08x %08x %08x %08x   %sn", ui,
          retValues[0], retValues[1], retValues[2], retValues[3],
          pLabel);
 
-  printf("\n");
+  printf("n");
   ui= 0x80000007;
   pLabel= (char*)"Advanced Power Management";
   callcpuid(ui, 0, 0, 0, retValues);
-  printf("cpuid(0x%08x): %08x %08x %08x %08x   %s\n", ui,
+  printf("cpuid(0x%08x): %08x %08x %08x %08x   %sn", ui,
          retValues[0], retValues[1], retValues[2], retValues[3],
          pLabel);
 
-  printf("\n");
+  printf("n");
   ui= 0x80000008;
   pLabel= (char*)"virtual and physical memory size";
   callcpuid(ui, 0, 0, 0, retValues);
-  printf("cpuid(0x%08x): %08x %08x %08x %08x   %s\n", ui,
+  printf("cpuid(0x%08x): %08x %08x %08x %08x   %sn", ui,
          retValues[0], retValues[1], retValues[2], retValues[3],
          pLabel);
 
   // sgx
-  printf("\n");
+  printf("n");
   a= 0x12;
   callcpuid(a, 0, 0, 0, retValues);
-  printf("cpuid(%d): %08x %08x %08x %08x   %s\n", a,
+  printf("cpuid(%d): %08x %08x %08x %08x   %sn", a,
           retValues[0], retValues[1], retValues[2], retValues[3],
           rgCallName[a]);
   if ((retValues[0]&0x1) != 0) {
-    printf("        SGX1\n");
+    printf("        SGX1n");
   } else {
-    printf("        SGX2\n");
+    printf("        SGX2n");
   }
   if ((retValues[0]&0x1000) != 0) {
-    printf("        256 Bit SGX\n");
+    printf("        256 Bit SGXn");
   } else {
-    printf("        no 256 Bit SGX\n");
+    printf("        no 256 Bit SGXn");
   }
 
   // Processor trace
   a= 0x14;
-  printf("\n");
+  printf("n");
   callcpuid(a, 0, 0, 0, retValues);
-  printf("cpuid(%d): %08x %08x %08x %08x   %s\n", a,
+  printf("cpuid(%d): %08x %08x %08x %08x   %sn", a,
           retValues[0], retValues[1], retValues[2], retValues[3],
           rgCallName[a]);
 
   // Bus and Core
   a= 0x15;
-  printf("\n");
+  printf("n");
   callcpuid(a, 0, 0, 0, retValues);
-  printf("cpuid(%d): %08x %08x %08x %08x   %s\n", a,
+  printf("cpuid(%d): %08x %08x %08x %08x   %sn", a,
           retValues[0], retValues[1], retValues[2], retValues[3],
           rgCallName[a]);
 
   // Soc
   a= 0x17;
-  printf("\n");
+  printf("n");
   callcpuid(a, 0, 0, 0, retValues);
-  printf("cpuid(%d): %08x %08x %08x %08x   %s\n", a,
+  printf("cpuid(%d): %08x %08x %08x %08x   %sn", a,
           retValues[0], retValues[1], retValues[2], retValues[3],
           rgCallName[a]);
 
   // TLB again
   a= 0x18;
-  printf("\n");
+  printf("n");
   callcpuid(a, 0, 0, 0, retValues);
-  printf("cpuid(%d): %08x %08x %08x %08x   %s\n", a,
+  printf("cpuid(%d): %08x %08x %08x %08x   %sn", a,
           retValues[0], retValues[1], retValues[2], retValues[3],
           rgCallName[a]);
 
   // TDX
   a= 0x21;
-  printf("\n");
+  printf("n");
   callcpuid(a, 0, 0, 0, retValues);
-  printf("cpuid(%d): %08x %08x %08x %08x   %s\n", a,
+  printf("cpuid(%d): %08x %08x %08x %08x   %sn", a,
           retValues[0], retValues[1], retValues[2], retValues[3],
           rgCallName[a]);
 
   // SVM
-  printf("\n");
+  printf("n");
   a= 0x8000000a;
   callcpuid(a, 0, 0, 0, retValues);
-  printf("cpuid(0x%x): %08x %08x %08x %08x   %s\n", a,
+  printf("cpuid(0x%x): %08x %08x %08x %08x   %sn", a,
           retValues[0], retValues[1], retValues[2], retValues[3],
           rgCallName[0x30+0xa]);
-  printf("        SVM revision %d\n", retValues[0]&0xff);
-  printf("        SVM number of ASIDs%d\n", retValues[1]);
+  printf("        SVM revision %dn", retValues[0]&0xff);
+  printf("        SVM number of ASIDs%dn", retValues[1]);
   if ((retValues[3]&0x20) != 0) {
-    printf("        EMX\n");
+    printf("        EMXn");
   } else {
-    printf("        no EMX\n");
+    printf("        no EMXn");
   }
 
   // Encrypted Memory
   a= 0x8000001f;
-  printf("\n");
+  printf("n");
   callcpuid(a, 0, 0, 0, retValues);
-  printf("cpuid(0x%x): %08x %08x %08x %08x   %s\n", a,
+  printf("cpuid(0x%x): %08x %08x %08x %08x   %sn", a,
           retValues[0], retValues[1], retValues[2], retValues[3],
           rgCallName[0x30+0x0b]);
   if ((retValues[0]&0x1) != 0) {
-    printf("        SME\n");
+    printf("        SMEn");
   } else {
-    printf("        no SME\n");
+    printf("        no SMEn");
   }
-  printf("        c-bit loc %d\n", retValues[1]&0x3f);
-  printf("        address reduction %d\n", (retValues[1]>>6)&0x3f);
-  printf("        number vmpls %d\n", (retValues[1]>>12)&0x1f);
+  printf("        c-bit loc %dn", retValues[1]&0x3f);
+  printf("        address reduction %dn", (retValues[1]>>6)&0x3f);
+  printf("        number vmpls %dn", (retValues[1]>>12)&0x1f);
 
   return(0);
 }
