@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 //
 //      CPUID Decode
@@ -159,7 +160,7 @@ char* rgCallName[MAXCALL] = {
   (char*) "cache parameters",                 // 4
   (char*) "monitor/mwait",                    // 5
   (char*) "thermal",                          // 6
-  (char*) "Extended features",                // 7
+  (char*) "extended features",                // 7
   (char*) "reserved",                         // 8
   (char*) "cache enable",                     // 9
   (char*) "performance monitor",              // 10, 0xa
@@ -235,7 +236,7 @@ struct cpuCapability EDXCapability[32]= {
   3, (char*)"pse page size extensions",
   4, (char*)"tsc time Stamp Counter",
   5, (char*)"msr model-specific registers",
-  6, (char*)"pae mhysical Address Extension",
+  6, (char*)"pae physical Address extension",
   7, (char*)"mce machine Check Exception  ",
   8, (char*)"cx8 mMPXCGH8 instruction",
   9, (char*)"apic on-chip APIC",
@@ -449,6 +450,39 @@ void callcpuid(u32 a, u32 b, u32 c, u32 d, u32 out[4]) {
     out[3]= a4;
 }
 
+/*
+  AMD Families
+    Zen 3 series CPUs and APUs (released 2020)
+      Vermeer Ryzen 5000 series (desktop)
+      Chagall Ryzen Threadripper 5000 series (desktop)
+      Cezanne Ryzen 5000 series (desktop & laptop)
+      Barceló Ryzen 5000 series (laptop)
+      Barceló-R Ryzen 7030 series (laptop)
+      Milan Epyc 7003 series (server)
+      Milan-X Epyc 7003X series (server)
+
+  Zen 3+ series CPUs and APUs (released 2022)
+    Rembrandt Ryzen 6000 series (laptop)
+    Rembrandt-R Ryzen 7035 series (laptop)
+
+  Zen 4 series CPUs and APUs (released 2022)
+    Raphael Ryzen 7000 series (desktop)
+    Storm Peak Ryzen Threadripper 7000 series (desktop)
+    Dragon Range Ryzen 7045 series (laptop)
+    Phoenix Ryzen 8000 APU series (desktop) and Ryzen 7040 series (laptop)
+    Hawk Point Ryzen 8040/8045 series (laptop)
+    Genoa Epyc 9004 series (server)
+    Genoa-X Epyc 9004X series (server)
+    Bergamo Epyc 9704 series (server, Zen 4c cores)
+    Siena Epyc 8004 series (server, Zen 4c cores)
+
+  Zen 5 series CPUs and APUs (released 2024)
+    Granite Ridge Ryzen 9000 series (desktop)
+    Strix Point Ryzen AI 300 series (laptop)
+    Turin Epyc 9005 series (server)
+    Turin Dense Epyc (server, Zen 5c cores)
+ */
+
 
 int main(int an, char** av) {
   u32     a, b;
@@ -469,14 +503,61 @@ int main(int an, char** av) {
   if (maxArg > MAXCALL)
     maxArg = MAXCALL;
 
+  char m_name[14];
   printf("\tmaximum input value: %d, ", maxArg);
   p=(char*) &retValues[1];
   printf("%c%c%c%c", *p,*(p+1), *(p+2), *(p+3));
+  memcpy(&m_name[0], p, 4);
   p=(char*) &retValues[3];
   printf("%c%c%c%c", *p,*(p+1), *(p+2), *(p+3));
+  memcpy(&m_name[4], p, 4);
   p=(char*) &retValues[2];
   printf("%c%c%c%c", *p,*(p+1), *(p+2), *(p+3));
+  memcpy(&m_name[8], p, 4);
   printf("\n\n");
+  m_name[12] = 0;
+  printf("manufacturer string: %s\n", m_name);
+
+  // AMD info
+  if (strcmp("AuthenticAMD", m_name) == 0) {
+    a= 0x80000000;
+    printf("\n");
+    callcpuid(a, 0, 0, 0, retValues);
+    printf("cpuid(0x%08x): %08x %08x %08x %08x   %s\n", a,
+            retValues[0], retValues[1], retValues[2], retValues[3],
+            "AMD space");
+  }
+
+  // To detect if an AMD processor family supports and has enabled SEV-SNP capabilities,
+  // hypervisors and operating systems probe CPUID extended leaf 0x8000001F
+  if (strcmp("AuthenticAMD", m_name) == 0) {
+    a= 0x8000001f;
+    printf("\n");
+    callcpuid(a, 0, 0, 0, retValues);
+    printf("cpuid(0x%08x): %08x %08x %08x %08x   %s\n", a,
+            retValues[0], retValues[1], retValues[2], retValues[3],
+            "SEV info");
+    if ((retValues[0]&0x1) != 0) {
+      printf("        SME\n");
+    } else {
+      printf("        no SME\n");
+    }
+    if ((retValues[0]&0x2) != 0) {
+      printf("        baseline virtualization support\n");
+    } else {
+      printf("        no baseline virtualization support\n");
+    }
+    if ((retValues[0]&0x4) != 0) {
+      printf("        encrypted state support\n");
+    } else {
+      printf("        no encrypted state support\n");
+    }
+    if ((retValues[0]&0x8) != 0) {
+      printf("        SNP support\n");
+    } else {
+      printf("        no SNP support\n");
+    }
+  }
 
   // Processor features
   a= 1;
@@ -485,14 +566,55 @@ int main(int an, char** av) {
   printf("cpuid(%d): %08x %08x %08x %08x   %s\n", a,
           retValues[0], retValues[1], retValues[2], retValues[3],
           rgCallName[a]);
+
   b= retValues[0];
-  printf("\tExtended family: %x\n", (b>>20)&0xff);
-  printf("\tExtended model: %x\n", (b>>16)&0xf);
-  printf("\tProcessor type: %x\n", (b>>12)&0x3);
-  printf("\tFamily: %x\n", (b>>8)&0xf);
-  printf("\tModel: %x\n", (b>>4)&0xf);
-  printf("\tStepping: %x\n", b&0xf);
-  printf("\nFeatures:\n");
+  u32 step = b&0xf;
+  u32 model = (b>>4)&0xf;
+  u32 fam_id = (b>>8)&0xf;
+  u32 proc_type = (b>>12)&0xf;
+  u32 ex_model = (b>>16)&0xf;
+  u32 ex_fam = (b>>20)&0xff;
+
+  printf("\tstepping: %x\n", step);
+  printf("\tmodel: %x\n", model);
+  printf("\textended model id: %x\n", ex_model);
+  printf("\tfamily id: %x\n", fam_id);
+  printf("\textended family id: %x\n", ex_fam);
+  printf("\tprocessor type: %x\n", proc_type);
+  if (strcmp("AuthenticAMD", m_name) == 0) {
+    printf("\tAMD family group numbering: %d, 0x%02x\n", fam_id + ex_fam, fam_id + ex_fam);
+  }
+
+  if (strcmp("AuthenticAMD", m_name) == 0) {
+    u32 gen = model + ex_model;
+    switch(fam_id + ex_fam) {
+      default:
+        printf("\tAMD unknown family\n");
+        break;
+      case 23:
+        printf("\tAMD zen 1/2 family (Ryzen, EPYC Naples\n");
+        break;
+      case 24:
+        printf("\tAMD hygon family\n");
+        break;
+      case 25:
+        printf("\tAMD zen 3/4 family (Ryzen, Milan), ");
+        if (gen >=0 && gen < 0xf || gen >=0x30 && gen < 0x3f) {
+          printf(" 3th gen\n");
+        } else if (gen >=0x10 && gen < 0x1f) {
+          printf(" 4th gen\n");
+        } else {
+          printf(" gen unknown\n");
+        }
+        break;
+      case 26:
+        printf("\tAMD zen 5/6 family (Turin), ");
+        printf(" 5th gen\n");
+        break;
+    }
+  }
+
+  printf("\nfeatures:\n");
   printFeatures(retValues[3], EDXCapability);
   printf("\n");
   printFeatures(retValues[2], ECXCapability);
@@ -561,7 +683,7 @@ int main(int an, char** av) {
   ui= 0x80000006;
   pLabel= (char*)"extended cache features";
   callcpuid(ui, 0, 0, 0, retValues);
-  printf("cpuid(%08x): %08x %08x %08x %08x   %s\n", ui,
+  printf("cpuid(0x%08x): %08x %08x %08x %08x   %s\n", ui,
          retValues[0], retValues[1], retValues[2], retValues[3],
          pLabel);
 
@@ -569,7 +691,7 @@ int main(int an, char** av) {
   ui= 0x80000007;
   pLabel= (char*)"Advanced Power Management";
   callcpuid(ui, 0, 0, 0, retValues);
-  printf("cpuid(%08x): %08x %08x %08x %08x   %s\n", ui,
+  printf("cpuid(0x%08x): %08x %08x %08x %08x   %s\n", ui,
          retValues[0], retValues[1], retValues[2], retValues[3],
          pLabel);
 
@@ -577,7 +699,7 @@ int main(int an, char** av) {
   ui= 0x80000008;
   pLabel= (char*)"virtual and physical memory size";
   callcpuid(ui, 0, 0, 0, retValues);
-  printf("cpuid(%08x): %08x %08x %08x %08x   %s\n", ui,
+  printf("cpuid(0x%08x): %08x %08x %08x %08x   %s\n", ui,
          retValues[0], retValues[1], retValues[2], retValues[3],
          pLabel);
 
@@ -643,7 +765,7 @@ int main(int an, char** av) {
   printf("\n");
   a= 0x8000000a;
   callcpuid(a, 0, 0, 0, retValues);
-  printf("cpuid(%x): %08x %08x %08x %08x   %s\n", a,
+  printf("cpuid(0x%x): %08x %08x %08x %08x   %s\n", a,
           retValues[0], retValues[1], retValues[2], retValues[3],
           rgCallName[0x30+0xa]);
   printf("        SVM revision %d\n", retValues[0]&0xff);
@@ -658,7 +780,7 @@ int main(int an, char** av) {
   a= 0x8000001f;
   printf("\n");
   callcpuid(a, 0, 0, 0, retValues);
-  printf("cpuid(%x): %08x %08x %08x %08x   %s\n", a,
+  printf("cpuid(0x%x): %08x %08x %08x %08x   %s\n", a,
           retValues[0], retValues[1], retValues[2], retValues[3],
           rgCallName[0x30+0x0b]);
   if ((retValues[0]&0x1) != 0) {
