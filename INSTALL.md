@@ -96,6 +96,17 @@ Once you are sure the Certifier works, compile and make the Certifier library:
  $ make -f certifier.mak
 ```
 
+You should also install the snp measurement tool if you use a "real" sev platform.
+
+```shell
+cd $CERTIFIER_ROOT
+cd ..
+mkdir virtee
+cd virtee
+git clone https://github.com/virtee/sev-snp-measure.git
+```
+
+
 # Utilities
 
 There are utility programs in the `utilities/` subdirectory. Different steps

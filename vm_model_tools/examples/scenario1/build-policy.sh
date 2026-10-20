@@ -114,8 +114,13 @@ function do-make-policy() {
     fi
 
     if [[ $DEPLOYED_ENCLAVE_TYPE = "sev-enclave" ]]; then
+
         echo " "
-        echo "For simulated enclave"
+        if [[ $TEST_TYPE = "simulated" ]]; then
+          echo "For simulated sev enclave"
+        else
+          echo "For real sev enclave"
+        fi
 
         $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
           --key_subject="" \
@@ -136,15 +141,19 @@ function do-make-policy() {
           --output=sev_signed_claim_1.bin
 
         if [[ $TEST_TYPE = "simulated" ]]; then
+          echo "SIMULATED"
           $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
              --key_subject="" \
              --measurement_subject=sev_cf_utility.measurement \
              --verb="is-trusted" \
              --output=sev_ts2.bin
         else
+          pushd ..
+            $CERTIFIER_ROOT/utilities/measurement_init.exe --hex_measurement=true --in_file=$SEV_MEASUREMENT_FILE_NAME --out_file=provisioning/sev.measurement.tmp 
+          popd
           $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
              --key_subject="" \
-             --measurement_subject=Pauls_vm.measurement \
+             --measurement_subject=./sev.measurement.tmp \
              --verb="is-trusted" \
              --output=sev_ts2.bin
         fi

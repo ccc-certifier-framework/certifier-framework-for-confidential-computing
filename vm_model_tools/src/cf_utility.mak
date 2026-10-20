@@ -35,7 +35,9 @@ T= $(CERTIFIER_ROOT)/src/tpm2
 
 CF_NEW_API = 1
 ENABLE_SEV=1
+
 TPM=1
+# The following isn't needed for real SEV but shouldnt cause problems.
 DUMMY_SEV=1
 
 # Newer versions of protobuf require C++17 and dependancies on additional libraries.
@@ -55,7 +57,7 @@ CFLAGS=$(CFLAGS_NOERROR) -fPIC
 CFLAGS += -Wno-strict-aliasing
 
 ifdef ENABLE_SEV
-CFLAGS  += -D SEV_SNP -D SEV_DUMMY_GUEST
+CFLAGS  += -D SEV_SNP
 endif
 
 ifdef TPM

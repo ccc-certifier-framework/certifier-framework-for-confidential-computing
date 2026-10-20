@@ -31,6 +31,9 @@
 #ifndef byte
 typedef unsigned char byte;
 #endif
+#ifndef byte_t
+typedef unsigned char byte_t;
+#endif
 
 using std::string;
 
@@ -38,6 +41,7 @@ using std::string;
 DEFINE_int32(print_level, 1, "print level");
 
 DEFINE_bool(test_measurement, false, "init test measurement");
+DEFINE_bool(hex_measurement, false, "convert hex measurement");
 DEFINE_string(in_file, "test.exe", "Input binary");
 DEFINE_string(out_file,
               "binary_trusted_measurements_file.bin",
@@ -108,6 +112,29 @@ bool read_file(string file_name, int *size, byte *data) {
   return true;
 }
 
+bool read_file_into_string(const string &file_name, string *out) {
+  int size = file_size(file_name);
+  if (size < 0) {
+    printf("%s() error, line: %d, read_file_into_string: Can't size input file "
+           "%s\n",
+           __func__,
+           __LINE__,
+           file_name.c_str());
+    return false;
+  }
+  byte buf[size];
+  if (!read_file(file_name, &size, buf)) {
+    printf("%s() error, line: %d, read_file_into_string: Can't read file %s\n",
+           __func__,
+           __LINE__,
+           file_name.c_str());
+    return false;
+  }
+
+  out->assign((char *)buf, size);
+  return true;
+}
+
 bool digest_message(const byte  *message,
                     int          message_len,
                     byte        *digest,
@@ -135,13 +162,56 @@ bool digest_message(const byte  *message,
   return true;
 }
 
+int num_bytes_in_hex(char *in) {
+  if (in == nullptr)
+    return -1;
+  int len = strlen(in);
+  return ((len + 1) / 2);
+}
+
+int num_hex_in_bytes(int size, byte_t *in) {
+  return 2 * size;
+}
+
+byte_t hex_to_value(char x) {
+  if (x >= '0' && x <= '9') {
+    return x - '0';
+  } else if (x >= 'a' && x <= 'f') {
+    return x + 10 - 'a';
+  } else {
+    return 0;
+  }
+}
+
+int hex_to_byte(char *in, int size, byte_t *out) {
+  if (in == nullptr)
+    return -1;
+  int    n = num_bytes_in_hex(in);
+  int    m = strlen(in);
+  byte_t a, b;
+
+  if (n > size) {
+    return -1;
+  }
+  while (m > 0) {
+    a = hex_to_value(*(in++));
+    b = hex_to_value(*(in++));
+    *(out++) = (a << 4) | b;
+    m -= 2;
+  }
+  return n;
+}
+
+
 int main(int an, char **av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
 
   if (FLAGS_print_level > 0) {
-    if (FLAGS_test_measurement)
+    if (FLAGS_test_measurement) {
       printf("Generating test measurement\n");
-    else if (FLAGS_mrenclave.size() != 0) {
+    } else if (FLAGS_hex_measurement) {
+      printf("Generating hex measurement, file: %s\n", FLAGS_in_file.c_str());
+    } else if (FLAGS_mrenclave.size() != 0) {
       printf("Using measurement string: %s\n", FLAGS_mrenclave.c_str());
     } else {
       printf("Measuring %s\n", FLAGS_in_file.c_str());
@@ -149,14 +219,41 @@ int main(int an, char **av) {
     printf("Output file: %s\n", FLAGS_out_file.c_str());
   }
 
-  int  measurement_size = 64;
-  byte m[measurement_size];
+  int    measurement_size = 64;
+  byte   m[measurement_size];
+  string hex_measurement;
 
   if (FLAGS_test_measurement == true) {
     measurement_size = 32;
     for (int i = 0; i < measurement_size; i++)
       m[i] = (byte)i;
     if (!write_file(FLAGS_out_file, measurement_size, m)) {
+      printf("%s() error, line %d, can't write %s\n",
+             __func__,
+             __LINE__,
+             FLAGS_out_file.c_str());
+      return 1;
+    }
+    return 0;
+  } else if (FLAGS_hex_measurement) {
+    if (!read_file_into_string(FLAGS_in_file, &hex_measurement)) {
+      printf("%s() error, line %d, read %s\n",
+             __func__,
+             __LINE__,
+             FLAGS_in_file.c_str());
+      return 1;
+    }
+    int n = hex_to_byte((char *)hex_measurement.data(),
+                        hex_measurement.size() - 1,
+                        m);
+    if (n < 0) {
+      printf("%s() error, line %d, Cant convert to hex %s\n",
+             __func__,
+             __LINE__,
+             hex_measurement.c_str());
+      return 1;
+    }
+    if (!write_file(FLAGS_out_file, n - 1, m)) {
       printf("%s() error, line %d, can't write %s\n",
              __func__,
              __LINE__,
