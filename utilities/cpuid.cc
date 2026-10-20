@@ -409,15 +409,15 @@ void printFeatures(u32 capabilities, struct cpuCapability *rg) {
 void callcpuid(u32 a, u32 b, u32 c, u32 d, u32 out[4]) {
   u32 a1, a2, a3, a4;
 
-  asm volatile("tmovl    %[a], %%eax\n"
-               "tmovl    %[b], %%ebx\n"
-               "tmovl    %[c], %%ecx\n"
-               "tmovl    %[d], %%edx\n"
-               "tcpuid   \n"
-               "tmovl    %%eax, %[a1]\n"
-               "tmovl    %%ebx, %[a2]\n"
-               "tmovl    %%ecx, %[a3]\n"
-               "tmovl    %%edx, %[a4]\n"
+  asm volatile("\tmovl    %[a], %%eax\n"
+               "\tmovl    %[b], %%ebx\n"
+               "\tmovl    %[c], %%ecx\n"
+               "\tmovl    %[d], %%edx\n"
+               "\tcpuid   \n"
+               "\tmovl    %%eax, %[a1]\n"
+               "\tmovl    %%ebx, %[a2]\n"
+               "\tmovl    %%ecx, %[a3]\n"
+               "\tmovl    %%edx, %[a4]\n"
                : [a1] "=m"(a1), [a2] "=m"(a2), [a3] "=m"(a3), [a4] "=m"(a4)
                : [a] "m"(a), [b] "m"(b), [c] "m"(c), [d] "m"(d)
                : "%eax", "%ebx", "%ecx", "%edx");
