@@ -132,7 +132,7 @@ $CERTIFIER_ROOT/src/tpm2/swtpmins.txt, for instructions).
 First set the location of the simulated tpm state:
 
 ```shell
-    export XDG_CONFIG_HOME=full directory name (probably $CERTIFIER_ROOT/swtom_state)
+    export XDG_CONFIG_HOME=full directory name (probably $CERTIFIER_ROOT/swtpm_state)
 ```
 
 You may want to clean up files and simulator state from previous runs.
@@ -165,13 +165,13 @@ If you do this, you can use the -ccf 0 flag when you run run-test-scenario1.sh a
 To run run-test-scenario1.sh from scratch, in the tpm environment, as root, type:
 
 ```shell
-    ./run-test-scenario1.sh  -bss 0 -ccf 1 -loud 1 -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin -pk 1 -pn cf-utility -tpm /dev/tpmrm1
+    ./run-test-scenario1.sh  -bss 0 -ccf 1 -loud 1 -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin -pk 1 -pn cf-utility
 ```
 
 or, if you previously did a "compile only", as root:
 
 ```shell
-    ./run-test-scenario1.sh  -bss 0 -ccf 0 -loud 1 -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin -pk 1 -pn cf-utility -tpm /dev/tpmrm1
+    ./run-test-scenario1.sh  -bss 0 -ccf 0 -loud 1 -et2 tpm-enclave -tpm /dev/tpmrm1 -end_chain ekchain.bin -pk 1 -pn cf-utility
 ```
 
 If you have already set pcr 7, you need not and should not reset it.
@@ -258,19 +258,25 @@ without this utility
 To run the test from scratch, in the simulated sev environment, as root, type:
 
 ```shell
-    ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 -tpm /dev/tpmrm1
+    ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave"
 ```
 
-or, if you already compiled as above:
+or, if you already compiled as above, and havent installed the simulated sev driver:
 
 ```shell
-    ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 0 -loud 1 -dn dom0 -pn cf-utility -pk 1 -tpm /dev/tpmrm1
+    ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 0 -loud 1 -dn dom0 -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave"
+```
+
+or, if you already compiled as above, and have installed the simulated sev driver:
+
+```shell
+    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -loud 1 -dn dom0 -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave"
 ```
 
 If you use the real SEV and have compiled the framework (and the measurement tool),
 
 ```shell
-    ./run-test-scenario1.sh  -tt real -bss 0 -ccf 0 -loud 1 -dn dom0 -pn cf-utility -pk 1 -sev-dev /dev/sev -sev-mfn ./sev.measurement -initram-mfn ../initrd.img -kernel-mfn ../vmlinuz -ovmf-loc /usr/share/ovmf/OVMF.amdsev.fd  -et2 "sev-enclave"
+    ./run-test-scenario1.sh  -tt real -bss 0 -ccf 0 -loud 1 -dn dom0 -pn cf-utility -pk 1 -sev-dev /dev/sev -sev-mfn ./sev.measurement -initram-mfn ../initrd.img -kernel-mfn ../vmlinuz -ovmf-loc /usr/share/ovmf/OVMF.amdsev.fd  -et2 "sev-enclave" -et1 "simulated-enclave" -et2 "sev-enclave"
 ```
 
 Some new flags we used are:
