@@ -304,3 +304,16 @@ Then, as root, you can rerun the test by typing:
 # Note
 
 The scripts do not build a VM yet.  Stay tuned for more information on that.
+
+SEV certificates
+
+sudo ./snpguest  fetch ca der ./certs milan
+sudo ./snpguest  fetch ca der ./certs milan -e vcek
+sudo ./snpguest certificates der ./certs -e vcek
+sudo snpguest fetch ca der ./certs milan -e vcek
+sudo ./snpguest fetch ca der ./certs milan --endorser vcek
+sudo ./snpguest fetch vcek der ./certs report.bin --processor-model milan
+sudo ./snpguest verify certs ./certs
+sudo ./snpguest  fetch ca der ./certs milan -e vlek
+
+

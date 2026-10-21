@@ -148,9 +148,7 @@ function do-make-policy() {
              --verb="is-trusted" \
              --output=sev_ts2.bin
         else
-          pushd ..
-            $CERTIFIER_ROOT/utilities/measurement_init.exe --hex_measurement=true --in_file=$SEV_MEASUREMENT_FILE_NAME --out_file=provisioning/sev.measurement.tmp 
-          popd
+          $CERTIFIER_ROOT/utilities/measurement_init.exe --hex_measurement=true --in_file=$SEV_MEASUREMENT_FILE_NAME --out_file=./sev.measurement.tmp 
           $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
              --key_subject="" \
              --measurement_subject=./sev.measurement.tmp \
