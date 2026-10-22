@@ -25,8 +25,10 @@ fi
 if [[ $TEST_TYPE = "simulated" ]]; then
 	echo "Nothing to do in simulated environment"
 fi
+if [[ $TEST_TYPE = "real" ]]; then
+	echo "we don't build VM's yet so this ony works in the test environment"
+fi
 
-echo "John needs help here"
 echo ""
 
 # --------------------------------------------------------------------------------

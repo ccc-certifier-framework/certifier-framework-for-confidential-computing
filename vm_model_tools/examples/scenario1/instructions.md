@@ -209,28 +209,23 @@ not do so.
 Again, almost all the variables are set within run-test-scenario1.sh.
 
 As mentioned above, you may want to just compile the framework and vm_model_tools
-executables, without being root.
-
-To do this, for the simulated sev environment:
+executables, without being root.  To do this, for the simulated sev environment:
 
 ```shell
+     # For simulated sev environment
     ./run-test-scenario1.sh  -bss 1 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 -just-compile 1 -et2 sev-enclave -tt simulated
-```
-
-if you are running on a real sev platform,
-
-```shell
+     # For real sev environment
     ./run-test-scenario1.sh  -tt real -et2 sev-enclave -bss 0 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 -just-compile 1
 ```
 
-If you do this, you can use the -ccf 0 flag when you run run-test-scenario1.sh as
-root.
+If you do this, you can use the -ccf 0 flag when you run run-test-scenario1.sh as root.
 
-Tod do SEV measurements for the real SEV platform you must install an open source tool from IBM, called
+To make SEV measurements for the real SEV platform you must install an open source tool from IBM, called
 sev-snp-measure and a tool from AMD called snpguest.  You will likely install these your
-github.com/virtee directory.
+github.com/virtee directory.  If you are using simulated SEV, you need not install these tools,
+the script construct a fabricated measurement without these utilities.
 
-For the IBM tool:
+To install the sev-snp-measure tool:
 
 ```shell
     cd ~/src/github.com
@@ -259,7 +254,8 @@ Now download the snpguest tool:
     sudo ./snpguest ok
 ```
 
-Now use the snpguest tool to retrieve the certs for you sev machine:
+Use the snpguest tool to retrieve the certs for you sev machine (The simulated environment
+construct these and yiou need not do this).
 
 ```shell
     cd $CERTIFIER_ROOT
@@ -273,46 +269,35 @@ Now use the snpguest tool to retrieve the certs for you sev machine:
     sudo ./snpguest display report report.bin
 ```
 
-You should also install the ovmf firmware for the measurement tool.
+You should also install the ovmf firmware which is required by the measurement tool.
 
 ```shell
     sudo apt install ovmf
     git clone https://github.com/AMDESE/AMDSEV.git
 ```
 
-The following package build host/guest kernels, QEMU, and OVMF
-from AMD's development branches for SEV 3.0+ (SNP).
-
-```shell
-    git clone https://github.com/AMDESE/AMDSEV.git
-```
-
-https://www.amd.com/en/developer/sev.html has useful information for sev.
-
-If you are using real SEV, the script that measures the vm will call the utility but
-the scripts assume the directory .../virtee/sev-snp-measure is in your path.
 If you are using simulated SEV, the scripts construct the fabricated measurement
 without this utility
 
 To run the test from scratch, in the simulated sev environment, as root, run one
-of the following commands:
+of the following three commands:
 
 ```shell
-    # If you have not compiled the certifier yet
+    # If you have not compiled the certifier yet and have not build the simulator or installed the simulated driver
     ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave"
 ```
 
 ```shell
-    # If you have compiled the certifier already but have not installed the simulated sev driver
+    # If you have compiled the certifier already but have not installed the simulated sev driver or environment
     ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 0 -loud 1 -dn dom0 -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave"
 ```
 
 ```shell
-    # If you have compiled the certifier already and have installed the simulated sev driver
+    # If you have compiled the certifier already and have installed the simulated sev driver and environment
     ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -loud 1 -dn dom0 -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave"
 ```
 
-To test real snp, you need a snp enabled VM image.  The scripts do not build a VM.  However, for testing on AWS, you can copy an
+To test real snp, you need a snp enabled VM image.  The scripts do not build a VM yet.  However, for testing on AWS, you can copy an
 initrd.img and vmlinuz from the /boot directory on your machine.
 
 ```shell
@@ -320,19 +305,19 @@ initrd.img and vmlinuz from the /boot directory on your machine.
   sudo /boot/"NAME OF INITRD.IMG IMAGE" $CERTIFIER_ROOT/vm_model_tools/examples/scenario1
 ```
 
-We'll complete the script that builds an snp vm soon, which is required for actual deployments..
+We'll complete the script that builds an snp vm soon, which is required for actual deployments.
 
-If you use the real SEV and have compiled the framework (and the measurement tool),and, for now, have the guest VM files,
-you can run the tests as:
+If you use the real SNP platform  and have compiled the framework (and the measurement tools), and, for now,
+have the VM and OVMF files, you can run the tests as:
 
 ```shell
-    ./run-test-scenario1.sh  -tt real -bss 0 -ccf 0 -loud 1 -dn dom0 -pn cf-utility -pk 1 -sev-dev /dev/sev -sev-mfn ./sev.measurement -initram-mfn ../initrd.img -kernel-mfn ../vmlinuz -ovmf-loc /usr/share/ovmf/OVMF.amdsev.fd  -et2 "sev-enclave" -et1 "simulated-enclave" -et2 "sev-enclave"
+    ./run-test-scenario1.sh  -tt real -bss 0 -ccf 0 -loud 1 -dn dom0 -pn cf-utility -pk 1 -sev-dev /dev/sev-guest -sev-mfn ./sev.measurement -initram-mfn ../initrd.img -kernel-mfn ../vmlinuz -ovmf-loc /usr/share/ovmf/OVMF.amdsev.fd  -et2 "sev-enclave" -et1 "simulated-enclave" -et2 "sev-enclave"
 ```
 This command will also work when we build VMs in the script.
 
 After you run the test the first time, you need not re-compile the certifier or
 install the device driver. To rerun the tests again, you should clean the app files to
-test again::
+test again:
 
 ```shell
     ./clean-files.sh
