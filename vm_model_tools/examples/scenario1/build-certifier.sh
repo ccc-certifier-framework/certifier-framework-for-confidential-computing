@@ -21,16 +21,16 @@ function do-fresh() {
   echo "do-fresh"
 
   if [[ $CLEAN -eq 1 ]] ; then
-        echo "cleaning programs and utilities"
-        pushd $CERTIFIER_ROOT/utilities
-        make clean -f cert_utility.mak
-        make clean -f policy_utilities.mak
-        popd
+    echo "cleaning programs and utilities"
+    pushd $CERTIFIER_ROOT/utilities
+      make clean -f cert_utility.mak
+      make clean -f policy_utilities.mak
+    popd
 
-        echo "cleaning cf_program"
-        pushd $CERTIFIER_ROOT/vm_model_tools/src
-        make clean -f cf_utility.mak
-        popd
+    echo "cleaning cf_program"
+    pushd $CERTIFIER_ROOT/vm_model_tools/src
+      make clean -f cf_utility.mak
+    popd
   else
         echo "not cleaning programs or utilities"
   fi
@@ -91,61 +91,61 @@ function do-fresh() {
 }
 
 function do-compile-utilities() {
-        echo " "
-        echo "do-compile-utilities"
+  echo " "
+  echo "do-compile-utilities"
 
-        pushd $CERTIFIER_ROOT/utilities
-          make -f cert_utility.mak
-          make -f policy_utilities.mak
-        popd
+  pushd $CERTIFIER_ROOT/utilities
+    make -f cert_utility.mak
+    make -f policy_utilities.mak
+  popd
 
-        echo "do-compile-utilities done"
+  echo "do-compile-utilities done"
 }
 
 function do-compile-program() {
-        echo " "
-        echo "do-compile-program"
+  echo " "
+  echo "do-compile-program"
 
-        pushd $CERTIFIER_ROOT/vm_model_tools/src
-          make -f cf_utility.mak
-        popd
+  pushd $CERTIFIER_ROOT/vm_model_tools/src
+    make -f cf_utility.mak
+  popd
 
-        echo "do-compile-program done"
+  echo "do-compile-program done"
 }
 
 function do-compile-certifier() {
-        echo " "
-        echo "do-compile-certifier"
+  echo " "
+  echo "do-compile-certifier"
 
-        pushd $CERTIFIER_ROOT/certifier_service/certprotos
-        if [[ ! -e "./certifier.proto.go" ]] ; then
-          echo " "
-          echo "making protobufs"
-          protoc --go_opt=paths=source_relative --go_out=. --go_opt=M=certifier.proto ./certifier.proto
-        fi
-        popd
+  pushd $CERTIFIER_ROOT/certifier_service/certprotos
+    if [[ ! -e "./certifier.proto.go" ]] ; then
+      echo " "
+      echo "making protobufs"
+      protoc --go_opt=paths=source_relative --go_out=. --go_opt=M=certifier.proto ./certifier.proto
+    fi
+  popd
 
-        pushd $CERTIFIER_ROOT/certifier_service
-          pushd graminelib
-            make dummy
-          popd
-          pushd oelib
-            make dummy
-          popd
-            pushd isletlib
-            make dummy
-          popd
-          pushd teelib
-            make
-          popd
-          pushd tpmlib
-            make
-          popd
+  pushd $CERTIFIER_ROOT/certifier_service
+    pushd graminelib
+      make dummy
+    popd
+    pushd oelib
+      make dummy
+    popd
+      pushd isletlib
+      make dummy
+    popd
+    pushd teelib
+      make
+    popd
+    pushd tpmlib
+      make
+    popd
 
-          go build simpleserver.go
-        popd
+    go build simpleserver.go
+  popd
 
-        echo "do-compile-certifier done"
+  echo "do-compile-certifier done"
 }
 
 echo ""
