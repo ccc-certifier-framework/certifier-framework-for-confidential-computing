@@ -159,8 +159,7 @@ echo "build-policy.sh"
 ./build-policy.sh $ALLARGS			# working
 
 if [[ $TEST_TYPE = "real" ]]; then
-	echo "\"real\" sev test not working yet"
-        exit
+	echo "Real snp platforms are not yet being built from scratch"
 fi
 
 echo ""
