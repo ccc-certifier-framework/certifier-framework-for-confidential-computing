@@ -263,6 +263,7 @@ function print-variables() {
         echo "CPU type                               $CPU_TYPE"
         echo "Number of cpus                         $NVCPUS"
         echo "CPU model                              $CPU_MODEL"
+        echo "CPU family                             $CPU_FAMILY"
         echo "CPU stepping                           $CPU_STEPPING"
         echo "CPU features                           $CPU_FEATURES"
         echo "VMM type                               $VMM_TYPE"

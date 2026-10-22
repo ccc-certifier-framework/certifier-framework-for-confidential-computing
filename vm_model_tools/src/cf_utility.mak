@@ -9,15 +9,19 @@ endif
 ifndef OBJ_DIR
 OBJ_DIR=.
 endif
+
 ifndef EXE_DIR
 EXE_DIR=.
 endif
+
 #ifndef GOOGLE_INCLUDE
 #GOOGLE_INCLUDE=/usr/local/include/g
 #endif
+
 ifndef LOCAL_LIB
 LOCAL_LIB=/usr/local/lib
 endif
+
 ifndef TARGET_MACHINE_TYPE
 TARGET_MACHINE_TYPE= x64
 endif
@@ -35,10 +39,13 @@ T= $(CERTIFIER_ROOT)/src/tpm2
 
 CF_NEW_API = 1
 ENABLE_SEV=1
-
 TPM=1
-# The following isn't needed for real SEV but shouldnt cause problems.
-DUMMY_SEV=1
+
+ifdef SEV_DUMMY_GUEST
+$(info "compiling for simulated enclaves")
+else
+$(info "not compiling for simulated enclaves")
+endif
 
 # Newer versions of protobuf require C++17 and dependancies on additional libraries.
 # When this happens, everything must be compiles with C++17 and the linking is a
@@ -53,6 +60,7 @@ else
 CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations -Wno-error
 CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations -Wno-error=strict-aliasing
 endif
+
 CFLAGS=$(CFLAGS_NOERROR) -fPIC
 CFLAGS += -Wno-strict-aliasing
 
@@ -69,10 +77,9 @@ ifdef CF_NEW_API
 CFLAGS += -DNEW_API
 endif
 
-ifdef DUMMY_SEV
+ifdef SEV_DUMMY_GUEST
 CFLAGS += -DSEV_DUMMY_GUEST
 endif
-
 
 CC=g++
 LINK=g++

@@ -107,7 +107,11 @@ function do-compile-program() {
   echo "do-compile-program"
 
   pushd $CERTIFIER_ROOT/vm_model_tools/src
-    make -f cf_utility.mak
+    if [[ $TEST_TYPE = "simulated" ]]; then
+      SEV_DUMMY_GUEST=1 make -f cf_utility.mak
+    else
+      make -f cf_utility.mak
+    fi
   popd
 
   echo "do-compile-program done"

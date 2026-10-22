@@ -469,6 +469,64 @@ int main(int an, char **av) {
   char *p;
   char *pLabel;
   u32   ui;
+  bool  print_sev_parameters = false;
+  u32   step;
+  u32   model;
+  u32   fam_id;
+  u32   proc_type;
+  u32   ex_model;
+  u32   ex_fam;
+  char  m_name[14];
+
+  for (int i = 0; i < an; i++) {
+    if (strcmp(av[i], "-sev-parameters") == 0) {
+      print_sev_parameters = true;
+    }
+  }
+
+
+  if (print_sev_parameters) {
+
+    a = 0;
+    printf("\n");
+    callcpuid(a, 0, 0, 0, retValues);
+
+    if (maxArg > MAXCALL)
+      maxArg = MAXCALL;
+
+    p = (char *)&retValues[1];
+    memcpy(&m_name[0], p, 4);
+    p = (char *)&retValues[3];
+    memcpy(&m_name[4], p, 4);
+    p = (char *)&retValues[2];
+    memcpy(&m_name[8], p, 4);
+    m_name[12] = 0;
+
+
+    if (strcmp("AuthenticAMD", m_name) != 0) {
+      printf("Not AMD, returning\n");
+      return 1;
+    }
+    a = 1;
+    printf("\n");
+    callcpuid(a, 0, 0, 0, retValues);
+    b = retValues[0];
+    step = b & 0xf;
+    model = (b >> 4) & 0xf;
+    fam_id = (b >> 8) & 0xf;
+    proc_type = (b >> 12) & 0xf;
+    ex_model = (b >> 16) & 0xf;
+    ex_fam = (b >> 20) & 0xff;
+
+    printf("--mode snp ");
+    printf("--vcpu-model %d ", model);
+    printf("--vcpu-family %d ", fam_id + ex_fam);
+    printf("--vcpu-stepping %d ", step);
+    printf("--vcpus 2 ");
+    printf("--vmm-type QEMU");
+    printf("\n");
+    return 0;
+  }
 
   // Manufacturer info
   a = 0;
@@ -485,7 +543,6 @@ int main(int an, char **av) {
   if (maxArg > MAXCALL)
     maxArg = MAXCALL;
 
-  char m_name[14];
   printf("\tmaximum input value: %d, ", maxArg);
   p = (char *)&retValues[1];
   printf("%c%c%c%c", *p, *(p + 1), *(p + 2), *(p + 3));
@@ -563,12 +620,12 @@ int main(int an, char **av) {
          rgCallName[a]);
 
   b = retValues[0];
-  u32 step = b & 0xf;
-  u32 model = (b >> 4) & 0xf;
-  u32 fam_id = (b >> 8) & 0xf;
-  u32 proc_type = (b >> 12) & 0xf;
-  u32 ex_model = (b >> 16) & 0xf;
-  u32 ex_fam = (b >> 20) & 0xff;
+  step = b & 0xf;
+  model = (b >> 4) & 0xf;
+  fam_id = (b >> 8) & 0xf;
+  proc_type = (b >> 12) & 0xf;
+  ex_model = (b >> 16) & 0xf;
+  ex_fam = (b >> 20) & 0xff;
 
   printf("\tstepping: %x\n", step);
   printf("\tmodel: %x\n", model);
