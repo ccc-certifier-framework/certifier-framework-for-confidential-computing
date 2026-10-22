@@ -78,6 +78,7 @@ fi
 #       CPU_FEATURES                      -cpu-feat       cpu features
 #       VMM_TYPE                          -vmm-type       VMM type
 #       OVMF_LOCATION                     -ovmf-loc       ovmf file
+#       BUILD_VM                          -build-vm       Build VM
 
 
 function print-options() {
@@ -139,6 +140,7 @@ function print-options() {
         echo "CPU_FEATURES                      -cpu-feat       cpu features"
         echo "VMM_TYPE                          -vmm-type       VMM type"
         echo "OVMF_LOCATION                     -ovmf-loc       ovmf file"
+        echo "BUILD_VM                          -build-vm       Build VM"
         echo "-----------------------------------------------------------------"
         echo ""
 }
@@ -198,6 +200,7 @@ CPU_FAMILY=23
 CPU_FEATURES=""
 VMM_TYPE="QEMU"
 OVMF_LOCATION="/usr/share/ovmf/OVMF.amdsev.fd"
+BUILD_VM=0
 
 
 function print-variables() {
@@ -264,7 +267,7 @@ function print-variables() {
         echo "CPU features                           $CPU_FEATURES"
         echo "VMM type                               $VMM_TYPE"
         echo "OVMF file location                     $OVMF_LOCATION"
-        echo "snpguest directory                     $SNPGUEST_LOCATION"
+        echo "Build VM                               $BUILD_VM"
 
         echo ""
 }
@@ -436,6 +439,9 @@ function process-args() {
             fi
             if [[ ${array[i]} = "-ovmf-loc" ]]; then
                     OVMF_LOCATION="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-build-vm" ]]; then
+                    BUILD_VM="${array[i+1]}"
             fi
 
         done

@@ -83,14 +83,14 @@ ALLSIMARG5="-vmn $VM_NAME -et1 $DEPLOYMENT_ENCLAVE_TYPE -et2 $DEPLOYED_ENCLAVE_T
 ALLSIMARG6="-psn1 $DEPLOYMENT_POLICY_STORE_NAME -csn1 $DEPLOYMENT_CRYPTSTORE_NAME -csn2 $DEPLOYED_CRYPTSTORE_NAME"
 ALLSIMARG7="-npcr $NUM_PCR -pcrs $PCRSTR -tpm $TPM_DEVICE -seal $SEAL_STORE -quote $QUOTE_STORE -quote_cert $QUOTE_CERT_FILE"
 ALLSIMARG8="-end_cert $END_CERT_FILE -end_chain $END_CERT_CHAIN_FILE -act_host $ACTIVATE_HOST -act_port $ACTIVATE_PORT"
-ALLSIMARG9="-sev-dev $SEV_DEVICE -sev-mfn $SEV_MEASUREMENT_FILE_NAME -vmm-type $VMM_TYPE"
+ALLSIMARG9="-sev-dev $SEV_DEVICE -sev-mfn $SEV_MEASUREMENT_FILE_NAME -vmm-type $VMM_TYPE -build-vm $BUILD_VM"
 ALLSIMARG10="-kernel-mfn $VM_KERNEL_FILE_NAME -initram-mfn $VM_INITRAM_FILE_NAME -vm-cmd-line $VM_COMMAND_LINE -ovmf-loc $OVMF_LOCATION"
 ALLSIMARG11="-cpu-type $CPU_TYPE -n-cpus $NVCPUS -cpu-model $CPU_MODEL -cpu-stepping $CPU_STEPPING -cpu-family $CPU_FAMILY -cpu-features $CPU_FEATURES"
 
 ALLARGS="$ALLSIMARG1 $ALLSIMARG2 $ALLSIMARG3 $ALLSIMARG4 $ALLSIMARG5 $ALLSIMARG6 $ALLSIMARG7 $ALLSIMARG8 $ALLSIMARG9 $ALLSIMARG10 $ALLSIMARG11"
 
 if [[ $TEST_TYPE = "real" ]]; then
-	echo "\"real\" sev test not working yet"
+  echo "real sev test not working yet"
 fi
 
 echo ""
@@ -159,7 +159,10 @@ echo "build-policy.sh"
 ./build-policy.sh $ALLARGS			# working
 
 if [[ $TEST_TYPE = "real" ]]; then
-	echo "Real snp platforms are not yet being built from scratch"
+  if [[ $BUILD_VM = 1 ]]; then
+    echo "Real snp platforms are not yet being built from scratch"
+    exit
+  fi
 fi
 
 echo ""
