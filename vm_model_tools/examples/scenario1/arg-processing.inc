@@ -60,9 +60,25 @@ fi
 #       QUOTE_CERT_FILE                         -quote_cert     "./quote_cert.crt"
 #       END_CERT_FILE                           -end_cert       ""
 #       END_CERT_CHAIN_FILE                     -end_chain      ""
-#       ACTIVATE_HOST                           -act_host       "localhost"
-#       ACTIVATE_PORT                           -act_port       "8130"
+#       ACTIVATE_HOST                           -act_host       localhost
+#       ACTIVATE_PORT                           -act_port       8130
 #       COMPILE_ONLY                            -just-compile   0
+#       TPM_MEASUREMENT_FILE_NAME         -tpm-mfn        tpm measurement file name
+#       SEV_DEVICE                        -sev-dev        sev device
+#       SEV_MEASUREMENT_FILE_NAME         -sev-mfn        sev measurement file name
+#       VM_KERNEL_FILE_NAME               -kernel-mfn     linux file name
+#       VM_INITRAM_FILE_NAME              -initram-mfn    initram file name
+#       VM_COMMAND_LINE                   -vm-cmd         vm command line
+
+#       CPU TYPE                          -cpu-type       cpu type
+#       NVCPUS                            -n-cpus         number of cpus
+#       CPU_MODEL                         -cpu-model      cpu model
+#       CPU_STEPPING                      -cpu-stepping   cpu stepping
+#       CPU_FAMILY                        -cpu-family     cpu family
+#       CPU_FEATURES                      -cpu-feat       cpu features
+#       VMM_TYPE                          -vmm-type       VMM type
+#       OVMF_LOCATION                     -ovmf-loc       ovmf file
+#       BUILD_VM                          -build-vm       Build VM
 
 
 function print-options() {
@@ -124,6 +140,7 @@ function print-options() {
         echo "CPU_FEATURES                      -cpu-feat       cpu features"
         echo "VMM_TYPE                          -vmm-type       VMM type"
         echo "OVMF_LOCATION                     -ovmf-loc       ovmf file"
+        echo "BUILD_VM                          -build-vm       Build VM"
         echo "-----------------------------------------------------------------"
         echo ""
 }
@@ -183,6 +200,7 @@ CPU_FAMILY=23
 CPU_FEATURES=""
 VMM_TYPE="QEMU"
 OVMF_LOCATION="/usr/share/ovmf/OVMF.amdsev.fd"
+BUILD_VM=0
 
 
 function print-variables() {
@@ -249,6 +267,7 @@ function print-variables() {
         echo "CPU features                           $CPU_FEATURES"
         echo "VMM type                               $VMM_TYPE"
         echo "OVMF file location                     $OVMF_LOCATION"
+        echo "Build VM                               $BUILD_VM"
 
         echo ""
 }
@@ -420,6 +439,9 @@ function process-args() {
             fi
             if [[ ${array[i]} = "-ovmf-loc" ]]; then
                     OVMF_LOCATION="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-build-vm" ]]; then
+                    BUILD_VM="${array[i+1]}"
             fi
 
         done

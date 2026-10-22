@@ -391,10 +391,10 @@ void printFeatures(u32 capabilities, struct cpuCapability *rg) {
     if (rg[i].offset < 0)
       continue;
     if (((capabilities >> rg[i].offset) & 1) != 0)
-      printf("t");
+      printf("\t");
     else
-      printf("tNO ");
-    printf("%sn", rg[i].feature);
+      printf("\tNO ");
+    printf("%s\n", rg[i].feature);
   }
 }
 
@@ -472,9 +472,9 @@ int main(int an, char **av) {
 
   // Manufacturer info
   a = 0;
-  printf("n");
+  printf("\n");
   callcpuid(a, 0, 0, 0, retValues);
-  printf("cpuid(%d): %08x %08x %08x %08x   %sn",
+  printf("cpuid(%d): %08x %08x %08x %08x   %s\n",
          a,
          retValues[0],
          retValues[1],
@@ -486,7 +486,7 @@ int main(int an, char **av) {
     maxArg = MAXCALL;
 
   char m_name[14];
-  printf("tmaximum input value: %d, ", maxArg);
+  printf("\tmaximum input value: %d, ", maxArg);
   p = (char *)&retValues[1];
   printf("%c%c%c%c", *p, *(p + 1), *(p + 2), *(p + 3));
   memcpy(&m_name[0], p, 4);
@@ -496,16 +496,16 @@ int main(int an, char **av) {
   p = (char *)&retValues[2];
   printf("%c%c%c%c", *p, *(p + 1), *(p + 2), *(p + 3));
   memcpy(&m_name[8], p, 4);
-  printf("n\n");
+  printf("\n\n");
   m_name[12] = 0;
   printf("manufacturer string: %sn", m_name);
 
   // AMD info
   if (strcmp("AuthenticAMD", m_name) == 0) {
     a = 0x80000000;
-    printf("n");
+    printf("\n");
     callcpuid(a, 0, 0, 0, retValues);
-    printf("cpuid(0x%08x): %08x %08x %08x %08x   %sn",
+    printf("cpuid(0x%08x): %08x %08x %08x %08x   %s\n",
            a,
            retValues[0],
            retValues[1],
@@ -519,9 +519,9 @@ int main(int an, char **av) {
   // 0x8000001F
   if (strcmp("AuthenticAMD", m_name) == 0) {
     a = 0x8000001f;
-    printf("n");
+    printf("\n");
     callcpuid(a, 0, 0, 0, retValues);
-    printf("cpuid(0x%08x): %08x %08x %08x %08x   %sn",
+    printf("cpuid(0x%08x): %08x %08x %08x %08x   %s\n",
            a,
            retValues[0],
            retValues[1],
@@ -529,32 +529,32 @@ int main(int an, char **av) {
            retValues[3],
            "SEV info");
     if ((retValues[0] & 0x1) != 0) {
-      printf("        SMEn");
+      printf("        SME\n");
     } else {
-      printf("        no SMEn");
+      printf("        no SME\n");
     }
     if ((retValues[0] & 0x2) != 0) {
-      printf("        baseline virtualization supportn");
+      printf("        baseline virtualization support\n");
     } else {
-      printf("        no baseline virtualization supportn");
+      printf("        no baseline virtualization support\n");
     }
     if ((retValues[0] & 0x4) != 0) {
-      printf("        encrypted state supportn");
+      printf("        encrypted state support\n");
     } else {
-      printf("        no encrypted state supportn");
+      printf("        no encrypted state support\n");
     }
     if ((retValues[0] & 0x8) != 0) {
-      printf("        SNP supportn");
+      printf("        SNP support\n");
     } else {
-      printf("        no SNP supportn");
+      printf("        no SNP support\n");
     }
   }
 
   // Processor features
   a = 1;
-  printf("n");
+  printf("\n");
   callcpuid(a, 0, 0, 0, retValues);
-  printf("cpuid(%d): %08x %08x %08x %08x   %sn",
+  printf("cpuid(%d): %08x %08x %08x %08x   %s\n",
          a,
          retValues[0],
          retValues[1],
@@ -570,14 +570,14 @@ int main(int an, char **av) {
   u32 ex_model = (b >> 16) & 0xf;
   u32 ex_fam = (b >> 20) & 0xff;
 
-  printf("tstepping: %x\n", step);
-  printf("tmodel: %x\n", model);
-  printf("textended model id: %x\n", ex_model);
-  printf("tfamily id: %x\n", fam_id);
-  printf("textended family id: %x\n", ex_fam);
-  printf("tprocessor type: %x\n", proc_type);
+  printf("\tstepping: %x\n", step);
+  printf("\tmodel: %x\n", model);
+  printf("\textended model id: %x\n", ex_model);
+  printf("\tfamily id: %x\n", fam_id);
+  printf("\textended family id: %x\n", ex_fam);
+  printf("\tprocessor type: %x\n", proc_type);
   if (strcmp("AuthenticAMD", m_name) == 0) {
-    printf("tAMD family group numbering: %d, 0x%02x\n",
+    printf("\tAMD family group numbering: %d, 0x%02x\n",
            fam_id + ex_fam,
            fam_id + ex_fam);
   }
@@ -586,32 +586,32 @@ int main(int an, char **av) {
     u32 gen = model + ex_model;
     switch (fam_id + ex_fam) {
       default:
-        printf("tAMD unknown family\n");
+        printf("\tAMD unknown family\n");
         break;
       case 23:
-        printf("tAMD zen 1/2 family (Ryzen, EPYC Naples\n");
+        printf("\tAMD zen 1/2 family (Ryzen, EPYC Naples\n");
         break;
       case 24:
-        printf("tAMD hygon family\n");
+        printf("\tAMD hygon family\n");
         break;
       case 25:
-        printf("tAMD zen 3/4 family (Ryzen, Milan), ");
+        printf("\tAMD zen 3/4 family (Ryzen, Milan), ");
         if (gen >= 0 && gen < 0xf || gen >= 0x30 && gen < 0x3f) {
           printf(" 3th genn");
         } else if (gen >= 0x10 && gen < 0x1f) {
-          printf(" 4th genn");
+          printf(" 4th gen\n");
         } else {
-          printf(" gen unknownn");
+          printf(" gen unknown\n");
         }
         break;
       case 26:
-        printf("tAMD zen 5/6 family (Turin), ");
-        printf(" 5th genn");
+        printf("\tAMD zen 5/6 family (Turin), ");
+        printf(" 5th gen\n");
         break;
     }
   }
 
-  printf("nfeatures:\n");
+  printf("\nfeatures:\n");
   printFeatures(retValues[3], EDXCapability);
   printf("n");
   printFeatures(retValues[2], ECXCapability);
@@ -621,7 +621,7 @@ int main(int an, char **av) {
   a = 2;
   printf("n");
   callcpuid(a, 0, 0, 0, retValues);
-  printf("cpuid(%d): %08x %08x %08x %08x   %sn",
+  printf("cpuid(%d): %08x %08x %08x %08x   %s\n",
          a,
          retValues[0],
          retValues[1],
@@ -631,9 +631,9 @@ int main(int an, char **av) {
 
   // cache hierarchy
   a = 4;
-  printf("n");
+  printf("\n");
   callcpuid(a, 0, 0, 0, retValues);
-  printf("cpuid(%d): %08x %08x %08x %08x   %sn",
+  printf("cpuid(%d): %08x %08x %08x %08x   %s\n",
          a,
          retValues[0],
          retValues[1],
@@ -643,9 +643,9 @@ int main(int an, char **av) {
 
   // Monitor/mwait
   a = 5;
-  printf("n");
+  printf("\n");
   callcpuid(a, 0, 0, 0, retValues);
-  printf("cpuid(%d): %08x %08x %08x %08x   %sn",
+  printf("cpuid(%d): %08x %08x %08x %08x   %s\n",
          a,
          retValues[0],
          retValues[1],
@@ -653,21 +653,21 @@ int main(int an, char **av) {
          retValues[3],
          rgCallName[a]);
   if ((retValues[2] & 0x1) != 0) {
-    printf("        EMXn");
+    printf("        EMX\n");
   } else {
-    printf("        no EMXn");
+    printf("        no EMX\n");
   }
   if ((retValues[2] & 0x2) != 0) {
-    printf("        IBEn");
+    printf("        IBE\n");
   } else {
-    printf("        no IBEn");
+    printf("        no IBE\n");
   }
 
   // Thermal and Power
   a = 6;
-  printf("n");
+  printf("\n");
   callcpuid(a, 0, 0, 0, retValues);
-  printf("cpuid(%d): %08x (eax) %08x (ebx) %08x (ecx) %08x (edx)  %sn",
+  printf("cpuid(%d): %08x (eax) %08x (ebx) %08x (ecx) %08x (edx)  %s\n",
          a,
          retValues[0],
          retValues[1],
@@ -675,14 +675,14 @@ int main(int an, char **av) {
          retValues[3],
          rgCallName[a]);
   if ((retValues[1] & 0xf) != 0) {
-    printf("        interrupt threshholds : %dn", retValues[1] & 0xf);
+    printf("        interrupt threshholds : %d\n", retValues[1] & 0xf);
   }
 
   // Extended features
   a = 7;
-  printf("n");
+  printf("\n");
   callcpuid(a, 0, 0, 0, retValues);
-  printf("cpuid(%d): %08x %08x %08x %08x   %sn",
+  printf("cpuid(%d): %08x %08x %08x %08x   %s\n",
          a,
          retValues[0],
          retValues[1],
@@ -690,17 +690,17 @@ int main(int an, char **av) {
          retValues[3],
          rgCallName[a]);
   printFeatures(retValues[1], EBX2Capability);
-  printf("n");
+  printf("\n");
   printFeatures(retValues[2], ECX2Capability);
-  printf("n");
+  printf("\n");
   printFeatures(retValues[3], EDX2Capability);
-  printf("n");
+  printf("\n");
 
-  printf("n");
+  printf("\n");
   ui = 0x80000006;
   pLabel = (char *)"extended cache features";
   callcpuid(ui, 0, 0, 0, retValues);
-  printf("cpuid(0x%08x): %08x %08x %08x %08x   %sn",
+  printf("cpuid(0x%08x): %08x %08x %08x %08x   %s\n",
          ui,
          retValues[0],
          retValues[1],
@@ -708,11 +708,11 @@ int main(int an, char **av) {
          retValues[3],
          pLabel);
 
-  printf("n");
+  printf("\n");
   ui = 0x80000007;
   pLabel = (char *)"Advanced Power Management";
   callcpuid(ui, 0, 0, 0, retValues);
-  printf("cpuid(0x%08x): %08x %08x %08x %08x   %sn",
+  printf("cpuid(0x%08x): %08x %08x %08x %08x   %s\n",
          ui,
          retValues[0],
          retValues[1],
@@ -720,11 +720,11 @@ int main(int an, char **av) {
          retValues[3],
          pLabel);
 
-  printf("n");
+  printf("\n");
   ui = 0x80000008;
   pLabel = (char *)"virtual and physical memory size";
   callcpuid(ui, 0, 0, 0, retValues);
-  printf("cpuid(0x%08x): %08x %08x %08x %08x   %sn",
+  printf("cpuid(0x%08x): %08x %08x %08x %08x   %s\n",
          ui,
          retValues[0],
          retValues[1],
@@ -733,10 +733,10 @@ int main(int an, char **av) {
          pLabel);
 
   // sgx
-  printf("n");
+  printf("\n");
   a = 0x12;
   callcpuid(a, 0, 0, 0, retValues);
-  printf("cpuid(%d): %08x %08x %08x %08x   %sn",
+  printf("cpuid(%d): %08x %08x %08x %08x   %s\n",
          a,
          retValues[0],
          retValues[1],
@@ -744,21 +744,21 @@ int main(int an, char **av) {
          retValues[3],
          rgCallName[a]);
   if ((retValues[0] & 0x1) != 0) {
-    printf("        SGX1n");
+    printf("        SGX1\n");
   } else {
-    printf("        SGX2n");
+    printf("        SGX2\n");
   }
   if ((retValues[0] & 0x1000) != 0) {
-    printf("        256 Bit SGXn");
+    printf("        256 Bit SGX\n");
   } else {
-    printf("        no 256 Bit SGXn");
+    printf("        no 256 Bit SGX\n");
   }
 
   // Processor trace
   a = 0x14;
-  printf("n");
+  printf("\n");
   callcpuid(a, 0, 0, 0, retValues);
-  printf("cpuid(%d): %08x %08x %08x %08x   %sn",
+  printf("cpuid(%d): %08x %08x %08x %08x   %s\n",
          a,
          retValues[0],
          retValues[1],
@@ -768,9 +768,9 @@ int main(int an, char **av) {
 
   // Bus and Core
   a = 0x15;
-  printf("n");
+  printf("\n");
   callcpuid(a, 0, 0, 0, retValues);
-  printf("cpuid(%d): %08x %08x %08x %08x   %sn",
+  printf("cpuid(%d): %08x %08x %08x %08x   %s\n",
          a,
          retValues[0],
          retValues[1],
@@ -780,9 +780,9 @@ int main(int an, char **av) {
 
   // Soc
   a = 0x17;
-  printf("n");
+  printf("\n");
   callcpuid(a, 0, 0, 0, retValues);
-  printf("cpuid(%d): %08x %08x %08x %08x   %sn",
+  printf("cpuid(%d): %08x %08x %08x %08x   %s\n",
          a,
          retValues[0],
          retValues[1],
@@ -792,9 +792,9 @@ int main(int an, char **av) {
 
   // TLB again
   a = 0x18;
-  printf("n");
+  printf("\n");
   callcpuid(a, 0, 0, 0, retValues);
-  printf("cpuid(%d): %08x %08x %08x %08x   %sn",
+  printf("cpuid(%d): %08x %08x %08x %08x   %s\n",
          a,
          retValues[0],
          retValues[1],
@@ -804,9 +804,9 @@ int main(int an, char **av) {
 
   // TDX
   a = 0x21;
-  printf("n");
+  printf("\n");
   callcpuid(a, 0, 0, 0, retValues);
-  printf("cpuid(%d): %08x %08x %08x %08x   %sn",
+  printf("cpuid(%d): %08x %08x %08x %08x   %s\n",
          a,
          retValues[0],
          retValues[1],
@@ -815,29 +815,29 @@ int main(int an, char **av) {
          rgCallName[a]);
 
   // SVM
-  printf("n");
+  printf("\n");
   a = 0x8000000a;
   callcpuid(a, 0, 0, 0, retValues);
-  printf("cpuid(0x%x): %08x %08x %08x %08x   %sn",
+  printf("cpuid(0x%x): %08x %08x %08x %08x   %s\n",
          a,
          retValues[0],
          retValues[1],
          retValues[2],
          retValues[3],
          rgCallName[0x30 + 0xa]);
-  printf("        SVM revision %dn", retValues[0] & 0xff);
-  printf("        SVM number of ASIDs%dn", retValues[1]);
+  printf("        SVM revision %d\n", retValues[0] & 0xff);
+  printf("        SVM number of ASIDs%d\n", retValues[1]);
   if ((retValues[3] & 0x20) != 0) {
-    printf("        EMXn");
+    printf("        EMX\n");
   } else {
-    printf("        no EMXn");
+    printf("        no EMX\n");
   }
 
   // Encrypted Memory
   a = 0x8000001f;
-  printf("n");
+  printf("\n");
   callcpuid(a, 0, 0, 0, retValues);
-  printf("cpuid(0x%x): %08x %08x %08x %08x   %sn",
+  printf("cpuid(0x%x): %08x %08x %08x %08x   %s\n",
          a,
          retValues[0],
          retValues[1],
@@ -845,13 +845,13 @@ int main(int an, char **av) {
          retValues[3],
          rgCallName[0x30 + 0x0b]);
   if ((retValues[0] & 0x1) != 0) {
-    printf("        SMEn");
+    printf("        SME\n");
   } else {
-    printf("        no SMEn");
+    printf("        no SME\n");
   }
-  printf("        c-bit loc %dn", retValues[1] & 0x3f);
-  printf("        address reduction %dn", (retValues[1] >> 6) & 0x3f);
-  printf("        number vmpls %dn", (retValues[1] >> 12) & 0x1f);
+  printf("        c-bit loc %d\n", retValues[1] & 0x3f);
+  printf("        address reduction %d\n", (retValues[1] >> 6) & 0x3f);
+  printf("        number vmpls %d\n", (retValues[1] >> 12) & 0x1f);
 
   return (0);
 }
