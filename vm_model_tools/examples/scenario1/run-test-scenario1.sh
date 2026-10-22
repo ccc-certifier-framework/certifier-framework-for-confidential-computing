@@ -129,9 +129,11 @@ if [[ $PROVISION_KEYS -eq 1 ]]; then
 	./provision-keys.sh $ALLARGS		# working
 fi
 
-echo ""
-echo "build-vm.sh"
-./build-vm.sh $ALLARGS				# working
+if [[ BUILD_VM = 1 ]]; then
+  echo ""
+  echo "build-vm.sh"
+  ./build-vm.sh $ALLARGS				# working
+fi
 
 TA="$ALLARGS -op measure"
 
@@ -171,8 +173,10 @@ echo "copy-files.sh"
 
 echo ""
 
-echo "copy-vm-files.sh"
-./copy-vm-files.sh $ALLARGS			# working
+if [[ BUILD_VM = 1 ]]; then
+  echo "copy-vm-files.sh"
+  ./copy-vm-files.sh $ALLARGS			# working
+fi
 
 echo ""
 echo "run-policy-server.sh"
