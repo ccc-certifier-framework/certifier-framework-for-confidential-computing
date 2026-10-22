@@ -264,6 +264,7 @@ function print-variables() {
         echo "CPU features                           $CPU_FEATURES"
         echo "VMM type                               $VMM_TYPE"
         echo "OVMF file location                     $OVMF_LOCATION"
+        echo "snpguest directory                     $SNPGUEST_LOCATION"
 
         echo ""
 }
