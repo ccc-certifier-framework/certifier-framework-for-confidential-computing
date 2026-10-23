@@ -58,23 +58,23 @@ echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
 
 echo " "
 
-  $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
-        --cf_utility_help=false \
-        --init_trust=true \
-        --print_cryptstore=true \
-        --enclave_type=$DEPLOYED_ENCLAVE_TYPE \
-        --policy_domain_name=$DOMAIN_NAME \
-        --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
-        --policy_store_filename=$DEPLOYED_POLICY_STORE_NAME \
-        --encrypted_cryptstore_filename=$DEPLOYED_CRYPTSTORE_NAME \
-        --symmetric_key_algorithm=$SYMMETRIC_ENCRYPTION_ALGORITHM \
-        --public_key_algorithm=$ASYMMETRIC_ENCRYPTION_ALGORITHM \
-        --data_dir="$EXAMPLE_DIR/" \
-        --certifier_service_URL=$POLICY_SERVER_ADDRESS \
-        --service_port=$POLICY_SERVER_PORT --print_level=1 \
-        --tpm_device="$TPM_DEVICE" \
-        --seal_hierarchy_file_name="$SEAL_STORE" \
-        --quote_hierarchy_file_name="$QUOTE_STORE"
+$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
+      --cf_utility_help=false \
+      --init_trust=true \
+      --print_cryptstore=true \
+      --enclave_type=$DEPLOYED_ENCLAVE_TYPE \
+      --policy_domain_name=$DOMAIN_NAME \
+      --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
+      --policy_store_filename=$DEPLOYED_POLICY_STORE_NAME \
+      --encrypted_cryptstore_filename=$DEPLOYED_CRYPTSTORE_NAME \
+      --symmetric_key_algorithm=$SYMMETRIC_ENCRYPTION_ALGORITHM \
+      --public_key_algorithm=$ASYMMETRIC_ENCRYPTION_ALGORITHM \
+      --data_dir="$EXAMPLE_DIR/" \
+      --certifier_service_URL=$POLICY_SERVER_ADDRESS \
+      --service_port=$POLICY_SERVER_PORT --print_level=1 \
+      --tpm_device="$TPM_DEVICE" \
+      --seal_hierarchy_file_name="$SEAL_STORE" \
+      --quote_hierarchy_file_name="$QUOTE_STORE"
 
 sleep 3
 

@@ -1,10 +1,6 @@
 #    
 #    File: certifier_tests.mak
 
-#ENABLE_SEV=1
-#RUN_SEV_TESTS=1
-#TPM=1
-
 # CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
 ifndef CERTIFIER_ROOT
 CERTIFIER_ROOT = ..
@@ -33,6 +29,12 @@ endif
 
 ifndef TARGET_MACHINE_TYPE
 TARGET_MACHINE_TYPE= x64
+endif
+
+ifdef SEV_DUMMY_GUEST
+$(info "compiling for simulated enclaves")
+else
+$(info "not compiling for simulated enclaves")
 endif
 
 # Newer versions of protobuf require C++17 and dependancies on additional libraries.

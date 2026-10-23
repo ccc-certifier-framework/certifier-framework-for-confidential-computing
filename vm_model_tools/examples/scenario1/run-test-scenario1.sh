@@ -89,13 +89,25 @@ ALLSIMARG11="-cpu-type $CPU_TYPE -n-cpus $NVCPUS -cpu-model $CPU_MODEL -cpu-step
 
 ALLARGS="$ALLSIMARG1 $ALLSIMARG2 $ALLSIMARG3 $ALLSIMARG4 $ALLSIMARG5 $ALLSIMARG6 $ALLSIMARG7 $ALLSIMARG8 $ALLSIMARG9 $ALLSIMARG10 $ALLSIMARG11"
 
-if [[ $TEST_TYPE = "real" ]]; then
-  echo "real sev test not working yet"
-fi
+# ----------------------------------------------------------------------------------------------------------------------------
 
 echo ""
 echo "Running consolidated test with $ALLARGS"
 echo ""
+
+if [[ ! -v CERTIFIER_ROOT ]] ; then
+  echo "Warning CERTIFIER_ROOT not defined yet"
+  pushd ../../..
+    CERTIFIER_ROOT=$(pwd)
+  popd
+fi
+if [[ ! -v EXAMPLE_DIR ]] ; then
+    EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
+fi
+
+if [[ $TEST_TYPE = "real" ]]; then
+  echo "real sev test not working yet"
+fi
 
 if [[ ! -e "$EXAMPLE_DIR/provisioning" ]] ; then
   mkdir $EXAMPLE_DIR/provisioning

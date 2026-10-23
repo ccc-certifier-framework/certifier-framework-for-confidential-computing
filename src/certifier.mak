@@ -29,11 +29,17 @@ endif
 #endif
 
 ifndef LOCAL_LIB
-    LOCAL_LIB=/usr/local/lib
+LOCAL_LIB=/usr/local/lib
 endif
 
 ifndef TARGET_MACHINE_TYPE
 TARGET_MACHINE_TYPE= x64
+endif
+
+ifdef SEV_DUMMY_GUEST
+$(info "compiling for simulated enclaves")
+else
+$(info "not compiling for simulated enclaves")
 endif
 
 # Newer versions of protobuf require C++17 and dependancies on additional libraries.

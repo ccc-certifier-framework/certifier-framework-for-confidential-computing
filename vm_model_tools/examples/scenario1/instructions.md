@@ -218,6 +218,9 @@ executables, without being root.  To do this, for the simulated sev environment:
     ./run-test-scenario1.sh  -tt real -et2 sev-enclave -bss 0 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 -just-compile 1
 ```
 
+If you are running the simulated test, the simulation code is compiled in, otherwise, not.  So if you compile for simulated,
+you MUST recompile for the real test and vice versa.
+
 If you do this, you can use the -ccf 0 flag when you run run-test-scenario1.sh as root.
 
 To make SEV measurements for the real SEV platform you must install an open source tool from IBM, called
@@ -280,21 +283,34 @@ If you are using simulated SEV, the scripts construct the fabricated measurement
 without this utility
 
 To run the test from scratch, in the simulated sev environment, as root, run one
-of the following three commands:
+of the following five commands:
 
 ```shell
-    # If you have not compiled the certifier yet and have not build the simulator or installed the simulated driver
+    # If you are running in the simulated environment but have not compiled the certifier yet and have not build the simulator
+    # or installed the simulated driver
     ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave"
 ```
 
 ```shell
-    # If you have compiled the certifier already but have not installed the simulated sev driver or environment
+    # If you are running in the simulated environment but have compiled the certifier already but have
+    # not installed the simulated sev driver or environment
     ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 0 -loud 1 -dn dom0 -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave"
 ```
 
 ```shell
-    # If you have compiled the certifier already and have installed the simulated sev driver and environment
+    # If you are running in the simulated environment and have compiled the certifier already and have installed the
+    # simulated sev driver and environment
     ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -loud 1 -dn dom0 -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave"
+```
+
+```shell
+    # If you are running for the real sev environment but have compiled the certifier.
+    ./run-test-scenario1.sh  -tt real -bss 0 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave"
+```
+
+```shell
+    # If you are running for the real sev environment and have already compiled the certifier.
+    ./run-test-scenario1.sh  -tt real -bss 0 -ccf 0 -loud 1 -dn dom0 -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave"
 ```
 
 To test real snp, you need a snp enabled VM image.  The scripts do not build a VM yet.  However, for testing on AWS, you can copy an
