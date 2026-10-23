@@ -101,7 +101,10 @@ You may want to just compile the framework and vm_model_tools executables,
 without being root.  To do this:
 
 ```shell
-    ./run-test-scenario1.sh  -bss 0 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 -just-compile 1
+    # if compiling for the simulated environment
+    ./run-test-scenario1.sh  -bss 0 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 -just-compile 1 -tt simulated
+    # if compiling for a real sev platform
+    ./run-test-scenario1.sh  -bss 0 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 -just-compile 1 -tt real
 ```
 
 If you do this, you can use the -ccf 0 flag when you run run-test-scenario1.sh as root for
