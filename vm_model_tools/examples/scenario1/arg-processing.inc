@@ -63,6 +63,7 @@ fi
 #       ACTIVATE_HOST                           -act_host       localhost
 #       ACTIVATE_PORT                           -act_port       8130
 #       COMPILE_ONLY                            -just-compile   0
+
 #       TPM_MEASUREMENT_FILE_NAME         -tpm-mfn        tpm measurement file name
 #       SEV_DEVICE                        -sev-dev        sev device
 #       SEV_MEASUREMENT_FILE_NAME         -sev-mfn        sev measurement file name
