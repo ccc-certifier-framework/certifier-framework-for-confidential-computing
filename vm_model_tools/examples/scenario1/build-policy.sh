@@ -176,12 +176,21 @@ function do-make-policy() {
           --string_value=no \
           --output=sev_property1.bin
 
-        $CERTIFIER_ROOT/utilities/make_property.exe \
-          --property_name=migrate \
-          --property_type='string' \
-          --comparator="=" \
-          --string_value=no \
-          --output=sev_property2.bin
+        if [[ $TEST_TYPE = "real" && $BUILD_VM = 0 ]] ; then
+          $CERTIFIER_ROOT/utilities/make_property.exe \
+            --property_name=migrate \
+            --property_type='string' \
+            --comparator="=" \
+            --string_value=yes \
+            --output=sev_property2.bin
+        else
+          $CERTIFIER_ROOT/utilities/make_property.exe \
+            --property_name=migrate \
+            --property_type='string' \
+            --comparator="=" \
+            --string_value=no \
+            --output=sev_property2.bin
+        fi
 
         $CERTIFIER_ROOT/utilities/make_property.exe \
           --property_name='api-major' \
@@ -197,19 +206,38 @@ function do-make-policy() {
           --int_value=0 \
           --output=sev_property4.bin
 
-        $CERTIFIER_ROOT/utilities/make_property.exe \
-          --property_name='tcb-version' \
-          --property_type=int \
-          --comparator="=" \
-          --int_value=0x03000000000008115 \
-          --output=sev_property6.bin
+        # E11F000000000004 on amazon
+        if [[ $TEST_TYPE = "real" && $BUILD_VM = 0 ]] ; then
+          $CERTIFIER_ROOT/utilities/make_property.exe \
+            --property_name='tcb-version' \
+            --property_type=int \
+            --comparator="=" \
+            --int_value=0xE11F000000000004\
+            --output=sev_property6.bin
+        else
+          $CERTIFIER_ROOT/utilities/make_property.exe \
+            --property_name='tcb-version' \
+            --property_type=int \
+            --comparator="=" \
+            --int_value=0x03000000000008115 \
+            --output=sev_property6.bin
+        fi
 
-        $CERTIFIER_ROOT/utilities/make_property.exe \
-          --property_name=smt \
-          --property_type='string' \
-          --comparator="=" \
-          --string_value=no \
-          --output=sev_property5.bin
+        if [[ $TEST_TYPE = "real" && $BUILD_VM = 0 ]] ; then
+          $CERTIFIER_ROOT/utilities/make_property.exe \
+            --property_name=smt \
+            --property_type='string' \
+            --comparator="=" \
+            --string_value=yes \
+            --output=sev_property5.bin
+        else
+          $CERTIFIER_ROOT/utilities/make_property.exe \
+            --property_name=smt \
+            --property_type='string' \
+            --comparator="=" \
+            --string_value=no \
+            --output=sev_property5.bin
+        fi
 
         $CERTIFIER_ROOT/utilities/combine_properties.exe \
           --in=sev_property1.bin,sev_property2.bin,sev_property3.bin,sev_property4.bin,sev_property5.bin,sev_property6.bin \
