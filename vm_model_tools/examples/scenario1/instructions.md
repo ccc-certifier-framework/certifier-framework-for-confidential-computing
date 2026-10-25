@@ -378,6 +378,29 @@ You should remove all the spaces in this file, too.
 The measurement is 48 bytes and so the file (with a line feed at the end)
 should have exactly 97 bytes.
 
+One additional note on AWS platforms.  AWS does not make VCEK certificates
+available but uses a "VLEK" certificate described below.  The scripts handle
+the differences but bare metal VM's should continue to use VCEKs for
+attestation.
+
+An AMD VLEK (Versioned Loaded Endorsement Key) is a versioned Elliptic Curve
+Digital Signature Algorithm (ECDSA) P-384 signing key used by AMD SEV-SNP
+(Secure Nested Paging) firmware to sign virtual machine attestation reports.
+A VLEK is an alternative to the VCEK (Versioned Chip Endorsement Key) used
+for signing SEV-SNP attestation reports, allowing virtual machines to
+authenticate their launch measurements and integrity.  Unlike the VCEK—which
+is derived directly from a unique device secret hardcoded into the silicon
+chip—the VLEK is derived from a secret maintained and shared between AMD
+and Cloud Service Providers (CSPs) via the AMD Key Derivation Service (KDS).
+They are commonly used in shared-tenancy or multi-tenant cloud environments
+(such as Amazon EC2 SEV-SNP instances) where guests rely on cloud-managed
+endorsement keys rather than direct hardware-bound chip keys.
+The certificate chain traces back to the AMD Root Key (ARK) and
+AMD SEV-VLEK Key (ASVK) infrastructure, with certificate revocation
+lists (CRLs) hosted via AMD's KDS endpoints
+(e.g., https://kdsintf.amd.com/vlek/v1/{product_name}/crl).
+
+
 ### Measurements for running the tests in a new VM (for example, tests on a bare metal platform)
 
 If you build your own VM, You should also install the ovmf firmware which is
