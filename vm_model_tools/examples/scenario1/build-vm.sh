@@ -13,7 +13,6 @@ source ./arg-processing.inc
 
 echo ""
 echo "build-vm.sh"
-echo ""
 
 echo "Processing arguments"
 process-args
