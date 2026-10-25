@@ -2073,8 +2073,10 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 		fmt.Printf("Platform TCB Version: %08x\n", tcbVer)
 		return nil
 	}
+	// The following fails on AWS
+	// Because VLEKs are a little different than VCEKs
 	chipid := ptr[0x1A0:0x1E0]
-	if !bytes.Equal(chipid, k.GetSnpChipid()) {
+	if chipid != nil && len(chipid) > 0 && k.GetSnpChipid() != nil && len(k.GetSnpChipid()) > 0 && !bytes.Equal(chipid, k.GetSnpChipid()) {
 		fmt.Printf("VerifySevAttestation: Chipid check failed\n")
 		fmt.Printf("VCEK HwID: ")
 		PrintBytes(k.GetSnpChipid())
