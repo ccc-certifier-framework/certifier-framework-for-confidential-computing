@@ -11,12 +11,15 @@
 # --------------------------------------------------------------------------------
 
 echo "Removing runtime data files"
-if [[ ! -z ${EXAMPLE_DIR} ]] ; then
+
+if [[ ! -e $EXAMPLE_DIR ]] ; then
   echo "EXAMPLE_DIR missing or not set"
   exit
 fi
+echo "Example dir: $EXAMPLE_DIR"
 
 pushd $EXAMPLE_DIR
+
   rm policy_store.dom0* cryptstore.dom0* quote_cert.crt ekchain.bin || true
   rm measurement cf_utility.measurement sev_cf_utility.measurement || true
   rm seal_hierarchy.bin quote_hierarchy.bin || true
@@ -28,6 +31,7 @@ pushd $EXAMPLE_DIR
   pushd provisioning
     rm ./* || true
   popd
+
   if [[ ! -e "./service" ]] ; then
     echo "service directory missing or not set"
     exit
@@ -35,6 +39,7 @@ pushd $EXAMPLE_DIR
   pushd service
    rm ./* || true
   popd
+
   if [[ ! -e "./cf_data" ]] ; then
     echo "cf_data directory missing or not set"
     exit
@@ -42,6 +47,7 @@ pushd $EXAMPLE_DIR
   pushd cf_data
     rm ./* || true
   popd
+
 popd
 
 echo "Removed runtime data files"
