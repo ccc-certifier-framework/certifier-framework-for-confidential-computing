@@ -8,15 +8,9 @@ used is cf_utility.exe, cf_utility.exe is described in
 cf_utility_usage_notes.md.
 
 In the scripts, $CERTIFIER_ROOT is the top level directory for the Certifier
-repository.  It is helpful to have a shell variable for it:
-
-```shell
-export CERTIFIER_ROOT=~/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing
-export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
-```
-
-$EXAMPLE_DIR is this directory containing the example application.  Again, a
-shell variable is useful, if you run the detailed steps below.
+repository and $EXAMPLE_DIR as described above.  $EXAMPLE_DIR is this
+directory containing the example application.  These are used byt the
+scripts.
 
 
 ## Overview
@@ -60,19 +54,19 @@ subordinate scripts employ a number of shell variables.   It's a good idea to
 define the first two in the shell you use by doing the following:
 
 ```shell
-    export CERTIFIER_ROOT=~/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing
-```
-or whatever directory you cloned the certifier repository into.  I use
-
-```shell
+  export CERTIFIER_ROOT=~/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing
+  # or depending where you put the certifier repository:
   export CERTIFIER_ROOT=~/src/github.com/certifier-framework-for-confidential-computing
 ```
+or whatever directory you cloned the certifier repository into.
 
 If you're root, as is required in some of the tests, use the full path name without
 the "~" abbreviation. For example,
 
 ```shell
   export CERTIFIER_ROOT=/home/jlm/src/github.com/certifier-framework-for-confidential-computing
+  # or on my aws VM
+  export CERTIFIER_ROOT=/home/ubuntu/src/github.com/certifier-framework-for-confidential-computing
 ```
 
 Then,
@@ -111,12 +105,12 @@ without being root.  This will save time later but is not required.
 To do this:
 
 ```shell
-    # if compiling for the simulated environment
-    ./run-test-scenario1.sh  -bss 0 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 \
-      -just-compile 1 -tt simulated
-    # if compiling for a real sev platform
-    ./run-test-scenario1.sh  -bss 0 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 \
-      -just-compile 1 -tt real
+  # if compiling for the simulated environment
+  ./run-test-scenario1.sh  -bss 0 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 \
+    -just-compile 1 -tt simulated
+  # if compiling for a real sev platform
+  ./run-test-scenario1.sh  -bss 0 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 \
+    -just-compile 1 -tt real
 ```
 
 If you do this, you can use the -ccf 0 flag when you run run-test-scenario1.sh
@@ -132,10 +126,10 @@ You must build the tpm utilities as follows (you only need to do this once),
 and you don't need to be root to do it.
 
 ```shell
-    pushd $CERTIFIER_ROOT/src/tpm2
-      make clean -f tpm2_support.mak
-      make -f tpm2_support.mak
-    popd
+  pushd $CERTIFIER_ROOT/src/tpm2
+    make clean -f tpm2_support.mak
+    make -f tpm2_support.mak
+  popd
 ```
 
 Except as noted, the following commands, which run the tests, must run as root
@@ -147,22 +141,23 @@ $CERTIFIER_ROOT/src/tpm2/swtpmins.txt, for instructions).
 First set the location of the simulated tpm state:
 
 ```shell
-    export XDG_CONFIG_HOME=full directory name (probably $CERTIFIER_ROOT/swtpm_state)
+  export XDG_CONFIG_HOME=full directory name (probably $CERTIFIER_ROOT/swtpm_state)
 ```
 
-You may want to clean up files and simulator state from previous runs.  To do this:
+You may want to clean up files and simulator state from previous runs.  To do this,
+in the $CERTIFIER_ROOT/src/tpm2 type:
 
 ```shell
-    ./clean-tpm-simulator.sh
+ ./clean-tpm-simulator.sh
 ```
 As root, start the tpm simulator for testing, and set pcr 7:
 
 ```shell
-    ./start-tpm-simulator.sh
-    export TPM_SUPPORT_DIR=$CERTIFIER_ROOT/src/tpm2
-    sleep 2
-    $TPM_SUPPORT_DIR/tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 \
-    --tpm_device=/dev/tpmrm1
+  ./start-tpm-simulator.sh
+  export TPM_SUPPORT_DIR=$CERTIFIER_ROOT/src/tpm2
+  sleep 2
+  $TPM_SUPPORT_DIR/tpm2_set_pcrs.exe --pcr_num=7 --num_pcrs=1 \
+  --tpm_device=/dev/tpmrm1
 ```
 
 If you are using a "real" tpm, make sure you set the correct device name
@@ -172,15 +167,15 @@ real tpm.
 These instructions are for the VM based platforms in the directory:
 
 ```shell
-$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
+  $CERTIFIER_ROOT/vm_model_tools/examples/scenario1
 ```
 
 As mentioned abolve, you may want to just compile the framework and 
 vm_model_tools executables, without being root.  To do this:
 
 ```shell
-    ./run-test-scenario1.sh -bss 0 -ccf 1 -loud 1 -dn dom0 -pn cf-utility \
-     -pk 1 -just-compile 1 -tpm /dev/tpmrm1
+  ./run-test-scenario1.sh -bss 0 -ccf 1 -loud 1 -dn dom0 -pn cf-utility \
+   -pk 1 -just-compile 1 -tpm /dev/tpmrm1
 ```
 
 If you do this, you can use the -ccf 0 flag when you run run-test-scenario1.sh as root.
@@ -188,8 +183,8 @@ If you do this, you can use the -ccf 0 flag when you run run-test-scenario1.sh a
 To run run-test-scenario1.sh from scratch, in the tpm environment, as root, type:
 
 ```shell
-    ./run-test-scenario1.sh  -bss 0 -ccf 1 -loud 1 -et2 tpm-enclave -tpm /dev/tpmrm1 \
-     -end_chain ekchain.bin -pk 1 -pn cf-utility
+  ./run-test-scenario1.sh  -bss 0 -ccf 1 -loud 1 -et2 tpm-enclave -tpm /dev/tpmrm1 \
+   -end_chain ekchain.bin -pk 1 -pn cf-utility
 ```
 
 or, if you previously did a "compile only", as root:
@@ -205,10 +200,11 @@ You do not need "-bss 1" and you shouldn't set it.
 You can rerun the test by typing, for example, in the tpm case:
 
 ```shell
-    ./clean-files.sh
-    ./run-test-scenario1.sh  -bss 0 -ccf 0 -pk 1 -dn dom0 -loud 0 -et2 tpm-enclave -tpm /dev/tpmrm1 \
-     -end_chain ekchain.bin -tpm /dev/tpmrm1
+  ./clean-files.sh
+  ./run-test-scenario1.sh  -bss 0 -ccf 0 -pk 1 -dn dom0 -loud 0 -et2 tpm-enclave -tpm /dev/tpmrm1 \
+   -end_chain ekchain.bin -tpm /dev/tpmrm1
 ```
+
 This does not recompile the utilities and is much faster.
 
 The master test script (run-test-scenario1.sh ) uses a number of sub-scripts which
@@ -219,11 +215,13 @@ the test harness, you can economize by examining the scripts and just pass
 the relevant arguments.  Some scripts are easy.  For example, cleanup.sh and
 clean-files.sh can be called with no arguments in the target directory.  These
 kill running simpleserver instances and keyserver instances and remove test files
-so it is useful between test runs or if the script aborts.
+so it is useful between test runs or if the script aborts.  To do this as root
+(assuming $CERTIFIER_ROOT and EXAMPLE_DIR are defined), in the $EXAMPLE_DIR
+directory, type:
 
 ```shell
-    ./cleanup.sh
-    ./clean-files.sh
+  ./cleanup.sh
+  ./clean-files.sh
 ```
 If you don't do this, the test won't work. You may also want to clean and restart the
 tpm simulator but you usually need not do so.  To do this:
@@ -236,7 +234,7 @@ tpm simulator but you usually need not do so.  To do this:
 
 ## Running the sev tests
 
-Again, almost all the variables are set within run-test-scenario1.sh.
+Almost all the variables for the test scrripts are set within run-test-scenario1.sh.
 
 As mentioned above, you may want to just compile the framework and vm_model_tools
 executables, without being root.  To do this, for the simulated sev environment:
@@ -274,30 +272,30 @@ snpguest (from AMD).  You should install both as follows:
 To install the sev-snp-measure tool:
 
 ```shell
-    cd ~/src/github.com
-    mkdir virtee
-    cd virtee
-    git clone https://github.com/virtee/sev-snp-measure.git
+  cd ~/src/github.com
+  mkdir virtee
+  cd virtee
+  git clone https://github.com/virtee/sev-snp-measure.git
 ```
 
 The snpguest tool has to be compiled with rust, if you don't have the rust environment on
 your machine, install it:
 
 ```shell 
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-    source "$HOME/.cargo/env"
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+  source "$HOME/.cargo/env"
 ```
 
 Now download the snpguest tool:
 
 ```shell 
-    cd $CERTIFIER_ROOT
-    cd ../virtee
-    git clone https://github.com/virtee/snpguest.git
-    cd snpguest
-    cargo build -r
-    # Check
-    sudo ./snpguest ok
+  cd $CERTIFIER_ROOT
+  cd ../virtee
+  git clone https://github.com/virtee/snpguest.git
+  cd snpguest
+  cargo build -r
+  # Check
+  sudo ./snpguest ok
 ```
 
 For measurement steps, it is convenient to define a variable:
@@ -387,8 +385,8 @@ required by the sev-snp-measure measurement tool.  The machine you build the
 VM on need not be sev enabled.
 
 ```shell
-    sudo apt install ovmf
-    git clone https://github.com/AMDESE/AMDSEV.git
+  sudo apt install ovmf
+  git clone https://github.com/AMDESE/AMDSEV.git
 ```
 
 If you build your own VM, we use the sev-snp-measure to obtain the measurement.
@@ -398,7 +396,7 @@ To obtain the additional arguments, we run the cpuid.exe on a target machine
 as follows:
 
 ```shell
-$CERTIFIER_ROOT/cpuid.exe -sev-parameters
+  $CERTIFIER_ROOT/utilities/cpuid.exe -sev-parameters
 ```
 and then use the output as arguments to the run-policy-server.sh script.  We'll
 complete the script that builds an snp vm soon; it is required for actual
@@ -407,33 +405,46 @@ deployments but it is not completed yet.
 
 ### Finally, running the test script
 
+From this point on, everything should run as root and the scripts rely on a couple
+of variables which are not reliably preserved across "sudo command or "sudo bash."
+Provided you've set up the directories as described here, the following avoids
+inconsistant behavior. Before you run any subsequent scripts:
+
+```shell
+  sudo bash
+  # Use the full path name and not abbreviations leik "~".  On my AWS VM, the directory
+  # is as below but you might have to change it on your machine.
+  export CERTIFIER_ROOT=/home/ubuntu/src/github.com/certifier-framework-for-confidential-computing
+  export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
+```
+
 To run the sev tests from scratch, as root, run one of the following five commands:
 
 ```shell
   # 1. If you are running in the simulated environment but have not compiled the
   # certifier yet and have not build the simulator or installed the simulated driver
-  sudo ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 1 -loud 1 -dn dom0 \
+  ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 1 -loud 1 -dn dom0 \
    -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave"
 ```
 
 ```shell
   # 2. If you are running in the simulated environment but have compiled the
   # certifier already but have # not installed the simulated sev driver or environment
-  sudo ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 0 -loud 1 -dn dom0 \
+  ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 0 -loud 1 -dn dom0 \
    -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave"
 ```
 
 ```shell
   # 3. If you are running in the simulated environment and have compiled the
   # certifier already and have installed the simulated sev driver and environment
-  sudo ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -loud 1 -dn dom0 \
+  ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -loud 1 -dn dom0 \
   -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave"
 ```
 
 ```shell
   # 4. If you are running for the real sev environment but have not compiled the certifier
   # and are using a prebuilt VM(AWS)
-  sudo ./run-test-scenario1.sh -tt real -bss 0 -ccf 1 -loud 1 -dn dom0 \
+  ./run-test-scenario1.sh -tt real -bss 0 -ccf 1 -loud 1 -dn dom0 \
    -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave" \
    -build-vm 0
   # Change "-build-vm 0" to "-build-vm 1" if you want to build a new VM.
@@ -443,7 +454,7 @@ To run the sev tests from scratch, as root, run one of the following five comman
 ```shell
   # 5. If you are running for the real sev environment and have compiled the
   # certifier and are using a prebuilt VM(AWS)
-  sudo ./run-test-scenario1.sh -tt real -bss 0 -ccf 0 -loud 1 -dn dom0 \
+  ./run-test-scenario1.sh -tt real -bss 0 -ccf 0 -loud 1 -dn dom0 \
   -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave" \
   -build-vm 0
   # Change "-build-vm 0" to "-build-vm 1" if you want to build a new VM.
@@ -460,21 +471,24 @@ cpuid.exe program mentioned above that you should append, these look like:
 
 ```shell
   -sev-dev /dev/sev-guest -sev-mfn ./sev.measurement \
-   -initram-mfn ../initrd.img -kernel-mfn ../vmlinuz \
-   -ovmf-loc /usr/share/ovmf/OVMF.amdsev.fd  \
-   -et2 "sev-enclave" -et1 "simulated-enclave" -et2 "sev-enclave"
+  -initram-mfn ../initrd.img -kernel-mfn ../vmlinuz \
+  -ovmf-loc /usr/share/ovmf/OVMF.amdsev.fd  \
+  -et2 "sev-enclave" -et1 "simulated-enclave" -et2 "sev-enclave"
 ```
 
 These should be appended whether you use the -ccf 1 or -ccf 0 flags in the
-commands you use.
+commands you use and the argument to the flags should match your actual
+environment.
 
 
 ### Rerunning the test script
 
 After you run the test the first time, you need not re-compile the certifier,
 remeasure the VM (if you use a real sev machine) or install the device driver
-(if you use a simulated environment). To rerun the tests again, you should clean
-the app files  and kill any residual test processes to test again:
+(if you use a simulated environment). To rerun the tests again, again make
+sure you are root and have defined CERTIFIER_ROOT and EXAMPLE_DIR as mentioned
+above.  It's a good idea to clean the app files and kill any residual test
+created in earlier runs by typing in $EXAMPLE_DIR as root:
 
 ```shell
   ./clean-files.sh
