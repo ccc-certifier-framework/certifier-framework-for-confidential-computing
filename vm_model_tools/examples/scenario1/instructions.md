@@ -103,7 +103,7 @@ variables you should know have the following effect:
     for sev builds in a real SEV environment and will be explained below.
     Similarly, the "-npcr" and "-pcrs" are used for the tpm tests and will be explained below.
 
-Two more imortant flags are "-et1" and "-et2" which specify the enclave types for the deployment
+Two more important flags are "-et1" and "-et2" which specify the enclave types for the deployment
 and deployed machines.
 
 You may want to just compile the framework and vm_model_tools executables,
@@ -234,7 +234,6 @@ tpm simulator but you usually need not do so.  To do this:
   ./start-tpm-simulator.sh
 ```
 
-
 ## Running the sev tests
 
 Again, almost all the variables are set within run-test-scenario1.sh.
@@ -246,9 +245,12 @@ executables, without being root.  To do this, for the simulated sev environment:
   # For simulated sev environment
   ./run-test-scenario1.sh  -bss 1 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 \
    -just-compile 1 -et2 sev-enclave -tt simulated
-  # For real sev environment
+  # For real sev environment, using a prebuilt VM to run the test (eg- Amazon)
   ./run-test-scenario1.sh  -tt real -et2 sev-enclave -bss 0 -ccf 1 -loud 1 \
-   -dn dom0 -pn cf-utility -pk 1 -just-compile 1 -build-vm [0|1]
+   -dn dom0 -pn cf-utility -pk 1 -just-compile 1 -build-vm 0
+  # For real sev environment, if you build an VM
+  ./run-test-scenario1.sh  -tt real -et2 sev-enclave -bss 0 -ccf 1 -loud 1 \
+   -dn dom0 -pn cf-utility -pk 1 -just-compile 1 -build-vm 0
 ```
 
 If you are running the simulated test, the simulation code is compiled in,
@@ -298,49 +300,65 @@ Now download the snpguest tool:
     sudo ./snpguest ok
 ```
 
+For measurement steps, it is convenient to define a variable:
+
+```script
+  pushd $CERTIFIER_ROOT
+    cd ../virtee
+    export MEASUREMENT_TOOLS=$(pwd)
+  popd
+```
+
 You need the "ASK" cert for the target SNP family in either case. To get it,
 on any sev-enabled machine in the same class as the target, use the snpguest
 tool to retrieve the ASK cert.
 
 ```shell
-    cd $CERTIFIER_ROOT
-    cd ../virtee/snpguest/target/release
-    mkdir certs
-    ./snpguest fetch ca der ./certs milan -e vlek
-    ./snpguest certificates der ./certs -e vlek
+  pushd $MEASUREMENT_TOOLS
+    cd ./snpguest/target/release
+    mkdir certs || true
+    sudo ./snpguest certificates der ./certs
+    sudo ./snpguest fetch ca der ./certs milan -e vlek
+  popd
 ```
 
 You can check them by:
 
 ```shell
+  pushd $MEASUREMENT_TOOLS
+    cd ./snpguest/target/release
     sudo ./snpguest verify certs ./certs
     sudo ./snpguest report report.bin request-file.txt –random
     sudo ./snpguest display report report.bin
+  popd
 ```
-For policy building, you only need the ARK cert but you need the ASK and VCEK
+For policy building, you only need the ARK cert but you need the ASKV and VCEK
 certs on the target machine.  In a prebuilt VM running the entire test, these
-are the same machine but if you build a VM and use it on a different machine,
-you need to provision these certs too.  Again, install the snpguest tool on
-those machines and use:
+are the same machine so there's nothing more you need to do. If you build a VM
+and use it on a different machine, you need to provision these certs too.
+Again, you must install the snpguest tool on those target machines and use:
 
 ```shell
-    cd $CERTIFIER_ROOT
-    cd ../virtee/snpguest/target/release
-    mkdir certs
-    ./snpguest fetch ca der ./certs milan -e vlek
-    ./snpguest certificates der ./certs -e vlek
+  pushd $MEASUREMENT_TOOLS
+    cd ./snpguest/target/release
+    mkdir certs || true
+    sudo ./snpguest certificates der ./certs
+    sudo ./snpguest fetch ca der ./certs milan -e vlek
+  popd
 ```
 
 to get them.
-
 
 ### Measurements for running the tests in a prebuilt VM (for example, the AWS tests)
 
 For the AWS machine, to get the VM measurement, run snpguest:
 
 ```shell
-sudo ./snpguest report report.bin request-file.txt --random
-sudo ./snpguest display report report.bin
+  pushd $MEASUREMENT_TOOLS
+    cd ./snpguest/target/release
+    sudo ./snpguest report report.bin request-file.txt --random
+    sudo ./snpguest display report report.bin
+  popd
 ```
 
 In the output, you will see a measurement like this:
@@ -356,10 +374,11 @@ F3 EE 0B B5 0E FA 34 DB 9C 53 AE 06 5B 1D C7 66
 Using a text editor, put this in the file
 $CERTIFIER_ROOT/vm_model_tools/examples/scenario1/sev.measurment.  The file
 should have the measurement on a single line with a line feed at the
-nd and nothing else (just like the output from the sev-snp-measure tool).
+end and nothing else (just like the output from the sev-snp-measure tool).
+You should remove all the spaces in this file, too.
+
 The measurement is 48 bytes and so the file (with a line feed at the end)
 should have exactly 97 bytes.
-
 
 ### Measurements for running the tests in a new VM (for example, tests on a bare metal platform)
 
@@ -393,37 +412,42 @@ To run the sev tests from scratch, as root, run one of the following five comman
 ```shell
   # 1. If you are running in the simulated environment but have not compiled the
   # certifier yet and have not build the simulator or installed the simulated driver
-  ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 1 -loud 1 -dn dom0 \
+  sudo ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 1 -loud 1 -dn dom0 \
    -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave"
 ```
 
 ```shell
   # 2. If you are running in the simulated environment but have compiled the
   # certifier already but have # not installed the simulated sev driver or environment
-  ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 0 -loud 1 -dn dom0 \
+  sudo ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 0 -loud 1 -dn dom0 \
    -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave"
 ```
 
 ```shell
   # 3. If you are running in the simulated environment and have compiled the
   # certifier already and have installed the simulated sev driver and environment
-  ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -loud 1 -dn dom0 \
+  sudo ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -loud 1 -dn dom0 \
   -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave"
 ```
 
 ```shell
-  # 4. If you are running for the real sev environment but have not compiled the certifier.
-  ./run-test-scenario1.sh -tt real -bss 0 -ccf 1 -loud 1 -dn dom0 \
+  # 4. If you are running for the real sev environment but have not compiled the certifier
+  # and are using a prebuilt VM(AWS)
+  sudo ./run-test-scenario1.sh -tt real -bss 0 -ccf 1 -loud 1 -dn dom0 \
    -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave" \
-   -build-vm [0|1]
+   -build-vm 0
+  # Change "-build-vm 0" to "-build-vm 1" if you want to build a new VM.
+  # This is not working yet.
 ```
 
 ```shell
   # 5. If you are running for the real sev environment and have compiled the
-  # certifier.
-  ./run-test-scenario1.sh -tt real -bss 0 -ccf 0 -loud 1 -dn dom0 \
+  # certifier and are using a prebuilt VM(AWS)
+  sudo ./run-test-scenario1.sh -tt real -bss 0 -ccf 0 -loud 1 -dn dom0 \
   -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave" \
-  -build-vm [0|1]
+  -build-vm 0
+  # Change "-build-vm 0" to "-build-vm 1" if you want to build a new VM.
+  # This is not working yet.
 ```
 
 In the last two cases, you should have either obtained the measurement for an
