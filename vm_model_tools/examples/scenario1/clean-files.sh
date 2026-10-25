@@ -11,7 +11,7 @@
 # --------------------------------------------------------------------------------
 
 echo "Removing runtime data files"
-if [[ ! -e "$EXAMPLE_DIR" ]] ; then
+if [[ ! -z ${EXAMPLE_DIR} ]] ; then
   echo "EXAMPLE_DIR missing or not set"
   exit
 fi

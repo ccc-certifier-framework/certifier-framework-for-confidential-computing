@@ -178,6 +178,8 @@ byte_t hex_to_value(char x) {
     return x - '0';
   } else if (x >= 'a' && x <= 'f') {
     return x + 10 - 'a';
+  } else if (x >= 'A' && x <= 'F') {
+    return x + 10 - 'A';
   } else {
     return 0;
   }
