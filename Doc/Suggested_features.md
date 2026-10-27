@@ -12,4 +12,5 @@
   4. Support CCA
   5. Experiment with hypervisors and check VMM measurements to avoid cipher stealing attacks based on side channels.
   6. Use  Firecracker with minimized/measured KVM
-  7. CHek Nitro TPM.  MIght not need Nitro Port.
+  7. Check Nitro TPM.  MIght not need Nitro Port.
+  8. RISC-V CoVE
