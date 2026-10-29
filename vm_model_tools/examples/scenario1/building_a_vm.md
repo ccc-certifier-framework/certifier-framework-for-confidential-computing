@@ -12,12 +12,10 @@ in instructions.md.
 
 In an normal boot, the process is as follows:
 
-The Boot Process Involving vmlinuz and initrd
-
-  1. Loading Stage: For a nom VMM boot, the bootloader (like GRUB) loads both
+  1. Loading Stage: For a non VMM boot, the bootloader (like GRUB) loads both
   the vmlinuz and initrd into memory.  This is done by the VMM.
 
-  2. Decompression of vmlinuz: The embedded routine in vmlinuz decompresses the kernel
+  2. Decompress vmlinuz: The embedded routine in vmlinuz decompresses the kernel
   into memory.
 
   3. Handoff to initrd: Post-decompression, control is passed to the kernel, which then
