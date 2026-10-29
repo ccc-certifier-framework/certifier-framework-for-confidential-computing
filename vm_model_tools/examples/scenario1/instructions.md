@@ -127,6 +127,18 @@ a lot of time so you should definitely not recompile if you don't have to.
 
 Now refer to the platform specific instructions below.
 
+## Running the tests with simulated enclaves
+
+The simulated enclave tests are the simplest.  After compiling with either of
+the commands above.
+
+```shell
+    ./run-test-scenario1.sh  -bss 0 -ccf 0 -loud 1 -et2 simulated-enclave
+     -pk 1 -pn cf-utility
+```
+
+You need not be root.
+
 
 ## Running the tpm tests
 
