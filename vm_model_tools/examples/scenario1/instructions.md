@@ -75,6 +75,14 @@ Then,
     export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
 ```
 
+If you run in a pure tpm environment (with a real tpm), there are a number of
+steps required to "take ownership" of the tpm and enable it, there is some stale
+documentation about this in https://github.com/jlmucb/cloudproxy/Doc/CloudProxyNutsandBolts
+but you should consult TPM documnetation.  In addition, since a "tpm only" hardware
+platform does not encrypt memory, it is important to encrypt the page table, or
+disable paging.  You can encrypt the page table in Linux using dmcrypt.
+
+
 # Running the tests
 
 All tests can be run from a consolidated script called run-test-scenario1.sh.
@@ -261,13 +269,19 @@ measurements require additional steps.
 
 To test real snp, you need a snp enabled VM image.  There are two ways to get
 the measurement which are determined by the BUILD_VM flag in the test script.
-If you build a VM, the script do everything.  If you test in an sev enabled
-AWS machine, the VM you use on AWS is suitable and the tests work in that
-partition.  Unlike when you build a VM, you will use snpguest, rather that
-sev-snp-measure, to obtain the VM measurement.  Because of this, there is
-one additional step that is not done by the script but must be done manually.
-Measurement of a VM uses one of two tools: sev-snp-measure (from IBM) or
-snpguest (from AMD).  You should install both as follows:
+
+If you build a VM, the script do everything.  You should consult the document
+"Building_a_VM" in this directory for notes on building a VM and the
+design alternatives.  The subscript "build-vm.sh" does this for one of the
+design alternatives.  It also has some notes on how the script builds the VM
+and how the VM is hosted.
+
+If you test in an sev enabled AWS machine, the VM you use on AWS is suitable
+and the tests work in that partition.  Unlike when you build a VM, you will
+use snpguest, rather that sev-snp-measure, to obtain the VM measurement.
+Because of this, there is one additional step that is not done by the script
+but must be done manually.  Measurement of a VM uses one of two tools:
+sev-snp-measure (from IBM) or snpguest (from AMD).  You should install both as follows:
 
 To install the sev-snp-measure tool:
 
