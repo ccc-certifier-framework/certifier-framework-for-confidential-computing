@@ -66,6 +66,9 @@ immutable.  We take the approach described below but there are alternatives
 (for example, one suggested by Paul England) that uses integrity protected
 file system images.  Additionally, support for interacting with the
 hypervisor including hypercalls must similarly be sxpected and immutable.
+The script is a good model for an SEV "appliance" with a very few
+programs all designed for the Certifier envionment.  Paul's mechanism is
+better for a complex "legacy" VM with lots of programs and dependencies.
 
 In our example build-vm.sh script, The way we ensure the above properties
 is conceptually simple.
@@ -87,14 +90,15 @@ should not be trusted.  This procedure provides the complete control
 over system components and libraries we need.  It is important that
 some writable file system is mounted and available, even if it
 is untrusted, because most programs (including certifier programs)
-will need storage.  In our case, initrd contains the startup scripts,
-at a mimimum, all programs and libraries required by cf_utility,
-key_server and key-client are in initrd as well as the libraries
-they use.  As mentioned below in building the kernel, any program that
-the OS allows to run that is not in initrd should be signed and checked.
-The check must be a part of the Linux machine policy.  It is also
-up to the kernel build (and dependent files in initrd) that the
-firewalls, device permissions and other configuration is set properly.
+will need storage.
+
+In our case, initrd contains the startup scripts, at a mimimum, all programs
+and libraries required by cf_utility, key_server and key-client are in
+initrd as well as the libraries they use.  As mentioned below in building
+the kernel, any program that the OS allows to run that is not in initrd
+should be signed and checked.  The check must be a part of the Linux machine
+policy.  It is also up to the kernel build (and dependent files in initrd) that
+the firewalls, device permissions and other configuration is set properly.
 In most kernels, no external logins should be permitted and certainly
 no one should be able to log in as root.
 
