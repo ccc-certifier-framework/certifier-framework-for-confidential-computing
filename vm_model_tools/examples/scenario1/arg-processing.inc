@@ -242,6 +242,8 @@ function print-variables() {
         echo "Encryption Algorithm:                  $SYMMETRIC_ENCRYPTION_ALGORITHM"
         echo "Public key algorithm:                  $ASYMMETRIC_ENCRYPTION_ALGORITHM"
         echo ""
+        echo "Build Sev simulator:                   $BUILD_SEV_SIMULATOR"
+        echo ""
         echo "Number of pcrs measured                $NUM_PCR"
         echo "Pcr string                             $PCRSTR"
         echo "Name of TPM device                     $TPM_DEVICE"

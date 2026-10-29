@@ -44,7 +44,7 @@ function do-make-keys() {
        --platform_key_output_file=platform_key_file.bin  \
        --attest_key_output_file=attest_key_file.bin
 
-    if [[ $DEPLOYED_ENCLAVE_TYPE="sev-enclave" ]]; then
+    if [[ $DEPLOYED_ENCLAVE_TYPE == "sev-enclave" ]]; then
       if [[ $TEST_TYPE == "simulated" ]]; then
         $CERTIFIER_ROOT/utilities/simulated_sev_key_generation.exe            \
           --ark_der=sev_ark_cert.der                                        \
@@ -65,6 +65,8 @@ function do-make-keys() {
         cp $CERT_DIR/vlek.der vcek_cert.der
       fi
       cp -p ark_cert.der ask_cert.der vcek_cert.der $EXAMPLE_DIR/cf_data
+    else
+      echo "deployed is NOT SEV"
     fi
   popd
 

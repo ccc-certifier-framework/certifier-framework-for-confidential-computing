@@ -134,8 +134,8 @@ Compile:
 Run: 
 
 ```shell
-    ./run-test-scenario1.sh  -bss 0 -ccf 0 -loud 1 -et2 simulated-enclave
-     -pk 1 -pn cf-utility
+  ./run-test-scenario1.sh  -bss 0 -ccf 0 -loud 1 -et2 simulated-enclave \
+   -pk 1 -pn cf-utility
 ```
 
 If you rerun the tests, first clean up old processes and files:
