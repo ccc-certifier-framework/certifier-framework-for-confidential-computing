@@ -47,34 +47,6 @@ is validated, resulting in a certificate signed by the policy key.  The
 customary proof protocol used in other enclaves is used to produce an
 "Admisions Certificate" as usual.
 
-# Running in a real or simulated SEV or tpm test environment using the consolidated tests script
-
-To compile the programs, establish the environment and run the entire test, the
-subordinate scripts employ a number of shell variables.   It's a good idea to
-define the first two in the shell you use by doing the following:
-
-```shell
-  export CERTIFIER_ROOT=~/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing
-  # or depending where you put the certifier repository:
-  export CERTIFIER_ROOT=~/src/github.com/certifier-framework-for-confidential-computing
-```
-or whatever directory you cloned the certifier repository into.
-
-If you're root, as is required in some of the tests, use the full path name without
-the "~" abbreviation. For example,
-
-```shell
-  export CERTIFIER_ROOT=/home/jlm/src/github.com/certifier-framework-for-confidential-computing
-  # or on my aws VM
-  export CERTIFIER_ROOT=/home/ubuntu/src/github.com/certifier-framework-for-confidential-computing
-```
-
-Then,
-
-```shell
-    export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
-```
-
 If you run in a pure tpm environment (with a real tpm), there are a number of
 steps required to "take ownership" of the tpm and enable it, there is some stale
 documentation about this in https://github.com/jlmucb/cloudproxy/Doc/CloudProxyNutsandBolts
@@ -108,6 +80,21 @@ variables you should know have the following effect:
 Two more important flags are "-et1" and "-et2" which specify the enclave types for the deployment
 and deployed machines.
 
+Before starting any tests, it's a good idea to define environment variables:
+
+```shell
+  export CERTIFIER_ROOT=~/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing
+  # or depending where you put the certifier repository:
+  export CERTIFIER_ROOT=~/src/github.com/certifier-framework-for-confidential-computing
+```
+or whatever directory you cloned the certifier repository into.
+
+Then,
+
+```shell
+    export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
+```
+
 You may want to just compile the framework and vm_model_tools executables,
 without being root.  This will save time later but is not required.
 To do this:
@@ -121,23 +108,34 @@ To do this:
     -just-compile 1 -tt real
 ```
 
-If you do this, you can use the -ccf 0 flag when you run run-test-scenario1.sh
-as root for platforms that need root privileges.  Not having to compile saves
-a lot of time so you should definitely not recompile if you don't have to.
+## Running the tests with the simulated enclave only
 
-Now refer to the platform specific instructions below.
+The simulated enclave tests are the simplest.  You need not be root.
+After defining the CERTIFIER_ROOT and EXAMPLE_DIR variables:
 
-## Running the tests with simulated enclaves
+Compile:
 
-The simulated enclave tests are the simplest.  After compiling with either of
-the commands above.
+```shell
+  ./run-test-scenario1.sh  -bss 0 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 \
+    -just-compile 1 -tt simulated
+````
+
+Run: 
 
 ```shell
     ./run-test-scenario1.sh  -bss 0 -ccf 0 -loud 1 -et2 simulated-enclave
      -pk 1 -pn cf-utility
 ```
 
-You need not be root.
+If you rerun the tests, first clean up old processes and files:
+
+```script
+  ./cleanup.sh
+  ./clean-files.sh
+```
+
+If you ran the tests as root, you have to be root to clean up and make sure
+CERTIFIER_ROOT and EXAMPLE_DIR are properly defined while you're root.
 
 
 ## Running the tpm tests
