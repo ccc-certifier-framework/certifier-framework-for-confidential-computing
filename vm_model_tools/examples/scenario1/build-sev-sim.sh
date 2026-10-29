@@ -19,11 +19,16 @@ function compile-sev-programs() {
 	echo " "
 	echo "do-compile-sev-programs"
 
-	cd $CERTIFIER_ROOT/sev-snp-simulator
-	make clean
-	make
-	make keys
-	sudo make insmod
+
+        if [[ $BUILD_SEV_SIMULATOR -eq 1 ]]; then
+	  cd $CERTIFIER_ROOT/sev-snp-simulator
+	  make clean
+	  make
+	  make keys
+	  sudo make insmod
+        else
+          echo "No need to build SEV simulator"
+        fi
 
 	echo "done"
 	echo " "
@@ -46,7 +51,7 @@ fi
 if [[ $BUILD_SEV_SIMULATOR -eq 1 ]]; then
 	compile-sev-programs
 fi
-echo "simulator compiled"
+echo "done"
 echo ""
 
 # ----------------------------------------------------------------------------------
