@@ -125,7 +125,18 @@ Firecracker
 
 ### Building vmlinuz
 
-These are the steps carried out by the build-vm.sh script.
+The master file for configuration is the hidden file .config which is placed
+in the root of the build tree. If unpacked your source into the directory
+/usr/src/linux-source-xyz, so the full pathname of the config file is
+/usr/src/linux-source-xyz/.config. To install the configuration, you must run
+a script, for example make oldconfig, to integrate into the Kconfig files
+that are scattered around the build tree those options specified in .config.
+Other scripts are make defconfig, which creates a configuration based on the
+current platform, or make menuconfig that presents a curses
+interface to make build selections. You will need ncurses-dev installed for
+menuconfig to work.
+
+These are the steps carried out by the build-vm.sh script with menuconfig.
 
 1. Download the Linux source and configure the kernel:
 
@@ -150,7 +161,7 @@ The compressed kernel image will be created at arch/x86/boot/bzImage
 
 ```script
 bash
-make modules_install
+make modules_install INSTALL_MOD_PATH=/path/to/rootfs
 ```
 
 ### Building initrd.img
@@ -271,6 +282,14 @@ find . -print0 | cpio --null -o -H newc | gzip -c >
 ```
 
 Now you can start at step 4 above.
+
+You may need to inject special drivers for your VM.
+Make sure your module names (e.g., virtio_blk, virtio_net) are listed in
+/etc/initramfs-tools/modules, then update:
+
+```script
+sudo update-initramfs -u -k all
+```
 
 ### Measuring the VM
 
