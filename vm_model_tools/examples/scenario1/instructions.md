@@ -108,6 +108,17 @@ To do this:
     -just-compile 1 -tt real
 ```
 
+If your running the tests on a raw VM, make sure you have the development tools.
+The instructions for doing this is in the top level README.md for the certifier
+but to remind you:
+
+```script
+sudo apt update -y && \
+sudo apt install -y build-essential clang-format protobuf-compiler libprotobuf-dev libgtest-dev libgflags-dev  protoc-gen-go golang-go \
+libmbedtls-dev python3-pip swig openssl libssl-dev cmake uuid-dev pkg-config python3 pylint swtpm swtpm-tools apparmor apparmor-utils \
+apparmor-profiles fuse3 libfuse3-dev socat
+```
+
 ## Running the tests with the simulated enclave only
 
 The simulated enclave tests are the simplest.  You need not be root.

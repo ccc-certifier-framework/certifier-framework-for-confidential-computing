@@ -22,7 +22,6 @@ In an normal boot, the process is as follows:
   mounts the initrd as its initial root filesystem.
 
 
-
 ## Overview and implementation alternatives
 
 Everything upon which the security of the certifier relies on including
@@ -119,11 +118,392 @@ https://kpj.github.io/linux/KernelBuilding.html.
 
 ### Hypervisor
 
-KVM ...
+Step 1: Install the required packages, make sure KVM is sev enabled.
+
+```script
+sudo apt -y install bridge-utils cpu-checker libvirt-clients libvirt-daemon qemu qemu-kvm
+'''
+
+Step 2: Check virtualisation capabilities
+
+Execute the following command to make sure your processor supports virtualisation capabilities:
+
+```script
+  kvm-ok
+```
+The output of this command and indicates whether KVM can be used or not:
+
+INFO: /dev/kvm exists
+KVM acceleration can be used
+
+Step 3: Launch a VM
+
+In order to launch your first Ubuntu Server 20.04 LTS instance on KVM execute the following command:
+
+
+```script
+$ sudo virt-install --name ubuntu-guest --os-variant ubuntu20.04 --vcpus 2 --ram 2048 --location http://ftp.ubuntu.com/ubuntu/dists/focal/main/installer-amd64/ --network bridge=virbr0,model=virtio --graphics none --extra-args='console=ttyS0,115200n8 serial'
+```
+
+This opens an interactive console that you can use to manually install the Ubuntu guest.
+
+### Tutorials and first aid for KVM
+
+There are number of tutorials on line like:
+
+1 .https://www.youtube.com/watch?v=_X1imTzohsY
+2. https://docs.beamnetworks.dev/en/kvm/create-vm-full
+3. https://oneuptime.com/blog/post/2026-01-15-setup-kvm-qemu-virtualization-ubuntu/view
+
+#### Step by step for KVM from third tutorial
+
+1. Check Virtualization Support
+
+```script
+egrep -c '(vmx|svm)' /proc/cpuinfo
+lscpu | grep Virtualization
+```
+
+2. Check KVM module is available
+
+```script
+lsmod | grep kvm
+```
+
+3. If virtualization is disabled, enable it in BIOS/UEFI settings.
+
+4. Install KVM and Tools
+
+```script
+# Install
+sudo apt update
+sudo apt install qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils virtinst virt-manager -y
+# Verify installation
+virsh --version
+qemu-system-x86_64 --version
+```
+
+5. Configure User Permissions
+
+```script
+# Add your user to libvirt and kvm groups
+sudo usermod -aG libvirt $USER
+sudo usermod -aG kvm $USER
+```
+
+6. Apply changes (or log out and back in)
+
+```script
+newgrp libvirt
+# Start libvirt daemon
+sudo systemctl start libvirtd
+```
+
+7. Enable on boot
+```script
+sudo systemctl enable libvirtd
+```
+
+8. Check status
+```script
+sudo systemctl status libvirtd
+```
+
+9. Verify KVM Installation
+```script
+# Tell libvirt to use the system-wide QEMU hypervisor
+# instead of using session mode that runs VMs under
+# your personal user account
+export LIBVIRT_DEFAULT_URI='qemu:///system'
+```
+
+10. Check KVM is working
+
+```script
+virsh list --all
+```
+
+11. Check default network
+
+```script
+virsh net-list --all
+```
+
+12. If default network is inactive, start it
+
+```script
+sudo virsh net-start default
+sudo virsh net-autostart default
+```
+
+
+13. Create Virtual Machine (another way) using virt-install (CLI)
+
+```script
+# Create VM from ISO
+virt-install \
+  --name ubuntu-vm \
+  --ram 2048 \
+  --vcpus 2 \
+  --disk path=/var/lib/libvirt/images/ubuntu-vm.qcow2,size=20 \
+  --os-variant ubuntu22.04 \
+  --network network=default \
+  --graphics vnc,listen=0.0.0.0 \
+  --cdrom /path/to/ubuntu-22.04-live-server-amd64.iso \
+  --boot cdrom
+```
+
+14. Create Virtual Machine (another way) using virt-install (CLI)
+Using virt-manager (GUI)
+
+```script
+virt-manager
+    1. Click "Create a new virtual machine"
+    2. Select installation method (ISO)
+    3. Choose OS type and version
+    4. Allocate RAM and CPUs
+    5. Create disk image
+    6. Name VM and configure network
+    7. Begin installation
+
+15. COmmands with virtsh
+
+
+```script
+
+# List all VMs
+virsh list --all
+
+# Start VM
+virsh start ubuntu-vm
+
+# Shutdown VM gracefully
+virsh shutdown ubuntu-vm
+
+# Force stop VM
+virsh destroy ubuntu-vm
+
+# Reboot VM
+virsh reboot ubuntu-vm
+
+# Suspend VM
+virsh suspend ubuntu-vm
+
+# Resume VM
+virsh resume ubuntu-vm
+VM Information
+
+# VM details
+virsh dominfo ubuntu-vm
+
+# VM configuration XML
+virsh dumpxml ubuntu-vm
+
+# Console access
+virsh console ubuntu-vm
+
+# VNC display info
+virsh vncdisplay ubuntu-vm
+Delete VM
+
+# Remove VM (keeps disk)
+virsh undefine ubuntu-vm
+
+# Remove VM and disk
+virsh undefine ubuntu-vm --remove-all-storage
+Networking Configuration
+Default NAT Network
+VMs use NAT by default, sharing the host's IP:
+
+# View default network
+virsh net-dumpxml default
+
+virsh domiflist ubuntu-vm
+
+# Bridged Network
+# For VMs to have their own IP on the LAN:
+# Create bridge configuration
+# sudo nano /etc/netplan/01-netcfg.yaml
+
+# network:
+#   version: 2
+#   renderer: networkd
+#   ethernets:
+#     enp0s3:
+#       dhcp4: false
+#   bridges:
+#     br0:
+#       interfaces: [enp0s3]
+#       dhcp4: true
+#       parameters:
+#         stp: false
+#         forward-delay: 0
+
+# Apply configuration
+sudo netplan apply
+
+# Define bridge network for libvirt
+sudo nano /tmp/bridge-network.xml
+
+<network>
+  <name>br0-network</name>
+  <forward mode="bridge"/>
+  <bridge name="br0"/>
+</network>
+
+
+# Create and start bridge network
+virsh net-define /tmp/bridge-network.xml
+virsh net-start br0-network
+virsh net-autostart br0-network
+Storage Management
+Storage Pools
+
+# List storage pools
+virsh pool-list --all
+
+22.  Create new storage pool
+virsh pool-define-as mypool dir --target /data/vms
+
+23. Start and autostart pool
+
+virsh pool-start mypool
+virsh pool-autostart mypool
+
+# List volumes in pool
+virsh vol-list mypool
+Disk Images
+
+# Create disk image
+qemu-img create -f qcow2 /var/lib/libvirt/images/newdisk.qcow2 50G
+
+# Check image info
+qemu-img info /var/lib/libvirt/images/newdisk.qcow2
+
+# Resize disk (VM must be off)
+qemu-img resize /var/lib/libvirt/images/ubuntu-vm.qcow2 +10G
+
+# Convert image format
+qemu-img convert -f raw -O qcow2 disk.raw disk.qcow2
+Attach Disk to VM
+# Attach disk (persistent)
+virsh attach-disk ubuntu-vm /var/lib/libvirt/images/data.qcow2 vdb --persistent
+
+# Detach disk
+virsh detach-disk ubuntu-vm vdb --persistent
+Snapshots
+
+# Create snapshot
+virsh snapshot-create-as ubuntu-vm snap1 "Before update"
+
+# List snapshots
+virsh snapshot-list ubuntu-vm
+
+# Revert to snapshot
+virsh snapshot-revert ubuntu-vm snap1
+
+# Delete snapshot
+virsh snapshot-delete ubuntu-vm snap1
+Resource Management
+CPU and Memory
+
+# Set vCPUs (online)
+virsh setvcpus ubuntu-vm 4 --live
+
+# Set maximum vCPUs
+virsh setvcpus ubuntu-vm 8 --config --maximum
+
+# Set memory (live, in KiB)
+virsh setmem ubuntu-vm 4194304 --live
+
+# Edit VM configuration
+virsh edit ubuntu-vm
+CPU Pinning
+Pin vCPUs to specific host CPUs:
+
+virsh edit ubuntu-vm
+# Add to the domain XML:
+<cputune>
+  <vcpupin vcpu='0' cpuset='0'/>
+  <vcpupin vcpu='1' cpuset='1'/>
+</cputune>
+
+# Clone VM (source must be off)
+virt-clone --original ubuntu-vm --name ubuntu-vm-clone --auto-clone
+
+# Clone with specific disk path
+virt-clone --original ubuntu-vm --name ubuntu-vm-clone --file /var/lib/libvirt/images/ubuntu-vm-clone.qcow2
+Migration
+Live Migration (requires shared storage)
+
+# Migrate VM to another host
+virsh migrate --live ubuntu-vm qemu+ssh://destination-host/system
+#Offline Migration
+# Dump VM XML
+virsh dumpxml ubuntu-vm > ubuntu-vm.xml
+
+# Copy disk and XML to destination
+scp /var/lib/libvirt/images/ubuntu-vm.qcow2 dest:/var/lib/libvirt/images/
+scp ubuntu-vm.xml dest:
+
+# On destination, define VM
+virsh define ubuntu-vm.xml
+Performance Tuning
+Enable Hugepages
+
+# Check current hugepages
+cat /proc/meminfo | grep Huge
+
+# Configure hugepages (2MB pages)
+echo 1024 | sudo tee /proc/sys/vm/nr_hugepages
+
+# Make permanent
+#echo "vm.nr_hugepages=1024" | sudo tee -a /etc/sysctl.conf
+#Enable in VM configuration:
+
+<memoryBacking>
+  <hugepages/>
+</memoryBacking>
+VirtIO Drivers
+Use VirtIO for best performance:
+
+<disk type='file' device='disk'>
+  <driver name='qemu' type='qcow2'/>
+  <source file='/var/lib/libvirt/images/vm.qcow2'/>
+  <target dev='vda' bus='virtio'/>
+</disk>
+
+<interface type='network'>
+  <source network='default'/>
+  <model type='virtio'/>
+</interface>
+Troubleshooting
+VM Won't Start
+
+# Check libvirtd logs
+sudo journalctl -u libvirtd -n 50
+
+# Check VM logs
+sudo cat /var/log/libvirt/qemu/ubuntu-vm.log
+Network Issues
+
+# Restart default network
+virsh net-destroy default
+virsh net-start default
+
+# Check iptables rules
+sudo iptables -L -n | grep virbr
+
+# Fix image permissions
+sudo chown libvirt-qemu:kvm /var/lib/libvirt/images/*.qcow2
+sudo chmod 600 /var/lib/libvirt/images/*.qcow2
+```
+
 
 ### Launching the VM and virtualization layer
 
-Firecracker
+Firecracker launch.
+
 
 ### Building vmlinuz
 
@@ -302,10 +682,8 @@ them some other way) and you should also also have the command line used for the
 launch.  The measure vm script uses them to call:
 
 ```script
-      $MEASURE_PROG_DIR/sev-snp-measure.py --mode snp --vcpu-family $CPU_FAMILY --vcpu-model $CPU_MODEL --vcpu-stepping $CPU_STEPPING \
+ $MEASURE_PROG_DIR/sev-snp-measure.py --mode snp --vcpu-family $CPU_FAMILY --vcpu-model $CPU_MODEL --vcpu-stepping $CPU_STEPPING \
         --ovmf $OVMF_LOCATION --kernel $VM_KERNEL_FILE_NAME --initrd $VM_INITRAM_FILE_NAME  \
 ```
 
 to obtain the measurement.
-
- 
