@@ -288,6 +288,17 @@ If you are using simulated SEV, the scripts construct the fabricated
 measurement without further work.  In a real sev environment, the
 measurements require additional steps.
 
+For the simulated sev case, you can now run the test:
+
+```script
+  sudo bash
+  # substitute your machine name
+  export CERTIFIER_ROOT=/home/jlm/src/github.com/certifier-framework-for-confidential-computing
+  export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
+  ./run-test-scenario1.sh  -bss 0 -ccf 0 -loud 1 -dn dom0 -pn cf-utility -pk 1 \
+   -et2 sev-enclave -tt simulated
+```
+
 To test real snp, you need a snp enabled VM image.  There are two ways to get
 the measurement which are determined by the BUILD_VM flag in the test script.
 
