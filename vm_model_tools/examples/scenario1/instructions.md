@@ -135,7 +135,7 @@ Run:
 
 ```shell
   ./run-test-scenario1.sh  -bss 0 -ccf 0 -loud 1 -et2 simulated-enclave \
-   -pk 1 -pn cf-utility
+   -pk 1 -pn cf-utility -pfn policy.bin
 ```
 
 If you rerun the tests, first clean up old processes and files:
@@ -271,13 +271,25 @@ executables, without being root.  To do this, for the simulated sev environment:
 ```shell
   # For simulated sev environment
   ./run-test-scenario1.sh  -bss 1 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 \
-   -just-compile 1 -et2 sev-enclave -tt simulated
+   -just-compile 1 -et2 sev-enclave -tt simulated -pfn sev_policy.bin
+
   # For real sev environment, using a prebuilt VM to run the test (eg- Amazon)
+  # Note: The TCB version should match what you saw in the report.
   ./run-test-scenario1.sh  -tt real -et2 sev-enclave -bss 0 -ccf 1 -loud 1 \
-   -dn dom0 -pn cf-utility -pk 1 -just-compile 1 -build-vm 0
-  # For real sev environment, if you build an VM
+   -dn dom0 -pn cf-utility -pk 1 -just-compile 1 -build-vm 0 -pfn sev_policy.bin \
+   -migrate yes -smt yes -tcb -tcb 0xE11F000000000004 
+
+  # For real sev environment, if you built an VM using the scripts
+  # Note: The TCB version should match what you saw in the report.
   ./run-test-scenario1.sh  -tt real -et2 sev-enclave -bss 0 -ccf 1 -loud 1 \
-   -dn dom0 -pn cf-utility -pk 1 -just-compile 1 -build-vm 0
+   -dn dom0 -pn cf-utility -pk 1 -just-compile 1 -build-vm 1 \
+   -migrate yes -smt yes -tcb 0xd517000000000003
+
+  # For real sev environment, if you built an VM without using the scripts
+  # Note: The TCB version should match what you saw in the report.
+  ./run-test-scenario1.sh  -tt real -et2 sev-enclave -bss 0 -ccf 1 -loud 1 \
+   -dn dom0 -pn cf-utility -pk 1 -just-compile 1 -build-vm 1 \
+   -migrate yes -smt yes -tcb 0xd517000000000003
 ```
 
 If you are running the simulated test, the simulation code is compiled in,
@@ -296,7 +308,7 @@ For the simulated sev case, you can now run the test:
   export CERTIFIER_ROOT=/home/jlm/src/github.com/certifier-framework-for-confidential-computing
   export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
   ./run-test-scenario1.sh  -bss 0 -ccf 0 -loud 1 -dn dom0 -pn cf-utility -pk 1 \
-   -et2 sev-enclave -tt simulated
+   -et2 sev-enclave -tt simulated -pfn sev_policy.bin
 ```
 
 To test real snp, you need a snp enabled VM image.  There are two ways to get

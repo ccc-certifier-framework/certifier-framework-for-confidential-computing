@@ -30,16 +30,11 @@ function do-copy-files() {
 
   pushd $EXAMPLE_DIR/provisioning
 
-    cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME policy.bin $EXAMPLE_DIR/service
+    cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME $POLICY_FILE_NAME $EXAMPLE_DIR/service
     cp -p $POLICY_FILE_NAME ark_cert.der ask_cert.der vcek_cert.der $EXAMPLE_DIR/service || true
     cp -p $POLICY_CERT_FILE_NAME $EXAMPLE_DIR/cf_data
     cp -p platform_key_file.bin attest_key_file.bin $EXAMPLE_DIR/cf_data
     cp -p ark_cert.der ask_cert.der vcek_cert.der $EXAMPLE_DIR/cf_data || true
-
-    if [[ -f cf_utility.measurement ]]; then
-            cp -p cf_utility.measurement $EXAMPLE_DIR
-            cp -p cf_utility.measurement $EXAMPLE_DIR/cf_data
-    fi
 
     if [[ -f cf_utility.measurement ]]; then
             cp -p cf_utility.measurement $EXAMPLE_DIR

@@ -35,43 +35,26 @@ function run-policy-server() {
 
    pushd $EXAMPLE_DIR/service
    if [[ $VERBOSE -eq 1 ]]; then
-     if [[ "$DEPLOYMENT_ENCLAVE_TYPE" == "simulated-enclave" ]] ; then
-       echo "running policy server for simulated-enclave"
-       $CERTIFIER_ROOT/certifier_service/simpleserver \
+     echo "$CERTIFIER_ROOT/certifier_service/simpleserver \
             --policy_key_file=$POLICY_KEY_FILE_NAME \
             --policy_cert_file=$POLICY_CERT_FILE_NAME \
-            --policyFile=policy.bin \
-            --readPolicy=true &
-        fi
-        if [[ "$DEPLOYED_ENCLAVE_TYPE" == "sev-enclave" ]] ; then
-          echo "running policy server for sev"
-          $CERTIFIER_ROOT/certifier_service/simpleserver \
-            --policy_key_file=$POLICY_KEY_FILE_NAME \
-            --policy_cert_file=$POLICY_CERT_FILE_NAME \
-            --policyFile=sev_policy.bin \
-            --readPolicy=true &
-        fi
+            --policyFile=$POLICY_FILE_NAME \
+            --readPolicy=true > cert.out &"
+     $CERTIFIER_ROOT/certifier_service/simpleserver \
+          --policy_key_file=$POLICY_KEY_FILE_NAME \
+          --policy_cert_file=$POLICY_CERT_FILE_NAME \
+          --policyFile=policy.bin \
+          --readPolicy=true > certout.txt &
     else
-     if [[ "$DEPLOYMENT_ENCLAVE_TYPE" == "simulated-enclave" ]] ; then
-       echo "running policy server for simulated-enclave"
-       $CERTIFIER_ROOT/certifier_service/simpleserver \
-            --policy_key_file=$POLICY_KEY_FILE_NAME \
-            --policy_cert_file=$POLICY_CERT_FILE_NAME \
-            --policyFile=policy.bin \
-            --readPolicy=true > certout.txt &
-        fi
-        if [[ "$DEPLOYED_ENCLAVE_TYPE" == "sev-enclave" ]] ; then
-          echo "running policy server for sev"
-          $CERTIFIER_ROOT/certifier_service/simpleserver \
-            --policy_key_file=$POLICY_KEY_FILE_NAME \
-            --policy_cert_file=$POLICY_CERT_FILE_NAME \
-            --policyFile=sev_policy.bin \
-            --readPolicy=true > certout.txt &
-        fi
+     $CERTIFIER_ROOT/certifier_service/simpleserver \
+          --policy_key_file=$POLICY_KEY_FILE_NAME \
+          --policy_cert_file=$POLICY_CERT_FILE_NAME \
+          --policyFile=$POLICY_FILE_NAME \
+          --readPolicy=true &
     fi
-    popd
+  popd
 
-    sleep 3
+  sleep 3
 }
 
 echo "Processing arguments"

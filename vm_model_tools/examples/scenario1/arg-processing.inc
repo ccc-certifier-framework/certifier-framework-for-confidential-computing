@@ -208,8 +208,8 @@ OVMF_LOCATION="/usr/share/ovmf/OVMF.amdsev.fd"
 BUILD_VM=0
 # The defaults are for simulated sev
 TCB_VER=0x03000000000008115
-MIGRATE_FLAG=no
-SMT_FLAG=yes
+MIGRATE_VAL="no"
+SMT_VAL="yes"
 
 
 function print-variables() {
@@ -279,8 +279,9 @@ function print-variables() {
         echo "CPU stepping                           $CPU_STEPPING"
         echo "CPU features                           $CPU_FEATURES"
         echo "VMM type                               $VMM_TYPE"
-        echo "OVMF file location                     $OVMF_LOCATION"
         echo "Build VM                               $BUILD_VM"
+        echo ""
+        echo "OVMF file location                     $OVMF_LOCATION"
         echo "TCB_VER                                $TCB_VER"
         echo "MIGRATE_VAL                            $MIGRATE_VAL"
         echo "SMT_VAL                                $SMT_VAL"
