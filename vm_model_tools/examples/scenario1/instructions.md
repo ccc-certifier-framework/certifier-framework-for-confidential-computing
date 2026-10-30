@@ -363,7 +363,6 @@ tool to retrieve the ASK cert.
     mkdir certs || true
     sudo ./snpguest certificates der ./certs
     sudo ./snpguest fetch ca der ./certs milan -e vlek
-    # Sometimes: snpguest fetch vlek pem ./ ./report.bin --processor-model milan
   popd
 ```
 
@@ -377,6 +376,7 @@ You can check them by:
     sudo ./snpguest display report report.bin
   popd
 ```
+
 For policy building, you only need the ARK cert but you need the ASKV and VCEK
 certs on the target machine.  In a prebuilt VM running the entire test, these
 are the same machine so there's nothing more you need to do. If you build a VM
@@ -389,6 +389,9 @@ Again, you must install the snpguest tool on those target machines and use:
     mkdir certs || true
     sudo ./snpguest certificates der ./certs
     sudo ./snpguest fetch ca der ./certs milan -e vlek
+    # If you are on a "bare metal" sev VM, get the vcek rather than the vlek
+    # as follows
+    sudo ./snpguest fetch vcek der ./certs ./report.bin
   popd
 ```
 

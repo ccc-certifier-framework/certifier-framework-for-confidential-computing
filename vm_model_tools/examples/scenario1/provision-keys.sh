@@ -60,9 +60,12 @@ function do-make-keys() {
           cd ../virtee/snpguest/
           CERT_DIR="$(pwd)/target/release/certs"
         popd
+        # copy either the askv/vlek or ask/vcek certs
         cp $CERT_DIR/ark.der ark_cert.der
-        cp $CERT_DIR/asvk.der ask_cert.der
-        cp $CERT_DIR/vlek.der vcek_cert.der
+        cp $CERT_DIR/ask.der ask_cert.der || true
+        cp $CERT_DIR/asvk.der ask_cert.der || true
+        cp $CERT_DIR/vcek.der vcek_cert.der || true
+        cp $CERT_DIR/vlek.der vcek_cert.der || true
       fi
       cp -p ark_cert.der ask_cert.der vcek_cert.der $EXAMPLE_DIR/cf_data
     else
