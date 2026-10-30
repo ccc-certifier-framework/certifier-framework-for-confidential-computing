@@ -194,6 +194,7 @@ sudo usermod -aG kvm $USER
 6. Apply changes (or log out and back in)
 
 ```script
+sudo apt install util-linux-extra
 newgrp libvirt
 # Start libvirt daemon
 sudo systemctl start libvirtd
@@ -266,7 +267,7 @@ virt-manager
     6. Name VM and configure network
     7. Begin installation
 
-15. COmmands with virtsh
+15. Commands with virtsh
 
 
 ```script

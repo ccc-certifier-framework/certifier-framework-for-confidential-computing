@@ -363,6 +363,7 @@ tool to retrieve the ASK cert.
     mkdir certs || true
     sudo ./snpguest certificates der ./certs
     sudo ./snpguest fetch ca der ./certs milan -e vlek
+    # Sometimes: snpguest fetch vlek pem ./ ./report.bin --processor-model milan
   popd
 ```
 
