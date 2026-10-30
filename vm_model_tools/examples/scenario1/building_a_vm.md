@@ -177,7 +177,7 @@ lsmod | grep kvm
 ```script
 # Install
 sudo apt update
-sudo apt install qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils virtinst virt-manager -y
+sudo apt install qemu-system libvirt-daemon-system libvirt-clients bridge-utils virtinst virt-manager -y
 # Verify installation
 virsh --version
 qemu-system-x86_64 --version
