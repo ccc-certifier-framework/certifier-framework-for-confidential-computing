@@ -40,6 +40,11 @@ function do-copy-files() {
             cp -p cf_utility.measurement $EXAMPLE_DIR
             cp -p cf_utility.measurement $EXAMPLE_DIR/cf_data
     fi
+
+    if [[ -f cf_utility.measurement ]]; then
+            cp -p cf_utility.measurement $EXAMPLE_DIR
+            cp -p cf_utility.measurement $EXAMPLE_DIR/cf_data
+    fi
     if [[ -f sev_cf_utility.measurement ]]; then
             cp -p sev_cf_utility.measurement $EXAMPLE_DIR
             cp -p sev_cf_utility.measurement $EXAMPLE_DIR/cf_data
