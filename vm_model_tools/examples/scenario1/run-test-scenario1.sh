@@ -185,7 +185,7 @@ echo "copy-files.sh"
 
 echo ""
 
-if [[ BUILD_VM = 1 ]]; then
+if [[ $BUILD_VM -eq  1 ]]; then
   echo "copy-vm-files.sh"
   ./copy-vm-files.sh $ALLARGS			# working
 fi
