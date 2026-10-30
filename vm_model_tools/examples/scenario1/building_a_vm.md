@@ -269,7 +269,6 @@ virt-manager
 
 15. Commands with virtsh
 
-
 ```script
 
 # List all VMs
@@ -503,7 +502,48 @@ sudo chmod 600 /var/lib/libvirt/images/*.qcow2
 
 ### Launching the VM and virtualization layer
 
-Firecracker launch.
+TODO: Firecracker launch.
+
+Here's how to KVM boot and sev VM on bare metal.
+
+Verify you have SEV:
+
+```script
+grep -w sev /proc/cpuinfo
+```
+
+Enable SEV in /etc/default/grub or kernel arguments:
+
+```script
+mem_encrypt=on kvm_amd.sev=1
+```
+Update the bootloader:
+
+```script
+grub2-mkconfig -o /boot/grub2/grub.cfg
+```
+
+Reboot your host:
+
+```script
+# virsh domcapabilities | grep -A 5 "<sev"
+```
+
+First, launch the VM:
+
+```script
+virt-install --name sev-guest \
+  --machine q35 \
+  --boot uefi \
+  --vcpus 4 \
+  --memory 4096 \
+  --memtune hard_limit=4563402 \
+  --disk size=30 \
+  --launchSecurity sev,policy=0x1 \
+  --network bridge=br0,model=virtio,rom.bar=off \
+  --location /path/to/os-installer.iso \
+  --install kernel_args="console=ttyS0"
+```
 
 
 ### Building vmlinuz
