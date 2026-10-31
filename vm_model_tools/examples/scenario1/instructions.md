@@ -103,7 +103,8 @@ To do this:
   # if compiling for the simulated environment
   ./run-test-scenario1.sh  -bss 0 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 \
     -just-compile 1 -tt simulated
-  # if compiling for a real sev platform
+
+  # if compiling for a real sev platform (AWS, pre-build or built by script)
   ./run-test-scenario1.sh  -bss 0 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 \
     -just-compile 1 -tt real
 ```
@@ -304,10 +305,13 @@ For the simulated sev case, you can now run the test:
 
 ```script
   sudo bash
-  # substitute your machine name
+  # substitute your certifier path for
+  # /home/jlm/src/github.com/certifier-framework-for-confidential-computing
+  # For the first run change -bss 0 to -bss 1 since you need
+  # to rebuild the simulated device support.
   export CERTIFIER_ROOT=/home/jlm/src/github.com/certifier-framework-for-confidential-computing
   export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
-  ./run-test-scenario1.sh  -bss 0 -ccf 0 -loud 1 -dn dom0 -pn cf-utility -pk 1 \
+  ./run-test-scenario1.sh -bss 0 -ccf 0 -loud 1 -dn dom0 -pn cf-utility -pk 1 \
    -et2 sev-enclave -tt simulated -pfn sev_policy.bin
 ```
 

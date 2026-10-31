@@ -34,24 +34,24 @@ function run-policy-server() {
    sudo ldconfig
 
    pushd $EXAMPLE_DIR/service
-   if [[ $VERBOSE -eq 1 ]]; then
-     echo "$CERTIFIER_ROOT/certifier_service/simpleserver \
+     if [[ $VERBOSE -eq 1 ]]; then
+       echo "$CERTIFIER_ROOT/certifier_service/simpleserver \
+              --policy_key_file=$POLICY_KEY_FILE_NAME \
+              --policy_cert_file=$POLICY_CERT_FILE_NAME \
+              --policyFile=$POLICY_FILE_NAME \
+              --readPolicy=true > cert.out &"
+       $CERTIFIER_ROOT/certifier_service/simpleserver \
             --policy_key_file=$POLICY_KEY_FILE_NAME \
             --policy_cert_file=$POLICY_CERT_FILE_NAME \
             --policyFile=$POLICY_FILE_NAME \
-            --readPolicy=true > cert.out &"
-     $CERTIFIER_ROOT/certifier_service/simpleserver \
-          --policy_key_file=$POLICY_KEY_FILE_NAME \
-          --policy_cert_file=$POLICY_CERT_FILE_NAME \
-          --policyFile=policy.bin \
-          --readPolicy=true > certout.txt &
-    else
-     $CERTIFIER_ROOT/certifier_service/simpleserver \
-          --policy_key_file=$POLICY_KEY_FILE_NAME \
-          --policy_cert_file=$POLICY_CERT_FILE_NAME \
-          --policyFile=$POLICY_FILE_NAME \
-          --readPolicy=true &
-    fi
+            --readPolicy=true > certout.txt &
+     else
+       $CERTIFIER_ROOT/certifier_service/simpleserver \
+            --policy_key_file=$POLICY_KEY_FILE_NAME \
+            --policy_cert_file=$POLICY_CERT_FILE_NAME \
+            --policyFile=$POLICY_FILE_NAME \
+            --readPolicy=true &
+     fi
   popd
 
   sleep 3

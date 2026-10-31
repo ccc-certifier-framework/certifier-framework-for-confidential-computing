@@ -209,7 +209,7 @@ BUILD_VM=0
 # The defaults are for simulated sev
 TCB_VER=0x03000000000008115
 MIGRATE_VAL="no"
-SMT_VAL="yes"
+SMT_VAL="no"
 
 
 function print-variables() {
