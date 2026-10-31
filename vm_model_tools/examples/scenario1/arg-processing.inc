@@ -80,6 +80,7 @@ fi
 #       VMM_TYPE                          -vmm-type       VMM type
 #       OVMF_LOCATION                     -ovmf-loc       ovmf file
 #       BUILD_VM                          -build-vm       Build VM
+#       TCB_VER                           -tcb            TCB version for sev
 
 
 function print-options() {
@@ -142,6 +143,9 @@ function print-options() {
         echo "VMM_TYPE                          -vmm-type       VMM type"
         echo "OVMF_LOCATION                     -ovmf-loc       ovmf file"
         echo "BUILD_VM                          -build-vm       Build VM"
+        echo "TCB_VER                           -tcb            TCB version"
+        echo "MIGRATE_VAL                       -migrate        migrate sev property"
+        echo "SMT_VAL                           -smt            smt sev property"
         echo "-----------------------------------------------------------------"
         echo ""
 }
@@ -202,6 +206,10 @@ CPU_FEATURES=""
 VMM_TYPE="QEMU"
 OVMF_LOCATION="/usr/share/ovmf/OVMF.amdsev.fd"
 BUILD_VM=0
+# The defaults are for simulated sev
+TCB_VER=0x03000000000008115
+MIGRATE_VAL="no"
+SMT_VAL="no"
 
 
 function print-variables() {
@@ -235,6 +243,7 @@ function print-variables() {
         echo "Deployment cryptstore name             $DEPLOYMENT_CRYPTSTORE_NAME"
         echo "Deployed cryptstore name               $DEPLOYED_CRYPTSTORE_NAME"
         echo ""
+        echo "Policy file name:                      $POLICY_FILE_NAME"
         echo "Policy Server address:                 $POLICY_SERVER_ADDRESS"
         echo "Policy server port:                    $POLICY_SERVER_PORT"
         echo "Key server address:                    $KEY_SERVER_ADDRESS"
@@ -270,8 +279,12 @@ function print-variables() {
         echo "CPU stepping                           $CPU_STEPPING"
         echo "CPU features                           $CPU_FEATURES"
         echo "VMM type                               $VMM_TYPE"
-        echo "OVMF file location                     $OVMF_LOCATION"
         echo "Build VM                               $BUILD_VM"
+        echo ""
+        echo "OVMF file location                     $OVMF_LOCATION"
+        echo "TCB_VER                                $TCB_VER"
+        echo "MIGRATE_VAL                            $MIGRATE_VAL"
+        echo "SMT_VAL                                $SMT_VAL"
 
         echo ""
 }
@@ -446,6 +459,15 @@ function process-args() {
             fi
             if [[ ${array[i]} = "-build-vm" ]]; then
                     BUILD_VM="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-tcb" ]]; then
+                    TCB_VER="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-smt" ]]; then
+                    SMT_VAL="${array[i+1]}"
+            fi
+            if [[ ${array[i]} = "-migrate" ]]; then
+                    MIGRATE_VAL="${array[i+1]}"
             fi
 
         done

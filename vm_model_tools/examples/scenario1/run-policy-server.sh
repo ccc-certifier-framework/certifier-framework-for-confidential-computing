@@ -34,44 +34,27 @@ function run-policy-server() {
    sudo ldconfig
 
    pushd $EXAMPLE_DIR/service
-   if [[ $VERBOSE -eq 1 ]]; then
-     if [[ "$DEPLOYMENT_ENCLAVE_TYPE" == "simulated-enclave" ]] ; then
-       echo "running policy server for simulated-enclave"
+     if [[ $VERBOSE -eq 1 ]]; then
+       echo "$CERTIFIER_ROOT/certifier_service/simpleserver \
+              --policy_key_file=$POLICY_KEY_FILE_NAME \
+              --policy_cert_file=$POLICY_CERT_FILE_NAME \
+              --policyFile=$POLICY_FILE_NAME \
+              --readPolicy=true > cert.out &"
        $CERTIFIER_ROOT/certifier_service/simpleserver \
             --policy_key_file=$POLICY_KEY_FILE_NAME \
             --policy_cert_file=$POLICY_CERT_FILE_NAME \
-            --policyFile=policy.bin \
-            --readPolicy=true &
-        fi
-        if [[ "$DEPLOYED_ENCLAVE_TYPE" == "sev-enclave" ]] ; then
-          echo "running policy server for sev"
-          $CERTIFIER_ROOT/certifier_service/simpleserver \
-            --policy_key_file=$POLICY_KEY_FILE_NAME \
-            --policy_cert_file=$POLICY_CERT_FILE_NAME \
-            --policyFile=sev_policy.bin \
-            --readPolicy=true &
-        fi
-    else
-     if [[ "$DEPLOYMENT_ENCLAVE_TYPE" == "simulated-enclave" ]] ; then
-       echo "running policy server for simulated-enclave"
+            --policyFile=$POLICY_FILE_NAME \
+            --readPolicy=true > certout.txt &
+     else
        $CERTIFIER_ROOT/certifier_service/simpleserver \
             --policy_key_file=$POLICY_KEY_FILE_NAME \
             --policy_cert_file=$POLICY_CERT_FILE_NAME \
-            --policyFile=policy.bin \
-            --readPolicy=true > certout.txt &
-        fi
-        if [[ "$DEPLOYED_ENCLAVE_TYPE" == "sev-enclave" ]] ; then
-          echo "running policy server for sev"
-          $CERTIFIER_ROOT/certifier_service/simpleserver \
-            --policy_key_file=$POLICY_KEY_FILE_NAME \
-            --policy_cert_file=$POLICY_CERT_FILE_NAME \
-            --policyFile=sev_policy.bin \
-            --readPolicy=true > certout.txt &
-        fi
-    fi
-    popd
+            --policyFile=$POLICY_FILE_NAME \
+            --readPolicy=true &
+     fi
+  popd
 
-    sleep 3
+  sleep 3
 }
 
 echo "Processing arguments"
