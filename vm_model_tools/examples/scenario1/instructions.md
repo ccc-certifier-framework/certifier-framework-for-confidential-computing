@@ -503,24 +503,26 @@ inconsistant behavior. Before you run any subsequent scripts:
 
 ```shell
   sudo bash
-  # Use the full path name and not abbreviations leik "~".  On my AWS VM, the directory
+  # Use the full path name and not abbreviations like "~".  On my AWS VM, the directory
   # is as below but you might have to change it on your machine.
   export CERTIFIER_ROOT=/home/ubuntu/src/github.com/certifier-framework-for-confidential-computing
   export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
 ```
 
-To run the sev tests from scratch, as root, run one of the following seven commands:
+To run the sev tests, as root, run one of the following seven commands:
 
 ```shell
   # 1. If you are running in the simulated environment but have not compiled the
-  # certifier yet and have not build the simulator or installed the simulated driver
+  # certifier yet and have not built the simulator or installed the simulated driver
+  # Change -bss 1 to -bss 0 after the first run
   ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 1 -loud 1 -dn dom0 \
    -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave"
 ```
 
 ```shell
-  # 2. If you are running in the simulated environment but have compiled the
-  # certifier already but have # not installed the simulated sev driver or environment
+  # 2. If you are running in the simulated environment and have compiled the
+  # certifier already but have not installed the simulated sev driver or environment
+  # Change -bss 1 to -bss 0 after the first run since that installs it.
   ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 0 -loud 1 -dn dom0 \
    -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave"
 ```
@@ -534,7 +536,7 @@ To run the sev tests from scratch, as root, run one of the following seven comma
 
 ```shell
   # 4. If you are running for the real sev environment but have not compiled the certifier
-  # and are using a prebuilt VM(AWS)
+  # and are using a prebuilt VM on AWS.
   ./run-test-scenario1.sh -tt real -bss 0 -ccf 1 -loud 1 -dn dom0 \
    -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave" \
    -build-vm 0 -pfn sev_policy.bin -migrate yes -smt yes -tcb -tcb 0xE11F000000000004
@@ -544,7 +546,7 @@ To run the sev tests from scratch, as root, run one of the following seven comma
 
 ```shell
   # 5. If you are running for the real sev environment and have compiled the
-  # certifier and are using a prebuilt VM(AWS), make sure the tcb
+  # certifier and are using a prebuilt VM on AWS, make sure the tcb
   # measurement is right
   ./run-test-scenario1.sh -tt real -bss 0 -ccf 0 -loud 1 -dn dom0 \
    -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave" \
@@ -553,7 +555,9 @@ To run the sev tests from scratch, as root, run one of the following seven comma
 
 ```shell
   # 6. If you are running for the real sev environment and have built
-  # a VM with the scripts.  Make sure the tcb version is right
+  # a VM with the scripts and compiled.  Make sure the tcb version is right
+  # and you have an sev.measurement in $EXAMPLE_DIR wither from snpguest or
+  # sev-snp-measure.
   ./run-test-scenario1.sh -tt real -bss 0 -ccf 0 -loud 1 -dn dom0 \
    -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave" \
    -build-vm 1 -pfn sev_policy.bin -migrate yes -smt yes -tcb -tcb 0xd517000000000003
@@ -561,7 +565,9 @@ To run the sev tests from scratch, as root, run one of the following seven comma
 
 ```shell
   # 7. If you are running for the real sev environment and have built
-  # a VM without the scripts.  Make sure the tcb version is right
+  # a VM without the scripts and compiled.  Make sure the tcb version is right
+  # and you have an sev.measurement in $EXAMPLE_DIR wither from snpguest or
+  # sev-snp-measure.
   ./run-test-scenario1.sh -tt real -bss 0 -ccf 0 -loud 1 -dn dom0 \
    -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave" \
    -build-vm 0 -pfn sev_policy.bin -migrate yes -smt yes -tcb -tcb 0xd517000000000003
@@ -569,9 +575,11 @@ To run the sev tests from scratch, as root, run one of the following seven comma
 In the last two cases, you should have either obtained the measurement for an
 AWS machine using snpguest or obtained the arguments for the sev-snp-measure
 tool as mentioned above.  The -build-vm flag should be 0 if you use a prebuilt
-AWS VM and are running in it and it should be 1 if you built your own VM.
+AWS VM and are running in it and it should be 1 if you built your own VM using
+the scripts.  If you built your own vm without using the scripts, the -build-vm
+flag should also be 0..
 
-If you build your own VM, there are more arguments to the script, obtained from the
+If you build your own VM, there may be more arguments to the script, obtained from the
 cpuid.exe program mentioned above that you should append, these look like:
 
 ```shell
