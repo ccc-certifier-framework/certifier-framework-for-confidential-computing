@@ -35,7 +35,7 @@ function do-run() {
                 exit
         fi
 
-        echo "Calling"
+        echo "Calling for deployment certify"
         echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
           --cf_utility_help=false \
           --init_trust=true \
@@ -52,8 +52,6 @@ function do-run() {
           --service_port=$POLICY_SERVER_PORT --print_level=1 \
           --trust_anchors=$EXAMPLE_DIR/cf_data/my_certs"
         echo " "
-
-        echo "Program 1"
         $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
           --cf_utility_help=false \
           --init_trust=true \
@@ -72,30 +70,11 @@ function do-run() {
 
         sleep 3
 
-        echo "Calling"
-        echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
-          --cf_utility_help=false \
-          --init_trust=false \
-          --generate_symmetric_key=true \
-          --keyname=primary-store-encryption-key \
-          --enclave_type=$DEPLOYMENT_ENCLAVE_TYPE  \
-          --policy_domain_name=$DOMAIN_NAME \
-          --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
-          --policy_store_filename=$DEPLOYMENT_POLICY_STORE_NAME \
-          --encrypted_cryptstore_filename=$DEPLOYMENT_CRYPTSTORE_NAME \
-          --symmetric_key_algorithm=$SYMMETRIC_ENCRYPTION_ALGORITHM  \
-          --public_key_algorithm=$ASYMMETRIC_ENCRYPTION_ALGORITHM \
-          --data_dir='$EXAMPLE_DIR/' \
-	  --endorsement_cert_file_name="ekchain.bin" \
-          --certifier_service_URL=$POLICY_SERVER_ADDRESS \
-          --service_port=$POLICY_SERVER_PORT --print_level=1"
-
-        echo " "
         echo " Alternatively add \
         --trust_anchors=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1/cf_data/my_certs"
         echo " "
 
-        echo "Program 2"
+        echo "Check recovery of store"
         $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
           --cf_utility_help=false \
           --init_trust=false \
@@ -120,8 +99,6 @@ function do-run() {
 echo "Processing arguments"
 process-args
 echo "Arguments processed"
-
-echo " "
 echo "Certify me"
 
 if [ $OPERATION  == "run" ] ; then

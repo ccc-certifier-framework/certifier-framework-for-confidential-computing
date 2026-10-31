@@ -25,13 +25,11 @@ source ./arg-processing.inc
 echo ""
 echo "certify-deployed-machine.sh"
 echo ""
-
 echo "Processing arguments"
 process-args
 echo "Arguments processed"
-
 echo " "
-echo "Running"
+echo "Running to certify deployed machine"
 echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
         --cf_utility_help=false \
         --init_trust=true \
@@ -51,9 +49,7 @@ echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
 	--endorsement_cert_file_name="ekchain.bin" \
         --seal_hierarchy_file_name="$SEAL_STORE" \
         --quote_hierarchy_file_name="$QUOTE_STORE"
-
 echo " "
-
 $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
       --cf_utility_help=false \
       --init_trust=true \
@@ -75,7 +71,7 @@ $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
 sleep 3
 
 echo " "
-echo "Running"
+echo "Checking store recovery"
 echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
         --cf_utility_help=false \
         --init_trust=false \
@@ -97,8 +93,6 @@ echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
 echo " "
 echo " Alternatively add \
 	--trust_anchors=$EXAMPLE_DIR/cf_data/my_certs"
-echo " "
-
 echo " "
 echo "deployed machine certified"
 
