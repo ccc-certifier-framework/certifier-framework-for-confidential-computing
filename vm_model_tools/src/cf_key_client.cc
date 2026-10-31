@@ -581,12 +581,6 @@ bool client_application(secure_authenticated_channel &channel) {
       }
       value.assign((char *)km.secret_key_bits().data(),
                    (int)km.secret_key_bits().size());
-    } else {
-      printf("%s() error, line %d, unsupported type %s\n",
-             __func__,
-             __LINE__,
-             ce.type().c_str());
-      return true;
     }
     if (!write_file_from_string(FLAGS_output_file, value)) {
       printf("%s() error, line %d, couldn't write output file %s\n",
