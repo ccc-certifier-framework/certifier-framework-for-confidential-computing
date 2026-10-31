@@ -577,7 +577,7 @@ To run the sev tests, as root, run one of the following seven commands:
   # sev-snp-measure.
   ./run-test-scenario1.sh -tt real -bss 0 -ccf 0 -loud 1 -dn dom0 \
    -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave" \
-   -build-vm 0 -pfn sev_policy.bin -migrate yes -smt yes -tcb 0xd517000000000003
+   -build-vm 0 -pfn sev_policy.bin -migrate no -smt yes -tcb 0xd517000000000003
 
 In the last two cases, you should have either obtained the measurement for an
 AWS machine using snpguest or obtained the arguments for the sev-snp-measure
