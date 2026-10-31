@@ -279,25 +279,27 @@ executables, without being root.  To do this, for the simulated sev environment:
   # For real sev environment, using a prebuilt VM to run the test (eg- Amazon)
   # Note: The TCB version should match what you saw in the report.
   ./run-test-scenario1.sh  -tt real -et2 sev-enclave -bss 0 -ccf 1 -loud 1 \
-   -dn dom0 -pn cf-utility -pk 1 -just-compile 1 -build-vm 0 -pfn sev_policy.bin \
-   -migrate yes -smt yes -tcb -tcb 0xE11F000000000004 
+   -dn dom0 -pn cf-utility -pk 1 -just-compile 1 -build-vm 0 -pfn sev_policy.bin
 
   # For real sev environment, if you built an VM using the scripts
   # Note: The TCB version should match what you saw in the report.
   ./run-test-scenario1.sh  -tt real -et2 sev-enclave -bss 0 -ccf 1 -loud 1 \
-   -dn dom0 -pn cf-utility -pk 1 -just-compile 1 -build-vm 1 \
-   -migrate yes -smt yes -tcb 0xd517000000000003
+   -dn dom0 -pn cf-utility -pk 1 -just-compile 1 -build-vm 1
 
   # For real sev environment, if you built an VM without using the scripts
   # Note: The TCB version should match what you saw in the report.
   ./run-test-scenario1.sh  -tt real -et2 sev-enclave -bss 0 -ccf 1 -loud 1 \
-   -dn dom0 -pn cf-utility -pk 1 -just-compile 1 -build-vm 1 \
+   -dn dom0 -pn cf-utility -pk 1 -just-compile 0 -build-vm 1 \
    -migrate yes -smt yes -tcb 0xd517000000000003
 ```
 
 If you are running the simulated test, the simulation code is compiled in,
 otherwise, not.  So if you compile for simulated, you MUST recompile for
 the real test and vice versa.  See below for the meaning of the build-vm flag.
+
+If you built your own VM measured it and put the measurement in $EXAMPLE_DIR/sev.measurement
+as instructed, you should also copy it into $EXAMPLE_DIR/provisioning/sev.measurement
+after a clean-files and before running the final test.
 
 If you are using simulated SEV, the scripts construct the fabricated
 measurement without further work.  In a real sev environment, the
