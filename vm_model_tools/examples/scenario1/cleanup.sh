@@ -44,8 +44,6 @@ function cleanup-stale-procs() {
 echo "Processing arguments"
 process-args
 echo "Arguments processed"
-
-echo " "
 echo "cleaning stale procs"
 cleanup-stale-procs
 echo "cleaned stale procs"

@@ -259,14 +259,12 @@ function do-make-policy() {
 
 echo ""
 echo "build-policy.sh"
-echo ""
-
 echo "Processing arguments"
 process-args
 echo "Arguments processed"
 
 do-make-policy
-echo ""
+
 echo "build-policy.sh done"
 echo ""
 

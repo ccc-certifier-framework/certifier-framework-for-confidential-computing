@@ -60,14 +60,9 @@ function run-policy-server() {
 echo "Processing arguments"
 process-args
 echo "Arguments processed"
-
-echo ""
 echo "running policy server"
 run-policy-server
-
-echo ""
 echo "policy server running"
-echo ""
 
 # --------------------------------------------------------------------------------
 

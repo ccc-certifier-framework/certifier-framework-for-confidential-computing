@@ -17,8 +17,6 @@ source ./arg-processing.inc
 
 echo ""
 echo "obtain-application-secrets.sh"
-echo ""
-
 echo "Processing arguments"
 process-args
 echo "Arguments processed"

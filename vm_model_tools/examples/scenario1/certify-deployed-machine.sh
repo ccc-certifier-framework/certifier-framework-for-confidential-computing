@@ -24,7 +24,6 @@ source ./arg-processing.inc
 
 echo ""
 echo "certify-deployed-machine.sh"
-echo ""
 echo "Processing arguments"
 process-args
 echo "Arguments processed"

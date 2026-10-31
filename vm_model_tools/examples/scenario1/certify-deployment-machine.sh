@@ -24,7 +24,6 @@ source ./arg-processing.inc
 
 echo ""
 echo "certify-deployment-machine.sh"
-echo ""
 
 function do-run() {
         echo " "

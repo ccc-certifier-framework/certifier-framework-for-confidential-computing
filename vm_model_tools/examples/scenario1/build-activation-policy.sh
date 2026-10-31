@@ -58,15 +58,11 @@ function do-make-activation-policy() {
 
 echo ""
 echo "build-activation-policy.sh"
-echo ""
-
 echo "Processing arguments"
 process-args
 echo "Arguments processed"
 
 do-make-activation-policy
-
-echo ""
 echo "build-activation-policy.sh done"
 echo ""
 

@@ -130,16 +130,9 @@ function run-first-pass() {
 
 echo "Processing arguments"
 process-args
-echo ""
-
-if [[ $VERBOSE -eq 1 ]]; then
-        print-variables
-fi
-
-echo ""
 run-first-pass
 echo ""
-echo "done"
+echo "first pass done"
 
 # --------------------------------------------------------------------------------
 

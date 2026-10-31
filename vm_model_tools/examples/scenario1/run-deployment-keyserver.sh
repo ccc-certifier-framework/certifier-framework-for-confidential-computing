@@ -21,15 +21,10 @@ source ./arg-processing.inc
 
 echo ""
 echo "run-deployment-key-server.sh"
-echo ""
-
 echo "Processing arguments"
 process-args
 echo "Arguments processed"
-
-echo " "
 echo "running key-server"
-echo " "
 echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_key_server.exe \
     --policy_domain_name=$DOMAIN_NAME \
     --encrypted_cryptstore_filename=$DEPLOYMENT_CRYPTSTORE_NAME \

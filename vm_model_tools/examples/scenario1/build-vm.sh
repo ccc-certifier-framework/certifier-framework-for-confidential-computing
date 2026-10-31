@@ -13,7 +13,6 @@ source ./arg-processing.inc
 
 echo ""
 echo "build-vm.sh"
-
 echo "Processing arguments"
 process-args
 echo "Arguments processed"
@@ -25,7 +24,7 @@ if [[ $TEST_TYPE == "real" ]]; then
 	echo "we don't build VM's yet so this ony works in the test environment"
 fi
 
-echo ""
+echo "done"
 
 # --------------------------------------------------------------------------------
 

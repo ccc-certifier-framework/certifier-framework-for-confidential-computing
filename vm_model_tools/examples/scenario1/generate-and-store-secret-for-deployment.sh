@@ -18,8 +18,6 @@ source ./arg-processing.inc
 
 echo ""
 echo "generate-and-store-secret staring"
-echo ""
-
 echo "Processing arguments"
 process-args
 echo "Arguments processed"
@@ -93,7 +91,6 @@ $CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe \
     --action=retrieve
 
 echo "generate-and-store-secret succeeded"
-echo ""
 
 # --------------------------------------------------------------------------------
 

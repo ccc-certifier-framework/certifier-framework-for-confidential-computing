@@ -154,8 +154,6 @@ function do-compile-certifier() {
 
 echo ""
 echo "build-certifier.sh"
-echo ""
-
 echo "processing arguments"
 process-args
 echo "processed arguments"

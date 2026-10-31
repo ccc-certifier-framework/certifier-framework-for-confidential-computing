@@ -85,8 +85,6 @@ echo ""
 
 echo ""
 echo "Provision keys"
-echo ""
-
 echo "Processing arguments"
 process-args
 echo "Processed arguments"
@@ -98,7 +96,6 @@ fi
 do-make-keys
 
 echo "Provision keys done"
-echo ""
 
 # --------------------------------------------------------------------------------
 

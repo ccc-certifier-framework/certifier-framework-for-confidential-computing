@@ -38,8 +38,6 @@ function compile-sev-programs() {
 
 echo ""
 echo "build-sev-sim.sh"
-echo ""
-
 echo "Processing arguments"
 process-args
 echo "Processed arguments"
@@ -48,7 +46,6 @@ if [[ $BUILD_SEV_SIMULATOR -eq 1 ]]; then
 	compile-sev-programs
 fi
 echo "done"
-echo ""
 
 # ----------------------------------------------------------------------------------
 

@@ -53,8 +53,6 @@ function do-measure-vm() {
 
 echo ""
 echo "measure-vm-programs.sh"
-echo ""
-
 echo "Processing arguments - $*"
 process-args
 echo "Arguments processed"
@@ -69,7 +67,7 @@ if [[ $OPERATION  == "measure" ]] ; then
 else
   echo "Unknown operation: $OPERATION"
 fi
-echo " "
+echo "done "
 
 # --------------------------------------------------------------------------------
 

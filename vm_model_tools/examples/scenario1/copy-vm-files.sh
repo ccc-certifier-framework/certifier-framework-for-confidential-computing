@@ -70,7 +70,7 @@ if [[ $TEST_TYPE == "real" ]]; then
 	exit
 fi
   do-copy-vm-files
-echo ""
+echo "copy-vm-files done"
 
 # --------------------------------------------------------------------------------
 
