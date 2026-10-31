@@ -84,10 +84,15 @@ Before starting any tests, it's a good idea to define environment variables:
 
 ```shell
   export CERTIFIER_ROOT=~/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing
+
   # or depending where you put the certifier repository:
   export CERTIFIER_ROOT=~/src/github.com/certifier-framework-for-confidential-computing
+
   # ON AWS as root
   export CERTIFIER_ROOT=/home/ubuntu/src/github.com/certifier-framework-for-confidential-computing
+
+  # on my machine as root
+  export CERTIFIER_ROOT=/home/jlm/src/github.com/certifier-framework-for-confidential-computing
 ```
 or whatever directory you cloned the certifier repository into.
 
@@ -567,7 +572,7 @@ To run the sev tests, as root, run one of the following seven commands:
   # sev-snp-measure.
   ./run-test-scenario1.sh -tt real -bss 0 -ccf 0 -loud 1 -dn dom0 \
    -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave" \
-   -build-vm 1 -pfn sev_policy.bin -migrate yes -smt yes -tcb 0xd517000000000003
+   -build-vm 1 -pfn sev_policy.bin -migrate no -smt yes -tcb 0xd517000000000003
 ```
 
 ```shell
