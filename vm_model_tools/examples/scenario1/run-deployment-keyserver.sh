@@ -47,7 +47,6 @@ $CERTIFIER_ROOT/vm_model_tools/src/cf_key_server.exe \
 
 sleep 5
 echo "keyserver running"
-echo ""
 
 # --------------------------------------------------------------------------------
 

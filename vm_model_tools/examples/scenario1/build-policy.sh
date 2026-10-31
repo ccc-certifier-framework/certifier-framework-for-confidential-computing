@@ -246,12 +246,10 @@ function do-make-policy() {
 
     echo ""
     echo "Final policy"
-    echo ""
     $CERTIFIER_ROOT/utilities/print_packaged_claims.exe \
       --input=$POLICY_FILE_NAME
   popd
 
-  echo ""
   echo "do-make-policy done"
 }
 
@@ -266,7 +264,6 @@ echo "Arguments processed"
 do-make-policy
 
 echo "build-policy.sh done"
-echo ""
 
 # ------------------------------------------------------------------------------------
 

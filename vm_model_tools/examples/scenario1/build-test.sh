@@ -165,7 +165,6 @@ if [ $CLEAN -eq 1 ] ; then
 fi
 
 echo "This was done in build-certifier.sh in step 0"
-echo " "
 
 # --------------------------------------------------------------------------------
 

@@ -105,8 +105,8 @@ if [[ ! -v EXAMPLE_DIR ]] ; then
     EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
 fi
 
-if [[ $TEST_TYPE == "real" ]]; then
-  echo "real sev test does not build a VM yet"
+if [[ $TEST_TYPE == "real" && $BUILD_VM -eq 1 ]]; then
+  echo "WARNING: real sev test does not build a VM yet"
 fi
 
 if [[ ! -e "$EXAMPLE_DIR/provisioning" ]] ; then

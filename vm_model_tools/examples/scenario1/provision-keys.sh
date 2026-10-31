@@ -78,7 +78,6 @@ function do-make-keys() {
   popd
 
 echo "do-make-keys done"
-echo ""
 }
 
 # ----------------------------------------------------------------

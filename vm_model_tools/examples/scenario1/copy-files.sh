@@ -45,10 +45,6 @@ function do-copy-files() {
             cp -p sev_cf_utility.measurement $EXAMPLE_DIR
             cp -p sev_cf_utility.measurement $EXAMPLE_DIR/cf_data
     fi
-#    if [[ -f $VM_NAME.measurement.measurement ]]; then
-#            cp -p $VM_NAME.measurement $EXAMPLE_DIR
-#          cp -p $VM_NAME.measurement $EXAMPLE_DIR/cf_data
-#    fi
     if [[ -f platform_attest_endorsement.bin ]]; then
             cp -p platform_key_file.bin attest_key_file.bin \
                 platform_attest_endorsement.bin $EXAMPLE_DIR/cf_data

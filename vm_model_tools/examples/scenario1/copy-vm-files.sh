@@ -17,12 +17,12 @@ source ./arg-processing.inc
 
 echo ""
 echo "copy-vm-files.sh"
-echo ""
 
 function do-copy-vm-files() {
 	echo " "
 	echo "do-copy-vm-files"
 	echo "This is redundant now, will change when we build a VM"
+        exit 0
       
 	if [[ ! -e "$EXAMPLE_DIR/provisioning" ]] ; then
 		mkdir $EXAMPLE_DIR/provisioning

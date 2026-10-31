@@ -115,14 +115,10 @@ function run-first-pass() {
     --service_port=$POLICY_SERVER_PORT --print_level=1
 
   echo "got quote cert"
-  echo ""
-
   echo "copy measurement"
   echo ""
   cp $TPM_MEASUREMENT_FILE_NAME provisioning
   chmod 0777 provisioning $TPM_MEASUREMENT_FILE_NAME provisioning/$TPM_MEASUREMENT_FILE_NAME
-
-  echo ""
   echo "first pass done"
 
   cleanup-stale-procs

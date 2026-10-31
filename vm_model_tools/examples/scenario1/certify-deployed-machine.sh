@@ -89,10 +89,8 @@ echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
         --tpm_device="$TPM_DEVICE" \
         --seal_hierarchy_file_name="$SEAL_STORE" \
         --quote_hierarchy_file_name="$QUOTE_STORE"
-echo " "
 echo " Alternatively add \
 	--trust_anchors=$EXAMPLE_DIR/cf_data/my_certs"
-echo " "
 echo "deployed machine certified"
 
 # --------------------------------------------------------------------------------
