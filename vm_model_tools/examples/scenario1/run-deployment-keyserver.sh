@@ -27,10 +27,6 @@ echo "Processing arguments"
 process-args
 echo "Arguments processed"
 
-if [[ $VERBOSE -eq 1 ]]; then
-        print-variables
-fi
-
 echo " "
 echo "running key-server"
 echo " "

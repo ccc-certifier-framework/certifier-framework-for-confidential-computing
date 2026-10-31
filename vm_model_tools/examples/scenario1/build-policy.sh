@@ -265,10 +265,6 @@ echo "Processing arguments"
 process-args
 echo "Arguments processed"
 
-if [[ $VERBOSE -eq 1 ]]; then                   
-        print-variables                         
-fi
-
 do-make-policy
 echo ""
 echo "build-policy.sh done"

@@ -269,37 +269,25 @@ tpm simulator but you usually need not do so.  To do this:
 Almost all the variables for the test scrripts are set within run-test-scenario1.sh.
 
 As mentioned above, you may want to just compile the framework and vm_model_tools
-executables, without being root.  To do this, for the simulated sev environment:
+executables, without being root.  The compilation is affected by the -tt flag.
+However, the compile does not depend on the build-vm flag.
 
 ```shell
   # For simulated sev environment
   ./run-test-scenario1.sh  -bss 1 -ccf 1 -loud 1 -dn dom0 -pn cf-utility -pk 1 \
    -just-compile 1 -et2 sev-enclave -tt simulated -pfn sev_policy.bin
 
-  # For real sev environment, using a prebuilt VM to run the test (eg- Amazon)
-  # Note: The TCB version should match what you saw in the report.
+  # For real sev environment
   ./run-test-scenario1.sh  -tt real -et2 sev-enclave -bss 0 -ccf 1 -loud 1 \
-   -dn dom0 -pn cf-utility -pk 1 -just-compile 1 -build-vm 0 -pfn sev_policy.bin
-
-  # For real sev environment, if you built an VM using the scripts
-  # Note: The TCB version should match what you saw in the report.
-  ./run-test-scenario1.sh  -tt real -et2 sev-enclave -bss 0 -ccf 1 -loud 1 \
-   -dn dom0 -pn cf-utility -pk 1 -just-compile 1 -build-vm 1
-
-  # For real sev environment, if you built an VM without using the scripts
-  # Note: The TCB version should match what you saw in the report.
-  ./run-test-scenario1.sh  -tt real -et2 sev-enclave -bss 0 -ccf 1 -loud 1 \
-   -dn dom0 -pn cf-utility -pk 1 -just-compile 0 -build-vm 1 \
-   -migrate yes -smt yes -tcb 0xd517000000000003
+   -dn dom0 -pn cf-utility -pk 1 -just-compile 1
 ```
 
 If you are running the simulated test, the simulation code is compiled in,
 otherwise, not.  So if you compile for simulated, you MUST recompile for
 the real test and vice versa.  See below for the meaning of the build-vm flag.
 
-If you built your own VM measured it and put the measurement in $EXAMPLE_DIR/sev.measurement
-as instructed, you should also copy it into $EXAMPLE_DIR/provisioning/sev.measurement
-after a clean-files and before running the final test.
+If you built your own VM you must measure it and put the measurement in
+$EXAMPLE_DIR/sev.measurement as instructed for the AWS case.
 
 If you are using simulated SEV, the scripts construct the fabricated
 measurement without further work.  In a real sev environment, the
@@ -319,21 +307,34 @@ For the simulated sev case, you can now run the test:
    -et2 sev-enclave -tt simulated -pfn sev_policy.bin
 ```
 
-To test real snp, you need a snp enabled VM image.  There are two ways to get
-the measurement which are determined by the BUILD_VM flag in the test script.
+That's it for simulated sev.
 
-If you build a VM, the script do everything.  You should consult the document
-"Building_a_VM" in this directory for notes on building a VM and the
-design alternatives.  The subscript "build-vm.sh" does this for one of the
-design alternatives.  It also has some notes on how the script builds the VM
-and how the VM is hosted.
+To test real snp, you need a snp enabled VM image.
 
+If you use the scripts to buiild a VM, by specifying the -build-vm 1, the script
+do everything.
+
+If you build your own VM without using the scripts or test on AWS or provide
+your own VM, you must provide a file $EXAMPLE_DIR/sev.measurement, this can
+be provisioned either with the snpguest tool or the sev-snp-measurement tool
 If you test in an sev enabled AWS machine, the VM you use on AWS is suitable
-and the tests work in that partition.  Unlike when you build a VM, you will
-use snpguest, rather that sev-snp-measure, to obtain the VM measurement.
-Because of this, there is one additional step that is not done by the script
-but must be done manually.  Measurement of a VM uses one of two tools:
-sev-snp-measure (from IBM) or snpguest (from AMD).  You should install both as follows:
+and the tests work in that partition.  Unlike when you build a VM with the
+script, you will use snpguest, rather that sev-snp-measure, to obtain the
+VM measurement.  You need to do the same thing if you run on bare metal
+and provide a "pre-built" VM.  The measurement is not done by the scripts
+in either case yet.This one additional step that is not done by the script
+but must be done manually.
+
+Measurement of a VM uses one of two tools: sev-snp-measure (from IBM) or
+snpguest (from AMD).  You should install both as follows:
+
+You should consult the document "Building_a_VM" in this directory for notes on
+building a VM and the design alternatives.  The subscript "build-vm.sh"
+does this for one of the design alternatives.  It also has some notes on how
+the script builds the VM and how the VM is hosted.  If you provide your
+own VM on bare metal (not the AWS VM case), there is on additional step
+related to making and copying the measurement mentioned above.  Eventually,
+the script will handle this.
 
 To install the sev-snp-measure tool:
 
@@ -448,6 +449,10 @@ You should remove all the spaces in this file, too.
 The measurement is 48 bytes and so the file (with a line feed at the end)
 should have exactly 97 bytes.
 
+You can also use this procedure if you provide your own VM OR you can use
+sev-snp-measure which provides a file of the same format without needing
+additional editing.
+
 One additional note on AWS platforms.  AWS does not make VCEK certificates
 available but uses a "VLEK" certificate described below.  The scripts handle
 the differences but bare metal VM's should continue to use VCEKs for
@@ -541,7 +546,7 @@ To run the sev tests, as root, run one of the following seven commands:
   # and are using a prebuilt VM on AWS.
   ./run-test-scenario1.sh -tt real -bss 0 -ccf 1 -loud 1 -dn dom0 \
    -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave" \
-   -build-vm 0 -pfn sev_policy.bin -migrate yes -smt yes -tcb -tcb 0xE11F000000000004
+   -build-vm 0 -pfn sev_policy.bin -migrate yes -smt yes -tcb 0xE11F000000000004
   # Change "-build-vm 0" to "-build-vm 1" if you want to build a new VM.
   # This is not working yet.
 ```
@@ -552,7 +557,7 @@ To run the sev tests, as root, run one of the following seven commands:
   # measurement is right
   ./run-test-scenario1.sh -tt real -bss 0 -ccf 0 -loud 1 -dn dom0 \
    -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave" \
-   -build-vm 0 -pfn sev_policy.bin -migrate yes -smt yes -tcb -tcb 0xE11F000000000004
+   -build-vm 0 -pfn sev_policy.bin -migrate yes -smt yes -tcb 0xE11F000000000004
 ```
 
 ```shell
@@ -562,7 +567,7 @@ To run the sev tests, as root, run one of the following seven commands:
   # sev-snp-measure.
   ./run-test-scenario1.sh -tt real -bss 0 -ccf 0 -loud 1 -dn dom0 \
    -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave" \
-   -build-vm 1 -pfn sev_policy.bin -migrate yes -smt yes -tcb -tcb 0xd517000000000003
+   -build-vm 1 -pfn sev_policy.bin -migrate yes -smt yes -tcb 0xd517000000000003
 ```
 
 ```shell
@@ -572,14 +577,12 @@ To run the sev tests, as root, run one of the following seven commands:
   # sev-snp-measure.
   ./run-test-scenario1.sh -tt real -bss 0 -ccf 0 -loud 1 -dn dom0 \
    -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave" \
-   -build-vm 0 -pfn sev_policy.bin -migrate yes -smt yes -tcb -tcb 0xd517000000000003
+   -build-vm 0 -pfn sev_policy.bin -migrate yes -smt yes -tcb 0xd517000000000003
 
 In the last two cases, you should have either obtained the measurement for an
 AWS machine using snpguest or obtained the arguments for the sev-snp-measure
 tool as mentioned above.  The -build-vm flag should be 0 if you use a prebuilt
-AWS VM and are running in it and it should be 1 if you built your own VM using
-the scripts.  If you built your own vm without using the scripts, the -build-vm
-flag should also be 0..
+AWS VM OR provided a VM without using the scripts to build.
 
 If you build your own VM, there may be more arguments to the script, obtained from the
 cpuid.exe program mentioned above that you should append, these look like:
@@ -613,21 +616,23 @@ created in earlier runs by typing in $EXAMPLE_DIR as root:
 Then, as root, you can rerun the test by typing:
 
 ```shell
-  # for real sev with built VM
+  # for real sev with a VM built by the scripts
   ./run-test-scenario1.sh  -tt real -bss 0 -ccf 0 -loud 1 -dn dom0 \
    -pn cf-utility -pk 1 -sev-dev /dev/sev -sev-mfn ./sev.measurement \
    -initram-mfn ../initrd.img -kernel-mfn ../vmlinuz \
    -ovmf-loc /usr/share/ovmf/OVMF.amdsev.fd  -et2 "sev-enclave" \
-   -et1 "simulated-enclave" -et2 "sev-enclave" -vm-build 1
-  # for real sev with pre-built VM
+   -et1 "simulated-enclave" -et2 "sev-enclave"
+
+  # for real sev with pre-built VM (AWS or user supplied)
   ./run-test-scenario1.sh  -tt real -bss 0 -ccf 0 -loud 1 -dn dom0 \
    -pn cf-utility -pk 1 -sev-dev /dev/sev -sev-mfn ./sev.measurement 
+
   # for simulated sev
   ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -loud 1 -dn dom0 -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave"
 ```
 
 The clean-files.sh script will not delete the sev.measurment file you prepared
-for a real sev environment on AWS nor will you need to rerun the cpuid.exe -sev-parameters
+for a real sev environment nor will you need to rerun the cpuid.exe -sev-parameters
 if you built your own VM BUT you do need to redo those steps if you build a new
 VM or switch target machine environments.
 

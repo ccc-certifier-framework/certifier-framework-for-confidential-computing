@@ -160,10 +160,6 @@ echo "processing arguments"
 process-args
 echo "processed arguments"
 
-if [[ $VERBOSE -eq 1 ]]; then                   
-   print-variables                         
-fi
-
 if [[ $CLEAN -eq 1 ]]; then
    echo "Removing old programs"
    do-fresh

@@ -22,9 +22,6 @@ echo ""
 echo "Processing arguments"
 process-args
 echo "Arguments processed"
-if [[ $VERBOSE -eq 1 ]]; then
-        print-variables
-fi
 
 CLIENT_IN_FILE="./cf_data/client.in"
 CLIENT_OUT_FILE="./cf_data/client.out"

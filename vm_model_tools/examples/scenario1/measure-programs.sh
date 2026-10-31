@@ -66,10 +66,6 @@ echo "Processing arguments - $*"
 process-args
 echo "Arguments processed"
 
-if [[ $VERBOSE -eq 1 ]]; then
-        print-variables
-fi
-
 if [[ $CLEAN -eq 1 ]] ; then
         do-fresh
 fi

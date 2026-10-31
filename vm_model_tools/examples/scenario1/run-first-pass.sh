@@ -17,10 +17,6 @@ echo "Processing arguments"
 process-args
 echo "Arguments processed"
 
-if [[ $VERBOSE -eq 1 ]]; then            
-        print-variables 
-fi
-
 echo ""
 echo "First pass"
 echo "Certifier root: $CERTIFIER_ROOT"

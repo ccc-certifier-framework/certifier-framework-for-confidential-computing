@@ -30,10 +30,6 @@ echo "Processing arguments"
 process-args
 echo "Arguments processed"
 
-if [[ $VERBOSE -eq 1 ]]; then                   
-        print-variables 
-fi
-
 echo " "
 echo "Running"
 echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \

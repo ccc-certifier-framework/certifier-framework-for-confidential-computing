@@ -60,16 +60,12 @@ echo "Processing arguments"
 process-args
 echo "Arguments processed"
 
-if [[ $VERBOSE -eq 1 ]]; then
-        print-variables
-fi
-
-if [[ $TEST_TYPE = "simulated" ]]; then
+if [[ $TEST_TYPE == "simulated" ]]; then
         echo "Nothing to do in simulated environment"
 	exit
 fi
 
-if [[ $TEST_TYPE = "real" ]]; then
+if [[ $TEST_TYPE == "real" ]]; then
         echo "Nothing more needed yet"
 	exit
 fi

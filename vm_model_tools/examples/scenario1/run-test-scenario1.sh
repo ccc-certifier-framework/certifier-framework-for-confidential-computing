@@ -105,8 +105,8 @@ if [[ ! -v EXAMPLE_DIR ]] ; then
     EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
 fi
 
-if [[ $TEST_TYPE = "real" ]]; then
-  echo "real sev test not working yet"
+if [[ $TEST_TYPE == "real" ]]; then
+  echo "real sev test does not build a VM yet"
 fi
 
 if [[ ! -e "$EXAMPLE_DIR/provisioning" ]] ; then
@@ -172,8 +172,8 @@ echo ""
 echo "build-policy.sh"
 ./build-policy.sh $ALLARGS			# working
 
-if [[ $TEST_TYPE = "real" ]]; then
-  if [[ $BUILD_VM = 1 ]]; then
+if [[ $TEST_TYPE == "real" ]]; then
+  if [[ $BUILD_VM -eq  1 ]]; then
     echo "Real snp platforms are not yet being built from scratch"
     exit
   fi

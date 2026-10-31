@@ -76,10 +76,6 @@ echo "Processing arguments"
 process-args
 echo "Processed arguments"
 
-if [[ $VERBOSE -eq 1 ]]; then
-        print-variables
-fi
-
 do-copy-files
 echo "Files copied"
 echo ""
