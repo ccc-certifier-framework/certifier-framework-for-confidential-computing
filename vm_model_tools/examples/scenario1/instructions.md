@@ -86,6 +86,8 @@ Before starting any tests, it's a good idea to define environment variables:
   export CERTIFIER_ROOT=~/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing
   # or depending where you put the certifier repository:
   export CERTIFIER_ROOT=~/src/github.com/certifier-framework-for-confidential-computing
+  # ON AWS as root
+  export CERTIFIER_ROOT=/home/ubuntu/src/github.com/certifier-framework-for-confidential-computing
 ```
 or whatever directory you cloned the certifier repository into.
 
@@ -507,7 +509,7 @@ inconsistant behavior. Before you run any subsequent scripts:
   export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
 ```
 
-To run the sev tests from scratch, as root, run one of the following five commands:
+To run the sev tests from scratch, as root, run one of the following seven commands:
 
 ```shell
   # 1. If you are running in the simulated environment but have not compiled the
@@ -535,20 +537,34 @@ To run the sev tests from scratch, as root, run one of the following five comman
   # and are using a prebuilt VM(AWS)
   ./run-test-scenario1.sh -tt real -bss 0 -ccf 1 -loud 1 -dn dom0 \
    -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave" \
-   -build-vm 0
+   -build-vm 0 -pfn sev_policy.bin -migrate yes -smt yes -tcb -tcb 0xE11F000000000004
   # Change "-build-vm 0" to "-build-vm 1" if you want to build a new VM.
   # This is not working yet.
 ```
 
 ```shell
   # 5. If you are running for the real sev environment and have compiled the
-  # certifier and are using a prebuilt VM(AWS)
+  # certifier and are using a prebuilt VM(AWS), make sure the tcb
+  # measurement is right
   ./run-test-scenario1.sh -tt real -bss 0 -ccf 0 -loud 1 -dn dom0 \
-  -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave" \
-  -build-vm 0
-  # Change "-build-vm 0" to "-build-vm 1" if you want to build a new VM.
-  # This is not working yet.
+   -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave" \
+   -build-vm 0 -pfn sev_policy.bin -migrate yes -smt yes -tcb -tcb 0xE11F000000000004
 ```
+
+```shell
+  # 6. If you are running for the real sev environment and have built
+  # a VM with the scripts.  Make sure the tcb version is right
+  ./run-test-scenario1.sh -tt real -bss 0 -ccf 0 -loud 1 -dn dom0 \
+   -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave" \
+   -build-vm 1 -pfn sev_policy.bin -migrate yes -smt yes -tcb -tcb 0xd517000000000003
+```
+
+```shell
+  # 7. If you are running for the real sev environment and have built
+  # a VM without the scripts.  Make sure the tcb version is right
+  ./run-test-scenario1.sh -tt real -bss 0 -ccf 0 -loud 1 -dn dom0 \
+   -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave" \
+   -build-vm 0 -pfn sev_policy.bin -migrate yes -smt yes -tcb -tcb 0xd517000000000003
 
 In the last two cases, you should have either obtained the measurement for an
 AWS machine using snpguest or obtained the arguments for the sev-snp-measure
