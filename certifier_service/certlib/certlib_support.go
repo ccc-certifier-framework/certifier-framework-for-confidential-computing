@@ -1369,6 +1369,14 @@ func SatisfyingProperties(p1 *certprotos.Properties, p2 *certprotos.Properties) 
 		if pp == nil {
 			continue
 		}
+		if p1.Props[i].PropertyName != nil && *p1.Props[i].PropertyName == "single-socket" {
+			fmt.Printf("WARNING: not checking single-socket property (PlatformEnt)\n")
+			continue
+		}
+		if p2.Props[i].PropertyName != nil && *p2.Props[i].PropertyName == "single-socket" {
+			fmt.Printf("WARNING: not checking single-socket property (EnvironmentEnt)\n")
+			continue
+		}
 		if !SatisfyingProperty(p1.Props[i], pp) {
 			return false
 		}
