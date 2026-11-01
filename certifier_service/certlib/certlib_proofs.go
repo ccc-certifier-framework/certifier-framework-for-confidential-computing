@@ -1876,13 +1876,19 @@ func GetPlatformFromSevAttest(binSevAttest []byte) *certprotos.Platform {
 	ivt := "int"
 	ce := "="
 
+	/*
+	// TEST: Get rid of the single-socket property
 	pn0 := "single-socket"
 	vp0 := "no"
 	if pol_byte&0x08 != 0 {
 		vp0 = "yes"
+	} else {
+		vp0 = "no"
 	}
+
 	p0 := MakeProperty(pn0, svt, &vp0, &ce, nil)
 	props.Props = append(props.Props, p0)
+	 */
 
 	pn1 := "debug"
 	vp1 := "no"
