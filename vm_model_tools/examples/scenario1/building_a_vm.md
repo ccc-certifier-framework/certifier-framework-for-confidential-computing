@@ -116,7 +116,7 @@ scripts to build your own VMs for an actual deployment.
 For additional information on step 2, consult:
 https://kpj.github.io/linux/KernelBuilding.html.
 
-### Hypervisor
+## Hypervisor
 
 Step 1: Install the required packages, make sure KVM is sev enabled.
 
@@ -155,7 +155,7 @@ There are number of tutorials on line like:
 2. https://docs.beamnetworks.dev/en/kvm/create-vm-full
 3. https://oneuptime.com/blog/post/2026-01-15-setup-kvm-qemu-virtualization-ubuntu/view
 
-#### Step by step for KVM from third tutorial
+### Step by step for KVM from third tutorial
 
 1. Check Virtualization Support
 
@@ -500,54 +500,20 @@ sudo chmod 600 /var/lib/libvirt/images/*.qcow2
 ```
 
 
-### Launching the VM and virtualization layer
+## Building vmlinuz and initrd.img
 
-TODO: Firecracker launch.
+A Linux VM cosist of two components, a kernal file, called vmlinuz and
+an in memory storage component called initrd.img.
 
-Here's how to KVM boot and sev VM on bare metal.
+In the scripts we use a very simple procedure to build these.
 
-Verify you have SEV:
+###  The kernal
 
-```script
-grep -w sev /proc/cpuinfo
-```
+We simply copy the existing kernal from the existing machine which
+is located at /boot/vmlinuz.
 
-Enable SEV in /etc/default/grub or kernel arguments:
-
-```script
-mem_encrypt=on kvm_amd.sev=1
-```
-Update the bootloader:
-
-```script
-grub2-mkconfig -o /boot/grub2/grub.cfg
-```
-
-Reboot your host:
-
-```script
-# virsh domcapabilities | grep -A 5 "<sev"
-```
-
-First, launch the VM:
-
-```script
-virt-install --name sev-guest \
-  --machine q35 \
-  --boot uefi \
-  --vcpus 4 \
-  --memory 4096 \
-  --memtune hard_limit=4563402 \
-  --disk size=30 \
-  --launchSecurity sev,policy=0x1 \
-  --network bridge=br0,model=virtio,rom.bar=off \
-  --location /path/to/os-installer.iso \
-  --install kernel_args="console=ttyS0"
-```
-
-
-### Building vmlinuz
-
+For most use cases you will build your own, compiling the Linux source.
+You can configure your kernel by using a utility, menuconfig.
 The master file for configuration is the hidden file .config which is placed
 in the root of the build tree. If unpacked your source into the directory
 /usr/src/linux-source-xyz, so the full pathname of the config file is
@@ -559,67 +525,114 @@ current platform, or make menuconfig that presents a curses
 interface to make build selections. You will need ncurses-dev installed for
 menuconfig to work.
 
-These are the steps carried out by the build-vm.sh script with menuconfig.
+Here are things you should remember about building a kernal:
 
-1. Download the Linux source and configure the kernel:
-
-```script
-bash
-tar -xvf linux-x.y.z.tar.xz
-cd linux-x.y.z
-make defconfig
-make menuconfig # Customize drivers/options if needed
-```
-
-2. Compile the kernel:
+  1. Make it as small as possible.  Don't include any software you don't trust.
+  2. Don't allow any loadable modules.
+  3. As we will see below, the normal system disk is mounted at /writabledisk
+     so some scripts and variables you use in programs.
+  4. You can download source, configure, compile and install modules as follows:
 
 ```script
-bash
-make -j$(nproc)
+
+    tar -xvf linux-x.y.z.tar.xz
+    cd linux-x.y.z
+    make defconfig
+    make menuconfig # Customize drivers/options if needed
+
+    make -j$(nproc)
+
+    make modules_install INSTALL_MOD_PATH=/path/to/rootfs
 ```
+
 The compressed kernel image will be created at arch/x86/boot/bzImage
 (copy this to /boot/vmlinuz).
 
-3. Install modules:
+The scripts that build the VM are in build-vm.sh.
 
-```script
-bash
-make modules_install INSTALL_MOD_PATH=/path/to/rootfs
-```
 
 ### Building initrd.img
 
-1. Install the initram tools for Ubuntu:
-
-a. update-initramfs, mkinitramfs
-b. Mkinitrd (mkinitrd)
-c. CPIO + Gzip
-
-1. Create a directory and a preliminary init script:
+The script also starts with an existing initd.img although you can
+build your own from scratch.  Before the script run (or you build it yourself,
+you must install the tools:
 
 ```script
-mkdir -p initramfs
-mkdir -p initramfs/{bin,sbin,dev,proc,sys,etc,lib}
+#  Install the initram tools for Ubuntu:
+
+  # as root
+  apt update
+  apt install initramfs-tools
+
+  # This should install update-initramfs, mkinitramfs and mkinitrd
+
+  # Install cpio and gzip
+  apt install cpio
+  apt-get install gzip
+
 ```
 
-1. Download and unpack the busybox source
+Then extract the archive:
+
+```script
+  mkdir custom_init && cd custom_init
+  zcat /boot/initrd.img-$(uname -r) | cpio -idmv
+```
+
+Edit contents add custom binaries, config files, or modify the /init script
+
+```script
+
+  # Copy binaries, including CF utilities and programs including
+  #   cf_utilities, cf_key_server, cf_key_client
+
+  # Copy needed libraries
+
+  # To find out, what the sharable libraries are.  For example,
+    ldd cf_utility.exe
+  # or
+    readelf -d
+
+  # Change init and mount the writable disk
+
+  # Make sure the init script is executable
+    chmod +x init
+```
+
+You may need to inject special drivers for your VM.  Make sure
+your module names (e.g., virtio_blk, virtio_net) are listed in
+/etc/initramfs-tools/modules, then update:
+
+```script
+  update-initramfs -u -k all
+```
+
+Rebuild the archive:
+
+```script
+  find . -print0 | cpio --null -o -H newc | gzip -c >
+    /boot/new_initrd.img
+```
+
 We use Busybox to provide a basic set of Unix utilities to use on the VM instance.
 
+To get it:
+
 ```script
-mkdir /tmp/tiny_linux
-cd /tmp/tiny_linux
-curl https://www.kernel.org/pub/linux/kernel/\
-	v4.x/linux-4.0.3.tar.xz | tar xJf -
-	curl https://busybox.net/downloads/busybox-1.23.2.tar.bz2 \
-| tar xjf -
+  mkdir /tmp/tiny_linux
+  cd /tmp/tiny_linux
+  curl https://www.kernel.org/pub/linux/kernel/\
+        v4.x/linux-4.0.3.tar.xz | tar xJf -
+        curl https://busybox.net/downloads/busybox-1.23.2.tar.bz2 \
+  | tar xjf -
 ```
 
-2. Build busybox
+Build busybox
 
 ```script
-mkdir -pv ../obj/busybox-x86
-make O=../obj/busybox-x86 defconfig
-make O=../obj/busybox-x86 menuconfig
+  mkdir -pv ../obj/busybox-x86
+  make O=../obj/busybox-x86 defconfig
+  make O=../obj/busybox-x86 menuconfig
 ```
 
 The last command opens an interactive menu. We will select to build BusyBox statically to ensure it can run on the VM instance.
@@ -633,85 +646,8 @@ Next we build Busybox as shown below.
 
 ```script
 cd ../obj/busybox-x86
-	make -j2
-	make install
-```
-
-3. Build initrd image
-Next we build the init RAM disk image.
-
-```script
-mkdir -p /tmp/tiny_linux/initramfs/x86-busybox
-
-cd /tmp/tiny_linux/initramfs/x86-busybox
-mkdir -pv {bin,sbin,etc,proc,sys,usr/{bin,sbin}}
-cp -av $TOP/obj/busybox-x86/_install/*
-```
-
-4. Configure initrd.img for your purpose:
-
-You should have already obtained the policy certs for the
-security domains this VM will participate in as well as
-building the certifier and applications you want.
-
-Now copy the applications, policy cert, certifier programs and
-shared libraries into initrd.img.
-
-```script
-```
-
-We will need an init script. The following minimal script works.
-
-```script
-#!/bin/sh
-mount -t proc none /proc
-mount -t sysfs none /sys
-mount -t devtmpfs -o mode=0755 udev /dev
-
-exec /bin/sh
-```
-
-Save the above script in a file called init and make it executable.
-
-```script
-chmod +x init
-```
-
-Finally we archive and compress this directory to create our initrd image.
-
-```script
-find . -print0 \
-    | cpio --null -ov --format=newc \
-    | gzip -9 > /tmp/tiny_linux/obj/initramfs-busybox-x86.cpio.gz
-```
-
-An alternative to building initrd.img from scratch is to start with an
-exiting one and modify it, To inspect, modify, or inject custom scripts
-into an existing initrd or initramfs image:
-
-1. Extract the archive:
-```script
-mkdir custom_init && cd custom_init
-zcat /boot/initrd.img-$(uname -r) | cpio -idmv
-```
-
-2. Edit contents (add custom binaries, config files, or modify the /init script).
-
-3. Rebuild the archive:
-
-```script
-find . -print0 | cpio --null -o -H newc | gzip -c >
-/boot/new_initrd.img
-```
-
-Now you can start at step 4 above.
-
-You may need to inject special drivers for your VM.
-Make sure your module names (e.g., virtio_blk, virtio_net) are listed in
-/etc/initramfs-tools/modules, then update:
-
-```script
-sudo update-initramfs -u -k all
+  make -j2
+  make install
 ```
 
 ### Measuring the VM
@@ -728,3 +664,48 @@ launch.  The measure vm script uses them to call:
 ```
 
 to obtain the measurement.
+
+### Launching the VM and virtualization layer
+
+TODO: Explain Firecracker launch too.
+
+Here's how to KVM boot and sev VM on bare metal.
+
+Verify you have SEV:
+
+```script
+  grep -w sev /proc/cpuinfo
+```
+
+Enable SEV in /etc/default/grub or kernel arguments:
+
+```script
+  mem_encrypt=on kvm_amd.sev=1
+```
+Update the bootloader:
+
+```script
+  grub2-mkconfig -o /boot/grub2/grub.cfg
+```
+
+Reboot your host:
+
+```script
+# virsh domcapabilities | grep -A 5 "<sev"
+```
+
+Launch the VM:
+
+```script
+  virt-install --name sev-guest \
+    --machine q35 \
+    --boot uefi \
+    --vcpus 4 \
+    --memory 4096 \
+    --memtune hard_limit=4563402 \
+    --disk size=30 \
+    --launchSecurity sev,policy=0x1 \
+    --network bridge=br0,model=virtio,rom.bar=off \
+    --location /path/to/os-installer.iso \
+    --install kernel_args="console=ttyS0"
+```
