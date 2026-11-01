@@ -584,7 +584,10 @@ Edit contents add custom binaries, config files, or modify the /init script
 ```script
 
   # Copy binaries, including CF utilities and programs including
-  #   cf_utilities, cf_key_server, cf_key_client
+  # cf_utilities, cf_key_server, cf_key_client.  The programs you
+  # load into initrd should either be the only ones that can run or
+  # you must make sure using another mechanism that only trusted
+  # programs can execute (especially as root).
 
   # Copy needed libraries
 
@@ -592,6 +595,10 @@ Edit contents add custom binaries, config files, or modify the /init script
     ldd cf_utility.exe
   # or
     readelf -d
+
+  # Make sure the libraries you load are the only ones that can be used
+
+  # Disallow root access
 
   # Change init and mount the writable disk
 
