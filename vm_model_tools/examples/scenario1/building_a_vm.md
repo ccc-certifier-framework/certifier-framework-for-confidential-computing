@@ -589,6 +589,8 @@ Edit contents add custom binaries, config files, or modify the /init script
   # you must make sure using another mechanism that only trusted
   # programs can execute (especially as root).
 
+  # Copy the policy key cert
+
   # Copy needed libraries
 
   # To find out, what the sharable libraries are.  For example,
