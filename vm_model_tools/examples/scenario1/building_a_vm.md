@@ -560,11 +560,11 @@ you must install the tools:
 ```script
 #  Install the initram tools for Ubuntu:
 
+  # Install update-initramfs, mkinitramfs and mkinitrd
   # as root
   apt update
   apt install initramfs-tools
 
-  # This should install update-initramfs, mkinitramfs and mkinitrd
 
   # Install cpio and gzip
   apt install cpio
@@ -576,8 +576,43 @@ Then extract the archive:
 
 ```script
   mkdir custom_init && cd custom_init
-  zcat /boot/initrd.img-$(uname -r) | cpio -idmv
+  unmkinitramfs ../initrd.img .
+  ls -l .
 ```
+
+You should see something like this:
+
+  lrwxrwxrwx  1 jlm jlm    7 Nov  3 12:08 bin -> usr/bin
+  drwxr-xr-x  3 jlm jlm 4096 Nov  3 12:08 conf
+  drwxr-xr-x 10 jlm jlm 4096 Nov  3 12:08 etc
+  -rwxr-xr-x  1 jlm jlm 7827 Apr  2  2026 init
+  drwxr-xr-x  3 jlm jlm 4096 Nov  3  2025 kernel
+  lrwxrwxrwx  1 jlm jlm    7 Nov  3 12:08 lib -> usr/lib
+  lrwxrwxrwx  1 jlm jlm    9 Nov  3 12:08 lib64 -> usr/lib64
+  drwxr-xr-x  2 jlm jlm 4096 Nov  3 12:08 run
+  lrwxrwxrwx  1 jlm jlm    8 Nov  3 12:08 sbin -> usr/sbin
+  drwxr-xr-x  9 jlm jlm 4096 Nov  3 12:08 scripts
+  drwxr-xr-x  9 jlm jlm 4096 Nov  3 12:08 usr
+  drwxr-xr-x  4 jlm jlm 4096 Nov  3 12:08 var
+
+We will be modifying the init script "init".  The changes will be at the
+very end of the file, which looks like:
+
+  # Move virtual filesystems over to the real filesystem
+  mount -n -o move /sys ${rootmnt}/sys
+  mount -n -o move /proc ${rootmnt}/proc
+
+  # Chain to real filesystem
+  # shellcheck disable=SC2086,SC2094
+  exec run-init ${drop_caps} "${rootmnt}" "${init}" "$@" <"${rootmnt}/dev/console" >"${rootmnt}/dev/console" 2>&1
+  echo "Something went badly wrong in the initramfs."
+  panic "Please file a bug on initramfs-tools."
+
+We will add the executables to usr/bin and libraries to usr/lib.
+
+We will add the policy cert to etc.
+
+Finally we will recompress.
 
 Edit contents add custom binaries, config files, or modify the /init script
 
@@ -590,19 +625,27 @@ Edit contents add custom binaries, config files, or modify the /init script
   # programs can execute (especially as root).
 
   # Copy the policy key cert
+  cp $EXAMPLE_DIR/provisioning/$POLICY_CERT_FILE_NAME etc/$POLICY_CERT_FILE_NAME
+  chmod 0644 etc/$POLICY_CERT_FILE_NAME
 
   # Copy needed libraries
-
   # To find out, what the sharable libraries are.  For example,
     ldd cf_utility.exe
   # or
     readelf -d
+  # cp $LIBRARY_LIST usr/lib
 
   # Make sure the libraries you load are the only ones that can be used
+  # libc.so, libcurses.so, libm.so and libtermcap.so are necessary for starting up the Linux system
+  # The program ldconfig will search the directories listed in /etc/ld.so.conf and store all of the shared libraries which are found in /etc/ld.so.cache. 
 
-  # Disallow root access
+  # Disallow root access at least remotely
+  /etc/ssh/sshd_config:
+	PermitRootLogin no #disabled
+  /etc/init.d/sshd restart
 
-  # Change init and mount the writable disk
+  # Change init and mount the writable disk under /
+  # mount $ROOT_FS /root/$ROOT_FS
 
   # Make sure the init script is executable
     chmod +x init
@@ -616,48 +659,12 @@ your module names (e.g., virtio_blk, virtio_net) are listed in
   update-initramfs -u -k all
 ```
 
-Rebuild the archive:
+Now, rebuild the archive:
 
 ```script
-  find . -print0 | cpio --null -o -H newc | gzip -c >
-    /boot/new_initrd.img
+  find . -print0 | cpio --null -o -H newc | gzip -c > ../new_initrd.img
 ```
 
-We use Busybox to provide a basic set of Unix utilities to use on the VM instance.
-
-To get it:
-
-```script
-  mkdir /tmp/tiny_linux
-  cd /tmp/tiny_linux
-  curl https://www.kernel.org/pub/linux/kernel/\
-        v4.x/linux-4.0.3.tar.xz | tar xJf -
-        curl https://busybox.net/downloads/busybox-1.23.2.tar.bz2 \
-  | tar xjf -
-```
-
-Build busybox
-
-```script
-  mkdir -pv ../obj/busybox-x86
-  make O=../obj/busybox-x86 defconfig
-  make O=../obj/busybox-x86 menuconfig
-```
-
-The last command opens an interactive menu. We will select to build BusyBox statically to ensure it can run on the VM instance.
-
--> Busybox Settings
-  -> Build Options
-[ ] Build BusyBox as a static binary (no shared libs)
-
-Select the above option, save your selection and quit the interactive menu.
-Next we build Busybox as shown below.
-
-```script
-cd ../obj/busybox-x86
-  make -j2
-  make install
-```
 
 ### Measuring the VM
 
@@ -717,4 +724,42 @@ Launch the VM:
     --network bridge=br0,model=virtio,rom.bar=off \
     --location /path/to/os-installer.iso \
     --install kernel_args="console=ttyS0"
+```
+
+# Appendix
+
+We use Busybox to provide a basic set of Unix utilities to use on the VM instance.
+
+To get it:
+
+```script
+  mkdir /tmp/tiny_linux
+  cd /tmp/tiny_linux
+  curl https://www.kernel.org/pub/linux/kernel/\
+        v4.x/linux-4.0.3.tar.xz | tar xJf -
+        curl https://busybox.net/downloads/busybox-1.23.2.tar.bz2 \
+  | tar xjf -
+```
+
+Build busybox
+
+```script
+  mkdir -pv ../obj/busybox-x86
+  make O=../obj/busybox-x86 defconfig
+  make O=../obj/busybox-x86 menuconfig
+```
+
+The last command opens an interactive menu. We will select to build BusyBox statically to ensure it can run on the VM instance.
+
+-> Busybox Settings
+  -> Build Options
+[ ] Build BusyBox as a static binary (no shared libs)
+
+Select the above option, save your selection and quit the interactive menu.
+Next we build Busybox as shown below.
+
+```script
+cd ../obj/busybox-x86
+  make -j2
+  make install
 ```
