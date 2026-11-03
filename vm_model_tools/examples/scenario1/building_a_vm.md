@@ -623,25 +623,44 @@ Edit contents add custom binaries, config files, or modify the /init script
   # load into initrd should either be the only ones that can run or
   # you must make sure using another mechanism that only trusted
   # programs can execute (especially as root).
+  cp $CERTIFIER_ROOT/vm_model_tools/src/cf_key_server.exe usr/bin
+  cp $CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe usr/bin
+  cp $CERTIFIER_ROOT/vm_model_tools/src/cf_utilities.exe usr/bin
+  cp $CERTIFIER_ROOT/utilities/cpuid.exe usr/bin
+  # Don't forget your application dependant libraries and scripts
 
   # Copy the policy key cert
   cp $EXAMPLE_DIR/provisioning/$POLICY_CERT_FILE_NAME etc/$POLICY_CERT_FILE_NAME
   chmod 0644 etc/$POLICY_CERT_FILE_NAME
 
   # Copy needed libraries
-  # To find out, what the sharable libraries are.  For example,
+  # Find out, what the sharable libraries are.  You can do this, for example, by:
     ldd cf_utility.exe
   # or
     readelf -d
-  # cp $LIBRARY_LIST usr/lib
+  # cp linux-vdso.so.1 usr/bin
+  # cp libprotobuf.so.32 usr/bin
+  # cp libgflags.so.2.2 usr/bin
+  # cp libcrypto.so.3 usr/bin
+  # cp libssl.so.3 usr/bin
+  # cp libuuid.so.1 usr/bin
+  # cp libstdc++.so.6 usr/bin
+  # cp libgcc_s.so.1 usr/bin
+  # cp libc.so.6 usr/bin
+  # cp libz.so.1 usr/bin
+  # cp /lib64/ld-linux-x86-64.so.2 usr/bin
+  # cp libzstd.so.1 usr/bin
+  # cp libm.so.6 usr/bin
 
   # Make sure the libraries you load are the only ones that can be used
   # libc.so, libcurses.so, libm.so and libtermcap.so are necessary for starting up the Linux system
   # The program ldconfig will search the directories listed in /etc/ld.so.conf and store all of the shared libraries which are found in /etc/ld.so.cache. 
 
+  # copy any scripts you need
+
   # Disallow root access at least remotely
   /etc/ssh/sshd_config:
-	PermitRootLogin no #disabled
+        PermitRootLogin no #disabled
   /etc/init.d/sshd restart
 
   # Change init and mount the writable disk under /
@@ -664,7 +683,6 @@ Now, rebuild the archive:
 ```script
   find . -print0 | cpio --null -o -H newc | gzip -c > ../new_initrd.img
 ```
-
 
 ### Measuring the VM
 
