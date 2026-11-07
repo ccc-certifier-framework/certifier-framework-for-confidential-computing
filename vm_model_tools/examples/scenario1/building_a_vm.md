@@ -22,7 +22,7 @@ In an normal boot, the process is as follows:
   mounts the initrd as its initial root filesystem.
 
 
-## Overview and implementation alternatives
+## Overview
 
 Everything upon which the security of the certifier relies on including
 the code and all critical data used by the VM and the (Linux)
@@ -36,12 +36,12 @@ components:
 
   1. You must use a secure measured hypervisor that is sev enlightened (when
   using SNP).  This hypervisor should be measured (to avoid single
-  stepping attacks.
+  stepping attacks).  {describe in appendix later]
   2. You must build a bootable kernel consisting of a compressed kernel
   (vmlinuz) and an initial (and in some cases persistant) file system
   initramfs.
   3. You must supply the hypervisor with a virutalization shim and a
-  command line for booting.
+  command line for the kernel you are booting.
 
 Most of this document describes step 2.
 
@@ -52,52 +52,55 @@ hypervisor stack we use, we don't have much to say here.  This is
 step 1 above.
 
 Step 3 is important.  Our only comment here is that while it is common
-to use QEMU, we recommend minimizing the virtualization layer by
-using Firecracker if appropriate.
+to use QEMU, we are investigating using Firecracker, which does not
+currently support SEV nor several important "real" instructions (e.g.-
+related to hardware based entropy for RNG) .
 
-As for step 2, there are several design options.  All must ensure that
-startup script is measured and safe, and that all programs that are
-called in the VM are safe.  Conceptually, the VM boot must ensure the
-"policy key" certificate and programs are the ones expected and
-immutable.  We take the approach described below but there are alternatives
-(for example, one suggested by Paul England) that uses integrity protected
-file system images.  Additionally, support for interacting with the
-hypervisor including hypercalls must similarly be sxpected and immutable.
-The script is a good model for an SEV "appliance" with a very few
-programs all designed for the Certifier envionment.  Paul's mechanism is
-better for a complex "legacy" VM with lots of programs and dependencies.
+As for step 2, there are several design options. The approach described
+here, and used in the example scripts, is to build a locked-down and
+entirely memory resident operating system and system disk containing all
+security related programs and configuration.  Other approaches are possible
+[add reference].
 
-In our example build-vm.sh script, The way we ensure the above properties
-is conceptually simple.
+Using our approach, we  must ensure that startup script is measured
+and safe, that all programs that are called in the VM are safe.  In
+addition, the we must ensure the "policy key" certificates are part of
+the measurement and accessible to the certifier.
 
-1. Our initrd.img contains the critical programs, policy key certificate
-and all required libraries.  It is part of the "VM" measurement
-must be measured, including basic system software and libraries you rely on.
-On Linux, we can protect and measure all that requires protection by
-incorporating it into a small, in memory, filesystem provided with the
-kernel boot image called initrd.img.
 
-On most Linux systems, initramfs is dismounted and replaced by the
-“system disk”  during the boot. In out example VM, initramfs not
-dismounted and serves as the permanent system disk. We do this by
-changing the shell script in initramfs that normally dismounts initramfs
-and mounts the “real” disk; instead, we simply mount the “real disk”
-under intiramfs.  All other disks are mounted under initramfs and
-should not be trusted.  This procedure provides the complete control
-over system components and libraries we need.  It is important that
+In our approach the VM build is implemented by build-vm.sh script
+which is vmlinuz focused and copy-vm-files.sh which build the
+memory resident file system in initrd.img.
+
+1. Our initrd.img contains all of Linux userland including
+the critical runable programs, the policy key certificate(s) for
+the security domain will be certified in, and all required libraries.
+It is part of the "VM" measurement must be measured.
+
+On most Linux systems, initrd.img (also called initramfs, sometimes)
+is dismounted and replaced by the “system disk” late in the boot.
+In our approach,, initrd.img is never dismounted and serves as the
+permanent system disk; any additional file system is mounted in this
+foundation file system and is generally "not trusted." We do this by
+changing the shell script (init) in initrd.img.  This procedure provides
+the complete control over system components and libraries we need and
+incorporates them in the VM measurement.  It is important that
 some writable file system is mounted and available, even if it
 is untrusted, because most programs (including certifier programs)
 will need storage.
 
-In our case, initrd contains the startup scripts, at a mimimum, all programs
-and libraries required by cf_utility, key_server and key-client are in
-initrd as well as the libraries they use.  As mentioned below in building
-the kernel, any program that the OS allows to run that is not in initrd
-should be signed and checked.  The check must be a part of the Linux machine
+As a result, initrd contains the startup scripts, at a mimimum, all programs
+and libraries required by cf_utility, key_server and key-client
+as well as the libraries they use.   If you need have additional
+programs that will employ the certifier primitivess, they and the
+libraries they rely on must also be in initrd.img. In fact, any program that
+the OS allows to run that is not in initrd should be signed and checked.
+This check must be a part of the Linux machine
 policy.  It is also up to the kernel build (and dependent files in initrd) that
 the firewalls, device permissions and other configuration is set properly.
-In most kernels, no external logins should be permitted and certainly
-no one should be able to log in as root.
+In most kernels, no external logins should be permitted, no one should be able
+to log in as root and not modules should be loaded after boot (unless signed and
+checked in accordance with the securoty domain policy.
 
 Having done that, we have ensured that the measurement used in
 the attestation guarentees the needed VM security properties.  In
@@ -114,9 +117,13 @@ load additional modules).  You should be able to modify these
 scripts to build your own VMs for an actual deployment.
 
 For additional information on step 2, consult:
-https://kpj.github.io/linux/KernelBuilding.html.
+https://kpj.github.io/linux/KernelBuilding.html.  But first,
+we describe how to boot your VM using KVM.
+
 
 ## Hypervisor
+
+[This section will be severely edited down]
 
 Step 1: Install the required packages, make sure KVM is sev enabled.
 
@@ -212,7 +219,7 @@ sudo systemctl status libvirtd
 
 9. Verify KVM Installation
 ```script
-# Tell libvirt to use the system-wide QEMU hypervisor
+# Tell libvirt to use the system-wide hypervisor
 # instead of using session mode that runs VMs under
 # your personal user account
 export LIBVIRT_DEFAULT_URI='qemu:///system'
@@ -622,16 +629,16 @@ Edit contents add custom binaries, config files, or modify the /init script
   # cf_utilities, cf_key_server, cf_key_client.  The programs you
   # load into initrd should either be the only ones that can run or
   # you must make sure using another mechanism that only trusted
-  # programs can execute (especially as root).
+  # programs can execute (especially as root).  You will also have
+  # to copy other programs (and libraries, seee below), you use but
+  # those will depend on what your VM does.  In our script, these
+  # are the only programs that run resulting in a fairly uninteresting
+  # VM.
+
   cp $CERTIFIER_ROOT/vm_model_tools/src/cf_key_server.exe usr/bin
   cp $CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe usr/bin
   cp $CERTIFIER_ROOT/vm_model_tools/src/cf_utilities.exe usr/bin
   cp $CERTIFIER_ROOT/utilities/cpuid.exe usr/bin
-  # Don't forget your application dependant libraries and scripts
-
-  # Copy the policy key cert
-  cp $EXAMPLE_DIR/provisioning/$POLICY_CERT_FILE_NAME etc/$POLICY_CERT_FILE_NAME
-  chmod 0644 etc/$POLICY_CERT_FILE_NAME
 
   # Copy needed libraries
   # Find out, what the sharable libraries are.  You can do this, for example, by:
@@ -653,10 +660,20 @@ Edit contents add custom binaries, config files, or modify the /init script
   # cp libm.so.6 usr/bin
 
   # Make sure the libraries you load are the only ones that can be used
-  # libc.so, libcurses.so, libm.so and libtermcap.so are necessary for starting up the Linux system
-  # The program ldconfig will search the directories listed in /etc/ld.so.conf and store all of the shared libraries which are found in /etc/ld.so.cache. 
+  # libc.so, libcurses.so, libm.so and libtermcap.so are necessary for
+  # starting up the Linux system
+
+  # Copy the policy key cert(s) in the VM serving as a guest.
+  # In VM's intended for distribution , you should obain these, in advance, from the
+  # security domain administrator.  In the test script, this is generated
+  # by provision-keys.sh and copied in copy-vm-files.sh..
+
+  cp $EXAMPLE_DIR/provisioning/$POLICY_CERT_FILE_NAME etc/$POLICY_CERT_FILE_NAME
+  chmod 0644 etc/$POLICY_CERT_FILE_NAME
 
   # copy any scripts you need
+
+  [TODO]
 
   # Disallow root access at least remotely
   /etc/ssh/sshd_config:
