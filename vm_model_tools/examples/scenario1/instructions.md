@@ -525,7 +525,9 @@ inconsistant behavior. Before you run any subsequent scripts:
   export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
 ```
 
-To run the sev tests, as root, run one of the following seven commands:
+#### Tests on a single OS (VM or not)
+
+To run the sev tests on a single machine, as root, run one of the following seven commands:
 
 ```shell
   # 1. If you are running in the simulated environment but have not compiled the
@@ -587,25 +589,40 @@ To run the sev tests, as root, run one of the following seven commands:
   ./run-test-scenario1.sh -tt real -bss 0 -ccf 0 -loud 1 -dn dom0 \
    -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave" \
    -build-vm 0 -pfn sev_policy.bin -migrate no -smt yes -tcb 0xd517000000000003
+```
 
 In the last two cases, you should have either obtained the measurement for an
 AWS machine using snpguest or obtained the arguments for the sev-snp-measure
 tool as mentioned above.  The -build-vm flag should be 0 if you use a prebuilt
 AWS VM OR provided a VM without using the scripts to build.
 
-If you build your own VM, there may be more arguments to the script, obtained from the
-cpuid.exe program mentioned above that you should append, these look like:
-
-```shell
-  -sev-dev /dev/sev-guest -sev-mfn ./sev.measurement \
-  -initram-mfn ../initrd.img -kernel-mfn ../vmlinuz \
-  -ovmf-loc /usr/share/ovmf/OVMF.amdsev.fd  \
-  -et2 "sev-enclave" -et1 "simulated-enclave" -et2 "sev-enclave"
-```
-
 These should be appended whether you use the -ccf 1 or -ccf 0 flags in the
 commands you use and the argument to the flags should match your actual
 environment.
+
+
+#### Tests where dealpoyed machine is in a different VM
+
+If your deployed machine is in another VM, after the scripts have built a
+kernel, initrd and VHD:
+
+On the deployment machine, after compiling cf, set up the deployment stuff:
+
+```script
+  ./run-test-scenario1.sh -tt real -bss 0 -ccf 0 -loud 1 -dn dom0 \
+   -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave" \
+   -build-vm 1 -pfn sev_policy.bin -migrate no -smt yes -tcb 0xd517000000000003 \
+   -remote-vm 1
+
+```
+
+Finally, start the VM:
+
+```script
+ virsh start my-vm
+```
+
+The scripts installed in the vm by our vm build should do the rest.
 
 
 ### Rerunning the test script

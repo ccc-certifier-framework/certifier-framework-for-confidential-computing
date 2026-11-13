@@ -773,11 +773,11 @@ to obtain the measurement.
 
 ### What you actually need to do to run the tests
 
-First, check the setup the KVM and QEMU we described in the beginning of the Hypervisor session and that
+These are the instructions in instructions.md following the build.
 you have SEV:
 
 ```script
- kvm-ok
+  kvm-ok
   modinfo kvm-amd
   lsmod | grep kvm
   qemu-system-x86_64 --version
@@ -790,100 +790,63 @@ To enable SEV in the kernel arguments:
   mem_encrypt=on kvm_amd.sev=1
 ```
 
-Update the bootloader:
-
-```script
-  grub2-mkconfig -o /boot/grub2/grub.cfg
-```
-
-Reboot your host:
-
-```script
-# virsh domcapabilities | grep -A 5 "<sev"
-```
-
+First, check the setup the KVM and QEMU we described in the beginning of the Hypervisor session and that
 Launch the VM:
 
-```script
-After building a vm as described above, as is done by the scripts and
+After building a vm as described above, as is done by the scripts, and
 installing KVM/QEMU as decribed above, you need to build a VHD wich will
 be used as a writable store
 
 ```script
+
 # Build a VHD
+qemu-img create -f qcow2 /var/lib/libvirt/images/template.qcow 25G
+
+# Normally we'd install an OS but no need
+#virt-install --name template --ram 2048 --vcpus 2 --disk path=/var/lib/libvirt/images/template.qcow2,format=qcow2 \
+#  os-variant ubuntu26.04 --network network=default --graphics vnc --cdrom ~/Downloads/ubuntu-26.04.1-desktop-amd64.iso
+
+qemu-img create -f qcow2 -b /var/lib/libvirt/images/template.qcow /var/lib/libvirt/images/CC-VM-disk
+
+# with qemu
+qemu-system-x86_64 \
+  -enable-kvm \
+  -m 2048 \
+  -smp 2 \
+  -drive file=/path/to/disk.qcow2,format=qcow2,bus=virtio \
+  -kernel /path/to/vmlinuz \
+  -initrd /path/to/initrd.img \
+  -append "root=/dev/vda1 rw console=ttyS0" \
+  -nographic
+
+or
+
+virt-install \
+  --name my-vm \
+  --memory 2048 \
+  --vcpus 2 \
+  --disk path=/path/to/disk.qcow2,bus=virtio \
+  --location $EXAMPLE_DIR,kernel=vmlinuz,initrd=initrd.img \
+  --extra-args "console=ttyS0 root=/dev/vda1" \
+  --nographic \
+  --launchSecurity sev,policy=0x1 \
+  --network bridge=br0,model=virtio,rom.bar=off \
+```
+
+On the deployment machine, after compiling cf, set up the deployment stuff:
+
+```script
+  ./run-test-scenario1.sh -tt real -bss 0 -ccf 0 -loud 1 -dn dom0 \
+   -pn cf-utility -pk 1 -et1 "simulated-enclave" -et2 "sev-enclave" \
+   -build-vm 1 -pfn sev_policy.bin -migrate no -smt yes -tcb 0xd517000000000003 \
+   -remote-vm 1
+
 ```
 
 Finally, start the VM:
 ```script
-# we assume you've installed kvm and qemu as above.
-sudo virt-install --name ubuntu-guest --os-variant ubuntu20.04 --vcpus 2 --ram 2048 --location http://ftp.ubuntu.com/ubuntu/dists/focal/main/installer-amd64/ --network bridge=virbr0,model=virtio --graphics none --extra-args='console=ttyS0,115200n8 serial'
+ virsh start my-vm
 ```
 
+The vm scripts should have been configured to run the test in the vm.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#### Delete the following, it is replaced by above
-
-
-Launch the VM:
-
-```script
-  virt-install --name sev-guest \
-    --machine q35 \
-    --boot uefi \
-    --vcpus 4 \
-    --memory 4096 \
-    --memtune hard_limit=4563402 \
-    --disk size=30 \
-    --launchSecurity sev,policy=0x1 \
-    --network bridge=br0,model=virtio,rom.bar=off \
-    --location /path/to/os-installer.iso \
-    --install kernel_args="console=ttyS0"
-```
-
-We use Busybox to provide a basic set of Unix utilities to use on the VM instance.
-To get it:
-
-```script
-  mkdir /tmp/tiny_linux
-  cd /tmp/tiny_linux
-  curl https://www.kernel.org/pub/linux/kernel/\
-        v4.x/linux-4.0.3.tar.xz | tar xJf -
-        curl https://busybox.net/downloads/busybox-1.23.2.tar.bz2 \
-  | tar xjf -
-```
-
-Build busybox
-
-```script
-  mkdir -pv ../obj/busybox-x86
-  make O=../obj/busybox-x86 defconfig
-  make O=../obj/busybox-x86 menuconfig
-```
-
-The last command opens an interactive menu. We will select to build BusyBox statically to ensure it can run on the VM instance.
-
--> Busybox Settings
-  -> Build Options
-[ ] Build BusyBox as a static binary (no shared libs)
-
-Select the above option, save your selection and quit the interactive menu.
-Next we build Busybox as shown below.
-
-```script
-cd ../obj/busybox-x86
-  make -j2
-  make install
-```
