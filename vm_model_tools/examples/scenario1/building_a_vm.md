@@ -67,7 +67,6 @@ and safe, that all programs that are called in the VM are safe.  In
 addition, the we must ensure the "policy key" certificates are part of
 the measurement and accessible to the certifier.
 
-
 In our approach the VM build is implemented by build-vm.sh script
 which is vmlinuz focused and copy-vm-files.sh which build the
 memory resident file system in initrd.img.
@@ -120,28 +119,40 @@ For additional information on step 2, consult:
 https://kpj.github.io/linux/KernelBuilding.html.  But first,
 we describe how to boot your VM using KVM.
 
+A focused view of this document is that it explains what we did
+in our test scripts to build a vm that meets out needs but I hope
+it can serve as a guide to help you build your own VMs if you
+use this approach for measurement integrity and contrrol.
+
 
 ## Hypervisor
-
-[This section will be severely edited down]
 
 Step 1: Install the required packages, make sure KVM is sev enabled.
 
 ```script
-sudo apt -y install bridge-utils cpu-checker libvirt-clients libvirt-daemon qemu qemu-kvm
+sudo apt -y install bridge-utils cpu-checker libvirt-clients libvirt-daemon qemu qemu-kvm cpu-checker qemu-img libvirt-daemon-system qemu-utils
 '''
 
-Step 2: Check virtualisation capabilities
+Step 2: Check virtualization capabilities
 
 Execute the following command to make sure your processor supports virtualisation capabilities:
 
 ```script
   kvm-ok
+  modinfo kvm-amd
+  lsmod | grep kvm
+  qemu-system-x86_64 --version
 ```
 The output of this command and indicates whether KVM can be used or not:
 
 INFO: /dev/kvm exists
 KVM acceleration can be used
+
+Setup guest services:
+
+```script
+  sudo systemctl start libvirtd  # if it hasn't already started
+```
 
 Step 3: Launch a VM
 
@@ -156,11 +167,15 @@ This opens an interactive console that you can use to manually install the Ubunt
 
 ### Tutorials and first aid for KVM
 
+This section is long and informative but if you're in a hurry,
+skip to "What you actually need to do to run the tests."
+
 There are number of tutorials on line like:
 
 1 .https://www.youtube.com/watch?v=_X1imTzohsY
 2. https://docs.beamnetworks.dev/en/kvm/create-vm-full
 3. https://oneuptime.com/blog/post/2026-01-15-setup-kvm-qemu-virtualization-ubuntu/view
+4. QEMU & KVM Virtualization, Vexel
 
 ### Step by step for KVM from third tutorial
 
@@ -169,6 +184,8 @@ There are number of tutorials on line like:
 ```script
 egrep -c '(vmx|svm)' /proc/cpuinfo
 lscpu | grep Virtualization
+# how many cpu's do you have?
+nproc
 ```
 
 2. Check KVM module is available
@@ -260,6 +277,13 @@ virt-install \
   --cdrom /path/to/ubuntu-22.04-live-server-amd64.iso \
   --boot cdrom
 ```
+# or
+
+# download iso using a browser
+
+# build vm
+virt-manager
+
 
 14. Create Virtual Machine (another way) using virt-install (CLI)
 Using virt-manager (GUI)
@@ -486,6 +510,7 @@ Use VirtIO for best performance:
 </interface>
 Troubleshooting
 VM Won't Start
+What you actually need to do to run the tests
 
 # Check libvirtd logs
 sudo journalctl -u libvirtd -n 50
@@ -504,6 +529,25 @@ sudo iptables -L -n | grep virbr
 # Fix image permissions
 sudo chown libvirt-qemu:kvm /var/lib/libvirt/images/*.qcow2
 sudo chmod 600 /var/lib/libvirt/images/*.qcow2
+```
+
+### What you actually need to do to run the tests
+
+You need to build a vm as described in the next section as is
+done by the scripts.
+
+Next you need to build a VHD wich will be used as a writable store:
+
+```script
+# Build a VHD
+```
+
+Setup the KVM and QEMU:
+```script
+```
+
+Start the VM:
+```script
 ```
 
 
@@ -602,28 +646,58 @@ You should see something like this:
   drwxr-xr-x  9 jlm jlm 4096 Nov  3 12:08 usr
   drwxr-xr-x  4 jlm jlm 4096 Nov  3 12:08 var
 
-We will be modifying the init script "init".  The changes will be at the
-very end of the file, which looks like:
+We will be modifying the init script "init".  Sample changes are in
+$EXAMPLE_DIR/init.new.
 
-  # Move virtual filesystems over to the real filesystem
-  mount -n -o move /sys ${rootmnt}/sys
-  mount -n -o move /proc ${rootmnt}/proc
+Note:  We use the terms "initrd.img" and "initramfs" interchangably.
+The older term is initramfs which is historically a tmpfs space before
+it boots with the "real" fs. This allows for more difficult and complex
+boot options such as LVM-on-root, booting from an NFS mount, etc.  As
+others have done (Android, http://www.tinycorelinux.net, and our
+previous cloudproxy), we actually retain this file system as root.
 
-  # Chain to real filesystem
-  # shellcheck disable=SC2086,SC2094
-  exec run-init ${drop_caps} "${rootmnt}" "${init}" "$@" <"${rootmnt}/dev/console" >"${rootmnt}/dev/console" 2>&1
-  echo "Something went badly wrong in the initramfs."
-  panic "Please file a bug on initramfs-tools."
+The most obvious difference between the two is that an initrd is loaded
+into a ramdisk. It consists of an actual filesystem (typically ext2) which
+is mounted in a ramdisk. An initramfs, on the other hand, is not a filesystem.
+It is simply a (compressed) cpio archive (of type newc) which is unpacked into a tmpfs.
+This has a side-effect of making the initramfs loadable a little earlier in
+the kernel boot process than an initrd. The size of the initramfs in memory
+is smaller, since the kernel can adapt the size of the tmpfs to what is actually
+loaded, rather than relying on predefined ramdisk sizes, and it can also
+clean up the ram that was used whereas ramdisks tend to remain in use
+(due to details of the pivot_root implementation).
 
-We will add the executables to usr/bin and libraries to usr/lib.
+Since an initrd is an actual filesystem unpacked into ram, the root device must
+actually be the ramdisk (which is good for us). For an initramfs, there is a
+kernel "rootfs" which becomes the tmpfs that the initramfs is unpacked into
+(if the kernel loads an initramfs; if not, then the rootfs is simply the filesystem
+specified via the root= kernel boot parameter), but this interim rootfs should not
+be specified as the root= boot parameter (and there wouldn't be a way to do so,
+since there's no device attached to it). This means that you can still pass your
+real root device to the kernel when using an initramfs. With an initrd, you have
+to process what the real root device is yourself. Also, since the "real" root device
+with an initrd is the ramdisk, the kernel has to really switch root devices from one
+real device (the ramdisk) to the other (your real root). In the case of an initramfs,
+the initramfs space (the tmpfs) is not a real device, so the kernel doesn't switch
+real devices. Thus, while the command pivot_root is used with an initrd, a different
+command has to be used for an initramfs. Busybox provides switch_root to accomplish
+this, while klibc offers new_root. This article will focus on busybox (and ignore klibc).
 
-We will add the policy cert to etc.
+As a result of all this, the initial "init" file for intrd is more complex than
+the previous "initramfs" script.
 
-Finally we will recompress.
-
-Edit contents add custom binaries, config files, or modify the /init script
+We need to modify the initial fs by adding binaries, libraries and script
+particular to the VM as described below. We also need to modify the
+init and passwd files as described below:
 
 ```script
+
+  # a useful variable
+  export ORIG_FS_DIR=$EXAMPLE_DIR/custom_init
+
+  # Copy (or modify existing) /etc/passwd to prevent root login and add
+  # "relyingparty" resticted user
+  cp $EXAMPLE_DIR/passwd.new $ORIG_FS_DIR/etc/passwd
 
   # Copy binaries, including CF utilities and programs including
   # cf_utilities, cf_key_server, cf_key_client.  The programs you
@@ -635,57 +709,70 @@ Edit contents add custom binaries, config files, or modify the /init script
   # are the only programs that run resulting in a fairly uninteresting
   # VM.
 
-  cp $CERTIFIER_ROOT/vm_model_tools/src/cf_key_server.exe usr/bin
-  cp $CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe usr/bin
-  cp $CERTIFIER_ROOT/vm_model_tools/src/cf_utilities.exe usr/bin
+  cp $CERTIFIER_ROOT/vm_model_tools/src/cf_key_server.exe $ORIG_FS_DIR/usr/bin
+  cp $CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe $ORIG_FS_DIR/usr/bin
+  cp $CERTIFIER_ROOT/vm_model_tools/src/cf_utilities.exe $ORIG_FS_DIR/usr/bin
   cp $CERTIFIER_ROOT/utilities/cpuid.exe usr/bin
+  cp $EXAMPLE_DIR/startup_program.exe $ORIG_FS_DIR/bin
 
   # Copy needed libraries
   # Find out, what the sharable libraries are.  You can do this, for example, by:
     ldd cf_utility.exe
   # or
     readelf -d
-  # cp linux-vdso.so.1 usr/bin
-  # cp libprotobuf.so.32 usr/bin
-  # cp libgflags.so.2.2 usr/bin
-  # cp libcrypto.so.3 usr/bin
-  # cp libssl.so.3 usr/bin
-  # cp libuuid.so.1 usr/bin
-  # cp libstdc++.so.6 usr/bin
-  # cp libgcc_s.so.1 usr/bin
-  # cp libc.so.6 usr/bin
-  # cp libz.so.1 usr/bin
-  # cp /lib64/ld-linux-x86-64.so.2 usr/bin
-  # cp libzstd.so.1 usr/bin
-  # cp libm.so.6 usr/bin
+  # Many of these may already be in usr/lib
+  cp linux-vdso.so.1 $ORIG_FS_DIR/usr/lib
+  cp libprotobuf.so.32 $ORIG_FS_DIR/usr/lib
+  cp libgflags.so.2.2 $ORIG_FS_DIR/usr/lib
+  cp libcrypto.so.3 $ORIG_FS_DIR/usr/lib
+  cp libssl.so.3 $ORIG_FS_DIR/usr/lib
+  cp libuuid.so.1 $ORIG_FS_DIR/usr/lib
+  cp libstdc++.so.6 $ORIG_FS_DIR/usr/lib
+  cp libgcc_s.so.1 $ORIG_FS_DIR/usr/lib
+  cp libc.so.6 $ORIG_FS_DIR/usr/lib
+  cp libz.so.1 $ORIG_FS_DIR/usr/lib
+  cp /lib64/ld-linux-x86-64.so.2 $ORIG_FS_DIR/usr/lib
+  cp libzstd.so.1 $ORIG_FS_DIR/usr/lib
+  cp libm.so.6 $ORIG_FS_DIR/usr/lib
+  # Copy any others you need
 
   # Make sure the libraries you load are the only ones that can be used
   # libc.so, libcurses.so, libm.so and libtermcap.so are necessary for
   # starting up the Linux system
+  # I think this is automatic since /writablefs is not in search path
 
   # Copy the policy key cert(s) in the VM serving as a guest.
   # In VM's intended for distribution , you should obain these, in advance, from the
   # security domain administrator.  In the test script, this is generated
   # by provision-keys.sh and copied in copy-vm-files.sh..
 
-  cp $EXAMPLE_DIR/provisioning/$POLICY_CERT_FILE_NAME etc/$POLICY_CERT_FILE_NAME
-  chmod 0644 etc/$POLICY_CERT_FILE_NAME
+  cp $EXAMPLE_DIR/provisioning/$POLICY_CERT_FILE_NAME $ORIG_FS_DIR/etc/$POLICY_CERT_FILE_NAME
+  chmod 0644 $ORIG_FS_DIR/etc/$POLICY_CERT_FILE_NAME
 
-  # copy any scripts you need
+  # Copy (or make) start-script.sh to call at init
+  cp $EXAMPLE_DIR/start-script.sh $ORIG_FS_DIR/scripts
 
-  [TODO]
-
-  # Disallow root access at least remotely
+  # Disallow root access at least remotely (FIX)
   /etc/ssh/sshd_config:
         PermitRootLogin no #disabled
   /etc/init.d/sshd restart
 
-  # Change init and mount the writable disk under /
-  # mount $ROOT_FS /root/$ROOT_FS
+  # Change init:
+  #   Make a /writablefs directory for disk mount point in init
+  #   Change init and mount the writable disk under /writeablefs
+  #   Mount $ROOT_FS /writablefs/$ROOT_FS
+  #   Modify init to call start-script.sh
+  #   Modify init to NOT replace initramfs with system disk
+  cp $EXAMPLE_DIR/init.new $ORIG_FS_DIR/init
 
-  # Make sure the init script is executable
-    chmod +x init
+  # copy any scripts you need into $ORIG_FS_DIR/scripts
+
+  # Make sure all your scripts are executable
+    chmod +x $ORIG_FS_DIR/init
+    chmod +x $ORIG_FS_DIR/scripts/start-script.sh
 ```
+
+Finally we will recompress initrd.img.
 
 You may need to inject special drivers for your VM.  Make sure
 your module names (e.g., virtio_blk, virtio_net) are listed in
@@ -693,7 +780,7 @@ your module names (e.g., virtio_blk, virtio_net) are listed in
 
 ```script
   update-initramfs -u -k all
-```
+startup_program.cc```
 
 Now, rebuild the archive:
 
@@ -703,7 +790,7 @@ Now, rebuild the archive:
 
 ### Measuring the VM
 
-As set forth in instructions.md, you should have installed the ovmf files and
+As indicated in instructions.md, you should have installed the ovmf files and
 gotten the machine class ARK cert for policy building.  You will also have called
 cpu-id.exe -sev-parameters to obtain the arguments for sev-snp-measue (or obtained
 them some other way) and you should also also have the command line used for the VM
@@ -713,8 +800,13 @@ launch.  The measure vm script uses them to call:
  $MEASURE_PROG_DIR/sev-snp-measure.py --mode snp --vcpu-family $CPU_FAMILY --vcpu-model $CPU_MODEL --vcpu-stepping $CPU_STEPPING \
         --ovmf $OVMF_LOCATION --kernel $VM_KERNEL_FILE_NAME --initrd $VM_INITRAM_FILE_NAME  \
 ```
-
 to obtain the measurement.
+
+
+
+#### replaced by above
+
+
 
 ### Launching the VM and virtualization layer
 
@@ -761,7 +853,7 @@ Launch the VM:
     --install kernel_args="console=ttyS0"
 ```
 
-# Appendix
+# Appendix (Probably remove)
 
 We use Busybox to provide a basic set of Unix utilities to use on the VM instance.
 
