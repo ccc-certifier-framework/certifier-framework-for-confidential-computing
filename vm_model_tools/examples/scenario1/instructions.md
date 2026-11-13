@@ -318,14 +318,26 @@ For the simulated sev case, you can now run the test:
 
 That's it for simulated sev.
 
-To test real snp, you need a snp enabled VM image.
+To test real snp platform, you need a snp enabled VM image.  You can either run the
+entire test in a single VM (whether you built it or used a stock AWS image as below),
+or run the "deployed instance" in a seperate VM.  The first is easier, the second
+is more similar to what you'd do in a real deployment.
 
-If you use the scripts to buiild a VM, by specifying the -build-vm 1, the script
-do everything.
+Start with the entire test running in a single VM (as it does in the AWS case).
 
-If you build your own VM without using the scripts or test on AWS or provide
-your own VM, you must provide a file $EXAMPLE_DIR/sev.measurement, this can
+If your "deployed machine" is in a different sev VM, although the instructions
+below should be self contained, you should consult the document "Building_a_VM"
+in this directory for notes on building a VM and the design alternatives. 
+That document also has some notes on how the script builds the VM and how the VM
+is hosted.  We hope those notes are also helpful when you build a "real application VM"
+using the protection strategy described in the notes.  In any case, if you use the scripts to
+build a VM, by specifying the -build-vm 1 and the appropriate -remote-vm 0/1, the scripts
+should do everything.
+
+If you build your VM without using the scripts or test on AWS,
+you must provide a file $EXAMPLE_DIR/sev.measurement, this can
 be provisioned either with the snpguest tool or the sev-snp-measurement tool
+
 If you test in an sev enabled AWS machine, the VM you use on AWS is suitable
 and the tests work in that partition.  Unlike when you build a VM with the
 script, you will use snpguest, rather that sev-snp-measure, to obtain the
@@ -336,14 +348,6 @@ but must be done manually.
 
 Measurement of a VM uses one of two tools: sev-snp-measure (from IBM) or
 snpguest (from AMD).  You should install both as follows:
-
-You should consult the document "Building_a_VM" in this directory for notes on
-building a VM and the design alternatives.  The subscript "build-vm.sh"
-does this for one of the design alternatives.  It also has some notes on how
-the script builds the VM and how the VM is hosted.  If you provide your
-own VM on bare metal (not the AWS VM case), there is on additional step
-related to making and copying the measurement mentioned above.  Eventually,
-the script will handle this.
 
 To install the sev-snp-measure tool:
 

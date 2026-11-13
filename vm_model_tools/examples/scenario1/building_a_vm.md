@@ -656,8 +656,12 @@ init and passwd files as described below:
 
 ```script
 
-  # a useful variable
+  # Two useful variables
   export ORIG_FS_DIR=$EXAMPLE_DIR/custom_init
+  pushd $CERTIFIER_ROOT
+    cd ../virtee/snpguest
+    export SNPTOOL_DIR=$(pwd)
+  popd
 
   # Copy (or modify existing) /etc/passwd to prevent root login and add
   # "relyingparty" resticted user
@@ -678,6 +682,8 @@ init and passwd files as described below:
   cp $CERTIFIER_ROOT/vm_model_tools/src/cf_utilities.exe $ORIG_FS_DIR/usr/bin
   cp $CERTIFIER_ROOT/utilities/cpuid.exe usr/bin
   cp $EXAMPLE_DIR/startup_program.exe $ORIG_FS_DIR/bin
+  # You will also need the snpguest program on the VM to get the sev certs.
+  cp $SNPTOOL_DIR/snpguest $ORIG_FS_DIR/usr/bin
 
   # Copy needed libraries
   # Find out, what the sharable libraries are.  You can do this, for example, by:
@@ -738,6 +744,9 @@ init and passwd files as described below:
   # Make sure all your scripts are executable
     chmod +x $ORIG_FS_DIR/init
     chmod +x $ORIG_FS_DIR/scripts/start-script.sh
+
+  # Your startup-script will also have to obtain the ARK, ASK and
+  # VCERT certificates on the real machine.
 ```
 
 Finally we will recompress initrd.img.
@@ -748,7 +757,7 @@ your module names (e.g., virtio_blk, virtio_net) are listed in
 
 ```script
   update-initramfs -u -k all
-startup_program.cc```
+```
 
 Now, rebuild the archive:
 
