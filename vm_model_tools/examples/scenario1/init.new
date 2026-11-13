@@ -238,117 +238,20 @@ for x in $(cat /proc/cmdline); do
 	esac
 done
 
-# Default to BOOT=local if no boot script defined.
-if [ -z "${BOOT}" ]; then
-	BOOT=local
-fi
+#   Make a /writablefs directory for disk mount point in init
+mkdir /writeablefs
+chmod 0755 /writeablefs
 
-if [ -n "${noresume}" ] || [ "$RESUME" = none ]; then
-	noresume=y
-else
-	case $RESUME in
-	UUID=*)
-		RESUME="/dev/disk/by-uuid/${RESUME#UUID=}"
-	esac
-	resume=${RESUME:-}
-fi
+# Make a new user "relyingparty"
+# Do I really need to do this?
+# useradd [options] relyingparty
+# passwd relyingparty
 
-mount -t tmpfs -o "nodev,noexec,nosuid,size=${RUNSIZE:-10%},mode=0755" tmpfs /run
-mkdir -m 0700 /run/initramfs
+# Mount $ROOT_FS /writablefs/$ROOT_FS
+mount -t $rootfstype $root /writablefs
 
-if [ -n "$log_output" ]; then
-	exec >"$log_output" 2>&1
-	unset log_output
-fi
-
-maybe_break top
-
-# Don't do log messages here to avoid confusing graphical boots
-run_scripts /scripts/init-top
-
-maybe_break modules
-[ "$quiet" != "y" ] && log_begin_msg "Loading essential drivers"
-[ -n "${netconsole}" ] && /sbin/modprobe netconsole netconsole="${netconsole}"
-load_modules
-[ "$quiet" != "y" ] && log_end_msg
-
-starttime="$(_uptime)"
-starttime=$((starttime + 1)) # round up
-export starttime
-
-maybe_break premount
-[ "$quiet" != "y" ] && log_begin_msg "Running /scripts/init-premount"
-run_scripts /scripts/init-premount
-[ "$quiet" != "y" ] && log_end_msg
-
-maybe_break mount
-log_begin_msg "Mounting root file system"
-# Always load local and nfs (since these might be needed for /etc or
-# /usr, irrespective of the boot script used to mount the rootfs).
-. /scripts/local
-. /scripts/nfs
-. "/scripts/${BOOT}"
-parse_numeric "${ROOT}"
-maybe_break mountroot
-mount_top
-mount_premount
-mountroot
-log_end_msg
-
-if read_fstab_entry /usr; then
-	log_begin_msg "Mounting /usr file system"
-	mountfs /usr
-	log_end_msg
-fi
-
-# Mount cleanup
-mount_bottom
-nfs_bottom
-local_bottom
-
-case "$IP" in
-""|none|off)
-	case "$IP6" in
-	""|none|off) ;; # Do nothing
-	*)
-		configure_networking
-	esac
-	;;
-*)
-	configure_networking
-esac
-
-maybe_break bottom
-[ "$quiet" != "y" ] && log_begin_msg "Running /scripts/init-bottom"
-# We expect udev's init-bottom script to move /dev to ${rootmnt}/dev
-run_scripts /scripts/init-bottom
-[ "$quiet" != "y" ] && log_end_msg
-
-# Move /run to the root
-mount -n -o move /run ${rootmnt}/run
-
-validate_init() {
-	run-init -n "${rootmnt}" "${1}"
-}
-
-# Check init is really there
-if ! validate_init "$init"; then
-	echo "Target filesystem doesn't have requested ${init}."
-	init=
-	for inittest in /sbin/init /etc/init /bin/init /bin/sh; do
-		if validate_init "${inittest}"; then
-			init="$inittest"
-			break
-		fi
-	done
-fi
-
-# No init on rootmount
-if ! validate_init "${init}" ; then
-	panic "No init found. Try passing init= bootarg."
-fi
-
-maybe_break init
+# Call start-script.sh
+scripts/start-script.sh &
 
 # don't leak too much of env - some init(8) don't clear it
 # (keep init, rootmnt, drop_caps)
@@ -380,12 +283,3 @@ unset forcefsck
 unset fsckfix
 unset starttime
 
-# Move virtual filesystems over to the real filesystem
-mount -n -o move /sys ${rootmnt}/sys
-mount -n -o move /proc ${rootmnt}/proc
-
-# Chain to real filesystem
-# shellcheck disable=SC2086,SC2094
-exec run-init ${drop_caps} "${rootmnt}" "${init}" "$@" <"${rootmnt}/dev/console" >"${rootmnt}/dev/console" 2>&1
-echo "Something went badly wrong in the initramfs."
-panic "Please file a bug on initramfs-tools."

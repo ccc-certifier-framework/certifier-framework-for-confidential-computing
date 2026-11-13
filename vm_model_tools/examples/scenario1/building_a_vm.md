@@ -713,6 +713,9 @@ init and passwd files as described below:
   cp $EXAMPLE_DIR/provisioning/$POLICY_CERT_FILE_NAME $ORIG_FS_DIR/etc/$POLICY_CERT_FILE_NAME
   chmod 0644 $ORIG_FS_DIR/etc/$POLICY_CERT_FILE_NAME
 
+  # set the domain names in $ORIG_FS_DIR/etc/domains
+  cat $DOMAIN_NAME >> $ORIG_FS_DIR/etc/domains
+
   # Copy (or make) start-script.sh to call at init
   cp $EXAMPLE_DIR/start-script.sh $ORIG_FS_DIR/scripts
 
@@ -727,6 +730,7 @@ init and passwd files as described below:
   #   Mount $ROOT_FS /writablefs/$ROOT_FS
   #   Modify init to call start-script.sh
   #   Modify init to NOT replace initramfs with system disk
+  #   Make a new user "relyingparty"
   cp $EXAMPLE_DIR/init.new $ORIG_FS_DIR/init
 
   # copy any scripts you need into $ORIG_FS_DIR/scripts

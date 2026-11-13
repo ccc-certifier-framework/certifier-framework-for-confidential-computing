@@ -1,2 +1,0 @@
-dhcpcd:x:996:996:DHCP Client Daemon:/usr/lib/dhcpcd:/bin/false
-root:x:0:0:root:/root:/bin/sh
