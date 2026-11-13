@@ -1,6 +1,3 @@
-# DRAFT in Progress --- JLM
-
-
 # Building a VM
 
 In the scripts, $CERTIFIER_ROOT is the top level directory for the Certifier
@@ -124,10 +121,49 @@ in our test scripts to build a vm that meets out needs but I hope
 it can serve as a guide to help you build your own VMs if you
 use this approach for measurement integrity and contrrol.
 
+Note:  We use the terms "initrd.img" and "initramfs" interchangably but
+they are not.  The older term is initramfs which is historically a
+tmpfs space sed before the OS boots with the "real" fs.
+
+initrd.img allows for more
+difficult and complex boot options such as LVM-on-root, booting from
+an NFS mount, etc.  As others have done (Android, http://www.tinycorelinux.net,
+and our previous cloudproxy), we actually retain this file system as root.
+
+The most obvious difference between initrd and intramfs is that an initrd is loaded
+into a ramdisk. It consists of an actual filesystem (typically ext2).
+An initramfs, on the other hand, is not a filesystem.  It is simply a (compressed)
+cpio archive (of type newc) which is unpacked into a tmpfs.
+This has a side-effect of making initramfs loadable a little earlier in
+the kernel boot process than an initrd. The size of the initramfs in memory
+is smaller, since the kernel can adapt the size of the tmpfs to what is actually
+loaded, rather than relying on predefined ramdisk sizes, and it can also
+clean up the ram that was used whereas ramdisks tend to remain in use
+(due to details of the pivot_root implementation).
+
+Since an initrd is an actual filesystem unpacked into ram, the root device must
+actually be the ramdisk (which is good for us). For an initramfs, there is a
+kernel "rootfs" which becomes the tmpfs that the initramfs is unpacked into
+(if the kernel loads an initramfs; if not, then the rootfs is simply the filesystem
+specified via the root= kernel boot parameter), but this interim rootfs should not
+be specified as the root= boot parameter.  This means that you can still pass your
+real root device to the kernel when using an initramfs. With an initrd, you have
+to process what the real root device is yourself. Also, since the "real" root device
+with an initrd is the ramdisk, the kernel has to switch root devices from one
+real device (the ramdisk) to the other (your real root). In the case of an initramfs,
+the initramfs space (the tmpfs) is not a real device, so the kernel doesn't switch
+real devices. Thus, while the command pivot_root is used with an initrd, a different
+command has to be used for an initramfs. Busybox provides switch_root to accomplish
+this, while klibc offers new_root. This article will focus on busybox (and ignore klibc).
+
+As a result of all this, the initial "init" file for intrd is more complex than
+the previous "initramfs" script.  We actually use initrd and these instructions are
+specific to that.
+
 
 ## Hypervisor
 
-Step 1: Install the required packages, make sure KVM is sev enabled.
+First, install the required packages, make sure KVM is sev enabled.
 
 ```script
 sudo apt -y install bridge-utils cpu-checker libvirt-clients libvirt-daemon qemu qemu-kvm cpu-checker qemu-img libvirt-daemon-system qemu-utils
@@ -154,18 +190,7 @@ Setup guest services:
   sudo systemctl start libvirtd  # if it hasn't already started
 ```
 
-Step 3: Launch a VM
-
-In order to launch your first Ubuntu Server 20.04 LTS instance on KVM execute the following command:
-
-
-```script
-$ sudo virt-install --name ubuntu-guest --os-variant ubuntu20.04 --vcpus 2 --ram 2048 --location http://ftp.ubuntu.com/ubuntu/dists/focal/main/installer-amd64/ --network bridge=virbr0,model=virtio --graphics none --extra-args='console=ttyS0,115200n8 serial'
-```
-
-This opens an interactive console that you can use to manually install the Ubuntu guest.
-
-### Tutorials and first aid for KVM
+### Step by step for KVM from third tutorial
 
 This section is long and informative but if you're in a hurry,
 skip to "What you actually need to do to run the tests."
@@ -176,8 +201,6 @@ There are number of tutorials on line like:
 2. https://docs.beamnetworks.dev/en/kvm/create-vm-full
 3. https://oneuptime.com/blog/post/2026-01-15-setup-kvm-qemu-virtualization-ubuntu/view
 4. QEMU & KVM Virtualization, Vexel
-
-### Step by step for KVM from third tutorial
 
 1. Check Virtualization Support
 
@@ -531,26 +554,6 @@ sudo chown libvirt-qemu:kvm /var/lib/libvirt/images/*.qcow2
 sudo chmod 600 /var/lib/libvirt/images/*.qcow2
 ```
 
-### What you actually need to do to run the tests
-
-You need to build a vm as described in the next section as is
-done by the scripts.
-
-Next you need to build a VHD wich will be used as a writable store:
-
-```script
-# Build a VHD
-```
-
-Setup the KVM and QEMU:
-```script
-```
-
-Start the VM:
-```script
-```
-
-
 ## Building vmlinuz and initrd.img
 
 A Linux VM cosist of two components, a kernal file, called vmlinuz and
@@ -558,7 +561,7 @@ an in memory storage component called initrd.img.
 
 In the scripts we use a very simple procedure to build these.
 
-###  The kernal
+###  The kernal (vmlinuz)
 
 We simply copy the existing kernal from the existing machine which
 is located at /boot/vmlinuz.
@@ -597,9 +600,7 @@ Here are things you should remember about building a kernal:
 ```
 
 The compressed kernel image will be created at arch/x86/boot/bzImage
-(copy this to /boot/vmlinuz).
-
-The scripts that build the VM are in build-vm.sh.
+(copy this to /boot/vmlinuz).  The scripts that build the VM are in build-vm.sh.
 
 
 ### Building initrd.img
@@ -648,43 +649,6 @@ You should see something like this:
 
 We will be modifying the init script "init".  Sample changes are in
 $EXAMPLE_DIR/init.new.
-
-Note:  We use the terms "initrd.img" and "initramfs" interchangably.
-The older term is initramfs which is historically a tmpfs space before
-it boots with the "real" fs. This allows for more difficult and complex
-boot options such as LVM-on-root, booting from an NFS mount, etc.  As
-others have done (Android, http://www.tinycorelinux.net, and our
-previous cloudproxy), we actually retain this file system as root.
-
-The most obvious difference between the two is that an initrd is loaded
-into a ramdisk. It consists of an actual filesystem (typically ext2) which
-is mounted in a ramdisk. An initramfs, on the other hand, is not a filesystem.
-It is simply a (compressed) cpio archive (of type newc) which is unpacked into a tmpfs.
-This has a side-effect of making the initramfs loadable a little earlier in
-the kernel boot process than an initrd. The size of the initramfs in memory
-is smaller, since the kernel can adapt the size of the tmpfs to what is actually
-loaded, rather than relying on predefined ramdisk sizes, and it can also
-clean up the ram that was used whereas ramdisks tend to remain in use
-(due to details of the pivot_root implementation).
-
-Since an initrd is an actual filesystem unpacked into ram, the root device must
-actually be the ramdisk (which is good for us). For an initramfs, there is a
-kernel "rootfs" which becomes the tmpfs that the initramfs is unpacked into
-(if the kernel loads an initramfs; if not, then the rootfs is simply the filesystem
-specified via the root= kernel boot parameter), but this interim rootfs should not
-be specified as the root= boot parameter (and there wouldn't be a way to do so,
-since there's no device attached to it). This means that you can still pass your
-real root device to the kernel when using an initramfs. With an initrd, you have
-to process what the real root device is yourself. Also, since the "real" root device
-with an initrd is the ramdisk, the kernel has to really switch root devices from one
-real device (the ramdisk) to the other (your real root). In the case of an initramfs,
-the initramfs space (the tmpfs) is not a real device, so the kernel doesn't switch
-real devices. Thus, while the command pivot_root is used with an initrd, a different
-command has to be used for an initramfs. Busybox provides switch_root to accomplish
-this, while klibc offers new_root. This article will focus on busybox (and ignore klibc).
-
-As a result of all this, the initial "init" file for intrd is more complex than
-the previous "initramfs" script.
 
 We need to modify the initial fs by adding binaries, libraries and script
 particular to the VM as described below. We also need to modify the
@@ -803,28 +767,25 @@ launch.  The measure vm script uses them to call:
 to obtain the measurement.
 
 
+### What you actually need to do to run the tests
 
-#### replaced by above
-
-
-
-### Launching the VM and virtualization layer
-
-TODO: Explain Firecracker launch too.
-
-Here's how to KVM boot and sev VM on bare metal.
-
-Verify you have SEV:
+First, check the setup the KVM and QEMU we described in the beginning of the Hypervisor session and that
+you have SEV:
 
 ```script
+ kvm-ok
+  modinfo kvm-amd
+  lsmod | grep kvm
+  qemu-system-x86_64 --version
   grep -w sev /proc/cpuinfo
 ```
 
-Enable SEV in /etc/default/grub or kernel arguments:
+To enable SEV in the kernel arguments:
 
 ```script
   mem_encrypt=on kvm_amd.sev=1
 ```
+
 Update the bootloader:
 
 ```script
@@ -836,6 +797,41 @@ Reboot your host:
 ```script
 # virsh domcapabilities | grep -A 5 "<sev"
 ```
+
+Launch the VM:
+
+```script
+After building a vm as described above, as is done by the scripts and
+installing KVM/QEMU as decribed above, you need to build a VHD wich will
+be used as a writable store
+
+```script
+# Build a VHD
+```
+
+Finally, start the VM:
+```script
+# we assume you've installed kvm and qemu as above.
+sudo virt-install --name ubuntu-guest --os-variant ubuntu20.04 --vcpus 2 --ram 2048 --location http://ftp.ubuntu.com/ubuntu/dists/focal/main/installer-amd64/ --network bridge=virbr0,model=virtio --graphics none --extra-args='console=ttyS0,115200n8 serial'
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#### Delete the following, it is replaced by above
+
 
 Launch the VM:
 
@@ -853,10 +849,7 @@ Launch the VM:
     --install kernel_args="console=ttyS0"
 ```
 
-# Appendix (Probably remove)
-
 We use Busybox to provide a basic set of Unix utilities to use on the VM instance.
-
 To get it:
 
 ```script
