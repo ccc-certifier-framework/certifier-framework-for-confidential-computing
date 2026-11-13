@@ -81,6 +81,7 @@ fi
 #       OVMF_LOCATION                     -ovmf-loc       ovmf file
 #       BUILD_VM                          -build-vm       Build VM
 #       TCB_VER                           -tcb            TCB version for sev
+#       REMOTE_VM                         -remote-vm      Remote VM test
 
 
 function print-options() {
@@ -146,6 +147,7 @@ function print-options() {
         echo "TCB_VER                           -tcb            TCB version"
         echo "MIGRATE_VAL                       -migrate        migrate sev property"
         echo "SMT_VAL                           -smt            smt sev property"
+        echo "REMOTE_VM                         -remote-vm      run remote VM test"
         echo "-----------------------------------------------------------------"
         echo ""
 }
@@ -210,6 +212,7 @@ BUILD_VM=0
 TCB_VER=0x03000000000008115
 MIGRATE_VAL="no"
 SMT_VAL="no"
+REMOTE_VM=0
 
 
 function print-variables() {
@@ -285,7 +288,8 @@ function print-variables() {
         echo "TCB_VER                                $TCB_VER"
         echo "MIGRATE_VAL                            $MIGRATE_VAL"
         echo "SMT_VAL                                $SMT_VAL"
-
+        echo ""
+        echo "REMOTE_VM                               $REMOTE_VM"
         echo ""
 }
 
@@ -469,7 +473,9 @@ function process-args() {
             if [[ ${array[i]} = "-migrate" ]]; then
                     MIGRATE_VAL="${array[i+1]}"
             fi
-
+            if [[ ${array[i]} = "-remote-vm" ]]; then
+                    REMOTE_VM="${array[i+1]}"
+            fi
         done
 
         POLICY_CERT_FILE_NAME=$POLICY_CERT_FILE_NAME.$DOMAIN_NAME

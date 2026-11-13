@@ -77,7 +77,7 @@ echo "Arguments processed"
 ALLARGS=""
 ALLSIMARG1="-tt $TEST_TYPE -pn scenario1-test -dn dom0 -clean $CLEAN -loud $VERBOSE -just_compile $COMPILE_ONLY"
 ALLSIMARG2="-dd $DATA_DIR -ccf $COMPILE_CF -bss $BUILD_SEV_SIMULATOR -pkn $POLICY_KEY_FILE_NAME"
-ALLSIMARG3="-pkn policy_key_file -cfn policy_cert_file -psn policy_store -csn cryptstore"
+ALLSIMARG3="-pkn policy_key_file -cfn policy_cert_file -psn policy_store -csn cryptstore -remote-vm $REMOTE_VM"
 ALLSIMARG4="-pfn $POLICY_FILE_NAME -psa $POLICY_SERVER_ADDRESS -ksa $KEY_SERVER_ADDRESS"
 ALLSIMARG5="-vmn $VM_NAME -et1 $DEPLOYMENT_ENCLAVE_TYPE -et2 $DEPLOYED_ENCLAVE_TYPE -tpm-mfn $TPM_MEASUREMENT_FILE_NAME"
 ALLSIMARG6="-psn1 $DEPLOYMENT_POLICY_STORE_NAME -csn1 $DEPLOYMENT_CRYPTSTORE_NAME -csn2 $DEPLOYED_CRYPTSTORE_NAME"
@@ -202,24 +202,28 @@ TA="$ALLARGS -op run"
 #   environment
 
 echo ""
-echo "certify-deployed-machine.sh"
-./certify-deployed-machine.sh $TA		# working
-
-echo ""
 echo "run-deployment-keyserver.sh"
 ./run-deployment-keyserver.sh $ALLARGS         	# working
 
-echo ""
-echo "generate-and-store-secret-for-deployment.sh"
-./generate-and-store-secret-for-deployment.sh $ALLARGS # working
+if [[ $REMOTE_VM -eq 0 ]]; then
+  echo ""
+  echo "Local test"
 
-echo ""
-echo "obtain-application-secrets.sh"
-./obtain-application-secrets.sh $ALLARGS	#working
+  echo ""
+  echo "certify-deployed-machine.sh"
+  ./certify-deployed-machine.sh $TA		# working
 
-echo ""
-echo "cleanup.sh"
-./cleanup.sh $ALLARGS				# working
+  echo "generate-and-store-secret-for-deployment.sh"
+  ./generate-and-store-secret-for-deployment.sh $ALLARGS # working
+
+  echo ""
+  echo "obtain-application-secrets.sh"
+  ./obtain-application-secrets.sh $ALLARGS	#working
+
+  echo ""
+  echo "cleanup.sh"
+  ./cleanup.sh $ALLARGS				# working
+fi
 
 echo ""
 echo "Consolidated test complete"
