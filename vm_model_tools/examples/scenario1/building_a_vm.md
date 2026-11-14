@@ -650,7 +650,7 @@ You should see something like this:
 We will be modifying the init script "init".  Sample changes are in
 $EXAMPLE_DIR/init.new.
 
-FIrst, make sure all the programs you need have been compiled; for example,
+First, make sure all the programs you need have been compiled; for example,
 in our simplest test:
 
 ```script
