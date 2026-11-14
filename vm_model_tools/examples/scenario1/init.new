@@ -250,6 +250,8 @@ chmod 0755 /writeablefs
 # Mount $ROOT_FS /writablefs/$ROOT_FS
 mount -t $rootfstype $root /writablefs
 
+# Network stack? ssh?
+
 # Call start-script.sh
 scripts/start-script.sh &
 

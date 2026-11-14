@@ -650,6 +650,14 @@ You should see something like this:
 We will be modifying the init script "init".  Sample changes are in
 $EXAMPLE_DIR/init.new.
 
+FIrst, make sure all the programs you need have been compiled; for example,
+in our simplest test:
+
+```script
+cd  $EXAMPLE_DIR
+g++ -o startup_program.exe startup_program.cc
+```
+
 We need to modify the initial fs by adding binaries, libraries and script
 particular to the VM as described below. We also need to modify the
 init and passwd files as described below:
@@ -858,4 +866,120 @@ Finally, start the VM:
 ```
 
 The vm scripts should have been configured to run the test in the vm.
+
+
+---------------------------------------
+
+How do I initialize networks?  ssh?
+
+
+When Linux boots as an operating system, it loadsits image from the disk
+into memory, unpacks it, and establishes itself by installing the file systems
+and memory management and other key systems. As the kernel's last (initialization)
+task, it executes the init program. This program reads a configuration file (/etc/inittab)
+which directs it to execute a startup script (found in /etc/rc.d on Red Hat distributions).
+This in turn executes more scripts, eventually including the network script (/etc/rc.d/init.d/network).
+
+Early during the boot process the netplan-generate binary is run as a systemd generator.
+The binary can be seen (symlinked) at /lib/systemd/system-generators/netplan.
+
+The netplan-generate binary uses the netplan configuration to create configuration for either
+systemd-networkd or NetworkManager. E.g. for systemd-networkd a file is created at
+/run/systemd/network/10-netplan-SOMETHING.network.
+
+Later in the boot process, systemd starts the service for systemd-networkd.service or
+NetworkManager.service. The service configures the network based on its configuration (which was just created by netplan).
+
+
+When the system boots and kernel executes /sbin/init for PID 1 it will actually execute
+/lib/systemd/systemd via symbolic link. See man 1 systemd for details.
+
+During early startup process of systemd, all generators will be executed which may automatically
+generate new config files before all config files are loaded. See man 7 systemd.generator for details about this process.
+
+The systemd (PID 1) will then look for default.target which is by default a symlink from /lib/systemd/system/default.target
+to graphical.target. (You're supposed to query this with systemctl get-default and set a new target with systemctl set-default.)
+
+Once the default target is known, systemd (PID 1) will then recursively look for dependencies for this target.
+
+
+
+
+Include /etc/ssh/ssh_config.d/*.conf
+
+
+/etc/init.d/networking restart
+virsh net-dumpxml default
+ip link set dev eth0 upA
+TYPE=”Ethernet”
+NAME=”eth0"
+DEVICE=”eth0"
+BOOTPROTO=”static”
+IPADDR=192.168.1.100
+NETMASK=255.255.255.0
+GATEWAY=192.168.1.1
+DNS1=8.8.8.8
+DNS2=8.8.4.4
+ONBOOT=yes
+service network restart
+
+/etc/network/interfaces gives:
+
+auto lo
+iface lo inet loopback
+
+allow-hotplug eth0
+iface eth0 inet dhcp
+init.d
+ip addr show virbr0
+sudo ifconfig eth0 up
+sudo /etc/dhclient
+
+runlevel > = 3
+
+
+network:
+  ethernets:
+    enp3s0:
+      dhcp4: true
+      dhcp6: true
+      match:
+        macaddress: 78:55:36:09:32:cb
+      set-name: enp3s0
+  version: 2
+  wifis: {}
+# Let NetworkManager manage all devices on this system
+network:
+  version: 2
+  renderer: NetworkManager
+
+
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host noprefixroute
+       valid_lft forever preferred_lft forever
+2: enp3s0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether 78:55:36:09:32:cb brd ff:ff:ff:ff:ff:ff
+    altname enx7855360932cb
+    inet 10.0.0.15/24 brd 10.0.0.255 scope global dynamic noprefixroute enp3s0
+       valid_lft 123148sec preferred_lft 123148sec
+    inet6 2601:645:c681:d02d::3040/128 scope global dynamic noprefixroute
+       valid_lft 137101sec preferred_lft 137101sec
+    inet6 2601:645:c681:d02d:7a55:36ff:fe09:32cb/64 scope global dynamic noprefixroute
+       valid_lft 48438sec preferred_lft 48438sec
+    inet6 fe80::7a55:36ff:fe09:32cb/64 scope link noprefixroute
+       valid_lft forever preferred_lft forever
+3: wls1: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default qlen 1000
+    link/ether a8:59:5f:53:d3:33 brd ff:ff:ff:ff:ff:ff
+    altname wlp2s0
+    altname wlxa8595f53d333
+4: virbr0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default qlen 1000
+    link/ether 52:54:00:86:32:4d brd ff:ff:ff:ff:ff:ff
+    inet 192.168.122.1/24 brd 192.168.122.255 scope global virbr0
+       valid_lft forever preferred_lft forever
+
+service network-manager restart
+
 
