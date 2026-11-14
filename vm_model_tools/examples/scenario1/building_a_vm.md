@@ -671,10 +671,6 @@ init and passwd files as described below:
     export SNPTOOL_DIR=$(pwd)
   popd
 
-  # Copy (or modify existing) /etc/passwd to prevent root login and add
-  # "relyingparty" resticted user
-  cp $EXAMPLE_DIR/passwd.new $ORIG_FS_DIR/etc/passwd
-
   # Copy binaries, including CF utilities and programs including
   # cf_utilities, cf_key_server, cf_key_client.  The programs you
   # load into initrd should either be the only ones that can run or
@@ -722,7 +718,7 @@ init and passwd files as described below:
   # Copy the policy key cert(s) in the VM serving as a guest.
   # In VM's intended for distribution , you should obain these, in advance, from the
   # security domain administrator.  In the test script, this is generated
-  # by provision-keys.sh and copied in copy-vm-files.sh..
+  # by provision-keys.sh.
 
   cp $EXAMPLE_DIR/provisioning/$POLICY_CERT_FILE_NAME $ORIG_FS_DIR/etc/$POLICY_CERT_FILE_NAME
   chmod 0644 $ORIG_FS_DIR/etc/$POLICY_CERT_FILE_NAME
@@ -766,7 +762,6 @@ your module names (e.g., virtio_blk, virtio_net) are listed in
 ```script
   update-initramfs -u -k all
 ```
-
 Now, rebuild the archive:
 
 ```script
