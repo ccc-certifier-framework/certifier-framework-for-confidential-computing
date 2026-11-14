@@ -89,8 +89,9 @@ chmod +x $ORIG_FS_DIR/init
 chmod +x $ORIG_FS_DIR/scripts/start-script.sh
 
 # Remake it
-find . -print0 | cpio --null -o -H newc | gzip -c > $EXAMPLE_DIR/new_initrd.img
-# mkimage -O linux -T ramdisk -C gzip -a 0x0000000 -e 0x0000000 -n "Pogoplug Ramdisk" -d linux-3.3.8 uInitrd
+# find . -print0 | cpio --null -o -H newc | gzip -c > $EXAMPLE_DIR/new_initrd.img
+# find . | cpio -o -c -R root:root | gzip -9 > $EXAMPLE_DIR/new_initrd.img
+mkinitramfs -l 9 -o $EXAMPLE_DIR/new_initrd.img 
 
 echo "done"
 
