@@ -842,7 +842,7 @@ virt-install \
   --extra-args "console=ttyS0 root=/dev/vda1" \
   --nographic \
   --launchSecurity sev,policy=0x1 \
-  --network bridge=br0,model=virtio,rom.bar=off \
+  --network bridge=br0,model=virtio,rom.bar=off
 ```
 
 On the deployment machine, after compiling cf, set up the deployment stuff:

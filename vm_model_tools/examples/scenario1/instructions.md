@@ -607,8 +607,30 @@ environment.
 
 #### Tests where dealpoyed machine is in a different VM
 
+Make sure you've built a VHD, if not:
+
+```script
+qemu-img create -f qcow2 /var/lib/libvirt/images/template.qcow 25G
+qemu-img create -f qcow2 -b /var/lib/libvirt/images/template.qcow /var/lib/libvirt/images/CC-VM-disk.qcow
+```
+
+If you have not installed the VM the scripts build:
+
+```script
+virt-install \
+  --name my-vm \
+  --memory 2048 \
+  --vcpus 2 \
+  --disk path=/var/lib/libvirt/images/CC-VM-disk.qcow,bus=virtio \
+  --location $EXAMPLE_DIR,kernel=vmlinuz,initrd=new_initrd.img \
+  --extra-args "console=ttyS0 root=/dev/vda1" \
+  --nographic \
+  --launchSecurity sev,policy=0x1 \
+  --network bridge=br0,model=virtio,rom.bar=off
+```
+
 If your deployed machine is in another VM, after the scripts have built a
-kernel, initrd and VHD:
+kernel, and initrd and you've installed them, as above, do the following.
 
 On the deployment machine, after compiling cf, set up the deployment stuff:
 
@@ -626,7 +648,7 @@ Finally, start the VM:
  virsh start my-vm
 ```
 
-The scripts installed in the vm by our vm build should do the rest.
+The scripts installed in the VM by the build scripts should do the rest.
 
 
 ### Rerunning the test script
