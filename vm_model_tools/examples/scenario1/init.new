@@ -250,10 +250,18 @@ chmod 0755 /writeablefs
 # Mount $ROOT_FS /writablefs/$ROOT_FS
 mount -t $rootfstype $root /writablefs
 
-# Network stack? ssh?
+# init NW
+# modprobe virtio_net
+# Call systemd instead?
+# run_init SCRIPT [[ARGS]...]
+
 
 # Call start-script.sh
 scripts/start-script.sh &
+
+# Don't return
+exec /bin/sh
+
 
 # don't leak too much of env - some init(8) don't clear it
 # (keep init, rootmnt, drop_caps)

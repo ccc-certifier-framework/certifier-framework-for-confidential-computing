@@ -977,4 +977,201 @@ network:
 
 service network-manager restart
 
+Boot process with systemd
+
+Once the kernel loads systemd, systemd takes over and starts the other system services that are required to
+bring the system up and running. This includes services such as networking service, the login manager, etc.
+
+The boot process is parallelized in the order in which specific target units are executed. systemd uses
+the /etc/systemd/system/default.target file to determine the target that the Linux system should boot into.
+This file is a link to graphical.target which boots the graphical login manager. systemd activates all
+target units that are dependencies of default.target as well as recursively all dependencies of these
+dependencies. Once all the services are started, your system is ready to use and the login manager displays.
+You can now log in and start using the system.
+
+wants:
+
+accounts-daemon.service@         --> /usr/lib/systemd/system/accounts-daemon.service
+power-profiles-daemon.service@   --> /usr/lib/systemd/system/power-profiles-daemon.service
+switcheroo-control.service@      --> /usr/lib/systemd/system/switcheroo-control.service
+udisks2.service@         --> /usr/lib/systemd/system/udisks2.service
+
+systemd is a system and service manager for Linux operating systems. When run as first process on boot (as PID 1),
+it acts as init system that brings up and maintains userspace services. Separate instances are started for
+logged-in users to start their services.
+
+systemd is usually not invoked directly by the user, but is installed as the /sbin/init symlink and started during
+early boot. The user manager instances are started automatically through the user@.service(5) service.
+When run as a system instance, systemd interprets the configuration file system.conf and the files in
+system.conf.d directories; when run as a user instance, systemd interprets the configuration file user.conf
+and the files in user.conf.d directories. See systemd-system.conf(5) for more information.
+systemd contains native implementations of various tasks that need to be executed as part of the boot process.
+For example, it sets the hostname or configures the loopback network device. It also sets up and mounts
+various API file systems, such as /sys/, /proc/, and /dev/.  systemd will also reset the system clock during
+early boot if it appears to be set incorrectly. See "System clock epoch" section below.
+Note that some but not all interfaces provided by systemd are covered by the Interface Portability and Stability Promise[1].
+
+Systems which invoke systemd in a container or initrd environment should implement the Container Interface[2]
+or initrd Interface[3] specifications, respectively.
+
+Using systemd inside an initrd
+
+Provide /etc/initrd-release in the initrd image. The idea is that it follows the same format as the usual
+/etc/os-release but describes the initial RAM disk implementation rather than the OS. systemd uses the
+existence of this file as a flag whether to run in initial RAM disk mode, or not.
+When run in initrd mode, systemd and its components will read a couple of additional command line arguments,
+which are generally prefixed with rd.  To transition into the main system image invoke "systemctl switch-root".
+The switch-root operation will result in a killing spree of all running processes. Some processes might
+need to be excluded from that, see the guide on systemd and Storage Daemons for the Root File System.
+
+When systemd runs inside an initial RAM disk (initrd or initramfs), it acts as a temporary system manager
+before handing over control to the real root file system.
+
+How the Boot Flow Works
+
+1. Loading into Memory: The bootloader loads the Linux kernel and the initrd/initramfs archive into RAM.
+2. Kernel Extraction: The kernel mounts or unpacks the archive into a temporary in-memory file system
+(traditionally a block-based ramdisk or modern tmpfs-backed initramfs).
+3. Initrd Detection: systemd checks for the existence of /etc/initrd-release inside the initrd environment
+to determine that it is operating in initrd mode rather than the main OS.
+4. Early Userspace Execution: systemd runs as PID 1 inside the initrd, parsing command-line parameters
+(typically prefixed with rd.) to load hardware drivers, unlock encrypted volumes, or configure early networking 
+
+1. Create a initramfs with static busybox and nothing else.
+This initramfs will have few necessary directories: like proc, sys, tmp, bin, usr, etc
+
+2. Write a "/init" script, whose main job will be:
+   a. mount the procfs,tmpfs and sysfs.
+   b. Call busybox's udev i.e. mdev
+   c. Install the busybox command onto virtual system by executing busybox install -s
+   d. Calling /bin/sh
+
+3. Source the initramfs directory while compiling the kernel. You can do so by flag: CONFIG_INITRAMFS_SOURCE
+
+4. Compile your kernel.
+
+5. Boot off this kernel and you will get the shell prompt with minimal things.
+
+#!/bin/sh
+# Mount essential virtual filesystems
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mount -t devtmpfs devtmpfs /dev
+
+# Clear screen and spawn a shell or init
+echo "Successfully booted with initramfs as permanent root!"
+exec /bin/sh
+
+Step 1: Ensure binaries and libraries are present in your initrd treeMake sure your initrd directory structure includes:/bin/busybox (or standalone ip, udhcpc, ifconfig)Required kernel modules under /lib/modules/$(uname -r)/kernel/drivers/net/ (e.g., e1000, virtio_net)Shared libraries if binaries are not statically linked (libc, libm, etc.)Step 2: Write initialization logic inside your init scriptInside your initrd's root /init script, bring up the loopback, load your NIC driver, assign an IP, and configure DNS before dropping to a shell or executing your payload:Bash#!/bin/sh
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mount -t devtmpfs devtmpfs /dev
+
+# 1. Bring up loopback
+ip link set lo up
+
+# 2. Load network driver (if built as module, e.g., virtio_net)
+modprobe virtio_net
+
+# 3. Bring up the physical interface
+ip link set eth0 up
+
+# 4. Configure IP (Choose A or B)
+# Option A: Static IP
+ip addr add 192.168.1.100/24 dev eth0
+ip route add default via 192.168.1.1
+
+# Option B: DHCP (using BusyBox udhcpc)
+# udhcpc -i eth0 -s /usr/share/udhcpc/default.script
+
+# 5. Add nameserver for resolution
+echo "nameserver 8.8.8.8" > /etc/resolv.conf
+
+echo "Networking is up inside initrd!"
+exec /bin/sh
+
+
+When using modern systemd-based initrds (such as systemd-initrd in Dracut or Debian initramfs-tools),
+the initrd itself operates in a temporary environment centered around initrd.target. It doesn't use
+traditional runlevels, but it hands off control to the real root filesystem's target (the equivalent of a runlevel) during the switch-root phase.   
+
+To control or change what target/runlevel the system boots into from the initrd handover stage, use the following methods:
+
+Method 1: Pass the Target via Kernel Command Line (Most Common)
+You can force the main system manager to boot into a specific target right as the initrd
+performs switch-root. Append the systemd.unit= parameter to your bootloader (GRUB) configuration:
+
+Locate the line starting with linux or linuxefi.
+
+Append systemd.unit=<target-name>.target to the end of the line:
+
+For multi-user text mode (equivalent to runlevel 3):
+
+Plaintext
+systemd.unit=multi-user.target
+For graphical mode (equivalent to runlevel 5):
+
+Plaintext
+systemd.unit=graphical.target
+For emergency/rescue mode (equivalent to runlevel 1):
+
+Plaintext
+systemd.unit=rescue.target
+Press Ctrl+X or F10 to boot.
+
+Method 2: Customizing the Initrd/Root Switch Logic (Advanced)
+If you are writing or modifying custom initrd scripts (like a custom dracut module or hook) and need to alter the target that systemd-initrd hands off to, you can pass the target argument directly when executing the switch-root command:
+
+Bash
+exec switch_root /sysroot /sbin/init --unit=multi-user.target
+Alternatively, you can drop a symlink or configuration override inside the temporary initrd environment before the switch occurs, modifying what /etc/systemd/system/default.target points to on the mounted root file system (/sysroot/etc/systemd/system/default.target).
+
+# Example replacement at the end of the init script:
+exec /bin/sh
+
+#!/bin/sh
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+mount -t proc none /proc
+mount -t sysfs none /sys
+mount -t devtmpfs none /dev
+
+# Do your custom tasks here...
+
+# Keep PID 1 alive
+
+
+run_init does a lot of work:
+  It jumps into the new root file system
+  Checks that this is the new root file system
+  Checks if it on initramfs
+  Cleans all directory (why waste the RAM?)
+  Mounts the new root file system
+  and runs init in the new root file system
+
+new minimalist init systems like Nitro, rising systemd alternatives such as Dinit,
+
+In most of the current day linux distribution, the INIT function then calls the systemd daemon.
+The systemd is responsible for bringing the linux host to usable state.
+systemd is responsible for mounting the file systems, starting and managing system services.
+systemd is the universal standard these days, but not too long ago another initialization
+process called system V (five) init was used. It is also called **Sys5
+
+Dinit is a portable, lightweight service supervisor and init system created by Davin McCall. It is designed as a clean, modular alternative to heavier systems like systemd or traditional alternatives like runit and sysvinit
+
+https://github.com/davmac314/dinit/blob/master/doc/linux/DINIT-AS-INIT.md
+
+#!/bin/sh
+# /opt/bootlocal.sh - Put other system startup commands here
+
+# Start the OpenSSH server daemon
+/usr/local/etc/init.d/openssh start &
+
+# Set a static IP address on eth0
+ifconfig eth0 192.168.1.50 netmask 255.255.255.0 up
+route add default gw 192.168.1.1
+
+
+https://wiki.tinycorelinux.net
+http://tinycorelinux.net/corebook.pdf
+
 
