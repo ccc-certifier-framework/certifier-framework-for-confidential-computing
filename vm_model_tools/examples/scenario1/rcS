@@ -25,19 +25,16 @@ else
     hostname busybox-linux
 fi
 
-# 6. Bring up the loopback network interface
-ifconfig lo 127.0.0.1 up
-
-# 7. Start all modular init scripts in /etc/init.d/ (e.g., S10udev, S40network, S50dropbear)
+# 6. Start all modular init scripts in /etc/init.d/ (e.g., S10udev, S40network, S50dropbear)
 for script in /etc/init.d/S*; do
     if [ -x "$script" ]; then
         "$script" start
     fi
+done
 
-# 8. network
+# 7. network (Put this in an init.d script
+ifconfig lo 127.0.0.1 up
 mount -a
 ip link set eth0 up
 udhcpc
 ntpd -n -q -p time.stdtime.gov.tw
-done
-
