@@ -1396,3 +1396,8 @@ cp -a busybox-*/_install/* initramfs/
 
 To run a script after services start in a BusyBox init environment, place an executable script prefixed with S99 inside /etc/init.d/ (or /etc/rc.d/) or add a ::once: entry at the bottom of /etc/inittab
 
+Edit /etc/inittab. Add your script at the very bottom of the file using the ::once: action so it executes after ::sysinit:/etc/init.d/rcS finishes.text
+::sysinit:/etc/init.d/rcS
+::respawn:/sbin/getty -L ttyS0 115200 vt100
+::once:/path/to/your_script.sh
+
