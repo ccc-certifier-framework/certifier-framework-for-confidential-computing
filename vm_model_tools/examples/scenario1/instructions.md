@@ -607,6 +607,14 @@ environment.
 
 #### Tests where dealpoyed machine is in a different VM
 
+Make sure you've installed busybox
+```script
+sudo apt update
+sudo apt install busybox-static
+# or
+sudo apt install busybox
+```
+
 Make sure you've built a VHD, if not:
 
 ```script

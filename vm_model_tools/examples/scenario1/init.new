@@ -250,16 +250,15 @@ chmod 0755 /writeablefs
 # Mount $ROOT_FS /writablefs/$ROOT_FS
 mount -t $rootfstype $root /writablefs
 
-# init NW
-# modprobe virtio_net
-# Call systemd instead?
-# run_init SCRIPT [[ARGS]...]
+# init NW ?
+# /usr/bin/busybox modprobe virtio_net
 
+# Call busybox to init proc 1
+# Busybox calls scripts/start-script.sh
+# at the end
+# exec /usr/bin/busybox init
 
-# Call start-script.sh
-scripts/start-script.sh &
-
-# Don't return
+# Don't return (maybe)
 exec /bin/sh
 
 

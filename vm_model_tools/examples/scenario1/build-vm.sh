@@ -57,17 +57,29 @@ g++ -o startup_program.exe startup_program.cc
 
 # install busybox
 export BUSYBOX_DIR=/usr/bin
-cp $BUSYBOX_DIR $ORIG_FS_DIR/usr/bin
+cp $BUSYBOX_DIR/busybox $ORIG_FS_DIR/usr/bin
 install ~/busybox/examples/inittab $ORIG_FS_DIR/etc/inittab
 
+# When the Linux kernel finishes booting, it executes /sbin/init (or /linuxrc),
+# which is symlinked to the busybox executable.
+# It reads /etc/inittab to determine what programs to run.
+# If /etc/inittab does not exist, BusyBox uses hardcoded default actions to mount
+# filesystems and spawn a shell.
+# this script typically iterates through and executes other scripts
+# in /etc/init.d/ in numerical order (such as S01*, S10*, S20*).
+
 # Init
-mkdir etc/init.d
+mkdir $ORIG_FS_DIR/etc/init.d || true
 cp $EXAMPLE_DIR/rcS $ORIG_FS_DIR/etc/init.d
 chmod +x $ORIG_FS_DIR/etc/init.d/rcS
 cp $EXAMPLE_DIR/inittab $ORIG_FS_DIR/etc
-# Populate init.d
-# cron libvirtd udhcpc console?
 
+# Populate init.d
+# install udhcpc?  If so:
+# ip link set eth0 up
+# udhcpc -i eth0 -s /usr/share/udhcpc/default.script -q -n
+# cron libvirtd udhcpc console? openssh
+# link linuxrc-->busybox ?
 
 # Copy Programs and libraries
 cp $CERTIFIER_ROOT/vm_model_tools/src/cf_key_server.exe $ORIG_FS_DIR/usr/bin

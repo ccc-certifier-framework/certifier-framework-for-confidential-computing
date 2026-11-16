@@ -872,10 +872,8 @@ The vm scripts should have been configured to run the test in the vm.
 
 Below here to be deleted
 
-How do I initialize networks?  ssh?
 
-
-When Linux boots as an operating system, it loadsits image from the disk
+When Linux boots as an operating system, it loads its image from the disk
 into memory, unpacks it, and establishes itself by installing the file systems
 and memory management and other key systems. As the kernel's last (initialization)
 task, it executes the init program. This program reads a configuration file (/etc/inittab)
@@ -910,11 +908,6 @@ ip addr show virbr0
 sudo ifconfig eth0 up
 sudo /etc/dhclient
 
-Boot process with systemd
-
-Once the kernel loads systemd, systemd takes over and starts the other system services that are required to
-bring the system up and running. This includes services such as networking service, the login manager, etc.
-
 # Keep PID 1 alive
 
 run_init does a lot of work:
@@ -931,35 +924,8 @@ Dinit is a portable, lightweight service supervisor and init system created by D
 
 https://github.com/davmac314/dinit/blob/master/doc/linux/DINIT-AS-INIT.md
 
-#!/bin/sh
-# /opt/bootlocal.sh - Put other system startup commands here
-
-# Start the OpenSSH server daemon
-/usr/local/etc/init.d/openssh start &
-
-# Set a static IP address on eth0
-ifconfig eth0 192.168.1.50 netmask 255.255.255.0 up
-route add default gw 192.168.1.1
-
-
-#!/bin/sh
-# put other system startup commands here
-
-# 1. Load a kernel module
-/sbin/modprobe i2c-dev
-
-# 2. Mount an extra partition
-/bin/mount /dev/sda1 /mnt/sda1
-
-# 3. Start background services (like OpenSSH)
-/usr/local/etc/init.d/openssh start
-
-# 4. Run a custom user script in the background
-/home/tc/my_startup_script.sh &
-
 
 #!/bin/busybox ash
-
 
 Example /init extracted from router.
 
@@ -1113,43 +1079,7 @@ Don’t forget to put the interface up, or it probably won’t be very useful.
 $ sudo ip link set dev eth0 up
 You should now be able to use your virtual network interface for whatever you want.
 
-Bringing up the network inside linuxrc or /init is commonly done to mount a 
-root filesystem over NFS, fetch firmware updates, or start a recovery shell
-over SSH/Telnet. There are two primary ways to configure networking at this stage:
-
-1. Kernel-Level IP Autoconfiguration (ip=)
-
-If your network driver is compiled directly into the kernel (y) rather than as a
-loadable module (m), the kernel can configure the network before linuxrc or /init even starts:
-
-• DHCP Configuration. Pass ip=dhcp on the kernel command line (via U-Boot bootargs or GRUB).
-• Static IP Configuration. Pass ip=<client-ip>:<server-ip>:<gw-ip>:<netmask>:<hostname>:<device>:<autoconf> on the kernel command line (e.g., ip=192.168.1.50::192.168.1.1:255.255.255.0::eth0:off).
-
-2. User-Space Scripting in linuxrc / /init
-
-If your Ethernet or Wi-Fi driver is a loadable kernel module, or if you need custom logic,
-your linuxrc or /init shell script must handle network setup manually:
-• Mount Virtual Filesystems. Mount /proc and /sys first so user-space tools and udev/mdev can detect hardware interfaces.
-• Load Network Drivers. Use modprobe or insmod to load the required NIC or PHY kernel modules.
-• Assign IP Settings. Bring up the loopback (lo) and Ethernet (eth0) interfaces using BusyBox utilities (ip link set eth0 up, followed by udhcpc -i eth0 for DHCP or ip addr add for static IPs).
-
-
-sh
-#!/bin/sh
-
-# 1. Mount essential virtual filesystems
-mount -t proc none /proc
-mount -t sysfs none /sys
-mount -t devtmpfs none /dev
-
-# Create mount points if they don't exist in the cpio archive
-mkdir -p /dev/pts /newroot /tmp
-mount -t devpts none /dev/pts
-
-# Optional: Populate device nodes and load hardware modules via mdev
-echo /sbin/mdev > /proc/sys/kernel/hotplug
-mdev -s
-
+rcS:
 # 2. Load network kernel modules (uncomment and adjust if compiled as .ko modules)
 # modprobe stmmac
 # modprobe micrel
@@ -1179,216 +1109,16 @@ else
     ip route add default via 192.168.1.1
 fi
 
-# 5. Mount the final root filesystem over NFS
-NFS_ROOT="192.168.1.10:/srv/nfs/rootfs"
-echo "Mounting NFS root from $NFS_ROOT..."
 
-if ! mount -t nfs -o nolock,vers=3,tcp "$NFS_ROOT" /newroot; then
-    echo "ERROR: Failed to mount NFS root. Dropping to emergency shell."
-    exec /bin/sh
-fi
-
-# 6. Clean up virtual mounts before switching root
-umount /dev/pts
-umount /dev
-umount /sys
-umount /proc
-
-# 7. Hand off execution to the real root filesystem's init (PID 1)
-echo "Switching to new root..."
-exec switch_root /newroot /sbin/init
-
-
-sh
-#!/bin/sh
-
-# 1. Mount essential virtual filesystems
-mount -t proc none /proc
-mount -t sysfs none /sys
-mount -t devtmpfs none /dev
-
-# Optional: Mount tmpfs for runtime logs and temporary files
-mount -t tmpfs none /tmp
-mount -t tmpfs none /var/run
-
-# 2. Bring up the loopback interface
-ip link set lo up
-
-# 3. Configure Ethernet interface (e.g., eth0)
-# Option A: Static IP configuration
-ip addr add 192.168.1.50/24 dev eth0
-ip link set eth0 up
-ip route add default via 192.168.1.1
-
-# Option B: DHCP configuration using BusyBox udhcpc
-# ip link set eth0 up
-# udhcpc -i eth0 -s /usr/share/udhcpc/default.script -q -n
-
-# 4. Set hostname and DNS (if static)
-hostname embedded-device
-echo "nameserver 8.8.8.8" > /etc/resolv.conf
-
-# 5. Hand off PID 1 to the main init system (e.g., BusyBox init)
 # Using 'exec' is critical so the new init inherits PID 1
 exec /sbin/init
-
 
 BusyBox init is a lightweight, minimalist initialization daemon (PID 1)
 built directly into the BusyBox multi-call binary. It manages system startup,
 process lifecycles, and shutdown sequences for embedded Linux devices, containers,
 and minimal root filesystems.
 
-
-How BusyBox init Works
-
-When the Linux kernel finishes booting, it executes /sbin/init (or /linuxrc),
-which is symlinked to the busybox executable. Its boot sequence follows a strict order:
-
-• Configuration file. It reads /etc/inittab to determine what programs to run. 
- If /etc/inittab does not exist, BusyBox uses hardcoded default actions to mount
-filesystems and spawn a shell.
-• Runlevels ignored. Unlike traditional SysVinit, BusyBox init ignores runlevels completely to
-save space and reduce complexity.
-• Startup scripts. By default, it runs /etc/init.d/rcS during boot. As noted by users on
-Unix & Linux Stack Exchange, this script typically iterates through and executes other scripts
-in /etc/init.d/ in numerical order (such as S01*, S10*, S20*).
-• Signal handling. It listens for specific signals to manage system states, such as SIGHUP
-to reload /etc/inittab, and SIGUSR1, SIGUSR2, or SIGTERM to halt, power off, or reboot the system.
-
-/etc/inittab Syntax and Actions
-
-Entries in BusyBox's /etc/inittab use a four-field colon-separated format: <id>:<runlevels>:<action>:<process>.
-Because runlevels are ignored, the second field is usually left blank. The <id> field specifies the controlling TTY (terminal) for the process.
-Common <action> keywords include:
-• sysinit. Runs first during boot and blocks all other actions until it finishes. Usually points to /etc/init.d/rcS.
-• wait. Runs after sysinit completes and blocks until the specified process exits.
-• once. Runs asynchronously without blocking and is not restarted if it exits.
-• respawn. Runs continuously and automatically restarts the process whenever it terminates (commonly used for getty login prompts).
-• askfirst. Works like respawn, but displays "Please press Enter to activate this console" before launching the process to save memory on unused terminals.
-• ctrlaltdel. Executes when the SIGINT signal is received (typically triggered by pressing Ctrl+Alt+Del).
-• shutdown. Runs cleanup tasks right before the system halts or reboots.
-Example /etc/inittab:
-text
-::sysinit:/etc/init.d/rcS
-::askfirst:-/bin/sh
-tty1::respawn:/sbin/getty 38400 tty1
-::ctrlaltdel:/sbin/reboot
-::shutdown:/bin/umount -a -r
-Use code with caution.
-
-sudo apt update
-sudo apt install busybox
-
-Use code with caution.
-
-sh
-#!/bin/sh
-
-# Set PATH so BusyBox applets are found reliably
-export PATH=/bin:/sbin:/usr/bin:/usr/sbin
-
-# Rescue shell helper on critical boot failure
-rescue_shell() {
-    echo "ERROR: $1"
-    echo "Dropping to rescue shell. Type 'exit' to attempt boot continuation."
-    exec setsid cttyhack /bin/sh
-}
-
-# 1. Mount essential virtual filesystems
-mkdir -p /proc /sys /dev /run /mnt/root
-mount -t proc proc /proc || rescue_shell "Failed to mount /proc"
-mount -t sysfs sysfs /sys || rescue_shell "Failed to mount /sys"
-mount -t devtmpfs devtmpfs /dev || rescue_shell "Failed to mount /dev"
-
-# Suppress noisy kernel printk messages on console (optional)
-echo "3" > /proc/sys/kernel/printk
-
-# 2. Populate device nodes and load hotplug handler
-echo /sbin/mdev > /proc/sys/kernel/hotplug
-mdev -s
-
-# 3. Parse kernel command line parameters from /proc/cmdline
-ROOT=""
-ROOTFSTYPE=""
-ROOTFLAGS="ro"
-INIT="/sbin/init"
-ROOTDELAY=5
-
-for param in $(cat /proc/cmdline); do
-    case "$param" in
-        root=*)
-            ROOT="${param#root=}"
-            ;;
-        rootfstype=*)
-            ROOTFSTYPE="${param#rootfstype=}"
-            ;;
-        rootdelay=*)
-            ROOTDELAY="${param#rootdelay=}"
-            ;;
-        init=*)
-            INIT="${param#init=}"
-            ;;
-        rw)
-            ROOTFLAGS="rw"
-            ;;
-        ro)
-            ROOTFLAGS="ro"
-            ;;
-    esac
-done
-
-[ -z "$ROOT" ] && rescue_shell "No root= parameter specified on kernel command line"
-
-# 4. Wait for the root block device to appear (handles USB/SD/NVMe enumeration)
-echo "Waiting for root device ($ROOT)..."
-count=0
-while [ ! -b "$ROOT" ] && [ "$count" -lt "$ROOTDELAY" ]; do
-    sleep 1
-    mdev -s
-    count=$((count + 1))
-done
-
-# Support UUID= or LABEL= via BusyBox findfs if not a direct /dev/ path
-case "$ROOT" in
-    UUID=*|LABEL=*)
-        RESOLVED_ROOT=$(findfs "$ROOT" 2>/dev/null)
-        [ -z "$RESOLVED_ROOT" ] && rescue_shell "Could not resolve $ROOT"
-        ROOT="$RESOLVED_ROOT"
-        ;;
-esac
-
-[ ! -b "$ROOT" ] && rescue_shell "Root device $ROOT did not appear after ${ROOTDELAY}s"
-
-# 5. Mount the real root filesystem
-echo "Mounting $ROOT on /mnt/root ($ROOTFLAGS)..."
-if [ -n "$ROOTFSTYPE" ]; then
-    mount -t "$ROOTFSTYPE" -o "$ROOTFLAGS" "$ROOT" /mnt/root || rescue_shell "Failed to mount $ROOT"
-else
-    mount -o "$ROOTFLAGS" "$ROOT" /mnt/root || rescue_shell "Failed to mount $ROOT"
-fi
-
-# Verify target init binary exists before switching
-[ ! -x "/mnt/root${INIT}" ] && rescue_shell "Target init $INIT not found or not executable"
-
-# 6. Clean up virtual mounts and hand off PID 1 to the real root
-echo "Switching root to $ROOT..."
-echo "" > /proc/sys/kernel/hotplug
-umount /proc
-umount /sys
-umount /dev
-
-
-
-------
-
-Installing busybox in initrd
-
-
-install ~/busybox/examples/inittab /mnt/etc/inittab
 https://hackmd.io/@starnight/Busbox_as_the_init
-
 https://cylab.be/blog/320/build-a-kernel-initramfs-and-busybox-to-create-your-own-micro-linux
-
 link linuxrc-->busybox
-
 cp -a busybox-*/_install/* initramfs/

@@ -34,7 +34,7 @@ for script in /etc/init.d/S*; do
         "$script" start
     fi
 
-# network
+# 8. network
 mount -a
 ip link set eth0 up
 udhcpc
