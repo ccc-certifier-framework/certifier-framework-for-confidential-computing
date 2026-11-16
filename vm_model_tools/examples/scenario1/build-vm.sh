@@ -55,6 +55,20 @@ ls -l .
 # Compile test program
 g++ -o startup_program.exe startup_program.cc
 
+# install busybox
+export BUSYBOX_DIR=/usr/bin
+cp $BUSYBOX_DIR $ORIG_FS_DIR/usr/bin
+install ~/busybox/examples/inittab $ORIG_FS_DIR/etc/inittab
+
+# Init
+mkdir etc/init.d
+cp $EXAMPLE_DIR/rcS $ORIG_FS_DIR/etc/init.d
+chmod +x $ORIG_FS_DIR/etc/init.d/rcS
+cp $EXAMPLE_DIR/inittab $ORIG_FS_DIR/etc
+# Populate init.d
+# cron libvirtd udhcpc console?
+
+
 # Copy Programs and libraries
 cp $CERTIFIER_ROOT/vm_model_tools/src/cf_key_server.exe $ORIG_FS_DIR/usr/bin
 cp $CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe $ORIG_FS_DIR/usr/bin

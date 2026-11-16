@@ -1,0 +1,43 @@
+#!/bin/sh
+
+# 1. Mount essential virtual filesystems
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mount -t devtmpfs devtmpfs /dev
+
+# 2. Set up /dev/pts for pseudo-terminals (required for SSH/telnet) and /dev/shm
+mkdir -p /dev/pts /dev/shm
+mount -t devpts devpts /dev/pts
+mount -t tmpfs tmpfs /dev/shm
+
+# 3. Populate device nodes and enable hotplugging using BusyBox mdev
+echo /sbin/mdev > /proc/sys/kernel/hotplug
+mdev -s
+
+# 4. Remount the root filesystem as read-write and mount /etc/fstab entries
+mount -o remount,rw /
+mount -a
+
+# 5. Set the system hostname
+if [ -f /etc/hostname ]; then
+    hostname -F /etc/hostname
+else
+    hostname busybox-linux
+fi
+
+# 6. Bring up the loopback network interface
+ifconfig lo 127.0.0.1 up
+
+# 7. Start all modular init scripts in /etc/init.d/ (e.g., S10udev, S40network, S50dropbear)
+for script in /etc/init.d/S*; do
+    if [ -x "$script" ]; then
+        "$script" start
+    fi
+
+# network
+mount -a
+ip link set eth0 up
+udhcpc
+ntpd -n -q -p time.stdtime.gov.tw
+done
+

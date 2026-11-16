@@ -1385,7 +1385,6 @@ Installing busybox in initrd
 
 
 install ~/busybox/examples/inittab /mnt/etc/inittab
-
 https://hackmd.io/@starnight/Busbox_as_the_init
 
 https://cylab.be/blog/320/build-a-kernel-initramfs-and-busybox-to-create-your-own-micro-linux
@@ -1393,3 +1392,7 @@ https://cylab.be/blog/320/build-a-kernel-initramfs-and-busybox-to-create-your-ow
 link linuxrc-->busybox
 
 cp -a busybox-*/_install/* initramfs/
+cp -a $BUSYBOX_BUILD/_install/* .
+
+apt-get install busybox-static
+https://github.com/mirror/busybox
