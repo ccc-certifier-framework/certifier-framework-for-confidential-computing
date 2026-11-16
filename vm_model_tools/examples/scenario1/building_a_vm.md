@@ -1392,7 +1392,3 @@ https://cylab.be/blog/320/build-a-kernel-initramfs-and-busybox-to-create-your-ow
 link linuxrc-->busybox
 
 cp -a busybox-*/_install/* initramfs/
-cp -a $BUSYBOX_BUILD/_install/* .
-
-apt-get install busybox-static
-https://github.com/mirror/busybox
