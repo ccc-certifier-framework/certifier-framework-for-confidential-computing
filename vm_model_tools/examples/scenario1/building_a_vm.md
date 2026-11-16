@@ -1401,3 +1401,106 @@ Edit /etc/inittab. Add your script at the very bottom of the file using the ::on
 ::respawn:/sbin/getty -L ttyS0 115200 vt100
 ::once:/path/to/your_script.sh
 
+• Using ifup (Standard /etc/network/interfaces). Run ifup -a to bring up all interfaces configured in /etc/network/interfaces.
+• Using DHCP (udhcpc). Run ip link set eth0 up followed by udhcpc -i eth0 to bring up the interface and request a dynamic IP address.
+• Using Static IP (ip). As users on Server Fault note, BusyBox includes the ip applet for manual configuration. Run:sh
+ip link set eth0 up
+ip addr add 192.168.1.100/24 dev eth0
+ip route add default via 192.168.1.1
+
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet dhcp
+
+
+1. auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet dhcp
+Use code with caution.
+
+2. Create a Network Init Script. Create /etc/init.d/S40network to bring up the interfaces during boot:sh
+#!/bin/sh
+case "$1" in
+  start)
+    echo "Starting network..."
+    /sbin/ifup -a
+    ;;
+  stop)
+    echo "Stopping network..."
+    /sbin/ifdown -a
+    ;;
+  restart)
+    "$0" stop
+    "$0" start
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart}"
+    exit 1
+esac
+
+If your BusyBox distribution uses runit for service supervision (such as KISS Linux), manage network daemons like dhcpcd using sv:
+• Enable at boot. Link the service directory by running ln -s /etc/sv/dhcpcd /var/service.
+• Start immediately. Bring the service up by running sv up dhcpcd.
+• Check status. Verify it is running with sv status dhcpcd.
+
+
+For buildroot all your scripts must be placed in $path_to_buildroot/output/target/etc/init.d before build image.
+n my case this directory contains rcS and few scripts named S[0-99]script_name. So you can create your own start\stop script.
+
+rcS:
+
+#!/bin/sh
+
+# Start all init scripts in /etc/init.d
+# executing them in numerical order.
+#
+for i in /etc/init.d/S??* ;do
+
+     # Ignore dangling symlinks (if any).
+     [ ! -f "$i" ] && continue
+
+     case "$i" in
+    *.sh)
+        # Source shell script for speed.
+        (
+        trap - INT QUIT TSTP
+        set start
+        . $i
+        )
+        ;;
+    *)
+        # No sh extension, so fork subprocess.
+        $i start
+        ;;
+    esac
+done
+
+#!/bin/sh
+#
+# Start the network....
+#
+
+case "$1" in
+  start)
+    echo "Starting network..."
+    /sbin/ifup -a
+    ;;
+  stop)
+    echo -n "Stopping network..."
+    /sbin/ifdown -a
+    ;;
+  restart|reload)
+    "$0" stop
+    "$0" start
+    ;;
+  *)
+    echo $"Usage: $0 {start|stop|restart}"
+    exit 1
+esac
+
+exit $?
+
