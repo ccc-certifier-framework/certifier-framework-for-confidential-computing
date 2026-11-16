@@ -1393,3 +1393,6 @@ https://cylab.be/blog/320/build-a-kernel-initramfs-and-busybox-to-create-your-ow
 link linuxrc-->busybox
 
 cp -a busybox-*/_install/* initramfs/
+
+To run a script after services start in a BusyBox init environment, place an executable script prefixed with S99 inside /etc/init.d/ (or /etc/rc.d/) or add a ::once: entry at the bottom of /etc/inittab
+
