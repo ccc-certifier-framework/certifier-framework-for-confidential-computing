@@ -60,12 +60,12 @@ export BUSYBOX_DIR=/usr/bin
 cp $BUSYBOX_DIR/busybox $ORIG_FS_DIR/usr/bin
 install ~/busybox/examples/inittab $ORIG_FS_DIR/etc/inittab
 
-# When the Linux kernel finishes booting, it executes /sbin/init (or /linuxrc),
-# which is symlinked to the busybox executable.
-# It reads /etc/inittab to determine what programs to run.
-# If /etc/inittab does not exist, BusyBox uses hardcoded default actions to mount
-# filesystems and spawn a shell.
-# this script typically iterates through and executes other scripts
+# When the Linux kernel finishes booting, it executes /sbin/init (or /linuxrc)
+# which starts busybox init.  busybox init reads /etc/inittab to determine what
+# programs to run. 
+# If /etc/inittab does not exist, BusyBox uses hardcoded
+# default actions to mount filesystems and spawn a shell.
+# Otherwise, the script typically iterates through and executes other scripts
 # in /etc/init.d/ in numerical order (such as S01*, S10*, S20*).
 
 # Init
@@ -75,6 +75,7 @@ chmod +x $ORIG_FS_DIR/etc/init.d/rcS
 cp $EXAMPLE_DIR/inittab $ORIG_FS_DIR/etc
 
 # Populate init.d
+# Not sure what to put in init.s (besides rcS)
 # install udhcpc?  If so:
 # ip link set eth0 up
 # udhcpc -i eth0 -s /usr/share/udhcpc/default.script -q -n
@@ -87,19 +88,19 @@ cp $CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe $ORIG_FS_DIR/usr/bin
 cp $CERTIFIER_ROOT/vm_model_tools/src/cf_utilities.exe $ORIG_FS_DIR/usr/bin
 cp $CERTIFIER_ROOT/utilities/cpuid.exe usr/bin
 cp $EXAMPLE_DIR/startup_program.exe $ORIG_FS_DIR/bin
-cp linux-vdso.so.1 $ORIG_FS_DIR/usr/lib
-cp libprotobuf.so.32 $ORIG_FS_DIR/usr/lib
-cp libgflags.so.2.2 $ORIG_FS_DIR/usr/lib
-cp libcrypto.so.3 $ORIG_FS_DIR/usr/lib
-cp libssl.so.3 $ORIG_FS_DIR/usr/lib
-cp libuuid.so.1 $ORIG_FS_DIR/usr/lib
-cp libstdc++.so.6 $ORIG_FS_DIR/usr/lib
-cp libgcc_s.so.1 $ORIG_FS_DIR/usr/lib
-cp libc.so.6 $ORIG_FS_DIR/usr/lib
-cp libz.so.1 $ORIG_FS_DIR/usr/lib
+cp /usr/lib/x86_64-linux-gnu/linux-vdso.so.1 $ORIG_FS_DIR/usr/lib
+cp /usr/lib/x86_64-linux-gnu/libprotobuf.so.32 $ORIG_FS_DIR/usr/lib
+cp /usr/lib/x86_64-linux-gnu/libgflags.so.2.2 $ORIG_FS_DIR/usr/lib
+cp /usr/lib/x86_64-linux-gnu/libcrypto.so.3 $ORIG_FS_DIR/usr/lib
+cp /usr/lib/x86_64-linux-gnu/libssl.so.3 $ORIG_FS_DIR/usr/lib
+cp /usr/lib/x86_64-linux-gnu/libuuid.so.1 $ORIG_FS_DIR/usr/lib
+cp /usr/lib/x86_64-linux-gnu/libstdc++.so.6 $ORIG_FS_DIR/usr/lib
+cp /usr/lib/x86_64-linux-gnu/libgcc_s.so.1 $ORIG_FS_DIR/usr/lib
+cp /usr/lib/x86_64-linux-gnu/libc.so.6 $ORIG_FS_DIR/usr/lib
+cp /usr/lib/x86_64-linux-gnu/libz.so.1 $ORIG_FS_DIR/usr/lib
 cp /lib64/ld-linux-x86-64.so.2 $ORIG_FS_DIR/usr/lib
-cp libzstd.so.1 $ORIG_FS_DIR/usr/lib
-cp libm.so.6 $ORIG_FS_DIR/usr/lib
+cp /usr/lib/x86_64-linux-gnu/libzstd.so.1 $ORIG_FS_DIR/usr/lib
+cp /usr/lib/x86_64-linux-gnu/libm.so.6 $ORIG_FS_DIR/usr/lib
 
 # Policy cert and domain name
 cp $EXAMPLE_DIR/provisioning/$POLICY_CERT_FILE_NAME $ORIG_FS_DIR/etc/$POLICY_CERT_FILE_NAME
@@ -115,8 +116,6 @@ chmod +x $ORIG_FS_DIR/init
 chmod +x $ORIG_FS_DIR/scripts/start-script.sh
 
 # Remake it
-# find . -print0 | cpio --null -o -H newc | gzip -c > $EXAMPLE_DIR/new_initrd.img
-# find . | cpio -o -c -R root:root | gzip -9 > $EXAMPLE_DIR/new_initrd.img
 mkinitramfs -l 9 -o $EXAMPLE_DIR/new_initrd.img 
 
 echo "done"
