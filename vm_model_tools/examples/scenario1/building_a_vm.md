@@ -154,11 +154,12 @@ real device (the ramdisk) to the other (your real root). In the case of an initr
 the initramfs space (the tmpfs) is not a real device, so the kernel doesn't switch
 real devices. Thus, while the command pivot_root is used with an initrd, a different
 command has to be used for an initramfs. Busybox provides switch_root to accomplish
-this, while klibc offers new_root. This article will focus on busybox (and ignore klibc).
+this, while klibc offers new_root.
 
 As a result of all this, the initial "init" file for intrd is more complex than
 the previous "initramfs" script.  We actually use initrd and these instructions are
-specific to that.
+specific to that.  We actually use the init from busybox which replaces
+systemd in a "disl-based" boot.
 
 
 ## Hypervisor
@@ -863,7 +864,13 @@ Finally, start the VM:
 The vm scripts should have been configured to run the test in the vm.
 
 
+
+
+
+
 ---------------------------------------
+
+Below here to be deleted
 
 How do I initialize networks?  ssh?
 
@@ -873,35 +880,10 @@ into memory, unpacks it, and establishes itself by installing the file systems
 and memory management and other key systems. As the kernel's last (initialization)
 task, it executes the init program. This program reads a configuration file (/etc/inittab)
 which directs it to execute a startup script (found in /etc/rc.d on Red Hat distributions).
-This in turn executes more scripts, eventually including the network script (/etc/rc.d/init.d/network).
 
-Early during the boot process the netplan-generate binary is run as a systemd generator.
-The binary can be seen (symlinked) at /lib/systemd/system-generators/netplan.
-
-The netplan-generate binary uses the netplan configuration to create configuration for either
-systemd-networkd or NetworkManager. E.g. for systemd-networkd a file is created at
-/run/systemd/network/10-netplan-SOMETHING.network.
-
-Later in the boot process, systemd starts the service for systemd-networkd.service or
-NetworkManager.service. The service configures the network based on its configuration (which was just created by netplan).
-
-
-When the system boots and kernel executes /sbin/init for PID 1 it will actually execute
-/lib/systemd/systemd via symbolic link. See man 1 systemd for details.
-
-During early startup process of systemd, all generators will be executed which may automatically
-generate new config files before all config files are loaded. See man 7 systemd.generator for details about this process.
-
-The systemd (PID 1) will then look for default.target which is by default a symlink from /lib/systemd/system/default.target
-to graphical.target. (You're supposed to query this with systemctl get-default and set a new target with systemctl set-default.)
-
-Once the default target is known, systemd (PID 1) will then recursively look for dependencies for this target.
-
-
-
-
-Include /etc/ssh/ssh_config.d/*.conf
-
+When the system boots and kernel executes /sbin/init for PID 1 it will normally execute
+/lib/systemd/systemd via symbolic link. See man 1 systemd for details.  WE replace this with
+busybox.
 
 /etc/init.d/networking restart
 virsh net-dumpxml default
@@ -918,8 +900,6 @@ DNS2=8.8.4.4
 ONBOOT=yes
 service network restart
 
-/etc/network/interfaces gives:
-
 auto lo
 iface lo inet loopback
 
@@ -930,215 +910,12 @@ ip addr show virbr0
 sudo ifconfig eth0 up
 sudo /etc/dhclient
 
-runlevel > = 3
-
-
-network:
-  ethernets:
-    enp3s0:
-      dhcp4: true
-      dhcp6: true
-      match:
-        macaddress: 78:55:36:09:32:cb
-      set-name: enp3s0
-  version: 2
-  wifis: {}
-# Let NetworkManager manage all devices on this system
-network:
-  version: 2
-  renderer: NetworkManager
-
-
-1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
-    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
-    inet 127.0.0.1/8 scope host lo
-       valid_lft forever preferred_lft forever
-    inet6 ::1/128 scope host noprefixroute
-       valid_lft forever preferred_lft forever
-2: enp3s0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
-    link/ether 78:55:36:09:32:cb brd ff:ff:ff:ff:ff:ff
-    altname enx7855360932cb
-    inet 10.0.0.15/24 brd 10.0.0.255 scope global dynamic noprefixroute enp3s0
-       valid_lft 123148sec preferred_lft 123148sec
-    inet6 2601:645:c681:d02d::3040/128 scope global dynamic noprefixroute
-       valid_lft 137101sec preferred_lft 137101sec
-    inet6 2601:645:c681:d02d:7a55:36ff:fe09:32cb/64 scope global dynamic noprefixroute
-       valid_lft 48438sec preferred_lft 48438sec
-    inet6 fe80::7a55:36ff:fe09:32cb/64 scope link noprefixroute
-       valid_lft forever preferred_lft forever
-3: wls1: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default qlen 1000
-    link/ether a8:59:5f:53:d3:33 brd ff:ff:ff:ff:ff:ff
-    altname wlp2s0
-    altname wlxa8595f53d333
-4: virbr0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default qlen 1000
-    link/ether 52:54:00:86:32:4d brd ff:ff:ff:ff:ff:ff
-    inet 192.168.122.1/24 brd 192.168.122.255 scope global virbr0
-       valid_lft forever preferred_lft forever
-
-service network-manager restart
-
 Boot process with systemd
 
 Once the kernel loads systemd, systemd takes over and starts the other system services that are required to
 bring the system up and running. This includes services such as networking service, the login manager, etc.
 
-The boot process is parallelized in the order in which specific target units are executed. systemd uses
-the /etc/systemd/system/default.target file to determine the target that the Linux system should boot into.
-This file is a link to graphical.target which boots the graphical login manager. systemd activates all
-target units that are dependencies of default.target as well as recursively all dependencies of these
-dependencies. Once all the services are started, your system is ready to use and the login manager displays.
-You can now log in and start using the system.
-
-wants:
-
-accounts-daemon.service@         --> /usr/lib/systemd/system/accounts-daemon.service
-power-profiles-daemon.service@   --> /usr/lib/systemd/system/power-profiles-daemon.service
-switcheroo-control.service@      --> /usr/lib/systemd/system/switcheroo-control.service
-udisks2.service@         --> /usr/lib/systemd/system/udisks2.service
-
-systemd is a system and service manager for Linux operating systems. When run as first process on boot (as PID 1),
-it acts as init system that brings up and maintains userspace services. Separate instances are started for
-logged-in users to start their services.
-
-systemd is usually not invoked directly by the user, but is installed as the /sbin/init symlink and started during
-early boot. The user manager instances are started automatically through the user@.service(5) service.
-When run as a system instance, systemd interprets the configuration file system.conf and the files in
-system.conf.d directories; when run as a user instance, systemd interprets the configuration file user.conf
-and the files in user.conf.d directories. See systemd-system.conf(5) for more information.
-systemd contains native implementations of various tasks that need to be executed as part of the boot process.
-For example, it sets the hostname or configures the loopback network device. It also sets up and mounts
-various API file systems, such as /sys/, /proc/, and /dev/.  systemd will also reset the system clock during
-early boot if it appears to be set incorrectly. See "System clock epoch" section below.
-Note that some but not all interfaces provided by systemd are covered by the Interface Portability and Stability Promise[1].
-
-Systems which invoke systemd in a container or initrd environment should implement the Container Interface[2]
-or initrd Interface[3] specifications, respectively.
-
-Using systemd inside an initrd
-
-Provide /etc/initrd-release in the initrd image. The idea is that it follows the same format as the usual
-/etc/os-release but describes the initial RAM disk implementation rather than the OS. systemd uses the
-existence of this file as a flag whether to run in initial RAM disk mode, or not.
-When run in initrd mode, systemd and its components will read a couple of additional command line arguments,
-which are generally prefixed with rd.  To transition into the main system image invoke "systemctl switch-root".
-The switch-root operation will result in a killing spree of all running processes. Some processes might
-need to be excluded from that, see the guide on systemd and Storage Daemons for the Root File System.
-
-When systemd runs inside an initial RAM disk (initrd or initramfs), it acts as a temporary system manager
-before handing over control to the real root file system.
-
-How the Boot Flow Works
-
-1. Loading into Memory: The bootloader loads the Linux kernel and the initrd/initramfs archive into RAM.
-2. Kernel Extraction: The kernel mounts or unpacks the archive into a temporary in-memory file system
-(traditionally a block-based ramdisk or modern tmpfs-backed initramfs).
-3. Initrd Detection: systemd checks for the existence of /etc/initrd-release inside the initrd environment
-to determine that it is operating in initrd mode rather than the main OS.
-4. Early Userspace Execution: systemd runs as PID 1 inside the initrd, parsing command-line parameters
-(typically prefixed with rd.) to load hardware drivers, unlock encrypted volumes, or configure early networking 
-
-1. Create a initramfs with static busybox and nothing else.
-This initramfs will have few necessary directories: like proc, sys, tmp, bin, usr, etc
-
-2. Write a "/init" script, whose main job will be:
-   a. mount the procfs,tmpfs and sysfs.
-   b. Call busybox's udev i.e. mdev
-   c. Install the busybox command onto virtual system by executing busybox install -s
-   d. Calling /bin/sh
-
-3. Source the initramfs directory while compiling the kernel. You can do so by flag: CONFIG_INITRAMFS_SOURCE
-
-4. Compile your kernel.
-
-5. Boot off this kernel and you will get the shell prompt with minimal things.
-
-#!/bin/sh
-# Mount essential virtual filesystems
-mount -t proc proc /proc
-mount -t sysfs sysfs /sys
-mount -t devtmpfs devtmpfs /dev
-
-# Clear screen and spawn a shell or init
-echo "Successfully booted with initramfs as permanent root!"
-exec /bin/sh
-
-Step 1: Ensure binaries and libraries are present in your initrd treeMake sure your initrd directory structure includes:/bin/busybox (or standalone ip, udhcpc, ifconfig)Required kernel modules under /lib/modules/$(uname -r)/kernel/drivers/net/ (e.g., e1000, virtio_net)Shared libraries if binaries are not statically linked (libc, libm, etc.)Step 2: Write initialization logic inside your init scriptInside your initrd's root /init script, bring up the loopback, load your NIC driver, assign an IP, and configure DNS before dropping to a shell or executing your payload:Bash#!/bin/sh
-mount -t proc proc /proc
-mount -t sysfs sysfs /sys
-mount -t devtmpfs devtmpfs /dev
-
-# 1. Bring up loopback
-ip link set lo up
-
-# 2. Load network driver (if built as module, e.g., virtio_net)
-modprobe virtio_net
-
-# 3. Bring up the physical interface
-ip link set eth0 up
-
-# 4. Configure IP (Choose A or B)
-# Option A: Static IP
-ip addr add 192.168.1.100/24 dev eth0
-ip route add default via 192.168.1.1
-
-# Option B: DHCP (using BusyBox udhcpc)
-# udhcpc -i eth0 -s /usr/share/udhcpc/default.script
-
-# 5. Add nameserver for resolution
-echo "nameserver 8.8.8.8" > /etc/resolv.conf
-
-echo "Networking is up inside initrd!"
-exec /bin/sh
-
-
-When using modern systemd-based initrds (such as systemd-initrd in Dracut or Debian initramfs-tools),
-the initrd itself operates in a temporary environment centered around initrd.target. It doesn't use
-traditional runlevels, but it hands off control to the real root filesystem's target (the equivalent of a runlevel) during the switch-root phase.   
-
-To control or change what target/runlevel the system boots into from the initrd handover stage, use the following methods:
-
-Method 1: Pass the Target via Kernel Command Line (Most Common)
-You can force the main system manager to boot into a specific target right as the initrd
-performs switch-root. Append the systemd.unit= parameter to your bootloader (GRUB) configuration:
-
-Locate the line starting with linux or linuxefi.
-
-Append systemd.unit=<target-name>.target to the end of the line:
-
-For multi-user text mode (equivalent to runlevel 3):
-
-Plaintext
-systemd.unit=multi-user.target
-For graphical mode (equivalent to runlevel 5):
-
-Plaintext
-systemd.unit=graphical.target
-For emergency/rescue mode (equivalent to runlevel 1):
-
-Plaintext
-systemd.unit=rescue.target
-Press Ctrl+X or F10 to boot.
-
-Method 2: Customizing the Initrd/Root Switch Logic (Advanced)
-If you are writing or modifying custom initrd scripts (like a custom dracut module or hook) and need to alter the target that systemd-initrd hands off to, you can pass the target argument directly when executing the switch-root command:
-
-Bash
-exec switch_root /sysroot /sbin/init --unit=multi-user.target
-Alternatively, you can drop a symlink or configuration override inside the temporary initrd environment before the switch occurs, modifying what /etc/systemd/system/default.target points to on the mounted root file system (/sysroot/etc/systemd/system/default.target).
-
-# Example replacement at the end of the init script:
-exec /bin/sh
-
-#!/bin/sh
-export PATH=/bin:/sbin:/usr/bin:/usr/sbin
-mount -t proc none /proc
-mount -t sysfs none /sys
-mount -t devtmpfs none /dev
-
-# Do your custom tasks here...
-
 # Keep PID 1 alive
-
 
 run_init does a lot of work:
   It jumps into the new root file system
@@ -1149,12 +926,6 @@ run_init does a lot of work:
   and runs init in the new root file system
 
 new minimalist init systems like Nitro, rising systemd alternatives such as Dinit,
-
-In most of the current day linux distribution, the INIT function then calls the systemd daemon.
-The systemd is responsible for bringing the linux host to usable state.
-systemd is responsible for mounting the file systems, starting and managing system services.
-systemd is the universal standard these days, but not too long ago another initialization
-process called system V (five) init was used. It is also called **Sys5
 
 Dinit is a portable, lightweight service supervisor and init system created by Davin McCall. It is designed as a clean, modular alternative to heavier systems like systemd or traditional alternatives like runit and sysvinit
 
@@ -1171,7 +942,454 @@ ifconfig eth0 192.168.1.50 netmask 255.255.255.0 up
 route add default gw 192.168.1.1
 
 
-https://wiki.tinycorelinux.net
-http://tinycorelinux.net/corebook.pdf
+#!/bin/sh
+# put other system startup commands here
+
+# 1. Load a kernel module
+/sbin/modprobe i2c-dev
+
+# 2. Mount an extra partition
+/bin/mount /dev/sda1 /mnt/sda1
+
+# 3. Start background services (like OpenSSH)
+/usr/local/etc/init.d/openssh start
+
+# 4. Run a custom user script in the background
+/home/tc/my_startup_script.sh &
 
 
+#!/bin/busybox ash
+
+
+Example /init extracted from router.
+
+
+#!/bin/sh
+#
+
+# crucial mountpoints
+mount -t proc none /proc
+mount -t sysfs none /sys
+mount -n tmpfs /var -t tmpfs -o size=17825792
+mount -t tmpfs dev /dev
+
+mknod /dev/console c 5 1
+mknod /dev/ttyS0 c 4 64
+mknod /dev/ttyS1 c 4 65
+
+# setup console, consider using ptmx?
+CIN=/dev/console
+COUT=/dev/console
+exec <$CIN &>$COUT
+
+mknod /dev/null c 1 3
+mknod /dev/gpio c 127 0
+
+mknod /dev/zero c 1 5
+mknod /dev/tty c 5 0
+mknod /dev/tty0 c 4 0
+mknod /dev/tty1 c 4 1
+mknod /dev/random c 1 8
+mknod /dev/urandom c 1 9
+mknod /dev/ptmx c 5 2
+mknod /dev/mem c 1 1
+
+mknod /dev/watchdog c 10 130
+
+mknod /dev/mtdblock0 b 31 0
+mknod /dev/mtdblock1 b 31 1
+mknod /dev/mtdblock2 b 31 2
+mknod /dev/mtdblock3 b 31 3
+mknod /dev/mtdblock4 b 31 4
+mknod /dev/mtdblock5 b 31 5
+mknod /dev/mtdblock6 b 31 6
+mknod /dev/mtdblock7 b 31 7
+
+mknod /dev/mtd0 c 90 0
+mknod /dev/mtd1 c 90 2
+mknod /dev/mtd2 c 90 4
+mknod /dev/mtd3 c 90 6
+mknod /dev/mtd4 c 90 8
+mknod /dev/mtd5 c 90 10
+mknod /dev/mtd6 c 90 12
+mknod /dev/mtd7 c 90 14
+
+mknod /dev/ttyUSB0 c 188 0
+mknod /dev/ttyUSB1 c 188 1
+mknod /dev/ttyUSB2 c 188 2
+mknod /dev/ttyUSB3 c 188 3
+mknod /dev/ttyUSB4 c 188 4
+mknod /dev/ttyUSB5 c 188 5
+mknod /dev/ttyUSB6 c 188 6
+
+mknod /dev/ppp  c 108 0
+
+mknod /dev/i2c-0 c 89 0
+mknod /dev/i2c-1 c 89 1
+mknod /dev/i2c-2 c 89 2
+mknod /dev/i2c-3 c 89 3
+
+#
+# Create the ubnt-poll-host char dev entries
+# The major number is 189
+#
+# NOTE: wifiN's minor number = N
+#
+mknod /dev/uph_wifi0 c 189 0
+
+
+# making sure that critical files are in place
+mkdir -p /etc/rc.d /etc/init.d
+# forced update
+for f in inittab rc.d/rc.sysinit rc.d/rc rc.d/rc.stop ppp; do
+        cp -f -r /usr/etc/$f /etc/$f
+
+
+# System configuration
+mkdir -p /etc/sysinit/
+/sbin/cfgmtd -r -p /etc/ -f $CFG_RUNNING
+if [ $? -ne 0 ]; then
+    /sbin/cfgmtd -r -p /etc/ -t 2 -f $CFG_RUNNING
+    if [ $? -ne 0 ]; then
+        cp $CFG_DEFAULT $CFG_RUNNING
+    fi
+fi
+sort $CFG_RUNNING | tr -d "\r" > $CFG_SYSTEM
+cp $CFG_SYSTEM $CFG_RUNNING
+
+# But for DFS testing, it's useful to be able to overide this
+if [ -f /etc/persistent/enable_printk ]; then
+    echo 9 > /proc/sys/kernel/printk
+    dmesg -c
+else
+    # Do not clutter serial port, normally
+    echo 1 > /proc/sys/kernel/printk
+fi;
+
+# Set device date to firmware build date
+BDATE=201509091722
+if [ ! -z $BDATE ]; then
+    date -s $BDATE >/dev/null 2>&1
+fi
+
+# Run configuration parser
+if [ -e /sbin/ubntconf ]; then
+    /sbin/ubntconf
+    echo "ubntconf returned $?" >> /tmp/ubntconf.log
+fi
+
+echo "...running /sbin/init"
+exec /sbin/init
+
+echo "INTERNAL ERROR!!! Cannot run /sbin/init."
+
+
+The methods for creating a virtual network interface have changed a bit through
+the years. There is more than one way to do this, but we will be using the “dummy”
+kernel module to set up our virtual interface in these steps.
+
+Start off by enabling the dummy kernel module with the following command.
+
+$ sudo modprobe dummy
+
+Now that the module has been loaded, we can create a new virtual interface.
+Feel free to name yours however you want, but we will name ours eth0 in this example.
+
+$ sudo ip link add eth0 type dummy
+You will be able to verify that the link was added by executing the following command afterwards:
+
+$ ip link show eth0
+We have our virtual interface, but it’t not much use to us without an IP address or MAC address.
+Let’s give the interface a MAC address with the following command. Feel free to substitute any
+address you want to use, as ours is just a randomly generated one.
+$ sudo ifconfig eth0 hw ether C8:D7:4A:4E:47:50
+Note that if the ifconfig command is not available, you’ll need to install package net-tools.
+
+We can now add an alias to the interface and configure an it with an IP address.
+
+$ sudo ip addr add 192.168.1.100/24 brd + dev eth0 label eth0:0
+Don’t forget to put the interface up, or it probably won’t be very useful.
+
+$ sudo ip link set dev eth0 up
+You should now be able to use your virtual network interface for whatever you want.
+
+Bringing up the network inside linuxrc or /init is commonly done to mount a 
+root filesystem over NFS, fetch firmware updates, or start a recovery shell
+over SSH/Telnet. There are two primary ways to configure networking at this stage:
+
+1. Kernel-Level IP Autoconfiguration (ip=)
+
+If your network driver is compiled directly into the kernel (y) rather than as a
+loadable module (m), the kernel can configure the network before linuxrc or /init even starts:
+
+• DHCP Configuration. Pass ip=dhcp on the kernel command line (via U-Boot bootargs or GRUB).
+• Static IP Configuration. Pass ip=<client-ip>:<server-ip>:<gw-ip>:<netmask>:<hostname>:<device>:<autoconf> on the kernel command line (e.g., ip=192.168.1.50::192.168.1.1:255.255.255.0::eth0:off).
+
+2. User-Space Scripting in linuxrc / /init
+
+If your Ethernet or Wi-Fi driver is a loadable kernel module, or if you need custom logic,
+your linuxrc or /init shell script must handle network setup manually:
+• Mount Virtual Filesystems. Mount /proc and /sys first so user-space tools and udev/mdev can detect hardware interfaces.
+• Load Network Drivers. Use modprobe or insmod to load the required NIC or PHY kernel modules.
+• Assign IP Settings. Bring up the loopback (lo) and Ethernet (eth0) interfaces using BusyBox utilities (ip link set eth0 up, followed by udhcpc -i eth0 for DHCP or ip addr add for static IPs).
+
+
+sh
+#!/bin/sh
+
+# 1. Mount essential virtual filesystems
+mount -t proc none /proc
+mount -t sysfs none /sys
+mount -t devtmpfs none /dev
+
+# Create mount points if they don't exist in the cpio archive
+mkdir -p /dev/pts /newroot /tmp
+mount -t devpts none /dev/pts
+
+# Optional: Populate device nodes and load hardware modules via mdev
+echo /sbin/mdev > /proc/sys/kernel/hotplug
+mdev -s
+
+# 2. Load network kernel modules (uncomment and adjust if compiled as .ko modules)
+# modprobe stmmac
+# modprobe micrel
+
+# 3. Configure Loopback and Ethernet interfaces
+echo "Bringing up network..."
+ip link set lo up
+ip link set eth0 up
+
+# Wait up to 5 seconds for the Ethernet link carrier to come up
+COUNT=0
+while [ $COUNT -lt 5 ]; do
+    if grep -q "1" /sys/class/net/eth0/carrier 2>/dev/null; then
+        echo "eth0 link is up."
+        break
+    fi
+    sleep 1
+    COUNT=$((COUNT + 1))
+done
+
+# 4. Obtain IP via DHCP (or fall back to static IP)
+if udhcpc -i eth0 -n -q -t 5 -s /usr/share/udhcpc/default.script; then
+    echo "DHCP succeeded."
+else
+    echo "DHCP failed, falling back to static IP..."
+    ip addr add 192.168.1.50/24 dev eth0
+    ip route add default via 192.168.1.1
+fi
+
+# 5. Mount the final root filesystem over NFS
+NFS_ROOT="192.168.1.10:/srv/nfs/rootfs"
+echo "Mounting NFS root from $NFS_ROOT..."
+
+if ! mount -t nfs -o nolock,vers=3,tcp "$NFS_ROOT" /newroot; then
+    echo "ERROR: Failed to mount NFS root. Dropping to emergency shell."
+    exec /bin/sh
+fi
+
+# 6. Clean up virtual mounts before switching root
+umount /dev/pts
+umount /dev
+umount /sys
+umount /proc
+
+# 7. Hand off execution to the real root filesystem's init (PID 1)
+echo "Switching to new root..."
+exec switch_root /newroot /sbin/init
+
+
+sh
+#!/bin/sh
+
+# 1. Mount essential virtual filesystems
+mount -t proc none /proc
+mount -t sysfs none /sys
+mount -t devtmpfs none /dev
+
+# Optional: Mount tmpfs for runtime logs and temporary files
+mount -t tmpfs none /tmp
+mount -t tmpfs none /var/run
+
+# 2. Bring up the loopback interface
+ip link set lo up
+
+# 3. Configure Ethernet interface (e.g., eth0)
+# Option A: Static IP configuration
+ip addr add 192.168.1.50/24 dev eth0
+ip link set eth0 up
+ip route add default via 192.168.1.1
+
+# Option B: DHCP configuration using BusyBox udhcpc
+# ip link set eth0 up
+# udhcpc -i eth0 -s /usr/share/udhcpc/default.script -q -n
+
+# 4. Set hostname and DNS (if static)
+hostname embedded-device
+echo "nameserver 8.8.8.8" > /etc/resolv.conf
+
+# 5. Hand off PID 1 to the main init system (e.g., BusyBox init)
+# Using 'exec' is critical so the new init inherits PID 1
+exec /sbin/init
+
+
+BusyBox init is a lightweight, minimalist initialization daemon (PID 1)
+built directly into the BusyBox multi-call binary. It manages system startup,
+process lifecycles, and shutdown sequences for embedded Linux devices, containers,
+and minimal root filesystems.
+
+
+How BusyBox init Works
+
+When the Linux kernel finishes booting, it executes /sbin/init (or /linuxrc),
+which is symlinked to the busybox executable. Its boot sequence follows a strict order:
+
+• Configuration file. It reads /etc/inittab to determine what programs to run. 
+ If /etc/inittab does not exist, BusyBox uses hardcoded default actions to mount
+filesystems and spawn a shell.
+• Runlevels ignored. Unlike traditional SysVinit, BusyBox init ignores runlevels completely to
+save space and reduce complexity.
+• Startup scripts. By default, it runs /etc/init.d/rcS during boot. As noted by users on
+Unix & Linux Stack Exchange, this script typically iterates through and executes other scripts
+in /etc/init.d/ in numerical order (such as S01*, S10*, S20*).
+• Signal handling. It listens for specific signals to manage system states, such as SIGHUP
+to reload /etc/inittab, and SIGUSR1, SIGUSR2, or SIGTERM to halt, power off, or reboot the system.
+
+/etc/inittab Syntax and Actions
+
+Entries in BusyBox's /etc/inittab use a four-field colon-separated format: <id>:<runlevels>:<action>:<process>.
+Because runlevels are ignored, the second field is usually left blank. The <id> field specifies the controlling TTY (terminal) for the process.
+Common <action> keywords include:
+• sysinit. Runs first during boot and blocks all other actions until it finishes. Usually points to /etc/init.d/rcS.
+• wait. Runs after sysinit completes and blocks until the specified process exits.
+• once. Runs asynchronously without blocking and is not restarted if it exits.
+• respawn. Runs continuously and automatically restarts the process whenever it terminates (commonly used for getty login prompts).
+• askfirst. Works like respawn, but displays "Please press Enter to activate this console" before launching the process to save memory on unused terminals.
+• ctrlaltdel. Executes when the SIGINT signal is received (typically triggered by pressing Ctrl+Alt+Del).
+• shutdown. Runs cleanup tasks right before the system halts or reboots.
+Example /etc/inittab:
+text
+::sysinit:/etc/init.d/rcS
+::askfirst:-/bin/sh
+tty1::respawn:/sbin/getty 38400 tty1
+::ctrlaltdel:/sbin/reboot
+::shutdown:/bin/umount -a -r
+Use code with caution.
+
+sudo apt update
+sudo apt install busybox
+
+Use code with caution.
+
+sh
+#!/bin/sh
+
+# Set PATH so BusyBox applets are found reliably
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+
+# Rescue shell helper on critical boot failure
+rescue_shell() {
+    echo "ERROR: $1"
+    echo "Dropping to rescue shell. Type 'exit' to attempt boot continuation."
+    exec setsid cttyhack /bin/sh
+}
+
+# 1. Mount essential virtual filesystems
+mkdir -p /proc /sys /dev /run /mnt/root
+mount -t proc proc /proc || rescue_shell "Failed to mount /proc"
+mount -t sysfs sysfs /sys || rescue_shell "Failed to mount /sys"
+mount -t devtmpfs devtmpfs /dev || rescue_shell "Failed to mount /dev"
+
+# Suppress noisy kernel printk messages on console (optional)
+echo "3" > /proc/sys/kernel/printk
+
+# 2. Populate device nodes and load hotplug handler
+echo /sbin/mdev > /proc/sys/kernel/hotplug
+mdev -s
+
+# 3. Parse kernel command line parameters from /proc/cmdline
+ROOT=""
+ROOTFSTYPE=""
+ROOTFLAGS="ro"
+INIT="/sbin/init"
+ROOTDELAY=5
+
+for param in $(cat /proc/cmdline); do
+    case "$param" in
+        root=*)
+            ROOT="${param#root=}"
+            ;;
+        rootfstype=*)
+            ROOTFSTYPE="${param#rootfstype=}"
+            ;;
+        rootdelay=*)
+            ROOTDELAY="${param#rootdelay=}"
+            ;;
+        init=*)
+            INIT="${param#init=}"
+            ;;
+        rw)
+            ROOTFLAGS="rw"
+            ;;
+        ro)
+            ROOTFLAGS="ro"
+            ;;
+    esac
+done
+
+[ -z "$ROOT" ] && rescue_shell "No root= parameter specified on kernel command line"
+
+# 4. Wait for the root block device to appear (handles USB/SD/NVMe enumeration)
+echo "Waiting for root device ($ROOT)..."
+count=0
+while [ ! -b "$ROOT" ] && [ "$count" -lt "$ROOTDELAY" ]; do
+    sleep 1
+    mdev -s
+    count=$((count + 1))
+done
+
+# Support UUID= or LABEL= via BusyBox findfs if not a direct /dev/ path
+case "$ROOT" in
+    UUID=*|LABEL=*)
+        RESOLVED_ROOT=$(findfs "$ROOT" 2>/dev/null)
+        [ -z "$RESOLVED_ROOT" ] && rescue_shell "Could not resolve $ROOT"
+        ROOT="$RESOLVED_ROOT"
+        ;;
+esac
+
+[ ! -b "$ROOT" ] && rescue_shell "Root device $ROOT did not appear after ${ROOTDELAY}s"
+
+# 5. Mount the real root filesystem
+echo "Mounting $ROOT on /mnt/root ($ROOTFLAGS)..."
+if [ -n "$ROOTFSTYPE" ]; then
+    mount -t "$ROOTFSTYPE" -o "$ROOTFLAGS" "$ROOT" /mnt/root || rescue_shell "Failed to mount $ROOT"
+else
+    mount -o "$ROOTFLAGS" "$ROOT" /mnt/root || rescue_shell "Failed to mount $ROOT"
+fi
+
+# Verify target init binary exists before switching
+[ ! -x "/mnt/root${INIT}" ] && rescue_shell "Target init $INIT not found or not executable"
+
+# 6. Clean up virtual mounts and hand off PID 1 to the real root
+echo "Switching root to $ROOT..."
+echo "" > /proc/sys/kernel/hotplug
+umount /proc
+umount /sys
+umount /dev
+
+
+
+------
+
+Installing busybox in initrd
+
+
+install ~/busybox/examples/inittab /mnt/etc/inittab
+
+https://hackmd.io/@starnight/Busbox_as_the_init
+
+https://cylab.be/blog/320/build-a-kernel-initramfs-and-busybox-to-create-your-own-micro-linux
+
+link linuxrc-->busybox
+
+cp -a busybox-*/_install/* initramfs/
