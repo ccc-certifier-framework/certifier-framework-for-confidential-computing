@@ -605,7 +605,7 @@ commands you use and the argument to the flags should match your actual
 environment.
 
 
-#### Tests where dealpoyed machine is in a different VM
+#### Tests where deployed machine is in a different VM
 
 Make sure you've installed busybox
 ```script
