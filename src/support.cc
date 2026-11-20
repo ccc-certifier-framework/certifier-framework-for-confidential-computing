@@ -2058,10 +2058,16 @@ EC_KEY *certifier::utilities::generate_new_ecc_key(int num_bits) {
   return ecc_key;
 }
 
-// Todo: free k on error
 EC_KEY *certifier::utilities::key_to_ECC(const key_message &k) {
 
   EC_KEY *ecc_key = nullptr;
+  BIGNUM *priv_mult = nullptr;
+  BIGNUM *p_pt_x = nullptr;
+  BIGNUM *p_pt_y = nullptr;
+  EC_POINT *pt = nullptr;
+  BN_CTX *ctx = nullptr;
+  bool success = false;
+
   if (k.key_type() == Enc_method_ecc_384_private
       || k.key_type() == Enc_method_ecc_384_public) {
     ecc_key = EC_KEY_new_by_curve_name(NID_secp384r1);
@@ -2083,73 +2089,90 @@ EC_KEY *certifier::utilities::key_to_ECC(const key_message &k) {
   }
 
   // set private multiplier
-  const BIGNUM *priv_mult =
-      BN_bin2bn((byte *)(k.ecc_key().private_multiplier().data()),
-                (int)(k.ecc_key().private_multiplier().size()),
-                NULL);
+  priv_mult = BN_bin2bn((byte *)(k.ecc_key().private_multiplier().data()),
+                        (int)(k.ecc_key().private_multiplier().size()),
+                        NULL);
   if (priv_mult == nullptr) {
     printf("%s() error, line: %d, key_to_ECC: no private mult\n",
            __func__,
            __LINE__);
-    return nullptr;
+    goto done;
   }
   if (EC_KEY_set_private_key(ecc_key, priv_mult) != 1) {
     printf("%s() error, line: %d, key_to_ECC: not can't set\n",
            __func__,
            __LINE__);
-    return nullptr;
+    goto done;
   }
 
   // set public point
-  const EC_GROUP *group = EC_KEY_get0_group(ecc_key);
-  if (group == nullptr) {
-    printf("%s() error, line: %d, key_to_ECC: Can't get group (1)\n",
-           __func__,
-           __LINE__);
-    return nullptr;
-  }
-  const BIGNUM *p_pt_x =
-      BN_bin2bn((byte *)(k.ecc_key().public_point().x().data()),
-                (int)(k.ecc_key().public_point().x().size()),
-                NULL);
-  const BIGNUM *p_pt_y =
-      BN_bin2bn((byte *)(k.ecc_key().public_point().y().data()),
-                (int)(k.ecc_key().public_point().y().size()),
-                NULL);
-  if (p_pt_x == nullptr || p_pt_y == nullptr) {
-    printf("%s() error, line: %d, key_to_ECC: pts are null\n",
-           __func__,
-           __LINE__);
-    return nullptr;
-  }
+  {
+    const EC_GROUP *group = EC_KEY_get0_group(ecc_key);
+    if (group == nullptr) {
+      printf("%s() error, line: %d, key_to_ECC: Can't get group (1)\n",
+             __func__,
+             __LINE__);
+      goto done;
+    }
+    p_pt_x = BN_bin2bn((byte *)(k.ecc_key().public_point().x().data()),
+                       (int)(k.ecc_key().public_point().x().size()),
+                       NULL);
+    p_pt_y = BN_bin2bn((byte *)(k.ecc_key().public_point().y().data()),
+                       (int)(k.ecc_key().public_point().y().size()),
+                       NULL);
+    if (p_pt_x == nullptr || p_pt_y == nullptr) {
+      printf("%s() error, line: %d, key_to_ECC: pts are null\n",
+             __func__,
+             __LINE__);
+      goto done;
+    }
 
-  EC_POINT *pt = EC_POINT_new(group);
-  if (pt == nullptr) {
-    printf("%s() error, line: %d, key_to_ECC: no pt in group\n",
-           __func__,
-           __LINE__);
-    return nullptr;
+    pt = EC_POINT_new(group);
+    if (pt == nullptr) {
+      printf("%s() error, line: %d, key_to_ECC: no pt in group\n",
+             __func__,
+             __LINE__);
+      goto done;
+    }
+    ctx = BN_CTX_new();
+    if (ctx == nullptr) {
+      printf("%s() error, line: %d, BN_CTX_new failed\n", __func__, __LINE__);
+      goto done;
+    }
+    if (EC_POINT_set_affine_coordinates_GFp(group, pt, p_pt_x, p_pt_y, ctx)
+        != 1) {
+      printf("%s() error, line: %d, key_to_ECC: can't set affine\n",
+             __func__,
+             __LINE__);
+      goto done;
+    }
+    if (EC_KEY_set_public_key(ecc_key, pt) != 1) {
+      printf("%s() error, line: %d, key_to_ECC: can't set public\n",
+             __func__,
+             __LINE__);
+      goto done;
+    }
   }
-  BN_CTX *ctx = BN_CTX_new();
-  if (ctx == nullptr) {
-    printf("%s() error, line: %d, BN_CTX_new failed\n", __func__, __LINE__);
-    return nullptr;
-  }
-  if (EC_POINT_set_affine_coordinates_GFp(group, pt, p_pt_x, p_pt_y, ctx)
-      != 1) {
-    printf("%s() error, line: %d, key_to_ECC: can't set affine\n",
-           __func__,
-           __LINE__);
-    return nullptr;
-  }
-  if (EC_KEY_set_public_key(ecc_key, pt) != 1) {
-    printf("%s() error, line: %d, key_to_ECC: can't set public\n",
-           __func__,
-           __LINE__);
-    return nullptr;
-  }
-  BN_CTX_free(ctx);
+  success = true;
 
+done:
+  if (priv_mult != nullptr)
+    BN_free(priv_mult);
+  if (p_pt_x != nullptr)
+    BN_free(p_pt_x);
+  if (p_pt_y != nullptr)
+    BN_free(p_pt_y);
+  if (pt != nullptr)
+    EC_POINT_free(pt);
+  if (ctx != nullptr)
+    BN_CTX_free(ctx);
+
+  if (!success) {
+    if (ecc_key != nullptr) {
+      EC_KEY_free(ecc_key);
+      ecc_key = nullptr;
+    }
+  }
   return ecc_key;
 }
 
