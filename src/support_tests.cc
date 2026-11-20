@@ -574,7 +574,7 @@ bool test_public_keys(bool print_all) {
 #if 1
   // TODO: sometimes this faults
   if (!ecc_verify(Digest_method_sha_256,
-                  ecc_key,
+                  ecc_key2,
                   size_data,
                   data,
                   size_out,
