@@ -340,7 +340,9 @@ bool acl_principal_table::save_principal_table_to_list(principal_list *pl) {
     principal_message *pm = pl->add_principals();
     pm->CopyFrom(principals_[i]);
   }
-  // Todo: add managers
+  for (int j = 0; j < num_managers_; j++) {
+    pl->add_table_managers(managers_[j]);
+  }
   principal_table_mutex_.unlock();
   return true;
 }
