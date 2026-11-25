@@ -2,7 +2,7 @@
 Description=Startup script
 DefaultDependencies=no
 Before=initrd-root-fs.target
-After=systemd-udevd.service
+After=network.target
 
 [Service]
 Type=oneshot

@@ -659,8 +659,14 @@ cd  $EXAMPLE_DIR
 g++ -o startup_program.exe startup_program.cc
 ```
 
-Change script to start systemd instead of switching roots.
-Remove initrd-switch-root.target and all the snap targets.
+Changes to init
+
+  Change script to start systemd instead of switching roots.
+  Remove initrd-switch-root.target and all the snap targets.
+  Change default.target to multi-user.target in /etc/systemd/system/default.target.
+  Towards the bottom of the standard init initrd, before run_scripts /scripts/init-bottom:
+  /lib/systemd/systemd
+    This should never return.
 
 We need to modify the initial fs by adding binaries, libraries and script
 particular to the VM as described below. We also need to modify the
@@ -682,6 +688,7 @@ init and passwd files as described below:
   cp vm-init-service.service $ORIG_FS_DIR/etc/systemd/service
   rm $ORIG_FS_DIR/etc/initrd-release || true
   cp $EXAMPLE_DIR/os-release $ORIG_FS_DIR/etc
+  cp /usr/bin/systemctl $ORIG_FS_DIR/usr/bin
 
  # Copy binaries, including CF utilities and programs including
   # cf_utilities, cf_key_server, cf_key_client.  The programs you
@@ -925,14 +932,8 @@ The vm scripts should have been configured to run the test in the vm.
 
 ---------------------------------------
 
-Below here to be deleted
+Below here to be deleted (mostly for busybox init)
 
-
-When Linux boots as an operating system, it loads its image from the disk
-into memory, unpacks it, and establishes itself by installing the file systems
-and memory management and other key systems. As the kernel's last (initialization)
-task, it executes the init program. This program reads a configuration file (/etc/inittab)
-which directs it to execute a startup script (found in /etc/rc.d on Red Hat distributions).
 
 When the system boots and kernel executes /sbin/init for PID 1 it will normally execute
 /lib/systemd/systemd via symbolic link. See man 1 systemd for details.  WE replace this with
@@ -963,27 +964,11 @@ ip addr show virbr0
 sudo ifconfig eth0 up
 sudo /etc/dhclient
 
-# Keep PID 1 alive
-
-run_init does a lot of work:
-  It jumps into the new root file system
-  Checks that this is the new root file system
-  Checks if it on initramfs
-  Cleans all directory (why waste the RAM?)
-  Mounts the new root file system
-  and runs init in the new root file system
-
-new minimalist init systems like Nitro, rising systemd alternatives such as Dinit,
-
 Dinit is a portable, lightweight service supervisor and init system created by Davin McCall. It is designed as a clean, modular alternative to heavier systems like systemd or traditional alternatives like runit and sysvinit
 
 https://github.com/davmac314/dinit/blob/master/doc/linux/DINIT-AS-INIT.md
 
-
 #!/bin/busybox ash
-
-Example /init extracted from router.
-
 
 #!/bin/sh
 #
@@ -1049,55 +1034,6 @@ mknod /dev/i2c-0 c 89 0
 mknod /dev/i2c-1 c 89 1
 mknod /dev/i2c-2 c 89 2
 mknod /dev/i2c-3 c 89 3
-
-#
-# Create the ubnt-poll-host char dev entries
-# The major number is 189
-#
-# NOTE: wifiN's minor number = N
-#
-mknod /dev/uph_wifi0 c 189 0
-
-
-# making sure that critical files are in place
-mkdir -p /etc/rc.d /etc/init.d
-# forced update
-for f in inittab rc.d/rc.sysinit rc.d/rc rc.d/rc.stop ppp; do
-        cp -f -r /usr/etc/$f /etc/$f
-
-
-# System configuration
-mkdir -p /etc/sysinit/
-/sbin/cfgmtd -r -p /etc/ -f $CFG_RUNNING
-if [ $? -ne 0 ]; then
-    /sbin/cfgmtd -r -p /etc/ -t 2 -f $CFG_RUNNING
-    if [ $? -ne 0 ]; then
-        cp $CFG_DEFAULT $CFG_RUNNING
-    fi
-fi
-sort $CFG_RUNNING | tr -d "\r" > $CFG_SYSTEM
-cp $CFG_SYSTEM $CFG_RUNNING
-
-# But for DFS testing, it's useful to be able to overide this
-if [ -f /etc/persistent/enable_printk ]; then
-    echo 9 > /proc/sys/kernel/printk
-    dmesg -c
-else
-    # Do not clutter serial port, normally
-    echo 1 > /proc/sys/kernel/printk
-fi;
-
-# Set device date to firmware build date
-BDATE=201509091722
-if [ ! -z $BDATE ]; then
-    date -s $BDATE >/dev/null 2>&1
-fi
-
-# Run configuration parser
-if [ -e /sbin/ubntconf ]; then
-    /sbin/ubntconf
-    echo "ubntconf returned $?" >> /tmp/ubntconf.log
-fi
 
 echo "...running /sbin/init"
 exec /sbin/init
