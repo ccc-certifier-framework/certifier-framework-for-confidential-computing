@@ -665,7 +665,7 @@ Changes to init
   Remove initrd-switch-root.target and all the snap targets.
   Change default.target to multi-user.target in /etc/systemd/system/default.target.
   Towards the bottom of the standard init initrd, before run_scripts /scripts/init-bottom:
-  /lib/systemd/systemd
+  exec /lib/systemd/systemd
     This should never return.
 
 We need to modify the initial fs by adding binaries, libraries and script
