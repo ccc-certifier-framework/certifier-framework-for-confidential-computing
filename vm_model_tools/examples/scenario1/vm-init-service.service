@@ -1,0 +1,15 @@
+[Unit]
+Description=Startup script
+DefaultDependencies=no
+Before=initrd-root-fs.target
+After=systemd-udevd.service
+
+[Service]
+Type=oneshot
+ExecStart=/scripts/start-script.sh
+RemainAfterExit=yes
+StandardOutput=journal+console
+
+[Install]
+WantedBy=multi-user.target
+

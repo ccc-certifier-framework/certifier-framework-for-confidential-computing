@@ -659,6 +659,9 @@ cd  $EXAMPLE_DIR
 g++ -o startup_program.exe startup_program.cc
 ```
 
+Change script to start systemd instead of switching roots.
+Remove initrd-switch-root.target and all the snap targets.
+
 We need to modify the initial fs by adding binaries, libraries and script
 particular to the VM as described below. We also need to modify the
 init and passwd files as described below:
@@ -676,8 +679,11 @@ init and passwd files as described below:
   cp -r /lib/systemd $ORIG_FS_DIR/lib
   cp -r /etc/systemd $ORIG_FS_DIR/etc
   cp /etc/os-release $ORIG_FS_DIR/etc
+  cp vm-init-service.service $ORIG_FS_DIR/etc/systemd/service
+  rm $ORIG_FS_DIR/etc/initrd-release || true
+  cp $EXAMPLE_DIR/os-release $ORIG_FS_DIR/etc
 
-  # Copy binaries, including CF utilities and programs including
+ # Copy binaries, including CF utilities and programs including
   # cf_utilities, cf_key_server, cf_key_client.  The programs you
   # load into initrd should either be the only ones that can run or
   # you must make sure using another mechanism that only trusted
