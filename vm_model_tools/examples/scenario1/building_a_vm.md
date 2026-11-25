@@ -672,6 +672,11 @@ init and passwd files as described below:
     export SNPTOOL_DIR=$(pwd)
   popd
 
+  # Copy the systemd which we use for PROC 1 init
+  cp -r /lib/systemd $ORIG_FS_DIR/lib
+  cp -r /etc/systemd $ORIG_FS_DIR/etc
+  cp /etc/os-release $ORIG_FS_DIR/etc
+
   # Copy binaries, including CF utilities and programs including
   # cf_utilities, cf_key_server, cf_key_client.  The programs you
   # load into initrd should either be the only ones that can run or
@@ -736,18 +741,14 @@ init and passwd files as described below:
   /etc/init.d/sshd restart
 
   # Change init:
-  #   Make a /writablefs directory for disk mount point in init
-  #   Change init and mount the writable disk under /writeablefs
-  #   Mount $ROOT_FS /writablefs/$ROOT_FS
-  #   Modify init to call start-script.sh
-  #   Modify init to NOT replace initramfs with system disk
-  #   Make a new user "relyingparty"
+  #   Modify systemd to call our initial script
+  #   Call systemd
+  #      exec /usr/lib/systemd/systemd
   cp $EXAMPLE_DIR/init.new $ORIG_FS_DIR/init
 
   # copy any scripts you need into $ORIG_FS_DIR/scripts
 
   # Make sure all your scripts are executable
-    chmod +x $ORIG_FS_DIR/init
     chmod +x $ORIG_FS_DIR/scripts/start-script.sh
 
   # Your startup-script will also have to obtain the ARK, ASK and
@@ -768,6 +769,54 @@ Now, rebuild the archive:
 ```script
   find . -print0 | cpio --null -o -H newc | gzip -c > ../new_initrd.img
 ```
+
+#### Notes
+
+Running entirely from RAM (No root filesystem)
+
+If you are building a custom embedded system, live environment, or appliance that
+runs completely out of initramfs/tmpfs and never switches root:
+    • Omit initrd-switch-root.target. In your initramfs image, set default.target
+      to point to multi-user.target (or a custom target) instead of initrd.target.
+    • Remove switch-root units. Do not include initrd-switch-root.target or
+      initrd-switch-root.service in the initramfs. Because systemd only triggers a
+      root switch if initrd-cleanup.service isolates to initrd-switch-root.target,
+      booting straight to multi-user.target inside the initramfs treats the initramfs
+      itself as the permanent root filesystem. (Note: Ensure /etc/initrd-release is
+      not present if you want systemd to behave like a standard host OS rather than an initrd).
+      default.target is in /etc/systemd/system/default.target.
+
+systemd.unit=, rd.systemd.unit=
+   Overrides the unit to activate on boot. Defaults to default.target. This may
+   be used to temporarily boot into a different boot unit, for example rescue.target
+   or emergency.service. See systemd.special(7) for details about these units.
+   The option prefixed with "rd." is honored only in the initrd, while the one
+   that is not prefixed only in the main system.
+
+Running a Custom Executable Inside a systemd initrd
+If your initrd already uses systemd systemd-boot and you want to execute a binary
+or script before the root filesystem mounts:
+
+    1. Create a unit file (e.g., /etc/systemd/system/my-initrd-task.service) and
+        include it in your initrd image:
+
+       ini
+       [Unit]
+       Description=Custom Initrd Executable
+       DefaultDependencies=no
+       Before=initrd-root-fs.target
+       After=systemd-udevd.service
+
+       [Service]
+       Type=oneshot
+       ExecStart=/usr/bin/my-script.sh
+       RemainAfterExit=yes
+       StandardOutput=journal+console
+
+       [Install]
+       WantedBy=initrd.target
+
+
 
 ### Measuring the VM
 
