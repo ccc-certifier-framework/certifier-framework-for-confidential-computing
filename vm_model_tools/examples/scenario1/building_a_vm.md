@@ -690,7 +690,9 @@ init and passwd files as described below:
   cp $EXAMPLE_DIR/os-release $ORIG_FS_DIR/etc
   cp /usr/bin/systemctl $ORIG_FS_DIR/usr/bin
 
- # Copy binaries, including CF utilities and programs including
+  # copy daemons and programs
+
+  # Copy binaries, including CF utilities and programs including
   # cf_utilities, cf_key_server, cf_key_client.  The programs you
   # load into initrd should either be the only ones that can run or
   # you must make sure using another mechanism that only trusted
@@ -1113,3 +1115,743 @@ https://hackmd.io/@starnight/Busbox_as_the_init
 https://cylab.be/blog/320/build-a-kernel-initramfs-and-busybox-to-create-your-own-micro-linux
 link linuxrc-->busybox
 cp -a busybox-*/_install/* initramfs/
+
+
+Notes on our VM
+
+I originally wanted to start with the working OS kernel on a development
+machine, and copy files from that OS into initrd, modify tt OS's unpacked
+initrd, along with other files and rebuild the initrd using the existing
+kernal and new initrd for the test.
+
+I've decided that this is too error prone having traced all the stuff
+systemd uses at init.  Instead, I will START with a small OS image,
+install the certifier, programs and data files and copy the resulting
+/bin, /usr, /etc, and /lib* from that image into the unpacked initrd for
+that OS, and then modify the init in initrd to do what I want including
+calling systemd and arranging for a startup script to run fter init.
+
+
+Before deciding that, I rand some experiments reflected in the data below.
+I'll remove this and fix both instructions.md and this file to reflect
+this.
+
+
+
+-------------------------------------
+
+
+Here is a list of running programs started on init.
+
+
+Running programs
+
+
+USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root           1  0.0  0.0  27668 18380 ?        Ss   Nov23   0:15 /sbin/init splash
+root          10  0.0  0.0      0     0 ?        I<   Nov23   0:00 [kworker/0:0H-kblockd]
+root          14  0.0  0.0      0     0 ?        S    Nov23   0:02 [ksoftirqd/0]
+root         139  0.0  0.0      0     0 ?        I<   Nov23   0:00 [kworker/R-quota_events_unbound]
+root         141  0.0  0.0      0     0 ?        S    Nov23   0:00 [irq/25-AMD-Vi]
+root         151  0.0  0.0      0     0 ?        I<   Nov23   0:00 [kworker/R-acpi_thermal_pm]
+root         152  0.0  0.0      0     0 ?        S    Nov23   0:02 [hwrng]
+root         156  0.0  0.0      0     0 ?        I<   Nov23   0:00 [kworker/R-mld]
+root         158  0.0  0.0      0     0 ?        I<   Nov23   0:00 [kworker/R-ipv6_addrconf]
+root         159  0.0  0.0      0     0 ?        I<   Nov23   0:00 [kworker/R-kstrp]
+root         177  0.0  0.0      0     0 ?        I<   Nov23   0:00 [kworker/R-charger_manager]
+root         376  0.0  0.1  59724 29928 ?        D<s  Nov23   0:03 /usr/lib/systemd/systemd-journald
+systemd+     414  0.0  0.0  16824  7512 ?        Ss   Nov23   1:00 /usr/lib/systemd/systemd-oomd
+systemd+     415  0.0  0.0  24028 16056 ?        Ss   Nov23   0:10 /usr/lib/systemd/systemd-resolved
+root         416  0.0  0.0  42220 15120 ?        Ss   Nov23   0:00 /usr/lib/systemd/systemd-udevd
+avahi       7279  0.0  0.0   7060  5408 ?        Ss   Nov23   0:20 avahi-daemon: running [Euclid.local]
+root        7280  0.0  0.0  13108  7472 ?        Ss   Nov23   0:00 /usr/libexec/bluetooth/bluetoothd
+root        7281  0.0  0.0   2888  2080 ?        Ss   Nov23   0:00 /bin/sh /usr/lib/systemd/scripts/chronyd-starter.sh -n -F 1
+root        7303  0.0  0.0 312136  8612 ?        Ssl  Nov23   0:02 /usr/libexec/accounts-daemon
+root        7306  0.0  0.0 310744  8044 ?        Ssl  Nov23   0:00 /usr/libexec/switcheroo-control
+root        7321  0.0  0.0  18852 10444 ?        Ss   Nov23   0:01 /usr/lib/systemd/systemd-logind
+root        7322  0.0  0.0  18056  8748 ?        Ss   Nov23   0:00 /usr/lib/systemd/systemd-machined
+root        7325  0.0  0.0 544724 16744 ?        Ssl  Nov23   0:02 /usr/libexec/udisks2/udisksd
+root        7327  0.0  0.0  42760 15992 ?        Ss   Nov23   0:00 /usr/sbin/virtlockd
+root        7332  0.0  0.0  42764 16064 ?        Ss   Nov23   0:00 /usr/sbin/virtlogd
+avahi       7360  0.0  0.0   6568  1708 ?        S    Nov23   0:00 avahi-daemon: chroot helper
+syslog      7386  0.0  0.0 220608  6720 ?        Ssl  Nov23   0:00 /usr/sbin/rsyslogd -n -iNONE
+root        7402  0.0  0.0 339432 22588 ?        Ssl  Nov23   2:03 /usr/sbin/NetworkManager --no-daemon
+root        7407  0.0  0.0  18908 12900 ?        Ss   Nov23   0:03 /usr/sbin/wpa_supplicant -u -s -O DIR=/run/wpa_supplicant GROUP=netdev
+_chrony     7426  0.0  0.0  20424  6544 ?        S    Nov23   0:00 /usr/sbin/chronyd -n -F 1
+_chrony     7450  0.0  0.0  12476  3748 ?        S    Nov23   0:00 /usr/sbin/chronyd -n -F 1
+root        7528  0.0  0.0 391612 14068 ?        Ssl  Nov23   0:00 /usr/sbin/ModemManager
+root        7530  0.0  0.0 311992  8452 ?        Ssl  Nov23   0:00 /usr/libexec/boltd
+root        7845  0.0  0.0   9660  3372 ?        Ss   Nov23   0:00 /usr/sbin/cron -f -P
+root        7846  0.0  0.1 1607256 41480 ?       Ssl  Nov23   0:00 /usr/sbin/libvirtd --timeout 120
+rtkit       8196  0.0  0.0  21872  3768 ?        SNsl Nov23   0:01 /usr/libexec/rtkit-daemon
+colord      8387  0.0  0.0 320148 16836 ?        Ssl  Nov23   0:00 /usr/libexec/colord
+root        8425  0.0  0.0 321944 12304 ?        Ssl  Nov23   0:00 /usr/libexec/upowerd
+root        9557  0.0  0.0 311748  7976 ?        Ssl  Nov23   0:00 /usr/libexec/power-profiles-daemon
+jlm         9846  0.0  0.0  25072 16404 ?        Ss   Nov23   0:04 /usr/lib/systemd/systemd --user
+jlm         9909  0.0  0.0  10736  7780 ?        Ss   Nov23   0:04 /usr/bin/dbus-daemon --session --address=systemd: --nofork --nopidfile --systemd-activation --syslog-only
+
+
+Here is a list of potentially minimalist files.
+
+Stuff in etc
+
+pushd /etc
+du -h ModemManager
+du -h cron.weekly
+du -h NetworkManager
+du -h cron.yearly
+du -h profile.d
+du -h crontab
+du -h sudo.conf
+du -h sudo_logsrvd.conf
+du -h lvm
+du -h sudoers
+du -h adduser.conf
+du -h machine-id
+du -h sudoers.d
+du -h dconf
+du -h hdparm.conf
+du -h magic
+du -h qemu-ifdown
+du -h debconf.conf
+du -h host.conf
+du -h magic.mime
+du -h qemu-ifup
+du -h debian_version
+du -h hostname
+du -h rc?.d
+du -h hosts
+du -h sysctl.d
+du -h apparmor
+du -h deluser.conf
+du -h hosts.deny
+du -h mke2fs.conf
+du -h apparmor.d
+du -h depmod.d
+du -h modprobe.d
+du -h systemd
+du -h apport
+du -h dhcp
+du -h ifplugd
+du -h dhcpcd.conf
+du -h modules-load.d
+du -h thermald
+du -h avahi
+du -h init.d
+du -h timezone
+du -h bash.bashrc
+du -h resolv.conf
+du -h tmpfiles.d
+du -h bash_completion.d
+du -h dpkg
+du -h insserv.conf.d
+du -h netplan
+du -h dracut.conf
+du -h ipp-usb
+du -h network
+du -h rsyslog.conf
+du -h ucf.conf
+du -h binfmt.d
+du -h e2scrub.conf
+du -h iscsi
+du -h networkd-dispatcher
+du -h rsyslog.d
+du -h udev
+du -h bluetooth
+du -h networks
+du -h rygel.conf
+du -h udisks2
+du -h brlapi.key
+du -h sane.d
+du -h brltty
+du -h environment.d
+du -h kdump
+du -h nftables.conf
+du -h brltty.conf
+du -h nsswitch.conf
+du -h screenrc
+du -h security
+du -h selinux
+du -h usb_modeswitch.conf
+du -h fstab
+du -h ld.so.conf
+du -h os-release
+du -h sensors.d
+du -h usb_modeswitch.d
+du -h fuse.conf
+du -h ld.so.conf.d
+du -h pam.conf
+du -h sensors3.conf
+du -h pam.d
+du -h services
+du -h chrony
+du -h gai.conf
+du -h gdb
+du -h libao.conf
+du -h passwd
+du -h colord
+du -h libblockdev
+du -h pcmcia
+du -h console-setup
+du -h libibverbs.d
+du -h skel
+du -h whoopsie
+du -h wpa_supplicant
+du -h libvirt
+du -h plymouth
+du -h ssh
+du -h xdg
+du -h cron.d
+du -h locale.conf
+du -h ssl
+du -h polkit-1
+du -h sssd
+du -h cron.hourly
+du -h localtime
+popd
+
+
+Stuff in /usr/lib
+
+pushd /usr/lib
+du -h NetworkManager
+du -h modules-load.d
+du -h rsyslog
+du -h environment.d
+du -h klibc
+du -h netplan
+du -h apparmor
+du -h klibc-vJ92VccDdUm9RkZ29z4hx5GyxAs.so
+du -h networkd-dispatcher
+du -h apt
+du -h file
+du -h libmpathcmd.so.0
+du -h finalrd
+du -h libmpathpersist.so.0
+du -h bfd-plugins
+du -h firewalld
+du -h libmpathutil.so.0
+du -h open-iscsi
+du -h binfmt.d
+du -h libmultipath.so.0
+du -h openssh
+du -h bridge-utils
+du -h libperf-jvmti.so
+du -h openvpn
+du -h ssl
+du -h brltty
+du -h libvirt
+du -h os-probes
+du -h sysctl.d
+du -h os-release
+du -h systemd
+du -h pam.d
+du -h sysusers.d
+du -h policykit-1
+du -h udev
+du -h polkit-1
+du -h lsb
+du -h pppd
+du -h dbus-1.0
+du -h debug
+du -h hdparm
+du -h mdevctl
+du -h depmod.d
+du -h init
+du -h memtest86+
+du -h qemu
+du -h dhcpcd
+du -h initramfs-tools
+du -h recovery-mode
+du -h x86_64-linux-gnu
+du -h dpkg
+du -h ipxe
+du -h modprobe.d
+du -h dracut
+du -h modules
+popd
+
+Stuff in /usr/libexec
+
+pushd /usr/libexec
+du -h accounts-daemon
+du -h bluetooth
+du -h boltd
+du -h chrony
+du -h colord
+du -h colord-sane
+du -h netplan
+du -h dconf-service
+du -h dhcpcd-hooks
+du -h dhcpcd-run-hooks
+du -h dpkg
+du -h plymouth
+du -h sudo
+du -h switcheroo-control
+du -h switcheroo-control-check-discrete-amdgpu
+du -h switcheroo-control-check-discrete-nouveau
+du -h switcheroo-control-check-discrete-xe
+du -h sysprofd
+du -h sysstat
+du -h ibus-dconf
+du -h ibus-engine-simple
+du -h ibus-engine-table
+du -h ibus-extension-gtk3
+du -h upowerd
+du -h ibus-memconf
+du -h ibus-portal
+du -h ibus-setup-table
+du -h ibus-ui-emojier
+du -h ibus-ui-gtk3
+du -h ibus-x11
+du -h libselinux
+popd
+
+
+Possible programs (/usr/bin, /usr/sbin)
+
+pushd /usr/bin
+du -h aa-easyprof
+du -h aa-enabled
+du -h aa-exec
+du -h aa-features-abi
+du -h aconnect
+du -h acpidbg
+du -h addpart
+du -h alsabat
+du -h alsaloop
+du -h alsamixer
+du -h alsatplg
+du -h alsaucm
+du -h apport-bug
+du -h apport-cli
+du -h apport-collect
+du -h apport-unpack
+du -h appres
+du -h appstreamcli
+du -h apropos
+du -h ar
+du -h arch
+du -h b2sum
+du -h base32
+du -h base64
+du -h basename
+du -h basenc
+du -h bash
+du -h bc
+du -h bits
+du -h blkzone
+du -h boltctl
+du -h bpftrace
+du -h bpftrace-aotrt
+du -h brltty
+du -h brltty-atb
+du -h brltty-clip
+du -h brltty-ctb
+du -h brltty-hid
+du -h brltty-ktb
+du -h brltty-lscmds
+du -h brltty-morse
+du -h brltty-trtxt
+du -h brltty-ttb
+du -h brltty-tune
+du -h broadwayd
+du -h busybox
+du -h bwrap
+du -h cat
+du -h catman
+du -h chcpu
+du -h chmem
+du -h chmod
+du -h choom
+du -h chown
+du -h chronyc
+du -h chroot
+du -h chrt
+du -h cksum
+du -h cmp
+du -h colcrt
+du -h colormgr
+du -h cp
+du -h cpio
+du -h cpp
+du -h cpupower
+du -h crash
+du -h crontab
+du -h cut
+du -h date
+du -h dbus-cleanup-sockets
+du -h dbus-daemon
+du -h dbus-monitor
+du -h dbus-run-session
+du -h dbus-send
+du -h dbus-update-activation-environment
+du -h dbus-uuidgen
+du -h dc
+du -h dconf
+du -h dd
+du -h deb-systemd-helper
+du -h deb-systemd-invoke
+du -h debconf
+du -h df
+du -h diff
+du -h dirname
+du -h dmesg
+du -h dnsdomainname
+du -h domainname
+du -h du
+du -h dumpkeys
+du -h echo
+du -h ed
+du -h eject
+du -h env
+du -h envsubst
+du -h eps2eps
+du -h fgrep
+du -h file
+du -h find
+du -h findmnt
+du -h free
+du -h ftp
+du -h funzip
+du -h gdb
+du -h gdb-add-index
+du -h gdbtui
+du -h gdbus
+du -h gdctl
+du -h grep
+du -h groff
+du -h groups
+du -h gunzip
+du -h gzip
+du -h hd
+du -h head
+du -h hexdump
+du -h host
+du -h hostid
+du -h hostname
+du -h hostnamectl
+du -h ibus
+du -h ibus-daemon
+du -h ibus-setup
+du -h ibus-table-createdb
+du -h iostat
+du -h ip
+du -h ipcmk
+du -h ipcrm
+du -h join
+du -h journalctl
+du -h kill
+du -h killall
+du -h kmod
+du -h ld
+du -h ld.bfd
+du -h ld.so
+du -h ldd
+du -h less
+du -h link
+du -h linkicc
+du -h linux32
+du -h linux64
+du -h ln
+du -h lnstat
+du -h login
+du -h loginctl
+du -h logname
+du -h look
+du -h lp
+du -h lsb_release
+du -h lsblk
+du -h lsclocks
+du -h lscpu
+du -h lsfd
+du -h lsinitramfs
+du -h lslogins
+du -h lsmdev
+du -h lsmem
+du -h lsmod
+du -h lsns
+du -h lsof
+du -h lspci
+du -h lspgpot
+du -h lspower
+du -h lsusb
+du -h make
+du -h makedumpfile
+du -h makedumpfile-R.pl
+du -h mkdir
+du -h more
+du -h mount
+du -h mountpoint
+du -h mv
+du -h netaddr
+du -h netcat
+du -h netshaper
+du -h networkctl
+du -h networkd-dispatcher
+du -h newgrp
+du -h nsenter
+du -h nslookup
+du -h nstat
+du -h nsupdate
+du -h ntfs-3g
+du -h ntfs-3g.probe
+du -h ntfscat
+du -h ntfscluster
+du -h ntfscmp
+du -h ntfsdecrypt
+du -h ntfsfallocate
+du -h ntfsfix
+du -h ntfsinfo
+du -h ntfsls
+du -h ntfsmove
+du -h ntfsrecover
+du -h ntfssecaudit
+du -h ntfstruncate
+du -h ntfsusermap
+du -h ntfswipe
+du -h objdump
+du -h od
+du -h on_ac_power
+du -h open
+du -h openssl
+du -h openvt
+du -h opldecode
+du -h passwd
+du -h paste
+du -h pathchk
+du -h ping
+du -h ping4
+du -h ping6
+du -h plymouth
+du -h poff
+du -h pon
+du -h ps
+du -h pwd
+du -h qemu-img
+du -h qemu-io
+du -h qemu-nbd
+du -h qemu-pr-helper
+du -h qemu-storage-daemon
+du -h qemu-system-aarch64
+du -h qemu-system-alpha
+du -h qemu-system-amd64
+du -h qemu-system-arm
+du -h qemu-system-arm64
+du -h qemu-system-i386
+du -h qemu-system-sh4
+du -h qemu-system-sh4eb
+du -h qemu-system-x86_64
+du -h qemu-vmsr-helper
+du -h readelf
+du -h readlink
+du -h realpath
+du -h renice
+du -h reset
+du -h rmdir
+du -h rnano
+du -h rtstat
+du -h rygel
+du -h sadf
+du -h sane-find-scanner
+du -h sh
+du -h sha1sum
+du -h sha224sum
+du -h sha256sum
+du -h sha3-224sum
+du -h sha3-256sum
+du -h sha3-384sum
+du -h sha3-512sum
+du -h socat
+du -h socat-broker.sh
+du -h socat-chain.sh
+du -h socat-mux.sh
+du -h socat1
+du -h ssh
+du -h ssh-add
+du -h ssh-agent
+du -h ssh-argv0
+du -h ssh-copy-id
+du -h ssh-keygen
+du -h ssh-keyscan
+du -h sss_ssh_authorizedkeys
+du -h sss_ssh_knownhosts
+du -h sss_ssh_knownhostsproxy
+du -h stat
+du -h su
+du -h su-rs
+du -h sudo
+du -h sudo-rs
+du -h sudo.ws
+du -h sudoedit
+du -h sudoedit-rs
+du -h sudoreplay.ws
+du -h sum
+du -h switcherooctl
+du -h swtpm
+du -h swtpm_bios
+du -h swtpm_cert
+du -h swtpm_ioctl
+du -h swtpm_localca
+du -h swtpm_setup
+du -h sync
+du -h systemctl
+du -h systemd-ac-power
+du -h systemd-analyze
+du -h systemd-ask-password
+du -h systemd-cat
+du -h systemd-cgls
+du -h systemd-cgtop
+du -h systemd-confext
+du -h systemd-creds
+du -h systemd-cryptenroll
+du -h systemd-cryptsetup
+du -h systemd-delta
+du -h systemd-detect-virt
+du -h systemd-dissect
+du -h systemd-escape
+du -h systemd-firstboot
+du -h systemd-hwdb
+du -h systemd-id128
+du -h systemd-inhibit
+du -h systemd-machine-id-setup
+du -h systemd-mount
+du -h systemd-mute-console
+du -h systemd-notify
+du -h systemd-nspawn
+du -h systemd-path
+du -h systemd-pty-forward
+du -h systemd-run
+du -h systemd-socket-activate
+du -h systemd-stdio-bridge
+du -h systemd-sysext
+du -h systemd-sysusers
+du -h systemd-tmpfiles
+du -h systemd-tty-ask-password-agent
+du -h systemd-umount
+du -h systemd-vmspawn
+du -h systemd-vpick
+du -h tty
+du -h ubuntu_virt_helper
+du -h umount
+du -h uname
+du -h upower
+du -h uptime
+du -h usb-devices
+du -h usb_printerid
+du -h usbhid-dump
+du -h virsh
+du -h virt-admin
+du -h virt-clone
+du -h virt-host-validate
+du -h virt-install
+du -h virt-manager
+du -h virt-pki-query-dn
+du -h virt-pki-validate
+du -h virt-qemu-run
+du -h virt-ssh-helper
+du -h virt-xml
+du -h virt-xml-validate
+du -h vmstat
+du -h waitpid
+du -h wall
+du -h watch
+du -h watchgnupg
+du -h wc
+du -h which
+du -h who
+du -h whoami
+du -h whoopsie
+du -h whoopsie-preferences
+du -h wpctl
+du -h wpexec
+du -h xxd
+du -h xz
+du -h xzcat
+du -h xzcmp
+du -h xzdiff
+du -h xzegrep
+du -h xzfgrep
+du -h xzgrep
+du -h xzless
+du -h xzmore
+du -h zip
+popd
+
+pushd /usr/sbin
+du -h busybox
+du -h mdevctl
+du -h NetworkManager
+du -h readahead-bpfcc
+du -h memleak-bpfcc
+du -h reboot
+du -h mkdosfs
+du -h mke2fs
+du -h mkfs
+du -h resolvconf
+du -h rmmod
+du -h hwclock
+du -h rsyslogd
+du -h unix_chkpwd
+du -h deluser
+du -h mkfs.ntfs
+du -h depmod
+du -h dhcpcd
+du -h invoke-rc.d
+du -h mkinitramfs
+du -h ip
+du -h mkntfs
+du -h adduser
+du -h modinfo
+du -h mount.ntfs
+du -h saned
+du -h aptd
+du -h dumpe2fs
+du -h ipp-usb
+du -h update-inetd
+du -h arpd
+du -h e2fsck
+du -h netplan
+du -h update-initramfs
+du -h newusers
+du -h update-passwd
+du -h update-rc.d
+du -h shutdown
+du -h avahi-daemon
+du -h usb_modeswitch_dispatcher
+du -h usbmuxd
+du -h useradd
+du -h spice-vdagentd
+du -h userdel
+du -h usermod
+du -h ustat
+du -h sssd
+du -h uuidd
+du -h iscsid
+du -h iscsistart
+du -h sudo_logsrvd
+du -h sulogin
+du -h swapoff
+du -h blkdiscard
+du -h swapon
+du -h blkid
+du -h bluetoothd
+du -h parted
+du -h brctl
+du -h bridge
+du -h brltty-setup
+du -h findfs
+du -h ldconfig
+du -h fsck
+du -h libvirtd
+du -h plymouthd
+du -h poweroff
+du -h virtlockd
+du -h virtlogd
+du -h lsmod
+du -h chpasswd
+du -h wpa_cli
+du -h chronyd
+du -h wpa_supplicant
+du -h thermald
+popd
