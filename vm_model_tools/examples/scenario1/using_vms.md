@@ -1,8 +1,41 @@
 # Using SEV VM's with the Certifier
 
-In this description, $CERTIFIER_ROOT is the top level directory for the Certifier
-repository.  $EXAMPLE_DIR is this directory containing the example application
-(like $CERTIFIER_ROOT/vm_model_tools/examples/scenario1.
+In this description, we use a number if exported variables.
+
+$HOST_CERTIFIER_ROOT is the top level directory for the Certifier
+repository on a development machine.  This is
+~/src/github.com/certifier-framework-for-confidential-computing on
+my machine.
+
+$HOST_EXAMPLE_DIR is the directory containing the example application
+and executables. This is $HOST_CERTIFIER_ROOT/ vm_model_tools/examples/scenario1
+for me.
+
+$VM_CERTIFIER_ROOT is the top level directory for the Certifier files
+on the virtual disk.  This is /home/certifier in my scripts.
+
+$VM_INITRAM_DIR is the directory on the virtual disk where we unpack
+initrd and modify it.  It is $VM_CERTIFIER_ROOT/custom_init in my
+tests.
+
+We also use:
+
+  $HOST_FS to mean "/" on the developer's machine.
+  $VM_FS to mean "/" on the developer's machine.
+
+Here are the defines
+
+```script
+export HOST_CERTIFIER_ROOT=/home/jlm/src/github.com/certifier-framework-for-confidential-computing
+export HOST_EXAMPLE_DIR=$HOST_CERTIFIER_ROOT/vm_model_tools/examples/scenario1
+export VM_CERTIFIER_ROOT=/home/certifier
+export VM_INITRAM_DIR=$VM_FS/tmp
+export VM_INITRAM_CUSTOMER_FOLDER=$VM_INITRAM_DIR/custom_init
+mkdir $VM_INITRAM_CUSTOMER_FOLDER
+export HOST_FS /    # on the development machine
+export VM_FS /      # in the vm
+```
+
 
 ## Overview
 
@@ -14,14 +47,15 @@ be part of a measurement ans so should start up scripts as well as
 the policy certificates for the security domains the VM operates in.
 These measured quantities ahould not be mutable.
 
-For the tests in this directory, the scripts do all this.  This
+For the tests in $HOST_EXAMPLE_DIR, the scripts do all this.  This
 document helps describe those scripts and can serve as a guide for
 building your own VM.
 
 The approach described here is to build a locked-down and entirely memory
 resident operating system and system disk containing all security related
 programs and configuration.  Measurement then consists of measuring
-the kernel image (vmlinuz) and the filesystem (initrd.img).
+the kernel image (vmlinuz) and the filesystem (initrd.img).  For testing,
+we allow root logind via ssh but in a real VM you'd NOT do that.
 
 Building a VM to use the Certifier using this approach requires
 You must build a bootable kernel consisting of a compressed kernel
@@ -40,21 +74,25 @@ To run such a VM:
   3. You must supply the hypervisor with a virutalization shim and a
   command line for the kernel you are booting.
 
-First, you will need a "small" Linux OS.  You can build your own but
-we will start with an existing one.  We use a small Debian OS called
-Trixie, which is an AMD SEV-enabled server (either bare metal or a
-confidential VM guest), based on 64 bit Debian 13.
+To build the VM in step 2, you will need to start with a "small" Linux OS.
+You can build your own but we will start with an existing one.  We use a
+small Debian OS called Trixie, which is an AMD SEV-enabled server
+(either bare metal or a confidential VM guest), based on 64 bit Debian 13.
 
-You can start with an ISO and install it into a real or virtual disk
-(for Trixie, get it at Link: https://www.debian.org/download) or a
-prebuilt virtual disk (get it at https://cdimage.debian.org/cdimage/cloud/).
-We'll do the latter.
+You could start with an ISO and install it into a real or virtual disk
+(for Trixie, get it at Link: https://www.debian.org/download) but we start
+with a prebuilt virtual disk (get it at
+https://cdimage.debian.org/cdimage/cloud/).  We'll do the latter.
+
+Instructions for building and running the VM follow.
+
 
 ## Install KVM (if you haven't already)
 
-Most people already have a KVM installed.  If not, do the following.
+Most people already have a KVM installed.  If not, do the following on
+your development machine.
 
-install the required packages, make sure KVM is sev enabled.
+Install the required packages, make sure KVM is sev enabled.
 
 ```script
 sudo apt -y install bridge-utils cpu-checker libvirt-clients libvirt-daemon qemu qemu-kvm cpu-checker qemu-img libvirt-daemon-system qemu-utils
@@ -215,7 +253,7 @@ virsh undefine ubuntu-vm
 virsh undefine ubuntu-vm --remove-all-storage
 ```
 
-To create a vm from an ISO:
+To create a vm from an ISO (untested):
 
 ```script
 virt-install \
@@ -231,6 +269,7 @@ virt-install \
 
 or
 
+# TODO: Change this
 openstack image create \
     --container-format bare \
     --disk-format qcow2 \
@@ -245,9 +284,9 @@ openstack image create \
     debian-13-generic-amd64-20250811-2201.qcow2
 ```
 
+
 ## Step by step instructions without cloud-init
 
-Here's what to do:
 
 ### Step 1 - Download the image and customize it
 
@@ -255,7 +294,7 @@ Use a browser to download a qcow image.  You should get a file named something
 like debian-13-generic-amd64-20261123-2671.qcow2.  The installation guide
 is at https://www.debian.org/releases/trixie/installmanual.
 
-Let assume the image is in ~/Downloads.
+Let's assume the image is in ~/Downloads.
 
 First, fix the image so you can log in.  You may first have to install a tool:
 
@@ -267,15 +306,16 @@ apt install guestfs-tools
 virt-customize -a /home/jlm/Downloads/debian-13-generic-amd64-20261123-2671.qcow2 \
   --root-password password:certifier \
   --ssh-inject root:file:/home/jlm/.ssh/id_rsa.pub \
-  --timezone America/Los_Angeles
+  --timezone America/Los_Angeles \
+  --hostname certifier-vm-host
 
-# set hostname
-#   Copying files
+#   You can copy files here too
 #     --upload local-config.conf:/etc/app/config.conf
 ```
 
-Import the image as a VM for KVM startup using virt-manager.
-You may have to be root to do this.  I called mine jlm-test-vm.
+Next, import the image as a VM in your KVM using virt-manager.
+You may have to be root to do this.  I called my vm jlm-test-vm.
+
 
 ### Step 2 - Run the VHD under a hypervisor
 
@@ -292,48 +332,56 @@ adduser certifier
 usermod -aG sudo certifier
 ```
 
+We need one more program for testing that we should compile:
+
+```script
+cd  $HOST_EXAMPLE_DIR
+g++ -o startup_program.exe startup_program.cc
+```
+
 Note that the NW installed is virbr0.
+
 
 ### Step 3 - Copy the programs, scripts, files and libraries you need to the VM image
 
 Copy from the host machine with the certifier to the VM.
 
+In the runnig VM you started up:
 ```script
-  cp $CERTIFIER_ROOT/vm_model_tools/src/cf_key_server.exe $ORIG_FS_DIR/usr/bin
-  cp $CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe $ORIG_FS_DIR/usr/bin
-  cp $CERTIFIER_ROOT/vm_model_tools/src/cf_utilities.exe $ORIG_FS_DIR/usr/bin
-  cp $CERTIFIER_ROOT/utilities/cpuid.exe usr/bin
-  cp $EXAMPLE_DIR/startup_program.exe $ORIG_FS_DIR/bin
-  # You will also need the snpguest program on the VM to get the sev certs.
-  cp $SNPTOOL_DIR/snpguest $ORIG_FS_DIR/usr/bin
+  mkdir $VM_CERTIFIER_ROOT/bin
+  chown certifier $VM_CERTIFIER_ROOT/bin
+  mkdir $VM_CERTIFIER_ROOT/app
+  chown certifier $VM_CERTIFIER_ROOT/app
 
-  cp $CERTIFIER_ROOT/vm_model_tools/src/cf_key_server.exe $ORIG_FS_DIR/usr/bin
-  cp $CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe $ORIG_FS_DIR/usr/bin
-  cp $CERTIFIER_ROOT/vm_model_tools/src/cf_utilities.exe $ORIG_FS_DIR/usr/bin
-  cp $CERTIFIER_ROOT/utilities/cpuid.exe usr/bin
-  cp $EXAMPLE_DIR/startup_program.exe $ORIG_FS_DIR/bin
-  # You will also need the snpguest program on the VM to get the sev certs.
-  cp $SNPTOOL_DIR/snpguest $ORIG_FS_DIR/usr/bin
+  cp $HOST_CERTIFIER_ROOT/vm_model_tools/src/cf_key_server.exe $VM_CERTIFIER_ROOT/bin
+  cp $HOST_CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe $VM_CERTIFIER_ROOT/bin
+  cp $HOST_CERTIFIER_ROOT/vm_model_tools/src/cf_utilities.exe $VM_CERTIFIER_ROOT/bin
+  cp $HOST_CERTIFIER_ROOT/utilities/cpuid.exe $VM_CERTIFIER_ROOT/bin
+  cp $HOST_EXAMPLE_DIR/startup_program.exe $VM_CERTIFIER_ROOT/bin
+  cp $SNPTOOL_DIR/snpguest $VM_CERTIFIER_ROOT/bin
+  chmod +x $VM_CERTIFIER_ROOT/bin/*
 
-  cp $EXAMPLE_DIR/provisioning/$POLICY_CERT_FILE_NAME $ORIG_FS_DIR/etc/$POLICY_CERT_FILE_NAME
-  chmod 0644 $ORIG_FS_DIR/etc/$POLICY_CERT_FILE_NAME
+  cp $HOST_EXAMPLE_DIR/provisioning/$POLICY_CERT_FILE_NAME $VM_FS/etc/$POLICY_CERT_FILE_NAME
+  chmod 0644 $VM_FS/etc/$POLICY_CERT_FILE_NAME
 
   # Copy (or make) start-script.sh to call at init
-  cp $EXAMPLE_DIR/start-script.sh $ORIG_FS_DIR/scripts
+  cp $HOST_EXAMPLE_DIR/start-script.sh $VM_FS/scripts
 
   # Your startup-script will also have to obtain the ARK, ASK and
   # VCERT certificates on the real machine.
 
-  cp libprotobuf.so.32 $ORIG_FS_DIR/usr/lib
-  cp libgflags.so.2.2 $ORIG_FS_DIR/usr/lib
-  cp libcrypto.so.3 $ORIG_FS_DIR/usr/lib
-  cp libssl.so.3 $ORIG_FS_DIR/usr/lib
-  cp libuuid.so.1 $ORIG_FS_DIR/usr/lib
-  cp libstdc++.so.6 $ORIG_FS_DIR/usr/lib
-  cp libgcc_s.so.1 $ORIG_FS_DIR/usr/lib
-  cp libc.so.6 $ORIG_FS_DIR/usr/lib
-  cp libz.so.1 $ORIG_FS_DIR/usr/lib
-
+  # Copy needed libraries into VM filesystem
+  # libraries needed will be in $HOST_FS/usr/lib/x86_64-linux-gnu
+  export HOST_LIB=$HOST_FS/usr/lib/x86_64-linux-gnu
+  export VM_LIB=$VM_FS/usr/lib/x86_64-linux-gnu
+  cp $HOST_LIB/libprotobuf.so.32 $HOST_LIB
+  cp $HOST_LIB/libgflags.so.2.2 $HOST_LIB
+  cp $HOST_LIB/libcrypto.so.3 $HOST_LIB
+  cp $HOST_LIB/libssl.so.3 $HOST_LIB
+  cp $HOST_LIB/libuuid.so.1 $HOST_LIB
+  cp $HOST_LIB/libstdc++.so.6 $HOST_LIB
+  cp $HOST_LIB/libc.so.6 $HOST_LIB
+  cp $HOST_LIB/libz.so.1 $HOST_LIB
 ```
 
 ### Step 4 - Unpack initrd
@@ -348,7 +396,6 @@ You should install the intram tools:
   apt update
   apt install initramfs-tools
 
-
   # Install cpio and gzip
   apt install cpio
   apt-get install gzip
@@ -357,9 +404,10 @@ You should install the intram tools:
 Then extract the archive:
 
 ```script
-  mkdir custom_init && cd custom_init
-  unmkinitramfs ../initrd.img .
-  ls -l .
+  pushd $VM_INITRAM_CUSTOMER_FOLDER
+    unmkinitramfs $VM_FS/boot/initrd.img $VM_INTIRAM_DIR
+    ls -l .
+  popd
 ```
 
 You should see something like this:
@@ -380,41 +428,27 @@ You should see something like this:
 
 ### Step 5 - Copy the needed files into initrd
 
-First a define:
+Copy the files needed in initrd:
 
 ```script
+cp -r $VM_FS/etc $VM_INITRAM_CUSTOM_FOLDER/etc
+cp -r $VM_FS/usr $VM_INITRAM_CUSTOM_FOLDER/usr
+cp -r $VM_FS/home /$VM_INITRAM_CUSTOM_FOLDER/home
+cp $HOST_EXAMPLE_DIR/provisioning/$POLICY_CERT_FILE_NAME $VM_FS/etc/$POLICY_CERT_FILE_NAME
+```
 
-  # Two useful variables
-  export ORIG_FS_DIR=$EXAMPLE_DIR/custom_init
-  pushd $CERTIFIER_ROOT
-    cd ../virtee/snpguest
-    export SNPTOOL_DIR=$(pwd)
-  popd
+Set the domain names:
+
+``script
+cat $DOMAIN_NAME >> $VM_INITRAM_CUSTOM_FOLDER/etc/domains
+cat $startup_program.exe $VM_INITRAM_CUSTOM_FOLDER/usr/bin
+chmod +x $VM_INITRAM_CUSTOM_FOLDER/usr/bin/startup_program.exe
+cp $VM_FS/etc/$POLICY_CERT_FILE_NAME $INITRAM_CUSTOM_FOLDER/etc
 ```
 
 ### Step 6 - Modify the init script in the initrd filesystem
 
-```script
-cd  $EXAMPLE_DIR
-g++ -o startup_program.exe startup_program.cc
-```
-
-Set the domain names in $ORIG_FS_DIR/etc/domains:
-
-``script
-cat $DOMAIN_NAME >> $ORIG_FS_DIR/etc/domains
-cat startup_program.exe /usr/bin
-chmod +x /usr/bin/startup_program.exe
-```
-
-``script
-cp -r /etc $ORIG_FS_DIR
-cp -r /usr $ORIG_FS_DIR
-
-# bin or sbin?
-```
-
-Changes to init
+Changes to init ($VM_INITRAM_CUSTOM_FOLDER/init)
   Change default.target to multi-user.target in /etc/systemd/system/default.target.
   Towards the bottom of the standard init initrd, before run_scripts /scripts/init-bottom:
 
@@ -428,19 +462,34 @@ your module names (e.g., virtio_blk, virtio_net) are listed in
 /etc/initramfs-tools/modules, then update:
 
 ```script
-  update-initramfs -u -k all
+  pushd $VM_INITRAM_CUSTOM_FOLDER
+    update-initramfs -u -k all
+  popd
 ```
 Now, rebuild the archive:
 
 ```script
-  find . -print0 | cpio --null -o -H newc | gzip -c > ../new_initrd.img
+  find . -print0 | cpio --null -o -H newc | gzip -c > $VMINITRAM_DIR/new_initrd.img
 ```
-
 
 ### Step 8 - Copy the resulting kernel image and initrd for distribution
 
 ```script
-scp localfile user@vm-ip:/path/to/destination from your terminal.
+pushd $VM_INITRAM_DIR
+cd ..
+scp $VM_INITRAM_DIR/new_init.img certifier@vm-certifier-host:$HOST_EXAMPLE_DIR
+scp $VM_FS/boot/vimlinz certifier@vm-certifier-host:$HOST_EXAMPLE_DIR
+```
+
+Now you have the files for your vm.
+
+### Step 9 --- Run the new vm
+
+Follow the instructions in instructions.md for the test.  You'll need the ip address for
+the test.  You can get it as follows:
+
+```script
+ip address
 ```
 
 
