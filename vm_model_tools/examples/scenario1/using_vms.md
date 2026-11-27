@@ -403,15 +403,20 @@ Set the domain names in $ORIG_FS_DIR/etc/domains:
 
 ``script
 cat $DOMAIN_NAME >> $ORIG_FS_DIR/etc/domains
+cat startup_program.exe /usr/bin
+chmod +x /usr/bin/startup_program.exe
+```
+
+``script
+cp -r /etc $ORIG_FS_DIR
+cp -r /usr $ORIG_FS_DIR
+
+# bin or sbin?
 ```
 
 Changes to init
-
-  Change script to start systemd instead of switching roots.
   Change default.target to multi-user.target in /etc/systemd/system/default.target.
   Towards the bottom of the standard init initrd, before run_scripts /scripts/init-bottom:
-  exec /lib/systemd/systemd
-    This should never return.
 
 
 ### Step 7 - Repack initrd
