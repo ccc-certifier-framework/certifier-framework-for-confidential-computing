@@ -16,6 +16,7 @@ AMD SEV confidential virtual machine on KVM/QEMU or Proxmox rather than
 installing from an ISO, use the pre-installed generic or nocloud qcow2
 image from the Debian Cloud Image Repository. Use generic instead of
 genericcloud if you need full hardware and confidential-computing driver support.
+Link: https://www.debian.org/download
 
 Key Requirements for AMD SEV
 
@@ -27,4 +28,4 @@ GRUB_CMDLINE_LINUX_DEFAULT in /etc/default/grub, run update-grub, and reboot.
 • Virtio Settings (For SEV Guests). When attaching virtual disks or network
 interfaces to an SEV-enabled VM, enable iommu=on on the virtio devices so
 encrypted memory DMA transfers work properly.
-
+Link: https://cdimage.debian.org/cdimage/cloud/
