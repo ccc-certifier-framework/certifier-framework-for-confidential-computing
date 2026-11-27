@@ -247,6 +247,8 @@ openstack image create \
 
 ## Step by step instructions without cloud-init
 
+Here's what to do:
+
 ### Step 1 - Download the image and customize it
 
 Use a browser to download a qcow image.  You should get a file named something
@@ -274,125 +276,181 @@ virt-customize -a /home/jlm/Downloads/debian-13-generic-amd64-20261123-2671.qcow
 Import the image as a VM for KVM startup using virt-manager.
 You may have to be root to do this.  I called mine jlm-test-vm.
 
-```script
-/etc/ssh/sshd_config.d/
-
-It's generally good practice to add configuration file(s) with
-your desired changes and options into that subdirectory, rather
-than editing the system default sshd_config file directly.
-
-E.g. if you wanted to allow users bill and ted to ssh, create a file called
-
-/etc/ssh/sshd_config.d/allowusers.conf
-
-with a line that looks like:
-
-AllowUsers bill ted
-
-This /etc/ssh/sshd_config works fine!
-
-# Package generated configuration file
-# See the sshd(8) manpage for details
-
-# What ports, IPs and protocols we listen for
-Port 30000
-# Use these options to restrict which interfaces/protocols sshd will bind to
-#ListenAddress ::
-#ListenAddress 0.0.0.0
-Protocol 2
-# HostKeys for protocol version 2
-HostKey /etc/ssh/ssh_host_rsa_key
-HostKey /etc/ssh/ssh_host_dsa_key
-#Privilege Separation is turned on for security
-UsePrivilegeSeparation yes
-
-# Lifetime and size of ephemeral version 1 server key
-KeyRegenerationInterval 3600
-ServerKeyBits 768
-
-# Logging
-SyslogFacility AUTH
-LogLevel INFO
-
-# Authentication:
-LoginGraceTime 120
-PermitRootLogin yes
-StrictModes yes
-
-RSAAuthentication yes
-PubkeyAuthentication yes
-#AuthorizedKeysFile     %h/.ssh/authorized_keys
-
-# Don't read the user's ~/.rhosts and ~/.shosts files
-IgnoreRhosts yes
-# For this to work you will also need host keys in /etc/ssh_known_hosts
-RhostsRSAAuthentication no
-# similar for protocol version 2
-HostbasedAuthentication no
-# Uncomment if you don't trust ~/.ssh/known_hosts for RhostsRSAAuthentication
-#IgnoreUserKnownHosts yes
-
-# To enable empty passwords, change to yes (NOT RECOMMENDED)
-PermitEmptyPasswords no
-
-# Change to yes to enable challenge-response passwords (beware issues with
-# some PAM modules and threads)
-ChallengeResponseAuthentication no
-
-# Change to no to disable tunnelled clear text passwords
-#PasswordAuthentication yes
-
-# Kerberos options
-#KerberosAuthentication no
-#KerberosGetAFSToken no
-#KerberosOrLocalPasswd yes
-#KerberosTicketCleanup yes
-
-# GSSAPI options
-#GSSAPIAuthentication no
-#GSSAPICleanupCredentials yes
-
-X11Forwarding yes
-X11DisplayOffset 10
-PrintMotd no
-PrintLastLog yes
-TCPKeepAlive yes
-#UseLogin no
-
-#MaxStartups 10:30:60
-#Banner /etc/issue.net
-
-# Allow client to pass locale environment variables
-AcceptEnv LANG LC_*
-
-```
-
-
 ### Step 2 - Run the VHD under a hypervisor
 
-From virt-manager, create a new virtual machine from the image you downloaded.  Name it debian13.
+Start the vm:
 
 ```script
-# Start VM
-virsh start debian13
+virtsh jlm-test-vm
+```
+
+Now log in as root and add certifier user:
+
+```script
+adduser certifier
+usermod -aG sudo certifier
 ```
 
 Note that the NW installed is virbr0.
 
 ### Step 3 - Copy the programs, scripts, files and libraries you need to the VM image
 
-### Step 4 - Fix the SSH and password configuration
+Copy from the host machine with the certifier machine.
 
-### Step 5 - Unpack initrd
+```script
+  cp $CERTIFIER_ROOT/vm_model_tools/src/cf_key_server.exe $ORIG_FS_DIR/usr/bin
+  cp $CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe $ORIG_FS_DIR/usr/bin
+  cp $CERTIFIER_ROOT/vm_model_tools/src/cf_utilities.exe $ORIG_FS_DIR/usr/bin
+  cp $CERTIFIER_ROOT/utilities/cpuid.exe usr/bin
+  cp $EXAMPLE_DIR/startup_program.exe $ORIG_FS_DIR/bin
+  # You will also need the snpguest program on the VM to get the sev certs.
+  cp $SNPTOOL_DIR/snpguest $ORIG_FS_DIR/usr/bin
 
-### Step 6 - Copy the needed files into initrd
+  cp $CERTIFIER_ROOT/vm_model_tools/src/cf_key_server.exe $ORIG_FS_DIR/usr/bin
+  cp $CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe $ORIG_FS_DIR/usr/bin
+  cp $CERTIFIER_ROOT/vm_model_tools/src/cf_utilities.exe $ORIG_FS_DIR/usr/bin
+  cp $CERTIFIER_ROOT/utilities/cpuid.exe usr/bin
+  cp $EXAMPLE_DIR/startup_program.exe $ORIG_FS_DIR/bin
+  # You will also need the snpguest program on the VM to get the sev certs.
+  cp $SNPTOOL_DIR/snpguest $ORIG_FS_DIR/usr/bin
 
-### Step 7 - Modify the init script in the initrd filesystem
 
-### Step 8 - Repack initrd
-
-### Step 9 - Copy the resulting kernel image and initrd for distribution
+  cp $EXAMPLE_DIR/provisioning/$POLICY_CERT_FILE_NAME $ORIG_FS_DIR/etc/$POLICY_CERT_FILE_NAME
+  chmod 0644 $ORIG_FS_DIR/etc/$POLICY_CERT_FILE_NAME
 
 
+  # Copy (or make) start-script.sh to call at init
+  cp $EXAMPLE_DIR/start-script.sh $ORIG_FS_DIR/scripts
 
+  # Your startup-script will also have to obtain the ARK, ASK and
+  # VCERT certificates on the real machine.
+
+  cp libprotobuf.so.32 $ORIG_FS_DIR/usr/lib
+  cp libgflags.so.2.2 $ORIG_FS_DIR/usr/lib
+  cp libcrypto.so.3 $ORIG_FS_DIR/usr/lib
+  cp libssl.so.3 $ORIG_FS_DIR/usr/lib
+  cp libuuid.so.1 $ORIG_FS_DIR/usr/lib
+  cp libstdc++.so.6 $ORIG_FS_DIR/usr/lib
+  cp libgcc_s.so.1 $ORIG_FS_DIR/usr/lib
+  cp libc.so.6 $ORIG_FS_DIR/usr/lib
+  cp libz.so.1 $ORIG_FS_DIR/usr/lib
+
+```
+
+### Step 4 - Unpack initrd
+
+You should install the intram tools:
+
+```script
+#  Install the initram tools for Ubuntu:
+
+  # Install update-initramfs, mkinitramfs and mkinitrd
+  # as root
+  apt update
+  apt install initramfs-tools
+
+
+  # Install cpio and gzip
+  apt install cpio
+  apt-get install gzip
+```
+
+Then extract the archive:
+
+```script
+  mkdir custom_init && cd custom_init
+  unmkinitramfs ../initrd.img .
+  ls -l .
+```
+
+You should see something like this:
+
+  lrwxrwxrwx  1 jlm jlm    7 Nov  3 12:08 bin -> usr/bin
+  drwxr-xr-x  3 jlm jlm 4096 Nov  3 12:08 conf
+  drwxr-xr-x 10 jlm jlm 4096 Nov  3 12:08 etc
+  -rwxr-xr-x  1 jlm jlm 7827 Apr  2  2026 init
+  drwxr-xr-x  3 jlm jlm 4096 Nov  3  2025 kernel
+  lrwxrwxrwx  1 jlm jlm    7 Nov  3 12:08 lib -> usr/lib
+  lrwxrwxrwx  1 jlm jlm    9 Nov  3 12:08 lib64 -> usr/lib64
+  drwxr-xr-x  2 jlm jlm 4096 Nov  3 12:08 run
+  lrwxrwxrwx  1 jlm jlm    8 Nov  3 12:08 sbin -> usr/sbin
+  drwxr-xr-x  9 jlm jlm 4096 Nov  3 12:08 scripts
+  drwxr-xr-x  9 jlm jlm 4096 Nov  3 12:08 usr
+  drwxr-xr-x  4 jlm jlm 4096 Nov  3 12:08 var
+
+
+### Step 5 - Copy the needed files into initrd
+
+First a define:
+
+```script
+
+  # Two useful variables
+  export ORIG_FS_DIR=$EXAMPLE_DIR/custom_init
+  pushd $CERTIFIER_ROOT
+    cd ../virtee/snpguest
+    export SNPTOOL_DIR=$(pwd)
+  popd
+```
+
+### Step 6 - Modify the init script in the initrd filesystem
+
+```script
+cd  $EXAMPLE_DIR
+g++ -o startup_program.exe startup_program.cc
+```
+
+Set the domain names in $ORIG_FS_DIR/etc/domains:
+
+``script
+cat $DOMAIN_NAME >> $ORIG_FS_DIR/etc/domains
+```
+
+Changes to init
+
+  Change script to start systemd instead of switching roots.
+  Change default.target to multi-user.target in /etc/systemd/system/default.target.
+  Towards the bottom of the standard init initrd, before run_scripts /scripts/init-bottom:
+  exec /lib/systemd/systemd
+    This should never return.
+
+
+### Step 7 - Repack initrd
+
+Finally we will recompress initrd.img.
+
+You may need to inject special drivers for your VM.  Make sure
+your module names (e.g., virtio_blk, virtio_net) are listed in
+/etc/initramfs-tools/modules, then update:
+
+```script
+  update-initramfs -u -k all
+```
+Now, rebuild the archive:
+
+```script
+  find . -print0 | cpio --null -o -H newc | gzip -c > ../new_initrd.img
+```
+
+
+### Step 8 - Copy the resulting kernel image and initrd for distribution
+
+
+## Step by step instructions with cloud-init
+
+
+
+## Measuring the VM you built
+
+As indicated in instructions.md, you should have installed the ovmf files and
+gotten the machine class ARK cert for policy building.  You will also have called
+cpu-id.exe -sev-parameters to obtain the arguments for sev-snp-measue (or obtained
+them some other way) and you should also also have the command line used for the VM
+launch.  The measure vm script uses them to call:
+
+```script
+ $MEASURE_PROG_DIR/sev-snp-measure.py --mode snp --vcpu-family $CPU_FAMILY --vcpu-model $CPU_MODEL --vcpu-stepping $CPU_STEPPING \
+        --ovmf $OVMF_LOCATION --kernel $VM_KERNEL_FILE_NAME --initrd $VM_INITRAM_FILE_NAME  \
+```
+to obtain the measurement.
 
