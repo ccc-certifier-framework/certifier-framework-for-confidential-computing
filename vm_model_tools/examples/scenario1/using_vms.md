@@ -43,7 +43,7 @@ Everything upon which the security of the certifier relies on including
 the code and all critical data used by the VM and the (Linux)
 VM policy must configured correctly and measured.  In a VM, any program that
 can access the the Certifier primitives (like cf_utility.exe) must
-be part of a measurement ans so should start up scripts as well as
+be part of a measurement and so should start up scripts as well as
 the policy certificates for the security domains the VM operates in.
 These measured quantities ahould not be mutable.
 
@@ -61,7 +61,7 @@ Building a VM to use the Certifier using this approach requires
 You must build a bootable kernel consisting of a compressed kernel
 (vmlinuz) and an initial (and in some cases persistant) file system
 initrd (or initramfs, we use these terms interchangeably although there
-are some differences.
+are some differences).
 
 To run such a VM:
 
@@ -83,6 +83,13 @@ You could start with an ISO and install it into a real or virtual disk
 (for Trixie, get it at Link: https://www.debian.org/download) but we start
 with a prebuilt virtual disk (get it at
 https://cdimage.debian.org/cdimage/cloud/).  We'll do the latter.
+
+After we get the virtual disk configured properly for the test, we use
+these files to populate an initrd file system which contains everything
+we need to measure.  The resulting vlinuz and initrd constitute the final
+VM.  This RAM based "disk" approach is also used by Android and many
+embedded systems like routers.
+
 
 Instructions for building and running the VM follow.
 
@@ -290,17 +297,21 @@ openstack image create \
 
 ### Step 1 - Download the image and customize it
 
-Use a browser to download a qcow image.  You should get a file named something
-like debian-13-generic-amd64-20261123-2671.qcow2.  The installation guide
-is at https://www.debian.org/releases/trixie/installmanual.
+Use a browser to download a qcow image we get from 
+https://cdimage.debian.org/cdimage/cloud/.  You should get a file named
+something like debian-13-generic-amd64-20261123-2671.qcow2.  The
+installation guide is at https://www.debian.org/releases/trixie/installmanual.
 
-Let's assume the image is in ~/Downloads.
+Let's assume the image we downloaded is in ~/Downloads.
 
-First, fix the image so you can log in.  You may first have to install a tool:
+First, we'll need to install the initram tools:
 
 ```script
 apt install guestfs-tools
 ```
+
+Next, fix the image so you can log in.  You may first have to install a tool:
+
 ```script
 
 virt-customize -a /home/jlm/Downloads/debian-13-generic-amd64-20261123-2671.qcow2 \
@@ -449,8 +460,12 @@ cp $VM_FS/etc/$POLICY_CERT_FILE_NAME $INITRAM_CUSTOM_FOLDER/etc
 ### Step 6 - Modify the init script in the initrd filesystem
 
 Changes to init ($VM_INITRAM_CUSTOM_FOLDER/init)
-  Change default.target to multi-user.target in /etc/systemd/system/default.target.
-  Towards the bottom of the standard init initrd, before run_scripts /scripts/init-bottom:
+  Edit $VM_INITRAM_CUSTOM_FOLDER/init
+  Towards the bottom of the file, before run_scripts /scripts/init-bottom,
+  add:
+    exec /lib/systemd/systemd
+  This does PROC 1 initialization and it should never return.
+  During boot none of the rest of the init file matters so you can comment it out.
 
 
 ### Step 7 - Repack initrd
@@ -495,7 +510,7 @@ ip address
 
 ## Step by step instructions with cloud-init
 
-Paul
+Help!
 
 
 ## Measuring the VM you built
@@ -507,8 +522,11 @@ them some other way) and you should also also have the command line used for the
 launch.  The measure vm script uses them to call:
 
 ```script
- $MEASURE_PROG_DIR/sev-snp-measure.py --mode snp --vcpu-family $CPU_FAMILY --vcpu-model $CPU_MODEL --vcpu-stepping $CPU_STEPPING \
-        --ovmf $OVMF_LOCATION --kernel $VM_KERNEL_FILE_NAME --initrd $VM_INITRAM_FILE_NAME  \
+ $MEASURE_PROG_DIR/sev-snp-measure.py --mode snp --vcpu-family $CPU_FAMILY \
+        --vcpu-model $CPU_MODEL --vcpu-stepping $CPU_STEPPING \
+        --ovmf $OVMF_LOCATION --kernel $VM_KERNEL_FILE_NAME \
+        --initrd $VM_INITRAM_FILE_NAME
 ```
+
 to obtain the measurement.
 
