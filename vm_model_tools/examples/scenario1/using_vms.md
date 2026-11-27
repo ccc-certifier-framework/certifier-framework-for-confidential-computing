@@ -222,7 +222,7 @@ virt-install \
   --name ubuntu-vm \
   --ram 2048 \
   --vcpus 2 \
-  --disk path=/var/lib/libvirt/images/ubuntu-vm.qcow2,size=20 \
+    --disk path=/var/lib/libvirt/images/ubuntu-vm.qcow2,size=20 \
   --os-variant ubuntu22.04 \
   --network network=default \
   --graphics vnc,listen=0.0.0.0 \
@@ -269,8 +269,9 @@ virt-customize -a /home/jlm/Downloads/debian-13-generic-amd64-20261123-2671.qcow
   --ssh-inject root:file:/home/jlm/.ssh/id_rsa.pub \
   --timezone America/Los_Angeles
 
-#  --ssh-inject debian:file:/home/jlm/.ssh/id_rsa.pub \
-#  --upload local-config.conf:/etc/app/config.conf
+# set hostname
+#   Copying files
+#     --upload local-config.conf:/etc/app/config.conf
 ```
 
 Import the image as a VM for KVM startup using virt-manager.
@@ -295,7 +296,7 @@ Note that the NW installed is virbr0.
 
 ### Step 3 - Copy the programs, scripts, files and libraries you need to the VM image
 
-Copy from the host machine with the certifier machine.
+Copy from the host machine with the certifier to the VM.
 
 ```script
   cp $CERTIFIER_ROOT/vm_model_tools/src/cf_key_server.exe $ORIG_FS_DIR/usr/bin
@@ -314,10 +315,8 @@ Copy from the host machine with the certifier machine.
   # You will also need the snpguest program on the VM to get the sev certs.
   cp $SNPTOOL_DIR/snpguest $ORIG_FS_DIR/usr/bin
 
-
   cp $EXAMPLE_DIR/provisioning/$POLICY_CERT_FILE_NAME $ORIG_FS_DIR/etc/$POLICY_CERT_FILE_NAME
   chmod 0644 $ORIG_FS_DIR/etc/$POLICY_CERT_FILE_NAME
-
 
   # Copy (or make) start-script.sh to call at init
   cp $EXAMPLE_DIR/start-script.sh $ORIG_FS_DIR/scripts
@@ -435,9 +434,14 @@ Now, rebuild the archive:
 
 ### Step 8 - Copy the resulting kernel image and initrd for distribution
 
+```script
+scp localfile user@vm-ip:/path/to/destination from your terminal.
+```
+
 
 ## Step by step instructions with cloud-init
 
+Paul
 
 
 ## Measuring the VM you built
