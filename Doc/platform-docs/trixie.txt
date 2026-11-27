@@ -1,0 +1,30 @@
+
+For an AMD SEV-enabled server (either bare metal or a confidential VM guest),
+download the Debian 13 ("Trixie") 64-bit PC netinst ISO
+(debian-13.x.x-amd64-netinst.iso), which is roughly 600–700 MB
+and includes modern Linux kernel support for
+AMD SEV/SEV-ES/SEV-SNP out of the box.
+
+Which Image to Choose
+
+• Standard Small Server ISO (netinst). Download the 64-bit amd64 network
+installer from the Debian Download Page. During setup, uncheck the desktop
+environment and select only SSH server and standard system utilities for
+a minimal footprint.
+• Pre-built Cloud Image (Fastest for SEV VMs). If you are booting an
+AMD SEV confidential virtual machine on KVM/QEMU or Proxmox rather than
+installing from an ISO, use the pre-installed generic or nocloud qcow2
+image from the Debian Cloud Image Repository. Use generic instead of
+genericcloud if you need full hardware and confidential-computing driver support.
+
+Key Requirements for AMD SEV
+
+• UEFI Boot Mode (OVMF). AMD SEV guests require UEFI firmware rather than
+legacy BIOS. Ensure your VM or server is configured to boot with UEFI (OVMF).
+• Host Kernel Parameters (If setting up a bare-metal SEV host).
+After installing Debian on the host, add mem_encrypt=on kvm_amd.sev=1 to
+GRUB_CMDLINE_LINUX_DEFAULT in /etc/default/grub, run update-grub, and reboot.
+• Virtio Settings (For SEV Guests). When attaching virtual disks or network
+interfaces to an SEV-enabled VM, enable iommu=on on the virtio devices so
+encrypted memory DMA transfers work properly.
+
