@@ -54,6 +54,13 @@ We'll do the latter.
 
 ### Step 1 - Download the image
 
+Use a browser to download a qcow image.  You should get a file named something
+like debian-13-generic-amd64-20261123-2671.qcow2.
+
+Copy the VHD into your images.
+```script
+```
+
 ### Step 2 - Run the image under a hypervisor
 
 ### Step 3 - Copy the programs, scripts, files and libraries you need to the VM image
